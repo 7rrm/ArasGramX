@@ -103,13 +103,11 @@ jobs:
         run: |
           set -o pipefail
           # One build, identical to upstream's release configuration.
-          # -Pandroid.enableArtProfiles=false drops compileReleaseArtProfile,
-          # measured at 155s and only a startup-time optimisation.
+          # (android.enableArtProfiles was removed in AGP 8, so the profile
+          # task stays; the caches below are what keep the build short.)
           TASK="TMessagesProj:assembleRelease"
           echo "Task: $TASK / ABI: $NATIVE_TARGET"
-          ./gradlew $TASK \
-            -Pandroid.enableArtProfiles=false \
-            --stacktrace 2>&1 | tee build.log
+          ./gradlew $TASK --stacktrace 2>&1 | tee build.log
 
       - name: Collect APKs
         if: success()
