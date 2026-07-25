@@ -1,0 +1,145 @@
+name: MeeroX Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      variant:
+        description: 'Build variant'
+        required: true
+        default: 'release'
+        type: choice
+        options:
+          - release
+          - debug
+
+concurrency:
+  group: meerox-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build MeeroX (arm64)
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      # NagramX reads this and restricts the ABI split to a single target.
+      # Building one ABI instead of four is the single biggest time saver.
+      NATIVE_TARGET: "arm64-v8a"
+      CCACHE_COMPILERCHECK: "%compiler% -dumpmachine; %compiler% -dumpversion"
+      CCACHE_HARDLINK: "true"
+      CCACHE_NOHASHDIR: "true"
+      CCACHE_MAXSIZE: "10G"
+
+    steps:
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/share/boost \
+                      /usr/share/swift "$AGENT_TOOLSDIRECTORY" || true
+          df -h / | tail -1
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Set up Ccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: meerox-arm64
+          append-timestamp: false
+          max-size: 10G
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-disabled: true
+
+      - name: Gradle cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.gradle
+          key: meerox-gradle-${{ hashFiles('**/*.gradle') }}
+          restore-keys: meerox-gradle-
+
+      - name: Native build cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            TMessagesProj/.cxx
+            TMessagesProj/build/intermediates/cxx
+          key: meerox-cxx-arm64-${{ hashFiles('TMessagesProj/jni/**/CMakeLists.txt') }}
+          restore-keys: meerox-cxx-arm64-
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: "build-tools;36.0.0 ndk;27.2.12479018 platforms;android-37.0"
+
+      - name: Install native build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends --yes nasm
+
+      - name: Configure build
+        run: |
+          echo "sdk.dir=${ANDROID_HOME}" >> local.properties
+          # Signing: the repo ships a debug-usable keystore, reuse it so the
+          # APK installs. Passwords come from the upstream defaults.
+          echo "KEYSTORE_PASS=${{ secrets.KEYSTORE_PASS || 'nagram' }}" >> local.properties
+          echo "ALIAS_NAME=${{ secrets.ALIAS_NAME || 'nagram' }}" >> local.properties
+          echo "ALIAS_PASS=${{ secrets.ALIAS_PASS || 'nagram' }}" >> local.properties
+          MEMORY_KB=$(awk '/MemTotal/ {print $2}' /proc/meminfo)
+          MEMORY_GB=$((MEMORY_KB / 1024 / 1024))
+          echo "Memory: ${MEMORY_GB}GB"
+          if [ $MEMORY_GB -ge 12 ]; then
+            sed -i '/^org\.gradle\.jvmargs=/d' gradle.properties
+            echo "org.gradle.jvmargs=-Xmx8G -XX:MaxMetaspaceSize=2G -XX:+UseParallelGC -Dfile.encoding=UTF-8" >> gradle.properties
+          fi
+
+      - name: Build
+        run: |
+          set -o pipefail
+          if [ "${{ github.event.inputs.variant }}" = "debug" ]; then
+            TASK="TMessagesProj:assembleDebug"
+          else
+            TASK="TMessagesProj:assembleRelease"
+          fi
+          echo "Task: $TASK / ABI: $NATIVE_TARGET"
+          ./gradlew $TASK --stacktrace 2>&1 | tee build.log
+
+      - name: Collect APKs
+        if: success()
+        run: |
+          mkdir -p out
+          find TMessagesProj/build/outputs/apk -name "*.apk" -print
+          for f in $(find TMessagesProj/build/outputs/apk -name "*arm64-v8a*.apk"); do
+            cp "$f" out/
+          done
+          # fall back to whatever exists if the arm64 filter matched nothing
+          if [ -z "$(ls -A out 2>/dev/null)" ]; then
+            find TMessagesProj/build/outputs/apk -name "*.apk" -exec cp {} out/ \;
+          fi
+          ls -lh out/
+          cd out && sha256sum *.apk | tee SHA256SUMS.txt
+
+      - name: Upload APK
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: MeeroX-apk
+          path: out/*
+          retention-days: 30
+
+      - name: Upload log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: build.log
+          retention-days: 7
