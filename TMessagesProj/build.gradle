@@ -169,8 +169,12 @@ android {
         release {
             debuggable = false
             jniDebuggable = false
-            minifyEnabled = true
-            shrinkResources = true
+            // MeeroX: R8 is the single most expensive task in CI (measured at
+            // 8.5 of 22 minutes). -PmeeroSkipMinify=true turns it off for
+            // iteration builds; release builds keep it for a smaller APK.
+            def skipMinify = project.findProperty('meeroSkipMinify') == 'true'
+            minifyEnabled = !skipMinify
+            shrinkResources = !skipMinify
             multiDexEnabled = true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             matchingFallbacks = ['release', 'staging', 'debug']

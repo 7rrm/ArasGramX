@@ -117,8 +117,10 @@ jobs:
               # task (measured at 8.5 of the 22 minutes). Turning minification
               # off makes the APK bigger and slightly slower to start, which is
               # fine while we are testing changes.
+              # android.enableR8 was removed from AGP; disable minification on
+              # the release build type itself instead.
               TASK="TMessagesProj:assembleRelease"
-              EXTRA="-Pandroid.enableR8=false -Pandroid.enableR8.fullMode=false" ;;
+              EXTRA="-PmeeroSkipMinify=true" ;;
             *)
               TASK="TMessagesProj:assembleRelease" ;;
           esac
