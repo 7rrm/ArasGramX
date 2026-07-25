@@ -91,9 +91,11 @@ jobs:
           echo "sdk.dir=${ANDROID_HOME}" >> local.properties
           # Signing: the repo ships a debug-usable keystore, reuse it so the
           # APK installs. Passwords come from the upstream defaults.
-          echo "KEYSTORE_PASS=${{ secrets.KEYSTORE_PASS || 'nagram' }}" >> local.properties
-          echo "ALIAS_NAME=${{ secrets.ALIAS_NAME || 'nagram' }}" >> local.properties
-          echo "ALIAS_PASS=${{ secrets.ALIAS_PASS || 'nagram' }}" >> local.properties
+          # Our own keystore (TMessagesProj/release.keystore is replaced with it),
+          # because upstream's is protected by a password we do not have.
+          echo "KEYSTORE_PASS=meerox2026" >> local.properties
+          echo "ALIAS_NAME=meerox" >> local.properties
+          echo "ALIAS_PASS=meerox2026" >> local.properties
           MEMORY_KB=$(awk '/MemTotal/ {print $2}' /proc/meminfo)
           MEMORY_GB=$((MEMORY_KB / 1024 / 1024))
           echo "Memory: ${MEMORY_GB}GB"
