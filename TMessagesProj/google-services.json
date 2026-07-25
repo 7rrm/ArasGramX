@@ -1,21 +1,59 @@
 {
   "project_info": {
-    "project_number": "986979746546",
-    "project_id": "nagram-x",
-    "storage_bucket": "nagram-x.firebasestorage.app"
+    "project_number": "760348033671",
+    "project_id": "meerox-placeholder",
+    "storage_bucket": "meerox-placeholder.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:986979746546:android:f63a8620cbea5950dcc66b",
+        "mobilesdk_app_id": "1:760348033671:android:0000000000000001",
         "android_client_info": {
-          "package_name": "nu.gpu.nagram"
+          "package_name": "com.meero.x"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyAzMqM8tLgsWIvmEyfZRS95ubX-TXiNB3w"
+          "current_key": "AIzaSyPLACEHOLDERPLACEHOLDERPLACEHOLD"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:760348033671:android:0000000000000002",
+        "android_client_info": {
+          "package_name": "com.meero.x.beta"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyPLACEHOLDERPLACEHOLDERPLACEHOLD"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:760348033671:android:0000000000000003",
+        "android_client_info": {
+          "package_name": "com.meero.x.debug"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyPLACEHOLDERPLACEHOLDERPLACEHOLD"
         }
       ],
       "services": {
