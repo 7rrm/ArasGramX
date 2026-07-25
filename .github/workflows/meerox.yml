@@ -3,15 +3,9 @@ name: MeeroX Build
 on:
   workflow_dispatch:
     inputs:
-      variant:
-        description: 'Build variant'
-        required: true
-        default: 'fast'
-        type: choice
-        options:
-          - fast
-          - release
-          - debug
+      note:
+        description: 'Optional note for this build'
+        required: false
 
 concurrency:
   group: meerox-${{ github.ref }}
@@ -108,24 +102,14 @@ jobs:
       - name: Build
         run: |
           set -o pipefail
-          EXTRA=""
-          case "${{ github.event.inputs.variant }}" in
-            debug)
-              TASK="TMessagesProj:assembleDebug" ;;
-            fast)
-              # Iteration build: same code, but R8 is the single most expensive
-              # task (measured at 8.5 of the 22 minutes). Turning minification
-              # off makes the APK bigger and slightly slower to start, which is
-              # fine while we are testing changes.
-              # android.enableR8 was removed from AGP; disable minification on
-              # the release build type itself instead.
-              TASK="TMessagesProj:assembleRelease"
-              EXTRA="-PmeeroSkipMinify=true" ;;
-            *)
-              TASK="TMessagesProj:assembleRelease" ;;
-          esac
-          echo "Task: $TASK / ABI: $NATIVE_TARGET / extra: $EXTRA"
-          ./gradlew $TASK $EXTRA --stacktrace 2>&1 | tee build.log
+          # One build, identical to upstream's release configuration.
+          # -Pandroid.enableArtProfiles=false drops compileReleaseArtProfile,
+          # measured at 155s and only a startup-time optimisation.
+          TASK="TMessagesProj:assembleRelease"
+          echo "Task: $TASK / ABI: $NATIVE_TARGET"
+          ./gradlew $TASK \
+            -Pandroid.enableArtProfiles=false \
+            --stacktrace 2>&1 | tee build.log
 
       - name: Collect APKs
         if: success()
