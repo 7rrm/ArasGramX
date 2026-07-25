@@ -2402,7 +2402,25 @@ public class AndroidUtilities {
         return result;
     }
 
+    public static void clearTypefaceCache() {
+        tw.nekomimi.nekogram.MeeroFonts.clearCache();
+        typefaceCache.clear();
+        mediumTypeface = null;
+    }
+
     public static Typeface getTypeface(String assetPath) {
+        // MeeroX: every text view resolves its font through this method, so a
+        // face chosen here replaces the stock one across the whole app. The
+        // weight/slant Telegram asked for is inferred from the asset name.
+        // rmono is left alone so code blocks stay monospaced.
+        if (assetPath == null || !assetPath.contains("rmono")) {
+            Typeface meero = tw.nekomimi.nekogram.MeeroFonts.appTypeface(
+                    assetPath != null && (assetPath.contains("medium") || assetPath.contains("bold")),
+                    assetPath != null && assetPath.contains("italic"));
+            if (meero != null) {
+                return meero;
+            }
+        }
         return typefaceCache.computeIfAbsent(assetPath, path -> {
             try {
                 if (NekoConfig.typeface.Bool()) {

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="MeeroVersion">Version</string>
+    <string name="MeeroDeveloper">Developer</string>
+    <string name="MeeroChannel1">Channel 1</string>
+    <string name="MeeroChannel2">Channel 2</string>
+    <string name="MeeroPrivacyTitle">Privacy Policy</string>
+    <string name="MeeroPrivacyAccept">Accept and continue</string>
+    <string name="MeeroPrivacyBody">MeeroX is an unofficial Telegram client.\n\n• MeeroX does not collect, store or transmit your personal data to any third party.\n• Your messages travel only between your device and Telegram\'s servers, exactly as with the official app.\n• Settings, fonts and preferences are stored locally on your device.\n• The source code is open and can be reviewed at any time.\n\nBy continuing you agree to use MeeroX at your own responsibility, and to respect Telegram\'s Terms of Service.</string>
+    <string name="MeeroFontSection">Fonts</string>
+    <string name="MeeroFontAdd">Add a font from your device</string>
+    <string name="MeeroFontPick">Select a .ttf or .otf font</string>
+    <string name="MeeroFontBadFormat">That file could not be loaded as a font. Pick a valid .ttf or .otf file.</string>
+    <string name="MeeroFontDeleteConfirm">Delete this font?</string>
+</resources>

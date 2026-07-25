@@ -689,4 +689,16 @@
     <string name="DeepLTranslateKeyNotice">أدخل مفتاح DeepL، اتركه فارغاً لاستخدام المفاتيح المدمجة.</string>
     <string name="DefaultScheduleDelay">التأخير الافتراضي</string>
     <string name="ExportAyuDB">تصدير قاعدة البيانات</string>
+    <string name="MeeroVersion">الإصدار</string>
+    <string name="MeeroDeveloper">المطوّر</string>
+    <string name="MeeroChannel1">القناة الأولى</string>
+    <string name="MeeroChannel2">القناة الثانية</string>
+    <string name="MeeroPrivacyTitle">سياسة الخصوصية</string>
+    <string name="MeeroPrivacyAccept">موافق ومتابعة</string>
+    <string name="MeeroPrivacyBody">ميرو إكس تطبيق غير رسمي لتيليجرام.\n\n• لا يجمع ميرو إكس أي بيانات شخصية ولا يرسلها لأي طرف ثالث.\n• رسائلك تنتقل بين جهازك وخوادم تيليجرام فقط، تماماً كالتطبيق الرسمي.\n• الإعدادات والخطوط والتفضيلات تُحفظ محلياً على جهازك.\n• الكود المصدري مفتوح ويمكن مراجعته في أي وقت.\n\nبالمتابعة فإنك توافق على استخدام ميرو إكس على مسؤوليتك الخاصة، وعلى احترام شروط خدمة تيليجرام.</string>
+    <string name="MeeroFontSection">الخطوط</string>
+    <string name="MeeroFontAdd">إضافة خط من جهازك</string>
+    <string name="MeeroFontPick">اختر ملف خط .ttf أو .otf</string>
+    <string name="MeeroFontBadFormat">تعذّر تحميل هذا الملف كخط. اختر ملف .ttf أو .otf صالح.</string>
+    <string name="MeeroFontDeleteConfirm">حذف هذا الخط؟</string>
 </resources>

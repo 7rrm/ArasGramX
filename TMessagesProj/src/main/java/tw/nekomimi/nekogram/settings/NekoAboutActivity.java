@@ -3,37 +3,52 @@ package tw.nekomimi.nekogram.settings;
 import static org.telegram.messenger.LocaleController.getString;
 
 import android.content.Context;
+import android.text.TextUtils;
 import android.view.View;
+import android.view.Gravity;
+import android.widget.LinearLayout;
+import android.widget.TextView;
+import android.util.TypedValue;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import org.telegram.messenger.AndroidUtilities;
+import org.telegram.messenger.BuildConfig;
+import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.R;
 import org.telegram.messenger.browser.Browser;
+import org.telegram.ui.ActionBar.AlertDialog;
+import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.Cells.TextSettingsCell;
+import org.telegram.ui.Components.LayoutHelper;
 
-import tw.nekomimi.nekogram.DatacenterActivity;
-
+/**
+ * MeeroX "About" screen.
+ *
+ * Upstream listed the NagramX author's own channels, source repo and Crowdin
+ * page. Those are replaced with MeeroX's own links, and the rows that only
+ * make sense for the upstream project (translation platform, datacenter
+ * diagnostics) are dropped to keep the screen short.
+ */
 public class NekoAboutActivity extends BaseNekoSettingsActivity {
 
-    private int xChannelRow;
-    private int channelRow;
-    private int channelTipsRow;
-    private int sourceCodeRow;
-    private int translationRow;
-    private int datacenterStatusRow;
+    private int versionRow;
+    private int developerRow;
+    private int channel1Row;
+    private int channel2Row;
+    private int privacyRow;
 
     @Override
     protected void updateRows() {
         super.updateRows();
 
-        xChannelRow = addRow();
-        channelRow = addRow();
-        channelTipsRow = addRow();
-        sourceCodeRow = addRow();
-        translationRow = addRow();
-        datacenterStatusRow = addRow();
+        versionRow = addRow();
+        developerRow = addRow();
+        channel1Row = addRow();
+        channel2Row = addRow();
+        privacyRow = addRow();
     }
 
     @Override
@@ -41,20 +56,55 @@ public class NekoAboutActivity extends BaseNekoSettingsActivity {
         return getString(R.string.About);
     }
 
+    private String versionName() {
+        try {
+            return BuildConfig.BUILD_VERSION_STRING;
+        } catch (Throwable ignore) {
+            return "";
+        }
+    }
+
+    private void showPrivacyDialog() {
+        if (getParentActivity() == null) {
+            return;
+        }
+
+        LinearLayout content = new LinearLayout(getParentActivity());
+        content.setOrientation(LinearLayout.VERTICAL);
+
+        TextView body = new TextView(getParentActivity());
+        body.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 15);
+        body.setTextColor(Theme.getColor(Theme.key_dialogTextBlack));
+        body.setLineSpacing(AndroidUtilities.dp(3), 1f);
+        body.setText(getString(R.string.MeeroPrivacyBody));
+        body.setGravity(LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT);
+        content.addView(body, LayoutHelper.createLinear(
+                LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 24, 8, 24, 0));
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(getParentActivity());
+        builder.setTitle(getString(R.string.MeeroPrivacyTitle));
+        builder.setView(content);
+        builder.setPositiveButton(getString(R.string.MeeroPrivacyAccept), (d, w) -> {
+            org.telegram.messenger.MessagesController.getGlobalMainSettings()
+                    .edit().putBoolean("meerox_privacy_accepted", true).apply();
+        });
+        builder.setNegativeButton(getString(R.string.Cancel), null);
+        showDialog(builder.create());
+    }
+
     @Override
     protected void onItemClick(View view, int position, float x, float y) {
-        if (position == xChannelRow) {
-            MessagesController.getInstance(currentAccount).openByUserName("NagramX", NekoAboutActivity.this, 1);
-        } else if (position == channelRow) {
-            MessagesController.getInstance(currentAccount).openByUserName("nagram_channel", NekoAboutActivity.this, 1);
-        } else if (position == channelTipsRow) {
-            MessagesController.getInstance(currentAccount).openByUserName("NagramTips", NekoAboutActivity.this, 1);
-        } else if (position == translationRow) {
-            Browser.openUrl(getParentActivity(), "https://crowdin.com/project/NagramX");
-        } else if (position == sourceCodeRow) {
-            Browser.openUrl(getParentActivity(), "https://github.com/risin42/NagramX");
-        } else if (position == datacenterStatusRow) {
-            presentFragment(new DatacenterActivity(0));
+        if (position == developerRow) {
+            MessagesController.getInstance(currentAccount)
+                    .openByUserName("i55544", NekoAboutActivity.this, 1);
+        } else if (position == channel1Row) {
+            MessagesController.getInstance(currentAccount)
+                    .openByUserName("nadoremalf", NekoAboutActivity.this, 1);
+        } else if (position == channel2Row) {
+            MessagesController.getInstance(currentAccount)
+                    .openByUserName("TOOPENK", NekoAboutActivity.this, 1);
+        } else if (position == privacyRow) {
+            showPrivacyDialog();
         }
     }
 
@@ -73,20 +123,25 @@ public class NekoAboutActivity extends BaseNekoSettingsActivity {
         public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position, boolean partial) {
             if (holder.getItemViewType() == TYPE_SETTINGS) {
                 TextSettingsCell textCell = (TextSettingsCell) holder.itemView;
-                if (position == xChannelRow) {
-                    textCell.setTextAndValue(getString(R.string.XChannel), "@NagramX", true);
-                } else if (position == channelRow) {
-                    textCell.setTextAndValue(getString(R.string.OfficialChannel), "@nagram_channel", true);
-                } else if (position == channelTipsRow) {
-                    textCell.setTextAndValue(getString(R.string.TipsChannel), "@" + "NagramTips", true);
-                } else if (position == sourceCodeRow) {
-                    textCell.setTextAndValue(getString(R.string.SourceCode), "Github", true);
-                } else if (position == translationRow) {
-                    textCell.setTextAndValue(getString(R.string.TransSite), "Crowdin", true);
-                } else if (position == datacenterStatusRow) {
-                    textCell.setText(getString(R.string.DatacenterStatus), false);
+                if (position == versionRow) {
+                    textCell.setTextAndValue(getString(R.string.MeeroVersion), versionName(), true);
+                } else if (position == developerRow) {
+                    textCell.setTextAndValue(getString(R.string.MeeroDeveloper), "@i55544", true);
+                } else if (position == channel1Row) {
+                    textCell.setTextAndValue(getString(R.string.MeeroChannel1), "@nadoremalf", true);
+                } else if (position == channel2Row) {
+                    textCell.setTextAndValue(getString(R.string.MeeroChannel2), "@TOOPENK", true);
+                } else if (position == privacyRow) {
+                    textCell.setText(getString(R.string.MeeroPrivacyTitle), false);
                 }
             }
+        }
+
+        @Override
+        public boolean isEnabled(@NonNull RecyclerView.ViewHolder holder) {
+            int position = holder.getAdapterPosition();
+            // The version row is informational only.
+            return position != versionRow && super.isEnabled(holder);
         }
 
         @Override
