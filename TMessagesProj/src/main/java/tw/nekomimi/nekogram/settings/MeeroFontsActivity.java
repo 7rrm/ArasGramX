@@ -194,7 +194,7 @@ public class MeeroFontsActivity extends BaseNekoSettingsActivity {
                 boolean selected = o.id.equals(MeeroFonts.getSelected());
                 cell.setTextAndCheck(o.title, selected, position < fontsEndRow - 1);
                 Typeface tf = MeeroFonts.previewOf(o.id);
-                cell.getTextView().setTypeface(tf != null ? tf : Typeface.DEFAULT);
+                cell.setTypeface(tf != null ? tf : Typeface.DEFAULT);
             } else if (type == TYPE_SETTINGS) {
                 TextSettingsCell cell = (TextSettingsCell) holder.itemView;
                 cell.setText(getString(R.string.MeeroFontAdd), false);
