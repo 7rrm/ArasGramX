@@ -6,9 +6,10 @@ on:
       variant:
         description: 'Build variant'
         required: true
-        default: 'release'
+        default: 'fast'
         type: choice
         options:
+          - fast
           - release
           - debug
 
@@ -107,13 +108,22 @@ jobs:
       - name: Build
         run: |
           set -o pipefail
-          if [ "${{ github.event.inputs.variant }}" = "debug" ]; then
-            TASK="TMessagesProj:assembleDebug"
-          else
-            TASK="TMessagesProj:assembleRelease"
-          fi
-          echo "Task: $TASK / ABI: $NATIVE_TARGET"
-          ./gradlew $TASK --stacktrace 2>&1 | tee build.log
+          EXTRA=""
+          case "${{ github.event.inputs.variant }}" in
+            debug)
+              TASK="TMessagesProj:assembleDebug" ;;
+            fast)
+              # Iteration build: same code, but R8 is the single most expensive
+              # task (measured at 8.5 of the 22 minutes). Turning minification
+              # off makes the APK bigger and slightly slower to start, which is
+              # fine while we are testing changes.
+              TASK="TMessagesProj:assembleRelease"
+              EXTRA="-Pandroid.enableR8=false -Pandroid.enableR8.fullMode=false" ;;
+            *)
+              TASK="TMessagesProj:assembleRelease" ;;
+          esac
+          echo "Task: $TASK / ABI: $NATIVE_TARGET / extra: $EXTRA"
+          ./gradlew $TASK $EXTRA --stacktrace 2>&1 | tee build.log
 
       - name: Collect APKs
         if: success()
