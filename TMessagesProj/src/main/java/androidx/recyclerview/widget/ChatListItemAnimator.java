@@ -336,6 +336,15 @@ public class ChatListItemAnimator extends DefaultItemAnimator {
         return true;
     }
 
+    /** MeeroX: master switch for the iOS-style bubble spring. */
+    private static boolean meeroIosAnimEnabled() {
+        try {
+            return tw.nekomimi.nekogram.NekoConfig.meeroIosAnim.Bool();
+        } catch (Throwable e) {
+            return false;
+        }
+    }
+
     public void animateAddImpl(final RecyclerView.ViewHolder holder, int addedItemsHeight) {
         final View view = holder.itemView;
         final ViewPropertyAnimator animation = view.animate();
@@ -363,6 +372,42 @@ public class ChatListItemAnimator extends DefaultItemAnimator {
                 }
                 activity.getChatActivityEnterView().startMessageTransition();
             }
+        }
+        // MeeroX: iOS gives a new bubble a short spring - it starts slightly
+        // small and settles to full size, growing from the corner it is
+        // anchored to (right for your messages, left for theirs). Applied only
+        // to message bubbles, and skipped when a dedicated enter transition
+        // (voice / text) is already running so the two do not fight.
+        final boolean meeroPop = meeroIosAnimEnabled()
+                && chatMessageCell != null
+                && !chatMessageCell.getMessageObject().isVoice()
+                && SharedConfig.getDevicePerformanceClass() != SharedConfig.PERFORMANCE_CLASS_LOW;
+        if (meeroPop) {
+            final ChatMessageCell mc = chatMessageCell;
+            final boolean out = mc.getMessageObject().isOutOwner();
+            final int bl = mc.getBackgroundDrawableLeft();
+            final int br = mc.getBackgroundDrawableRight();
+            final int bb = mc.getPaddingTop() + mc.getBackgroundDrawableBottom();
+            mc.setPivotX(out ? br : bl);
+            mc.setPivotY(bb);
+            mc.setScaleX(0.86f);
+            mc.setScaleY(0.86f);
+            final android.animation.ValueAnimator pop = android.animation.ValueAnimator.ofFloat(0.86f, 1f);
+            pop.setDuration(340);
+            pop.setInterpolator(new android.view.animation.OvershootInterpolator(1.15f));
+            pop.addUpdateListener(a -> {
+                final float sc = (float) a.getAnimatedValue();
+                mc.setScaleX(sc);
+                mc.setScaleY(sc);
+            });
+            pop.addListener(new AnimatorListenerAdapter() {
+                @Override
+                public void onAnimationEnd(Animator animation2) {
+                    mc.setScaleX(1f);
+                    mc.setScaleY(1f);
+                }
+            });
+            pop.start();
         }
         animation.translationY(0).setDuration(getMoveDuration())
                 .setInterpolator(translationInterpolator)
