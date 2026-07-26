@@ -70,6 +70,12 @@ public final class MainTabsHelper {
     }
 
     public static int getTabsViewWidth() {
+        // MeeroX: the reference bar runs nearly the full width of the screen.
+        // Five fixed 80dp tabs overflow a narrow phone, so fall back to
+        // MATCH_PARENT and let the tabs share the space evenly.
+        if (isMeeroSearchTabEnabled()) {
+            return -1; // LayoutHelper.MATCH_PARENT
+        }
         return TAB_WIDTH * getVisibleTabsCount() + (getMainTabsMargin() + TAB_PADDING) * 2;
     }
 }
