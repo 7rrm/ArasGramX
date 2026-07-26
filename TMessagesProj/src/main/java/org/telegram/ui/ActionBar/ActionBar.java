@@ -2536,8 +2536,30 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
     }
 
     private boolean isCentered() {
+        // MeeroX: the iOS dialogs header centres its title. The fork already
+        // supports a centred title, so the MeeroX switch just turns that on
+        // instead of touching this layout code.
+        if (meeroCenterTitle()) {
+            return true;
+        }
         return NaConfig.INSTANCE.getCenterActionBarTitle().Bool() && NaConfig.INSTANCE.getCenterActionBarTitleType().Int() != 3;
     }
+
+    /** MeeroX: centre titles when the iOS dialogs style is on. */
+    private boolean meeroCenterTitle() {
+        try {
+            return meeroAllowCenteredTitle
+                    && tw.nekomimi.nekogram.NekoConfig.meeroDialogsStyle.Bool();
+        } catch (Throwable e) {
+            return false;
+        }
+    }
+
+    /**
+     * Set by DialogsActivity only. Other screens keep their own title
+     * alignment so nothing else in the app shifts.
+     */
+    public boolean meeroAllowCenteredTitle;
 
     // --- Spring Animation ---
     public void onDrawCrossfadeBackground(Canvas canvas) {
