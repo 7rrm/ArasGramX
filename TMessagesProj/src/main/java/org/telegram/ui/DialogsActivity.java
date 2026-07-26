@@ -514,6 +514,9 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
     private ActionBarMenuItem passcodeItem;
     /** MeeroX: always-visible folder edit button in the iOS dialogs header. */
     private ActionBarMenuItem meeroEditItem;
+    /** MeeroX: standalone compose button in the iOS dialogs header. */
+    private ActionBarMenuItem meeroComposeItem;
+    private static final int MEERO_ID_COMPOSE = 9711;
     private ActionBarMenuItem downloadsItem;
     private DownloadProgressIcon downloadProgressIcon;
     private boolean downloadsItemVisible;
@@ -3553,6 +3556,22 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                 showItemOptions();
                 return true;
             });
+
+            // MeeroX: iOS shows compose as its own header button rather than
+            // burying it in the overflow menu. It opens the same contact
+            // picker the floating compose button uses - no new behaviour, just
+            // a second way in that matches the reference layout.
+            if (meeroDialogsStyleEnabled()) {
+                meeroComposeItem = menu.addItem(MEERO_ID_COMPOSE, R.drawable.msg_message_s);
+                meeroComposeItem.setContentDescription(LocaleController.getString(R.string.NewMessageTitle));
+                meeroComposeItem.setOnClickListener(v -> {
+                    if (MessagesController.getInstance(currentAccount).isFrozen()) {
+                        AccountFrozenAlert.show(currentAccount);
+                        return;
+                    }
+                    openWriteContacts();
+                });
+            }
         }
 
         // na: Added ability to open Saved Messages on long click on search top button
@@ -10478,6 +10497,24 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
 
     private AnimatorSet doneItemAnimator;
 
+    /**
+     * MeeroX: opens the dialogs search. Used by the extra search tab on the
+     * bottom bar, which is a shortcut into the search that already exists
+     * rather than a new screen.
+     */
+    public void meeroOpenSearch() {
+        if (fragmentSearchField == null || fragmentSearchFieldWatcher == null) {
+            return;
+        }
+        fragmentSearchField.editText.requestFocus();
+        fragmentSearchFieldWatcher.toggleSearch(true);
+        AndroidUtilities.runOnUIThread(() -> {
+            if (fragmentSearchField != null) {
+                AndroidUtilities.showKeyboard(fragmentSearchField.editText);
+            }
+        }, 80);
+    }
+
     /** MeeroX: master switch for the iOS-style dialogs header. */
     public static boolean meeroDialogsStyleEnabled() {
         try {
@@ -14410,6 +14447,18 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
         checkUi_itemPasscodeVisibility();
         checkUi_itemSearchVisibility();
         checkUi_meeroEditVisibility();
+        checkUi_meeroComposeVisibility();
+    }
+
+    /** MeeroX: compose button follows the same visibility rules as the rest. */
+    private void checkUi_meeroComposeVisibility() {
+        if (meeroComposeItem == null) {
+            return;
+        }
+        final float factor1 = 1f - animatorSearchVisible.getFloatValue();
+        final float factor2 = 1f - getRightSlidingProgress();
+        final float factor3 = 1f - animatorDoneButtonVisible.getFloatValue();
+        FragmentFloatingButton.setAnimatedVisibility(meeroComposeItem, factor1 * factor2 * factor3);
     }
 
     /**
