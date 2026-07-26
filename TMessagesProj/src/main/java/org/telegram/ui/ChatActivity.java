@@ -1153,6 +1153,10 @@ public class ChatActivity extends BaseFragment implements
     public ActionBarPopupWindow scrimPopupWindow;
     private boolean scrimPopupWindowHideDimOnDismiss = true;
     private int scrimPopupX, scrimPopupY;
+    // MeeroX: how far the tapped bubble slides up so the menu fits below it.
+    private int meeroScrimLift;
+    private float meeroScrimLiftProgress;
+    private ValueAnimator meeroScrimLiftAnimator;
     public ActionBarMenuSubItem[] scrimPopupWindowItems;
     private ActionBarMenuSubItem menuDeleteItem;
     private final Runnable updateDeleteItemRunnable = new Runnable() {
@@ -11399,7 +11403,31 @@ public class ChatActivity extends BaseFragment implements
     }
 
     private void dimBehindView(View view, boolean enable) {
+        meeroAnimateScrimLift(enable);
         dimBehindView(view, enable && meeroMenuBlurEnabled(), enable);
+    }
+
+    /** Eases the tapped bubble up/down alongside the menu. */
+    private void meeroAnimateScrimLift(boolean enable) {
+        if (meeroScrimLiftAnimator != null) {
+            meeroScrimLiftAnimator.cancel();
+            meeroScrimLiftAnimator = null;
+        }
+        if (!enable) {
+            meeroScrimLiftProgress = 0f;
+            meeroScrimLift = 0;
+            if (contentView != null) contentView.invalidate();
+            return;
+        }
+        meeroScrimLiftProgress = 0f;
+        meeroScrimLiftAnimator = ValueAnimator.ofFloat(0f, 1f);
+        meeroScrimLiftAnimator.setDuration(260);
+        meeroScrimLiftAnimator.setInterpolator(CubicBezierInterpolator.EASE_OUT_QUINT);
+        meeroScrimLiftAnimator.addUpdateListener(a -> {
+            meeroScrimLiftProgress = (float) a.getAnimatedValue();
+            if (contentView != null) contentView.invalidate();
+        });
+        meeroScrimLiftAnimator.start();
     }
 
     private void dimBehindView(View view, boolean blur, boolean enable) {
@@ -18805,6 +18833,11 @@ public class ChatActivity extends BaseFragment implements
                             }
                             canvas.clipRect(viewClipLeft, viewClipTop, viewClipRight, viewClipBottom);
                             canvas.translate(chatListView.getLeft() + child.getX(), chatListView.getY() + child.getY());
+                            // MeeroX: slide the tapped message up so the menu
+                            // below it stays on screen, the way iOS does.
+                            if (child == scrimView && meeroScrimLift > 0) {
+                                canvas.translate(0, -meeroScrimLift * meeroScrimLiftProgress);
+                            }
                             if (cell != null && scrimGroup == null && cell.drawBackgroundInParent()) {
                                 canvas.save();
                                 canvas.translate(0, cell.getPaddingTop());
@@ -33761,17 +33794,35 @@ public class ChatActivity extends BaseFragment implements
             int maxY = totalHeight - height - dp(8);
             if (height < totalHeight) {
                 popupY = (int) (chatListView.getY() + v.getTop() + y);
-                // MeeroX: iOS places the menu *below* the message instead of
-                // starting it at the touch point, which covers the bubble.
-                // Anchor to the bubble's bottom edge and let the clamp below
-                // flip it above when there is not enough room.
+                // MeeroX: iOS keeps the message visible and puts the menu a
+                // constant distance under it. Measured off the reference
+                // screenshot: bubble bottom to menu top is ~10dp.
+                //
+                // When the menu will not fit below, iOS slides the message up
+                // rather than covering it, so we compute how far the bubble
+                // has to travel and hand that to meeroScrimLift; the scrim
+                // draw code translates the bubble by that amount.
                 if (meeroMenuBlurEnabled() && !isInsideContainer) {
-                    final int belowBubble = (int) (chatListView.getY() + v.getBottom() + dp(6));
-                    if (belowBubble + height <= totalHeight - dp(8)) {
-                        popupY = belowBubble;
+                    final int gap = dp(10);
+                    final int bubbleBottom = (int) (chatListView.getY() + v.getBottom());
+                    final int spaceBelow = totalHeight - dp(8) - (bubbleBottom + gap);
+                    if (height <= spaceBelow) {
+                        popupY = bubbleBottom + gap;
+                        meeroScrimLift = 0;
                     } else {
-                        popupY = (int) (chatListView.getY() + v.getTop() - height - dp(6));
+                        // Not enough room: lift the bubble so the menu still
+                        // sits gap below it and both stay on screen.
+                        final int wanted = totalHeight - dp(8) - height;
+                        meeroScrimLift = (bubbleBottom + gap) - wanted;
+                        final int minLift = (int) (chatListView.getY() + dp(24));
+                        if (bubbleBottom - meeroScrimLift - v.getHeight() < minLift) {
+                            meeroScrimLift = bubbleBottom - v.getHeight() - minLift;
+                        }
+                        if (meeroScrimLift < 0) meeroScrimLift = 0;
+                        popupY = bubbleBottom - meeroScrimLift + gap;
                     }
+                } else {
+                    meeroScrimLift = 0;
                 }
                 if (isInsideContainer) {
                     int[] location = new int[2];
