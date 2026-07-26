@@ -18679,7 +18679,10 @@ public class ChatActivity extends BaseFragment implements
             // corners, and cutting a hard rectangle around it left visible
             // square edges in the blur. Insetting slightly keeps the popup
             // copy overlapping the hole so no seam shows through.
-            final float r = dp(20);
+            // The captured region can be wider than the bubble when an avatar
+            // is included, so keep the rounding modest - a large radius on a
+            // wide rect would expose the baked-in copy at the corners.
+            final float r = dp(14);
             final float inset = dp(1);
             meeroGhostPath.reset();
             meeroGhostRectF.set(
