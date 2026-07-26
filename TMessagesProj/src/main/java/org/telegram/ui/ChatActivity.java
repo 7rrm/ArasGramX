@@ -33806,31 +33806,43 @@ public class ChatActivity extends BaseFragment implements
                 if (meeroMenuBlurEnabled() && !isInsideContainer) {
                     meeroPositioned = true;
                     final int gap = dp(10);
+
+                    // popupY positions the whole container, and when reactions
+                    // are shown that container starts with the reaction bar,
+                    // not the menu. Everything below has to be measured from
+                    // the menu's own top edge, which sits this far down.
+                    final int menuOffsetInContainer = (isReactionsAvailable && reactionsLayout != null)
+                            ? (int) (dp(52) + reactionsLayout.getTopOffset() + dp(30))
+                            : 0;
+
+                    final int bubbleTop = (int) (chatListView.getY() + v.getTop());
                     final int bubbleBottom = (int) (chatListView.getY() + v.getBottom());
-                    final int spaceBelow = totalHeight - dp(8) - (bubbleBottom + gap);
-                    if (height <= spaceBelow) {
-                        popupY = bubbleBottom + gap;
+
+                    // Where the menu should end up, and the container origin
+                    // that puts it there.
+                    int wantedMenuTop = bubbleBottom + gap;
+                    int containerY = wantedMenuTop - menuOffsetInContainer;
+
+                    // Lowest the container may sit before the menu runs off.
+                    final int lowestContainerY = totalHeight - dp(8) - height;
+
+                    if (containerY <= lowestContainerY) {
+                        popupY = containerY;
                         meeroScrimLift = 0;
                     } else {
-                        // Not enough room below: slide the message up so the
-                        // menu still sits `gap` under it. The menu is pinned to
-                        // the lowest position it can occupy, and the bubble
-                        // moves to sit `gap` above that.
-                        final int menuTop = totalHeight - dp(8) - height;
-                        int lift = (bubbleBottom + gap) - menuTop;
+                        // Pin the container at its lowest usable position and
+                        // lift the message so the gap is preserved.
+                        popupY = lowestContainerY;
+                        final int actualMenuTop = lowestContainerY + menuOffsetInContainer;
+                        int lift = bubbleBottom + gap - actualMenuTop;
 
-                        // Do not push the bubble past the reaction bar, which
-                        // needs room above it (bar height + its own spacing).
-                        final int topLimit = (int) (chatListView.getY() + dp(24)) + dp(56);
-                        final int bubbleTop = (int) (chatListView.getY() + v.getTop());
+                        // Keep the bubble clear of the reaction bar above it.
+                        final int topLimit = (int) chatListView.getY()
+                                + dp(24) + menuOffsetInContainer;
                         final int maxLift = bubbleTop - topLimit;
-                        if (lift > maxLift) {
-                            lift = Math.max(maxLift, 0);
-                        }
+                        if (lift > maxLift) lift = maxLift;
                         if (lift < 0) lift = 0;
-
                         meeroScrimLift = lift;
-                        popupY = bubbleBottom - lift + gap;
                     }
                 } else {
                     meeroScrimLift = 0;
