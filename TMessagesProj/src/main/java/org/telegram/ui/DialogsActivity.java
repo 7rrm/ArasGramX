@@ -3354,9 +3354,20 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
             // button toggles exactly the same folder-edit mode - long press on
             // a tab still works, nothing about the behaviour changes.
             if (meeroDialogsStyleEnabled()) {
-                meeroEditItem = new ActionBarMenuItem(context, null, getThemedColor(Theme.key_actionBarDefaultSelector), getThemedColor(Theme.key_actionBarDefaultIcon), true);
-                meeroEditItem.setText(LocaleController.getString(R.string.Edit));
-                actionBar.addView(meeroEditItem, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.TOP | Gravity.LEFT, 10, 0, 0, 0));
+                meeroEditItem = new ActionBarMenuItem(context, null, getThemedColor(Theme.key_actionBarDefaultSelector), getThemedColor(Theme.key_actionBarDefaultIcon), false);
+                // An icon, not a word - it has to read as a sibling of the
+                // other header buttons rather than a label.
+                meeroEditItem.setIcon(R.drawable.msg_edit);
+                meeroEditItem.setContentDescription(LocaleController.getString(R.string.Edit));
+                // ActionBar lays its children out from its own top edge, and
+                // that edge sits behind the status bar. Gravity.TOP therefore
+                // pushed the button up over the clock and battery. Centre it
+                // in the bar proper and offset by the status bar instead.
+                final FrameLayout.LayoutParams meeroEditLp = LayoutHelper.createFrame(
+                        54, 54, Gravity.TOP | Gravity.LEFT, 4, 0, 0, 0);
+                meeroEditLp.topMargin = (AndroidUtilities.statusBarHeight
+                        + (ActionBar.getCurrentActionBarHeight() - dp(54)) / 2);
+                actionBar.addView(meeroEditItem, meeroEditLp);
                 meeroEditItem.setOnClickListener(v -> {
                     if (filterTabsView == null) {
                         return;
