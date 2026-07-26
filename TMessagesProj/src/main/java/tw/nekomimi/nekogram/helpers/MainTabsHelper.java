@@ -55,7 +55,21 @@ public final class MainTabsHelper {
         return isContactsTabHidden() ? 3 : MainTabsActivity.TABS_COUNT;
     }
 
+    /** MeeroX: the iOS bar carries an extra search entry. */
+    public static boolean isMeeroSearchTabEnabled() {
+        try {
+            return tw.nekomimi.nekogram.NekoConfig.meeroDialogsStyle.Bool();
+        } catch (Throwable e) {
+            return false;
+        }
+    }
+
+    /** Visible buttons on the bar - pages plus the search shortcut. */
+    public static int getVisibleTabsCount() {
+        return getFragmentsCount() + (isMeeroSearchTabEnabled() ? 1 : 0);
+    }
+
     public static int getTabsViewWidth() {
-        return TAB_WIDTH * getFragmentsCount() + (getMainTabsMargin() + TAB_PADDING) * 2;
+        return TAB_WIDTH * getVisibleTabsCount() + (getMainTabsMargin() + TAB_PADDING) * 2;
     }
 }
