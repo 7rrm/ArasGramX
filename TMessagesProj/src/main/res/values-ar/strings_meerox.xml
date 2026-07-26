@@ -707,4 +707,8 @@
     <string name="MeeroIosBubblesInfo">شكل كبسولة مع ذيل واضح. أوقفه لاستعادة فقاعات تيليجرام الأصلية.</string>
     <string name="meeroTapMenu">فتح القائمة بنقرة واحدة</string>
     <string name="MeeroTapMenuInfo">انقر على فقاعة الرسالة لفتح قائمتها. الضغط المطوّل يبقى يعمل.</string>
+    <string name="meeroIosAnim">أنميشن الرسائل بنمط iOS</string>
+    <string name="MeeroIosAnimInfo">الرسائل الجديدة تنبثق من الزاوية بحركة نابضة، مثل الآيفون.</string>
+    <string name="meeroCards">بطاقات إعدادات مدوّرة</string>
+    <string name="MeeroCardsInfo">تجميع صفوف الإعدادات ببطاقات مدوّرة بأسلوب iOS 26.</string>
 </resources>
