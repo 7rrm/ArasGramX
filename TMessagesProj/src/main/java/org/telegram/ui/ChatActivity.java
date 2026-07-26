@@ -33790,6 +33790,7 @@ public class ChatActivity extends BaseFragment implements
                 totalHeight += keyboardHeight;
             }
             int popupY;
+            boolean meeroPositioned = false;
             int minY = (int) (chatListView.getY() + dp(24));
             int maxY = totalHeight - height - dp(8);
             if (height < totalHeight) {
@@ -33803,6 +33804,7 @@ public class ChatActivity extends BaseFragment implements
                 // has to travel and hand that to meeroScrimLift; the scrim
                 // draw code translates the bubble by that amount.
                 if (meeroMenuBlurEnabled() && !isInsideContainer) {
+                    meeroPositioned = true;
                     final int gap = dp(10);
                     final int bubbleBottom = (int) (chatListView.getY() + v.getBottom());
                     final int spaceBelow = totalHeight - dp(8) - (bubbleBottom + gap);
@@ -33810,16 +33812,25 @@ public class ChatActivity extends BaseFragment implements
                         popupY = bubbleBottom + gap;
                         meeroScrimLift = 0;
                     } else {
-                        // Not enough room: lift the bubble so the menu still
-                        // sits gap below it and both stay on screen.
-                        final int wanted = totalHeight - dp(8) - height;
-                        meeroScrimLift = (bubbleBottom + gap) - wanted;
-                        final int minLift = (int) (chatListView.getY() + dp(24));
-                        if (bubbleBottom - meeroScrimLift - v.getHeight() < minLift) {
-                            meeroScrimLift = bubbleBottom - v.getHeight() - minLift;
+                        // Not enough room below: slide the message up so the
+                        // menu still sits `gap` under it. The menu is pinned to
+                        // the lowest position it can occupy, and the bubble
+                        // moves to sit `gap` above that.
+                        final int menuTop = totalHeight - dp(8) - height;
+                        int lift = (bubbleBottom + gap) - menuTop;
+
+                        // Do not push the bubble past the reaction bar, which
+                        // needs room above it (bar height + its own spacing).
+                        final int topLimit = (int) (chatListView.getY() + dp(24)) + dp(56);
+                        final int bubbleTop = (int) (chatListView.getY() + v.getTop());
+                        final int maxLift = bubbleTop - topLimit;
+                        if (lift > maxLift) {
+                            lift = Math.max(maxLift, 0);
                         }
-                        if (meeroScrimLift < 0) meeroScrimLift = 0;
-                        popupY = bubbleBottom - meeroScrimLift + gap;
+                        if (lift < 0) lift = 0;
+
+                        meeroScrimLift = lift;
+                        popupY = bubbleBottom - lift + gap;
                     }
                 } else {
                     meeroScrimLift = 0;
@@ -33832,10 +33843,15 @@ public class ChatActivity extends BaseFragment implements
                     chatListView.getLocationInWindow(location);
                     minY = dp(24);
                     maxY = Math.min(location[1] + chatListView.getMeasuredHeight(), AndroidUtilities.displaySize.y) - dp(8) - height;
-                } else if (height - backgroundPaddings.top - backgroundPaddings.bottom > AndroidUtilities.dp(240)) {
+                } else if (!meeroPositioned && height - backgroundPaddings.top - backgroundPaddings.bottom > AndroidUtilities.dp(240)) {
+                    // Upstream pulls a tall menu upwards so it overlaps the
+                    // message. That is exactly what we are avoiding, so it is
+                    // skipped once we have placed the menu ourselves.
                     popupY += AndroidUtilities.dp(240) - height;
                 }
-                popupY = Utilities.clamp(popupY, maxY, minY);
+                if (!meeroPositioned) {
+                    popupY = Utilities.clamp(popupY, maxY, minY);
+                }
             } else {
                 popupY = inBubbleMode ? 0 : AndroidUtilities.statusBarHeight;
             }
