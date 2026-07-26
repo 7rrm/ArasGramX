@@ -91,37 +91,57 @@ public class MeeroCards {
             final float r = dp(RADIUS_DP);
             final android.graphics.Rect b = getBounds();
 
-            // Overdraw past the flat edges so consecutive rows join seamlessly.
+            // Bleed a hair past the shared edges. Without this the rounding
+            // left a sliver of page colour between rows, which read as a dark
+            // line running through the card.
+            final float bleed = 1f;
             float top = b.top;
             float bottom = b.bottom;
             if (position == POS_MIDDLE || position == POS_LAST) {
-                top -= r;
+                top -= bleed;
             }
             if (position == POS_MIDDLE || position == POS_FIRST) {
-                bottom += r;
+                bottom += bleed;
             }
             rect.set(b.left + m, top, b.right - m, bottom);
 
+            // Square off the joins so consecutive rows read as one card. Only
+            // the outer corners of the group stay rounded.
             java.util.Arrays.fill(radii, r);
+            if (position == POS_MIDDLE) {
+                java.util.Arrays.fill(radii, 0f);
+            } else if (position == POS_FIRST) {
+                radii[4] = radii[5] = radii[6] = radii[7] = 0f; // bottom corners
+            } else if (position == POS_LAST) {
+                radii[0] = radii[1] = radii[2] = radii[3] = 0f; // top corners
+            }
             canvas.save();
-            canvas.clipRect(b.left, b.top, b.right, b.bottom);
             path.reset();
             path.addRoundRect(rect, radii, android.graphics.Path.Direction.CW);
             canvas.drawPath(path, fill);
 
-            // A hairline separator between rows inside the same card.
+            // A hairline separator between rows inside the same card, inset on
+            // both sides so it never touches the rounded edge. Drawn from the
+            // card colour rather than key_divider, which is tuned for the page
+            // background and came out almost black on top of the card.
             if (position == POS_FIRST || position == POS_MIDDLE) {
-                hairline.setColor(Theme.getColor(Theme.key_divider, rp));
-                hairline.setAlpha(60);
-                final float inset = dp(SIDE_MARGIN_DP + 16);
-                canvas.drawLine(b.left + inset, b.bottom - hairline.getStrokeWidth() / 2f,
-                        b.right - dp(SIDE_MARGIN_DP), b.bottom - hairline.getStrokeWidth() / 2f, hairline);
+                hairline.setColor(dark ? lighten(fill.getColor(), 0.10f) : darken(fill.getColor(), 0.08f));
+                final float inset = dp(SIDE_MARGIN_DP + 14);
+                final float y = b.bottom - hairline.getStrokeWidth();
+                canvas.drawLine(b.left + inset, y, b.right - inset, y, hairline);
             }
             canvas.restore();
         }
 
         private static boolean isDark(int color) {
             return (0.299 * Color.red(color) + 0.587 * Color.green(color) + 0.114 * Color.blue(color)) < 128;
+        }
+
+        private static int darken(int color, float amount) {
+            final int r = (int) Math.max(0, Color.red(color) - 255 * amount);
+            final int g = (int) Math.max(0, Color.green(color) - 255 * amount);
+            final int b = (int) Math.max(0, Color.blue(color) - 255 * amount);
+            return Color.argb(Color.alpha(color), r, g, b);
         }
 
         private static int lighten(int color, float amount) {
