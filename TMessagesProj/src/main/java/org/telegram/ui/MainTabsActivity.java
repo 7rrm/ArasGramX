@@ -106,8 +106,11 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
     private static final int INDEX_SETTINGS = 2;
     private static final int INDEX_CALLS = 3;
     private static final int INDEX_PROFILE = 4;
-    /** MeeroX: extra search tab, shown at the end of the bar. */
+    /** MeeroX: extra search tab, shown in its own pill beside the bar. */
     private static final int INDEX_MEERO_SEARCH = 5;
+    /** MeeroX: the standalone pill that holds the search tab. */
+    private MainTabsLayout meeroSearchTabSeparate;
+    private BlurredBackgroundDrawable meeroSearchTabBackground;
 
     /** MeeroX: master switch for the iOS-style dialogs chrome. */
     private static boolean meeroDialogsStyleEnabled() {
@@ -332,7 +335,11 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
         // spans the screen and the tabs share it; otherwise keep upstream's
         // fixed cap exactly as it was.
         if (meeroDialogsStyleEnabled()) {
-            tabsView.setMaxWidth(AndroidUtilities.displaySize.x - dp(DialogsActivity.MAIN_TABS_MARGIN * 2));
+            // The bar holds the four pages; the search pill is laid out beside
+            // it and takes its own width.
+            tabsView.setMaxWidth(AndroidUtilities.displaySize.x
+                    - dp(MainTabsHelper.getMainTabsHeight() + MainTabsHelper.getMainTabsMargin() * 2)
+                    - dp(DialogsActivity.MAIN_TABS_MARGIN * 2 + 6));
         } else {
             tabsView.setMaxWidth(dp(328 + DialogsActivity.MAIN_TABS_MARGIN * 2));
         }
@@ -372,8 +379,8 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
             final int tabIndex = index;
             final int position = indexToPosition(index);
             if (index == INDEX_MEERO_SEARCH) {
-                // MeeroX: this tab has no page of its own - it jumps to the
-                // chats page and opens the search that already lives there.
+                // MeeroX: search lives in its own pill beside the bar, so it
+                // is wired up here but added to the wrapper, not to tabsView.
                 tabs[index].setOnClickListener(v -> {
                     final int chats = MainTabsHelper.getChatsPosition();
                     if (viewPager.getCurrentPosition() != chats) {
@@ -387,8 +394,12 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
                         }
                     }, 120);
                 });
-                tabsView.addView(tabs[index]);
-                tabsView.setViewVisible(view, true, false);
+                final MainTabsLayout pill = new MainTabsLayout(context, resourceProvider);
+                pill.setClipChildren(false);
+                pill.setPadding(paddingH, paddingV, paddingH, paddingV);
+                pill.addView(tabs[index]);
+                pill.setViewVisible(view, true, false);
+                meeroSearchTabSeparate = pill;
                 continue;
             }
             tabs[index].setOnLongClickListener(v -> processLongClick(v, tabIndex));
@@ -433,6 +444,17 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
         tabsViewBackground.setPadding(dp(mainTabsMargin - 0.334f));
         tabsView.setBackground(tabsViewBackground);
 
+        // MeeroX: give the standalone search pill the same glass treatment so
+        // it reads as a sibling of the bar rather than a stray button.
+        if (meeroSearchTabSeparate != null) {
+            final BlurredBackgroundDrawable pillBg = iBlur3FactoryGlass.create(
+                    meeroSearchTabSeparate, BlurredBackgroundProviderImpl.mainTabs(resourceProvider));
+            pillBg.setRadius(dp(MainTabsHelper.getMainTabsHeight() / 2f));
+            pillBg.setPadding(dp(mainTabsMargin - 0.334f));
+            meeroSearchTabSeparate.setBackground(pillBg);
+            meeroSearchTabBackground = pillBg;
+        }
+
         BlurredBackgroundDrawableViewFactory iBlur3FactoryFade = new BlurredBackgroundDrawableViewFactory(iBlur3SourceColor);
         iBlur3FactoryFade.setSourceRootView(viewPositionWatcher, contentView);
 
@@ -445,7 +467,29 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
 
         tabsViewWrapper = new FrameLayout(context);
         tabsViewWrapper.setOnClickListener(v -> {});
-        tabsViewWrapper.addView(tabsView, LayoutHelper.createFrame(tabsViewWidth, MainTabsHelper.getMainTabsHeightWithMargins(), Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL));
+        if (meeroSearchTabSeparate != null) {
+            // MeeroX: the reference puts search in its own pill next to the
+            // bar rather than as another segment inside it. Lay the two out
+            // side by side so the gap between them is visible.
+            final int barH = MainTabsHelper.getMainTabsHeightWithMargins();
+            final int pillW = dp(MainTabsHelper.getMainTabsHeight() + MainTabsHelper.getMainTabsMargin() * 2);
+            final int gap = dp(6);
+            final FrameLayout.LayoutParams barLp = LayoutHelper.createFrame(
+                    LayoutHelper.MATCH_PARENT, barH, Gravity.BOTTOM | Gravity.LEFT);
+            final FrameLayout.LayoutParams pillLp = LayoutHelper.createFrame(
+                    pillW, barH, Gravity.BOTTOM | Gravity.RIGHT);
+            if (LocaleController.isRTL) {
+                barLp.gravity = Gravity.BOTTOM | Gravity.RIGHT;
+                barLp.leftMargin = pillW + gap;
+                pillLp.gravity = Gravity.BOTTOM | Gravity.LEFT;
+            } else {
+                barLp.rightMargin = pillW + gap;
+            }
+            tabsViewWrapper.addView(tabsView, barLp);
+            tabsViewWrapper.addView(meeroSearchTabSeparate, pillLp);
+        } else {
+            tabsViewWrapper.addView(tabsView, LayoutHelper.createFrame(tabsViewWidth, MainTabsHelper.getMainTabsHeightWithMargins(), Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL));
+        }
         tabsViewWrapper.setClipToPadding(false);
         contentView.addView(tabsViewWrapper, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, Gravity.BOTTOM));
 
