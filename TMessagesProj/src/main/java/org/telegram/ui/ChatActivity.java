@@ -18630,6 +18630,8 @@ public class ChatActivity extends BaseFragment implements
         }
 
         private final Rect meeroGhostRect = new Rect();
+        private final RectF meeroGhostRectF = new RectF();
+        private final Path meeroGhostPath = new Path();
 
         /**
          * MeeroX: hides the copy of the message that is baked into the blur
@@ -18673,10 +18675,23 @@ public class ChatActivity extends BaseFragment implements
                 return -1;
             }
             final int save = canvas.save();
+            // Clip a rounded shape, not a rectangle: the bubble has 20dp
+            // corners, and cutting a hard rectangle around it left visible
+            // square edges in the blur. Insetting slightly keeps the popup
+            // copy overlapping the hole so no seam shows through.
+            final float r = dp(20);
+            final float inset = dp(1);
+            meeroGhostPath.reset();
+            meeroGhostRectF.set(
+                    meeroGhostRect.left + inset,
+                    meeroGhostRect.top + inset,
+                    meeroGhostRect.right - inset,
+                    meeroGhostRect.bottom - inset);
+            meeroGhostPath.addRoundRect(meeroGhostRectF, r, r, Path.Direction.CW);
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                canvas.clipOutRect(meeroGhostRect);
+                canvas.clipOutPath(meeroGhostPath);
             } else {
-                canvas.clipRect(meeroGhostRect, android.graphics.Region.Op.DIFFERENCE);
+                canvas.clipPath(meeroGhostPath, android.graphics.Region.Op.DIFFERENCE);
             }
             return save;
         }
