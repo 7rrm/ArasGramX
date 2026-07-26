@@ -338,6 +338,48 @@ public abstract class BaseNekoSettingsActivity extends BaseFragment {
         public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
             var payload = holder.getPayload();
             onBindViewHolder(holder, position, PARTIAL.equals(payload));
+            meeroApplyCard(holder, position);
+        }
+
+        /**
+         * MeeroX: turns the flat row list into iOS 26 grouped cards.
+         *
+         * The card shape depends on the neighbours, which are only known once
+         * the rows exist - so it is decided here rather than in
+         * onCreateViewHolder. Rows that are separators or dividers break a
+         * group; everything between two breaks becomes one card.
+         */
+        private void meeroApplyCard(@NonNull RecyclerView.ViewHolder holder, int position) {
+            if (!tw.nekomimi.nekogram.MeeroCards.enabled()) {
+                return;
+            }
+            final int type = holder.getItemViewType();
+            if (!meeroIsCardRow(type)) {
+                return;
+            }
+            final boolean prevIsCard = position > 0 && meeroIsCardRow(getItemViewType(position - 1));
+            final boolean nextIsCard = position + 1 < getItemCount() && meeroIsCardRow(getItemViewType(position + 1));
+            final int pos;
+            if (prevIsCard && nextIsCard) {
+                pos = tw.nekomimi.nekogram.MeeroCards.POS_MIDDLE;
+            } else if (prevIsCard) {
+                pos = tw.nekomimi.nekogram.MeeroCards.POS_LAST;
+            } else if (nextIsCard) {
+                pos = tw.nekomimi.nekogram.MeeroCards.POS_FIRST;
+            } else {
+                pos = tw.nekomimi.nekogram.MeeroCards.POS_SINGLE;
+            }
+            final View v = holder.itemView;
+            v.setBackground(new tw.nekomimi.nekogram.MeeroCards.CardDrawable(pos, resourcesProvider));
+        }
+
+        /** Row types that live inside a card. Shadows and dividers do not. */
+        private boolean meeroIsCardRow(int type) {
+            return type == TYPE_SETTINGS || type == TYPE_CHECK || type == TYPE_HEADER
+                    || type == TYPE_NOTIFICATION_CHECK || type == TYPE_DETAIL_SETTINGS
+                    || type == TYPE_TEXT || type == TYPE_CHECKBOX || type == TYPE_RADIO
+                    || type == TYPE_ACCOUNT || type == TYPE_CREATION
+                    || type == TYPE_CHECK2 || type == TYPE_CHECKBOX2;
         }
 
         @NonNull
