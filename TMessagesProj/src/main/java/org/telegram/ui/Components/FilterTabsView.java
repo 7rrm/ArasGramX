@@ -357,6 +357,13 @@ public class FilterTabsView extends FrameLayout {
                 animateToOtherKey = aUnactiveTextColorKey;
                 unreadKey = Theme.key_chats_tabUnreadActiveBackground;
                 unreadOtherKey = Theme.key_chats_tabUnreadUnactiveBackground;
+                // MeeroX: with the capsule filled, the label sits on the
+                // accent colour and needs to contrast against it rather than
+                // against the page background.
+                if (meeroDialogsStyleEnabled()) {
+                    key = Theme.key_featuredStickers_buttonText;
+                    animateToKey = -1;
+                }
             } else {
                 key = unactiveTextColorKey;
                 animateToKey = aUnactiveTextColorKey;
@@ -1637,7 +1644,10 @@ public class FilterTabsView extends FrameLayout {
             final int y = height / 2 - dp(14);
             float internalPadding = FolderIconHelper.getTabInternalPadding();
             selectorDrawable.setBounds((int) (indicatorX - dp(internalPadding) - add), y, (int) (indicatorX + indicatorWidth + dp(internalPadding) + add), y + dp(28));
-            selectorDrawable.setAlpha(31);
+            // MeeroX: upstream draws the selected-tab capsule at 12% opacity,
+            // which reads as no background at all. iOS fills it, so the active
+            // folder is unmistakable. Colour still comes from the theme.
+            selectorDrawable.setAlpha(meeroDialogsStyleEnabled() ? 255 : 31);
             selectorDrawable.draw(canvas);
             canvas.restore();
         }
@@ -1817,6 +1827,15 @@ public class FilterTabsView extends FrameLayout {
 
     public boolean isEditing() {
         return isEditing;
+    }
+
+    /** MeeroX: master switch for the iOS-style dialogs header. */
+    public static boolean meeroDialogsStyleEnabled() {
+        try {
+            return tw.nekomimi.nekogram.NekoConfig.meeroDialogsStyle.Bool();
+        } catch (Throwable e) {
+            return false;
+        }
     }
 
     public void setIsEditing(boolean value) {
