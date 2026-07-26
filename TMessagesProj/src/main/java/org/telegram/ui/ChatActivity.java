@@ -18866,7 +18866,18 @@ public class ChatActivity extends BaseFragment implements
                                 canvas.translate(0, -meeroScrimLift * t);
                                 if (meeroScrimScale < 1f) {
                                     final float sc = 1f + (meeroScrimScale - 1f) * t;
-                                    canvas.scale(sc, sc, child.getWidth() / 2f, child.getHeight() / 2f);
+                                    float px = child.getWidth() / 2f;
+                                    float py = child.getHeight() / 2f;
+                                    if (child instanceof ChatMessageCell) {
+                                        final ChatMessageCell mc = (ChatMessageCell) child;
+                                        final int pad = mc.getPaddingTop();
+                                        final int bt = pad + mc.getBackgroundDrawableTop();
+                                        final int bb = pad + mc.getBackgroundDrawableBottom();
+                                        if (bb > bt) {
+                                            py = (bt + bb) / 2f;
+                                        }
+                                    }
+                                    canvas.scale(sc, sc, px, py);
                                 }
                             }
                             if (cell != null && scrimGroup == null && cell.drawBackgroundInParent()) {
@@ -33845,9 +33856,24 @@ public class ChatActivity extends BaseFragment implements
                             ? (int) (dp(52) + reactionsLayout.getTopOffset() + dp(30))
                             : 0;
 
-                    final int bubbleTop = (int) (chatListView.getY() + v.getTop());
-                    final int bubbleBottom = (int) (chatListView.getY() + v.getBottom());
-                    final int bubbleH = v.getBottom() - v.getTop();
+                    // v is the whole list row, which is taller and wider than
+                    // the bubble itself. Measure the bubble so the gap and the
+                    // scale are computed against what the user actually sees.
+                    int bubbleLocalTop = 0;
+                    int bubbleLocalBottom = v.getHeight();
+                    if (v instanceof ChatMessageCell) {
+                        final ChatMessageCell mc = (ChatMessageCell) v;
+                        final int pad = mc.getPaddingTop();
+                        final int bt = pad + mc.getBackgroundDrawableTop();
+                        final int bb = pad + mc.getBackgroundDrawableBottom();
+                        if (bb > bt) {
+                            bubbleLocalTop = bt;
+                            bubbleLocalBottom = bb;
+                        }
+                    }
+                    final int bubbleTop = (int) (chatListView.getY() + v.getTop() + bubbleLocalTop);
+                    final int bubbleBottom = (int) (chatListView.getY() + v.getTop() + bubbleLocalBottom);
+                    final int bubbleH = bubbleLocalBottom - bubbleLocalTop;
 
                     // Everything has to fit between the top of the list and the
                     // bottom of the screen:
