@@ -22,4 +22,6 @@
     <string name="MeeroIosAnimInfo">New messages spring into place from the corner, the way iOS does.</string>
     <string name="meeroCards">Rounded settings cards</string>
     <string name="MeeroCardsInfo">Group settings rows into inset rounded cards, iOS 26 style.</string>
+    <string name="meeroDialogsStyle">iOS chats header</string>
+    <string name="MeeroDialogsStyleInfo">Centred title, filled folder tabs, pill search field and an always-visible Edit button. Restart to apply everywhere.</string>
 </resources>
