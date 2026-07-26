@@ -18641,53 +18641,44 @@ public class ChatActivity extends BaseFragment implements
          * the strip of blur directly above the bubble is stretched down over
          * it - the blur has no detail left, so the repeat is invisible.
          */
-        private void meeroEraseGhost(Canvas canvas) {
+        /**
+         * MeeroX: keeps the blur snapshot from repainting the message.
+         *
+         * The snapshot is captured before the menu opens, so the bubble is
+         * baked into it. Once the popup shows its own copy, that baked-in one
+         * becomes a duplicate. Earlier this was patched by stretching a strip
+         * of blur over the area, but scaling a CLAMP shader that far walked off
+         * the bitmap and painted solid black.
+         *
+         * Clipping the region out before drawing avoids the problem entirely:
+         * nothing is painted there, so the live wallpaper below shows through -
+         * which is what iOS does anyway.
+         *
+         * @return a canvas save count to restore, or -1 when no clip was applied
+         */
+        private int meeroBlurClipOut(Canvas canvas) {
             if (!meeroSnapshotShown || meeroSnapshotView == null || scrimView == null) {
-                return;
-            }
-            if (scrimBlurBitmapPaint == null || scrimBlurBitmap == null) {
-                return;
+                return -1;
             }
             final View v = scrimView;
-            final int top = (int) (chatListView.getY() + v.getY() + meeroSnapshotView.getBubbleTopInCell());
-            final int left = (int) (chatListView.getLeft() + v.getX() + meeroSnapshotView.getBubbleLeftInCell());
             final int w = meeroSnapshotView.getBubbleWidthPx();
             final int h = meeroSnapshotView.getBubbleHeightPx();
             if (w <= 0 || h <= 0) {
-                return;
+                return -1;
             }
+            final int top = (int) (chatListView.getY() + v.getY() + meeroSnapshotView.getBubbleTopInCell());
+            final int left = (int) (chatListView.getLeft() + v.getX() + meeroSnapshotView.getBubbleLeftInCell());
             meeroGhostRect.set(left, top, left + w, top + h);
             if (meeroGhostRect.bottom <= 0 || meeroGhostRect.top >= getMeasuredHeight()) {
-                return;
+                return -1;
             }
-
-            // Source: a band of blur just above the bubble, mirrored downwards
-            // so the fill keeps the wallpaper's vertical gradient.
-            final float scale = (float) getMeasuredWidth() / scrimBlurBitmap.getWidth();
-            final int bandH = Math.max(1, AndroidUtilities.dp(24));
-            int srcTop = meeroGhostRect.top - bandH;
-            if (srcTop < 0) {
-                srcTop = meeroGhostRect.bottom;
+            final int save = canvas.save();
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                canvas.clipOutRect(meeroGhostRect);
+            } else {
+                canvas.clipRect(meeroGhostRect, android.graphics.Region.Op.DIFFERENCE);
             }
-
-            canvas.save();
-            canvas.clipRect(meeroGhostRect);
-            scrimBlurMatrix.reset();
-            scrimBlurMatrix.postScale(scale, scale);
-            // Slide the shader so the chosen band lands over the bubble, then
-            // stretch it to cover the full height.
-            scrimBlurMatrix.postTranslate(0, meeroGhostRect.top - srcTop);
-            scrimBlurMatrix.postScale(1f, Math.max(1f, h / (float) bandH), 0, meeroGhostRect.top);
-            scrimBlurBitmapShader.setLocalMatrix(scrimBlurMatrix);
-            scrimBlurBitmapPaint.setAlpha((int) (0xFF * scrimViewProgress * meeroSnapshotProgress));
-            canvas.drawRect(meeroGhostRect, scrimBlurBitmapPaint);
-            canvas.restore();
-
-            // Leave the shader as the rest of dispatchDraw expects it.
-            scrimBlurMatrix.reset();
-            scrimBlurMatrix.postScale(scale, scale);
-            scrimBlurBitmapShader.setLocalMatrix(scrimBlurMatrix);
-            scrimBlurBitmapPaint.setAlpha((int) (0xFF * scrimViewProgress));
+            return save;
         }
 
         @Override
@@ -18763,14 +18754,14 @@ public class ChatActivity extends BaseFragment implements
                     scrimBlurBitmapShader.setLocalMatrix(scrimBlurMatrix);
                     scrimBlurBitmapPaint.setAlpha((int) (0xFF * scrimViewProgress));
                     if (scrimBlurBitmapPaint.getAlpha() > 0) {
-                        // MeeroX: the blur bitmap is a snapshot of the screen
-                        // taken before the menu opened, so the message is baked
-                        // into it. With the popup showing its own copy, that
-                        // baked-in one reads as a faint duplicate. Paint over
-                        // the area it occupied with a neighbouring slice of the
-                        // same blur, which erases it without a visible seam.
+                        // MeeroX: skip the area the popup already redraws, so
+                        // the message baked into the snapshot is not painted a
+                        // second time under the copy.
+                        final int meeroClip = meeroBlurClipOut(canvas);
                         canvas.drawRect(0, 0, getMeasuredWidth(), getMeasuredHeight(), scrimBlurBitmapPaint);
-                        meeroEraseGhost(canvas);
+                        if (meeroClip != -1) {
+                            canvas.restoreToCount(meeroClip);
+                        }
                     }
                 } else {
                     scrimPaint.setAlpha((int) (0xFF * scrimPaintAlpha * (scrimView != null ? scrimViewAlpha : 1f)));
