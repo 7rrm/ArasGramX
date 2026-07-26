@@ -512,6 +512,8 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
     private ValueAnimator contactsAlphaAnimator;
     private ViewPage[] viewPages;
     private ActionBarMenuItem passcodeItem;
+    /** MeeroX: always-visible folder edit button in the iOS dialogs header. */
+    private ActionBarMenuItem meeroEditItem;
     private ActionBarMenuItem downloadsItem;
     private DownloadProgressIcon downloadProgressIcon;
     private boolean downloadsItemVisible;
@@ -3343,6 +3345,24 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
             });
             doneItem.setAlpha(0.0f);
             doneItem.setVisibility(View.GONE);
+
+            // MeeroX: iOS keeps an "Edit" affordance on the header at all
+            // times instead of hiding folder editing behind a long press. The
+            // button toggles exactly the same folder-edit mode - long press on
+            // a tab still works, nothing about the behaviour changes.
+            if (meeroDialogsStyleEnabled()) {
+                meeroEditItem = new ActionBarMenuItem(context, null, getThemedColor(Theme.key_actionBarDefaultSelector), getThemedColor(Theme.key_actionBarDefaultIcon), true);
+                meeroEditItem.setText(LocaleController.getString(R.string.Edit));
+                actionBar.addView(meeroEditItem, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.TOP | Gravity.LEFT, 10, 0, 0, 0));
+                meeroEditItem.setOnClickListener(v -> {
+                    if (filterTabsView == null) {
+                        return;
+                    }
+                    final boolean editing = filterTabsView.isEditing();
+                    filterTabsView.setIsEditing(!editing);
+                    showDoneItem(!editing);
+                });
+            }
             proxyDrawable = new ProxyDrawable(context);
             proxyMenuSubItem = new ActionBarMenuSubItem(context, false, true, resourceProvider);
             proxyMenuSubItem.setItemHeight(56);
@@ -5506,6 +5526,13 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
         if (hasMainTabs) {
             actionBar.getTitlesContainer().setTranslationX(dp(4));
             actionBar.setTitleColor(getThemedColor(Theme.key_telegram_color_dialogsLogo));
+        }
+
+        // MeeroX: opt this screen into the centred title. The flag is local to
+        // this ActionBar, so every other screen keeps its own alignment.
+        if (meeroDialogsStyleEnabled() && !onlySelect && folderId == 0) {
+            actionBar.meeroAllowCenteredTitle = true;
+            actionBar.getTitlesContainer().setTranslationX(0);
         }
 
         if (folderId != 0 || communityId != 0) {
@@ -10451,6 +10478,15 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
 
     private AnimatorSet doneItemAnimator;
 
+    /** MeeroX: master switch for the iOS-style dialogs header. */
+    public static boolean meeroDialogsStyleEnabled() {
+        try {
+            return tw.nekomimi.nekogram.NekoConfig.meeroDialogsStyle.Bool();
+        } catch (Throwable e) {
+            return false;
+        }
+    }
+
     private void showDoneItem(boolean show) {
         animatorDoneButtonVisible.setValue(show, true);
 
@@ -14373,6 +14409,23 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
         checkUi_itemSpeedVisibility();
         checkUi_itemPasscodeVisibility();
         checkUi_itemSearchVisibility();
+        checkUi_meeroEditVisibility();
+    }
+
+    /**
+     * MeeroX: the always-visible Edit button follows the same rules as the
+     * other header buttons - it steps aside for search, for the sliding pane
+     * and for the Done button that replaces it while editing.
+     */
+    private void checkUi_meeroEditVisibility() {
+        if (meeroEditItem == null) {
+            return;
+        }
+        final float factor0 = (filterTabsView != null && filterTabsView.getVisibility() == View.VISIBLE) ? 1 : 0;
+        final float factor1 = 1f - animatorSearchVisible.getFloatValue();
+        final float factor2 = 1f - getRightSlidingProgress();
+        final float factor3 = 1f - animatorDoneButtonVisible.getFloatValue();
+        FragmentFloatingButton.setAnimatedVisibility(meeroEditItem, factor0 * factor1 * factor2 * factor3);
     }
 
     private void checkUi_itemBackButtonVisibility() {
