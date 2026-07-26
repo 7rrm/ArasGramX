@@ -64,18 +64,15 @@ public final class MainTabsHelper {
         }
     }
 
-    /** Visible buttons on the bar - pages plus the search shortcut. */
+    /**
+     * Buttons inside the bar itself. The MeeroX search pill sits outside it,
+     * so it is deliberately not counted here.
+     */
     public static int getVisibleTabsCount() {
-        return getFragmentsCount() + (isMeeroSearchTabEnabled() ? 1 : 0);
+        return getFragmentsCount();
     }
 
     public static int getTabsViewWidth() {
-        // MeeroX: the reference bar runs nearly the full width of the screen.
-        // Five fixed 80dp tabs overflow a narrow phone, so fall back to
-        // MATCH_PARENT and let the tabs share the space evenly.
-        if (isMeeroSearchTabEnabled()) {
-            return -1; // LayoutHelper.MATCH_PARENT
-        }
         return TAB_WIDTH * getVisibleTabsCount() + (getMainTabsMargin() + TAB_PADDING) * 2;
     }
 }
