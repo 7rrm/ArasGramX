@@ -13881,6 +13881,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
 
         @Override
         public void onBindViewHolder(RecyclerView.ViewHolder holder, @SuppressLint("RecyclerView") int position) {
+            meeroApplyProfileCard(holder, position);
             switch (holder.getItemViewType()) {
                 case VIEW_TYPE_HEADER:
                     HeaderCell headerCell = (HeaderCell) holder.itemView;
@@ -14802,6 +14803,43 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
         }
 
         @Override
+        /**
+         * MeeroX: groups the profile's detail rows - phone, username,
+         * birthday, bio - into one inset rounded card, the way iOS presents
+         * them. Only the background changes; every row keeps its own content
+         * and click behaviour.
+         */
+        private void meeroApplyProfileCard(RecyclerView.ViewHolder holder, int position) {
+            if (!tw.nekomimi.nekogram.MeeroCards.enabled()) {
+                return;
+            }
+            final int type = holder.getItemViewType();
+            if (!meeroIsProfileCardRow(type)) {
+                return;
+            }
+            final boolean prev = position > 0 && meeroIsProfileCardRow(getItemViewType(position - 1));
+            final boolean next = position + 1 < getItemCount() && meeroIsProfileCardRow(getItemViewType(position + 1));
+            final int pos;
+            if (prev && next) {
+                pos = tw.nekomimi.nekogram.MeeroCards.POS_MIDDLE;
+            } else if (prev) {
+                pos = tw.nekomimi.nekogram.MeeroCards.POS_LAST;
+            } else if (next) {
+                pos = tw.nekomimi.nekogram.MeeroCards.POS_FIRST;
+            } else {
+                pos = tw.nekomimi.nekogram.MeeroCards.POS_SINGLE;
+            }
+            holder.itemView.setBackground(new tw.nekomimi.nekogram.MeeroCards.CardDrawable(pos, resourcesProvider));
+        }
+
+        /** The detail rows that belong inside the card. */
+        private boolean meeroIsProfileCardRow(int type) {
+            return type == VIEW_TYPE_TEXT_DETAIL
+                    || type == VIEW_TYPE_TEXT_DETAIL_MULTILINE
+                    || type == VIEW_TYPE_TEXT_DETAIL_MULTILINE_2
+                    || type == VIEW_TYPE_ABOUT_LINK;
+        }
+
         public int getItemViewType(int position) {
             if (position == infoHeaderRow || position == membersHeaderRow || position == settingsSectionRow2 ||
                     position == numberSectionRow || position == helpHeaderRow || position == debugHeaderRow || position == botPermissionsHeader) {
