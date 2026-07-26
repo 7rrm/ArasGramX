@@ -14802,7 +14802,6 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
             return rowCount;
         }
 
-        @Override
         /**
          * MeeroX: groups the profile's detail rows - phone, username,
          * birthday, bio - into one inset rounded card, the way iOS presents
@@ -14840,6 +14839,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                     || type == VIEW_TYPE_ABOUT_LINK;
         }
 
+        @Override
         public int getItemViewType(int position) {
             if (position == infoHeaderRow || position == membersHeaderRow || position == settingsSectionRow2 ||
                     position == numberSectionRow || position == helpHeaderRow || position == debugHeaderRow || position == botPermissionsHeader) {
