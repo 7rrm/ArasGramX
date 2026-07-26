@@ -711,4 +711,6 @@
     <string name="MeeroIosAnimInfo">الرسائل الجديدة تنبثق من الزاوية بحركة نابضة، مثل الآيفون.</string>
     <string name="meeroCards">بطاقات إعدادات مدوّرة</string>
     <string name="MeeroCardsInfo">تجميع صفوف الإعدادات ببطاقات مدوّرة بأسلوب iOS 26.</string>
+    <string name="meeroDialogsStyle">رأس المحادثات بنمط iOS</string>
+    <string name="MeeroDialogsStyleInfo">عنوان بالنص، تبويبات ممتلئة، حقل بحث مدوّر، وزر تحرير ظاهر دائماً. أعد التشغيل للتطبيق الكامل.</string>
 </resources>
