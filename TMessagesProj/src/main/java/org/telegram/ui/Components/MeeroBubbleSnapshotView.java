@@ -91,6 +91,25 @@ public class MeeroBubbleSnapshotView extends FrameLayout {
         if (right <= left || bottom <= top) {
             return null;
         }
+        // The sender avatar sits outside the bubble background, so capturing
+        // only the bubble sliced it in half. Grow the region to cover it.
+        try {
+            final org.telegram.messenger.ImageReceiver avatar = cell.getAvatarImage();
+            if (avatar != null) {
+                final int aLeft = (int) avatar.getImageX();
+                final int aRight = (int) avatar.getImageX2();
+                final int aTop = (int) avatar.getImageY();
+                final int aBottom = (int) avatar.getImageY2();
+                if (aRight > aLeft && aBottom > aTop) {
+                    left = Math.min(left, aLeft);
+                    right = Math.max(right, aRight);
+                    top = Math.min(top, aTop);
+                    bottom = Math.max(bottom, aBottom);
+                }
+            }
+        } catch (Throwable ignore) {
+        }
+
         // A little breathing room so the tail and any outbounds content (the
         // reaction chips, the effect animation) are not clipped away.
         final int padX = dp(8);
