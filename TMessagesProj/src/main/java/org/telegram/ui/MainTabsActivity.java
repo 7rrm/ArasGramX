@@ -326,7 +326,16 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
         final int paddingH = dp(mainTabsMargin + 4);
         final int paddingV = dp(mainTabsMargin + 4);
         tabsView.setPadding(paddingH, paddingV, paddingH, paddingV);
-        tabsView.setMaxWidth(dp(328 + DialogsActivity.MAIN_TABS_MARGIN * 2));
+        // MeeroX: the cap was hard-coded for four tabs, so adding the search
+        // entry squeezed all five into the old width - which is why the
+        // search icon ended up jammed against the edge. In iOS mode the bar
+        // spans the screen and the tabs share it; otherwise keep upstream's
+        // fixed cap exactly as it was.
+        if (meeroDialogsStyleEnabled()) {
+            tabsView.setMaxWidth(AndroidUtilities.displaySize.x - dp(DialogsActivity.MAIN_TABS_MARGIN * 2));
+        } else {
+            tabsView.setMaxWidth(dp(328 + DialogsActivity.MAIN_TABS_MARGIN * 2));
+        }
 
         final boolean meeroSearchTab = meeroDialogsStyleEnabled();
         tabs = new GlassTabView[meeroSearchTab ? 6 : 5];
