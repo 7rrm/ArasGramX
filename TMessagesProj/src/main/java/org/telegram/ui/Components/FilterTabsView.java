@@ -20,6 +20,7 @@ import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.ColorFilter;
 import android.graphics.Paint;
 import android.graphics.Path;
@@ -357,12 +358,11 @@ public class FilterTabsView extends FrameLayout {
                 animateToOtherKey = aUnactiveTextColorKey;
                 unreadKey = Theme.key_chats_tabUnreadActiveBackground;
                 unreadOtherKey = Theme.key_chats_tabUnreadUnactiveBackground;
-                // MeeroX: with the capsule filled, the label sits on the
-                // accent colour and needs to contrast against it rather than
-                // against the page background.
+                // MeeroX: with the capsule filled the label sits on the accent
+                // colour. A fixed colour key washed out on some themes, so
+                // pick black or white from the capsule's own luminance.
                 if (meeroDialogsStyleEnabled()) {
-                    key = Theme.key_featuredStickers_buttonText;
-                    animateToKey = -1;
+                    meeroForceActiveTextColor = true;
                 }
             } else {
                 key = unactiveTextColorKey;
@@ -388,6 +388,17 @@ public class FilterTabsView extends FrameLayout {
                 } else {
                     textPaint.setColor(ColorUtils.blendARGB(color1, color2, animationValue));
                 }
+            }
+            // MeeroX: override with whichever of black/white reads on the
+            // filled capsule. Computed from the capsule colour so it stays
+            // correct on any theme the user picks.
+            if (meeroForceActiveTextColor) {
+                meeroForceActiveTextColor = false;
+                final int capsule = Theme.getColor(tabLineColorKey, resourcesProvider);
+                final double lum = (0.299 * Color.red(capsule)
+                        + 0.587 * Color.green(capsule)
+                        + 0.114 * Color.blue(capsule)) / 255.0;
+                textPaint.setColor(lum > 0.6 ? 0xFF000000 : 0xFFFFFFFF);
             }
             emojiColorFilter = new PorterDuffColorFilter(textPaint.getColor(), PorterDuff.Mode.SRC_IN);
 
@@ -1647,7 +1658,10 @@ public class FilterTabsView extends FrameLayout {
             // MeeroX: upstream draws the selected-tab capsule at 12% opacity,
             // which reads as no background at all. iOS fills it, so the active
             // folder is unmistakable. Colour still comes from the theme.
-            selectorDrawable.setAlpha(meeroDialogsStyleEnabled() ? 255 : 31);
+            // MeeroX: a fully opaque capsule swallowed the folder names on
+            // tinted themes. Keep it clearly visible but let a little of the
+            // page through, the way iOS does.
+            selectorDrawable.setAlpha(meeroDialogsStyleEnabled() ? 200 : 31);
             selectorDrawable.draw(canvas);
             canvas.restore();
         }
@@ -1828,6 +1842,9 @@ public class FilterTabsView extends FrameLayout {
     public boolean isEditing() {
         return isEditing;
     }
+
+    /** MeeroX: set while drawing the selected tab on a filled capsule. */
+    private boolean meeroForceActiveTextColor;
 
     /** MeeroX: master switch for the iOS-style dialogs header. */
     public static boolean meeroDialogsStyleEnabled() {
