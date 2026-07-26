@@ -32382,7 +32382,22 @@ public class ChatActivity extends BaseFragment implements
             Rect backgroundPaddings = new Rect();
             Drawable shadowDrawable = getParentActivity().getResources().getDrawable(R.drawable.popup_fixed_alert4).mutate();
             shadowDrawable.getPadding(backgroundPaddings);
-            popupLayout.setBackgroundColor(getThemedColor(Theme.key_actionBarDefaultSubmenuBackground));
+            // MeeroX: frosted panel for the message menu, matching the
+            // reaction menu the fork already blurs via scrimBlur3Factory.
+            // The reference screenshot shows a translucent panel that picks up
+            // the wallpaper behind it rather than a flat colour.
+            if (meeroMenuBlurEnabled()) {
+                popupLayout.setBackgroundColor(android.graphics.Color.TRANSPARENT);
+                popupLayout.setClipToOutline(true);
+                popupLayout.setOutlineProvider(ViewOutlineProviderImpl.boundsWithPaddingRoundRect(dp(8), dp(16)));
+                popupLayout.setBackground(scrimBlur3Factory.create(popupLayout, true)
+                        .setColorProvider(BlurredBackgroundProviderImpl.scrimMenuBackground(resourceProvider))
+                        .setRadius(dp(16))
+                        .setPadding(dp(8))
+                        .setHasPadding(true));
+            } else {
+                popupLayout.setBackgroundColor(getThemedColor(Theme.key_actionBarDefaultSubmenuBackground));
+            }
             MessageSeenView messageSeenView = null;
 
             boolean addGap = false;
@@ -33746,6 +33761,18 @@ public class ChatActivity extends BaseFragment implements
             int maxY = totalHeight - height - dp(8);
             if (height < totalHeight) {
                 popupY = (int) (chatListView.getY() + v.getTop() + y);
+                // MeeroX: iOS places the menu *below* the message instead of
+                // starting it at the touch point, which covers the bubble.
+                // Anchor to the bubble's bottom edge and let the clamp below
+                // flip it above when there is not enough room.
+                if (meeroMenuBlurEnabled() && !isInsideContainer) {
+                    final int belowBubble = (int) (chatListView.getY() + v.getBottom() + dp(6));
+                    if (belowBubble + height <= totalHeight - dp(8)) {
+                        popupY = belowBubble;
+                    } else {
+                        popupY = (int) (chatListView.getY() + v.getTop() - height - dp(6));
+                    }
+                }
                 if (isInsideContainer) {
                     int[] location = new int[2];
                     v.getLocationInWindow(location);
