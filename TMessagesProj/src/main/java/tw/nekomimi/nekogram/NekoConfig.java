@@ -87,6 +87,8 @@ public class NekoConfig {
     public static ConfigItem meeroMenuBlur = addConfig("meeroMenuBlur", configTypeBool, true);
     public static ConfigItem meeroIosBubbles = addConfig("meeroIosBubbles", configTypeBool, true);
     public static ConfigItem meeroTapMenu = addConfig("meeroTapMenu", configTypeBool, true);
+    public static ConfigItem meeroIosAnim = addConfig("meeroIosAnim", configTypeBool, true);
+    public static ConfigItem meeroCards = addConfig("meeroCards", configTypeBool, true);
 
     // From NekoConfig
     public static ConfigItem useIPv6 = addConfig("IPv6", configTypeBool, false);
