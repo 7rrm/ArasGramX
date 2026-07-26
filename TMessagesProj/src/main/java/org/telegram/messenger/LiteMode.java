@@ -146,7 +146,22 @@ public class LiteMode {
         return flag;
     }
 
+    /**
+     * MeeroX: the shader only needs RuntimeShader (API 33). Upstream also
+     * hides the feature on anything it classes as low-performance, which
+     * rules out plenty of capable phones.
+     */
+    public static boolean isLiquidGlassSupported() {
+        return Build.VERSION.SDK_INT >= 33;
+    }
+
     public static boolean isEnabled(int flag) {
+        if (flag == FLAG_LIQUID_GLASS) {
+            // Glass is the point of this build, so it must survive battery
+            // saver: getValue() returns PRESET_POWER_SAVER (0) below the
+            // threshold, which silently killed every glass surface.
+            return isLiquidGlassSupported() && (getValue(true) & FLAG_LIQUID_GLASS) > 0;
+        }
         if (flag == FLAG_CHAT_FORUM_TWOCOLUMN && AndroidUtilities.isTablet()) {
             // always enabled for tablets
             return true;
@@ -213,7 +228,7 @@ public class LiteMode {
         if (!preferences.contains("lite_mode6")) {
             if (preferences.contains("lite_mode5")) {
                 defaultValue = preferences.getInt("lite_mode5", defaultValue);
-                defaultValue &=~ FLAG_LIQUID_GLASS;
+                defaultValue |= FLAG_LIQUID_GLASS; // MeeroX: keep glass on when migrating
                 preferences.edit().putInt("lite_mode6", defaultValue).apply();
             } else if (preferences.contains("lite_mode4")) {
                 defaultValue = preferences.getInt("lite_mode4", defaultValue);
@@ -278,6 +293,17 @@ public class LiteMode {
 
         int prevValue = value;
         value = preferences.getInt("lite_mode6", defaultValue);
+
+        // Phones upgraded from an older build already have lite_mode6 saved
+        // without the glass bit, and that saved value wins over the presets
+        // below. Set it once, then remember so the user can still turn it off.
+        if (isLiquidGlassSupported() && !preferences.getBoolean("meerox_glass_migrated", false)) {
+            value |= FLAG_LIQUID_GLASS | FLAG_CHAT_BLUR;
+            preferences.edit()
+                .putInt("lite_mode6", value)
+                .putBoolean("meerox_glass_migrated", true)
+                .apply();
+        }
         if (loaded) {
             onFlagsUpdate(prevValue, value);
         }

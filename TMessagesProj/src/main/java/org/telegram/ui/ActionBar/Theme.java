@@ -200,6 +200,33 @@ public class Theme {
 
     public static class MessageDrawable extends Drawable {
 
+        /**
+         * MeeroX: iOS 26 draws bubbles as capsules. Measuring a reference
+         * screenshot gives a corner radius of about half the bubble height,
+         * and Telegram already clamps rad to heightHalf, so asking for a large
+         * value yields the capsule while short bubbles stay correct.
+         * Off -> stock Telegram radius, unchanged.
+         */
+        private static int meeroBubbleRadius() {
+            try {
+                if (tw.nekomimi.nekogram.NekoConfig.meeroIosBubbles.Bool()) {
+                    return 30;
+                }
+            } catch (Throwable ignore) {}
+            return SharedConfig.bubbleRadius;
+        }
+
+        /** Bigger tail so it stays visible against the rounder corners. */
+        private static int meeroTailRadius() {
+            try {
+                if (tw.nekomimi.nekogram.NekoConfig.meeroIosBubbles.Bool()) {
+                    return dp(9);
+                }
+            } catch (Throwable ignore) {}
+            return dp(6);
+        }
+
+
         private Shader gradientShader;
         private int currentBackgroundHeight;
         private Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -493,7 +520,7 @@ public class Theme {
             } else if (overrideRounding > 0) {
                 newRad = 0;
             } else {
-                newRad = dp(SharedConfig.bubbleRadius);
+                newRad = dp(meeroBubbleRadius());
             }
             int idx;
             if (isTopNear && isBottomNear) {
@@ -611,7 +638,7 @@ public class Theme {
             if (gradientShader == null && !isSelected && crossfadeFromDrawable == null) {
                 return null;
             }
-            int newRad = dp(SharedConfig.bubbleRadius);
+            int newRad = dp(meeroBubbleRadius());
             int idx;
             if (isTopNear && isBottomNear) {
                 idx = 3;
@@ -743,7 +770,7 @@ public class Theme {
                 rad = dp(SharedConfig.bubbleRadius);
                 nearRad = dp(Math.min(6, SharedConfig.bubbleRadius));
             }
-            int smallRad = dp(6);
+            int smallRad = meeroTailRadius();
 
             Paint p = paintToUse == null ? paint : paintToUse;
 
@@ -806,7 +833,7 @@ public class Theme {
                 rad = dp(SharedConfig.bubbleRadius);
                 nearRad = dp(Math.min(6, SharedConfig.bubbleRadius));
             }
-            int smallRad = dp(6);
+            int smallRad = meeroTailRadius();
             int top = Math.max(bounds.top, 0);
             boolean drawFullBottom, drawFullTop;
             if (pathDrawCacheParams != null && bounds.height() < currentBackgroundHeight) {

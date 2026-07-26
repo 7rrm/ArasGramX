@@ -154,17 +154,29 @@ public class ItemOptions {
     private boolean drawScrim = true;
 
     private boolean blur;
-    private boolean blurForMenu;
+    // MeeroX: frosted backdrop behind long-press menus, controlled from
+    // MeeroX Settings -> Chat. Upstream leaves this false unless a caller
+    // opts in, which is why most menus were drawn on a flat panel.
+    private boolean blurForMenu = meeroMenuBlurEnabled();
+
+    private static boolean meeroMenuBlurEnabled() {
+        try {
+            return tw.nekomimi.nekogram.NekoConfig.meeroMenuBlur.Bool()
+                && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S;
+        } catch (Throwable e) {
+            return false;
+        }
+    }
 
     public ItemOptions setBlur(boolean blur, boolean blurForMenu) {
         this.blur = blur;
-        this.blurForMenu = blurForMenu;
+        this.blurForMenu = blurForMenu || meeroMenuBlurEnabled();
         return this;
     }
 
     public ItemOptions setBlur(boolean b) {
         this.blur = b;
-        this.blurForMenu = b;
+        this.blurForMenu = b || meeroMenuBlurEnabled();
         return this;
     }
 
@@ -1138,7 +1150,7 @@ public class ItemOptions {
                 .setColorProvider(colorProvider)
                 .setPadding(dp(8))
                 .setHasPadding(true)
-                .setRadius(dp(12)));
+                .setRadius(dp(16)));
         }
         return this;
     }
@@ -1507,7 +1519,7 @@ public class ItemOptions {
                 .setColorProvider(BlurredBackgroundProviderImpl.scrimMenuBackground(resourcesProvider))
                 .setPadding(dp(8))
                 .setHasPadding(true)
-                .setRadius(dp(12));
+                .setRadius(dp(16));
 
             bg.setSourceOffset(X + this.translateX, Y + this.translateY);
             layout.setBackground(bg);

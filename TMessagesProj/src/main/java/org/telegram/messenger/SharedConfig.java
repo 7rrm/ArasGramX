@@ -1887,7 +1887,9 @@ public class SharedConfig {
     }
 
     public static boolean canBlurChat() {
-        return getDevicePerformanceClass() >= (Build.VERSION.SDK_INT >= 31 ? PERFORMANCE_CLASS_AVERAGE : PERFORMANCE_CLASS_HIGH) || BuildVars.DEBUG_PRIVATE_VERSION;
+        // MeeroX: the chat blur needs RenderEffect (API 31). The extra
+        // performance-class requirement disabled it on capable phones.
+        return Build.VERSION.SDK_INT >= 31 || BuildVars.DEBUG_PRIVATE_VERSION;
     }
 
     public static boolean chatBlurEnabled() {

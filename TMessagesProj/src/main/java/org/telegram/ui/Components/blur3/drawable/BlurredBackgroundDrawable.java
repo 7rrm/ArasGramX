@@ -223,8 +223,9 @@ public abstract class BlurredBackgroundDrawable extends Drawable {
         public int padding;
         public boolean hasPadding;
         public int liquidThickness;
-        public float liquidIntensity = 0.75f;
-        public float liquidIndex = 1.5f;
+        // MeeroX: stronger iOS 26-like refraction (upstream: 0.75 / 1.5)
+        public float liquidIntensity = 1.05f;
+        public float liquidIndex = 1.72f;
 
         public float strokeWidthTop;
         public float strokeWidthBottom;
