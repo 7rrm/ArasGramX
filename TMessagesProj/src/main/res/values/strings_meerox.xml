@@ -18,4 +18,8 @@
     <string name="MeeroIosBubblesInfo">Capsule shape with a visible tail. Turn off for stock Telegram bubbles.</string>
     <string name="meeroTapMenu">Open menu with a single tap</string>
     <string name="MeeroTapMenuInfo">Tap a message bubble to open its menu. Long press keeps working.</string>
+    <string name="meeroIosAnim">iOS message animation</string>
+    <string name="MeeroIosAnimInfo">New messages spring into place from the corner, the way iOS does.</string>
+    <string name="meeroCards">Rounded settings cards</string>
+    <string name="MeeroCardsInfo">Group settings rows into inset rounded cards, iOS 26 style.</string>
 </resources>
