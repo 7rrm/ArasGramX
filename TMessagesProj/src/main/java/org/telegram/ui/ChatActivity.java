@@ -1153,11 +1153,13 @@ public class ChatActivity extends BaseFragment implements
     public ActionBarPopupWindow scrimPopupWindow;
     private boolean scrimPopupWindowHideDimOnDismiss = true;
     private int scrimPopupX, scrimPopupY;
-    // MeeroX: how far the tapped bubble slides up so the menu fits below it.
-    private int meeroScrimLift;
-    private float meeroScrimScale = 1f;
-    private float meeroScrimLiftProgress;
-    private ValueAnimator meeroScrimLiftAnimator;
+    // MeeroX: a copy of the tapped bubble is shown inside the menu popup so it
+    // can sit above the menu - a PopupWindow is its own system window, so a
+    // view drawn in contentView can never be raised over it.
+    private MeeroBubbleSnapshotView meeroSnapshotView;
+    private boolean meeroSnapshotShown;
+    private float meeroSnapshotProgress;
+    private ValueAnimator meeroSnapshotAnimator;
     public ActionBarMenuSubItem[] scrimPopupWindowItems;
     private ActionBarMenuSubItem menuDeleteItem;
     private final Runnable updateDeleteItemRunnable = new Runnable() {
@@ -11404,55 +11406,59 @@ public class ChatActivity extends BaseFragment implements
     }
 
     private void dimBehindView(View view, boolean enable) {
-        meeroAnimateScrimLift(enable);
+        meeroAnimateSnapshotFade(enable);
         dimBehindView(view, enable && meeroMenuBlurEnabled(), enable);
     }
 
-    /** Eases the tapped bubble up/down alongside the menu. */
-    private void meeroAnimateScrimLift(boolean enable) {
-        if (meeroScrimLiftAnimator != null) {
-            meeroScrimLiftAnimator.cancel();
-            meeroScrimLiftAnimator = null;
+    /**
+     * Cross-fades the original bubble out while the popup copy is on screen.
+     * Runs only when a snapshot was actually taken, and only for the short
+     * duration of the fade - unlike the old lift animation this does not keep
+     * invalidating the whole chat every frame.
+     */
+    private void meeroAnimateSnapshotFade(boolean enable) {
+        if (meeroSnapshotAnimator != null) {
+            meeroSnapshotAnimator.cancel();
+            meeroSnapshotAnimator = null;
         }
         if (!enable) {
-            // Ease back instead of snapping, so dismissing the menu returns
-            // the message to where it was.
-            if (meeroScrimLift > 0 || meeroScrimScale < 1f) {
-                final float from = meeroScrimLiftProgress;
-                meeroScrimLiftAnimator = ValueAnimator.ofFloat(from, 0f);
-                meeroScrimLiftAnimator.setDuration(220);
-                meeroScrimLiftAnimator.setInterpolator(CubicBezierInterpolator.EASE_OUT_QUINT);
-                meeroScrimLiftAnimator.addUpdateListener(a -> {
-                    meeroScrimLiftProgress = (float) a.getAnimatedValue();
-                    if (contentView != null) contentView.invalidate();
-                });
-                meeroScrimLiftAnimator.addListener(new AnimatorListenerAdapter() {
-                    @Override
-                    public void onAnimationEnd(Animator animation) {
-                        meeroScrimLift = 0;
-                        meeroScrimScale = 1f;
-                        meeroScrimLiftProgress = 0f;
-                        if (contentView != null) contentView.invalidate();
-                    }
-                });
-                meeroScrimLiftAnimator.start();
+            if (!meeroSnapshotShown) {
+                meeroSnapshotProgress = 0f;
                 return;
             }
-            meeroScrimLiftProgress = 0f;
-            meeroScrimLift = 0;
-            meeroScrimScale = 1f;
-            if (contentView != null) contentView.invalidate();
+            final float from = meeroSnapshotProgress;
+            meeroSnapshotAnimator = ValueAnimator.ofFloat(from, 0f);
+            meeroSnapshotAnimator.setDuration(180);
+            meeroSnapshotAnimator.setInterpolator(CubicBezierInterpolator.EASE_OUT_QUINT);
+            meeroSnapshotAnimator.addUpdateListener(a -> {
+                meeroSnapshotProgress = (float) a.getAnimatedValue();
+                if (contentView != null) contentView.invalidate();
+            });
+            meeroSnapshotAnimator.addListener(new AnimatorListenerAdapter() {
+                @Override
+                public void onAnimationEnd(Animator animation) {
+                    meeroSnapshotShown = false;
+                    meeroSnapshotProgress = 0f;
+                    meeroSnapshotView = null;
+                    if (contentView != null) contentView.invalidate();
+                }
+            });
+            meeroSnapshotAnimator.start();
             return;
         }
-        meeroScrimLiftProgress = 0f;
-        meeroScrimLiftAnimator = ValueAnimator.ofFloat(0f, 1f);
-        meeroScrimLiftAnimator.setDuration(260);
-        meeroScrimLiftAnimator.setInterpolator(CubicBezierInterpolator.EASE_OUT_QUINT);
-        meeroScrimLiftAnimator.addUpdateListener(a -> {
-            meeroScrimLiftProgress = (float) a.getAnimatedValue();
+        if (!meeroSnapshotShown) {
+            meeroSnapshotProgress = 0f;
+            return;
+        }
+        meeroSnapshotProgress = 0f;
+        meeroSnapshotAnimator = ValueAnimator.ofFloat(0f, 1f);
+        meeroSnapshotAnimator.setDuration(160);
+        meeroSnapshotAnimator.setInterpolator(CubicBezierInterpolator.EASE_OUT_QUINT);
+        meeroSnapshotAnimator.addUpdateListener(a -> {
+            meeroSnapshotProgress = (float) a.getAnimatedValue();
             if (contentView != null) contentView.invalidate();
         });
-        meeroScrimLiftAnimator.start();
+        meeroSnapshotAnimator.start();
     }
 
     private void dimBehindView(View view, boolean blur, boolean enable) {
@@ -18858,27 +18864,20 @@ public class ChatActivity extends BaseFragment implements
                             }
                             canvas.clipRect(viewClipLeft, viewClipTop, viewClipRight, viewClipBottom);
                             canvas.translate(chatListView.getLeft() + child.getX(), chatListView.getY() + child.getY());
-                            // MeeroX: slide the tapped message up - and shrink
-                            // it when it is tall - so the menu below stays on
-                            // screen, the way iOS does.
-                            if (child == scrimView && (meeroScrimLift > 0 || meeroScrimScale < 1f)) {
-                                final float t = meeroScrimLiftProgress;
-                                canvas.translate(0, -meeroScrimLift * t);
-                                if (meeroScrimScale < 1f) {
-                                    final float sc = 1f + (meeroScrimScale - 1f) * t;
-                                    float px = child.getWidth() / 2f;
-                                    float py = child.getHeight() / 2f;
-                                    if (child instanceof ChatMessageCell) {
-                                        final ChatMessageCell mc = (ChatMessageCell) child;
-                                        final int pad = mc.getPaddingTop();
-                                        final int bt = pad + mc.getBackgroundDrawableTop();
-                                        final int bb = pad + mc.getBackgroundDrawableBottom();
-                                        if (bb > bt) {
-                                            py = (bt + bb) / 2f;
-                                        }
-                                    }
-                                    canvas.scale(sc, sc, px, py);
-                                }
+                            // MeeroX: the bubble is no longer lifted here.
+                            // Translating after clipRect() cut the bubble off,
+                            // which is why short messages appeared not to move
+                            // and long ones lost their text. The raised copy
+                            // now lives inside the popup window itself - see
+                            // MeeroBubbleSnapshotView - so nothing is clipped
+                            // and there is no per-frame invalidate.
+                            int meeroFadeSave = -1;
+                            if (child == scrimView && meeroSnapshotShown) {
+                                // The snapshot in the popup is the visible
+                                // copy; fade the original so the message is
+                                // not drawn twice in two places.
+                                meeroFadeSave = canvas.saveLayerAlpha(0, 0, child.getWidth(), child.getHeight(),
+                                        (int) (255 * (1f - 0.85f * meeroSnapshotProgress)), Canvas.ALL_SAVE_FLAG);
                             }
                             if (cell != null && scrimGroup == null && cell.drawBackgroundInParent()) {
                                 canvas.save();
@@ -18895,6 +18894,9 @@ public class ChatActivity extends BaseFragment implements
                             }
                             if (actionCell != null) {
                                 actionCell.drawOutboundsContent(canvas);
+                            }
+                            if (meeroFadeSave != -1) {
+                                canvas.restoreToCount(meeroFadeSave);
                             }
 
                             canvas.restore();
@@ -33643,6 +33645,30 @@ public class ChatActivity extends BaseFragment implements
                     }
                 }
 
+                // MeeroX: put a copy of the bubble between the reaction bar and
+                // the menu, giving the iOS stack:
+                //     [reactions] / [bubble] / [menu]
+                // Doing it here - inside the popup - is the only way the bubble
+                // can appear above the menu, because the menu is its own system
+                // window. It also means the bubble is never clipped by the chat
+                // list and long messages can be scrolled instead of shrunk.
+                meeroSnapshotView = null;
+                meeroSnapshotShown = false;
+                if (meeroMenuBlurEnabled() && !isInsideContainer && v instanceof ChatMessageCell) {
+                    final MeeroBubbleSnapshotView snap = MeeroBubbleSnapshotView.capture(contentView.getContext(), (ChatMessageCell) v);
+                    if (snap != null) {
+                        final boolean out = message != null && message.isOutOwner();
+                        final LinearLayout.LayoutParams sp = LayoutHelper.createLinear(
+                                LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT,
+                                out ? Gravity.RIGHT : Gravity.LEFT,
+                                0, 0, 0, 10);
+                        scrimPopupContainerLayout.addView(snap, sp);
+                        scrimPopupContainerLayout.setClipChildren(false);
+                        meeroSnapshotView = snap;
+                        meeroSnapshotShown = true;
+                    }
+                }
+
                 boolean showNoForwards = (isPeerNoForwards() || message.messageOwner.noforwards && currentUser != null && currentUser.bot) && message.messageOwner.action == null && message.isSent() && !message.isEditing() && chatMode != MODE_SCHEDULED && chatMode != MODE_SAVED && getDialogId() != UserObject.VERIFY;
                 scrimPopupContainerLayout.addView(popupLayout, LayoutHelper.createLinearRelatively(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.LEFT, isReactionsAvailable ? 16 : 0, 0, isReactionsAvailable ? 36 : 0, 0));
                 scrimPopupContainerLayout.setPopupWindowLayout(popupLayout);
@@ -33808,6 +33834,32 @@ public class ChatActivity extends BaseFragment implements
                 scrimPopupWindow.setAnimationStyle(0);
             }
             scrimPopupWindow.setFocusable(true);
+            // MeeroX: tell the bubble copy how much room it may take before the
+            // container is measured, so a long message becomes scrollable
+            // instead of pushing the menu off the bottom of the screen.
+            if (meeroSnapshotShown && meeroSnapshotView != null) {
+                popupLayout.measure(
+                        View.MeasureSpec.makeMeasureSpec(AndroidUtilities.displaySize.x, View.MeasureSpec.AT_MOST),
+                        View.MeasureSpec.makeMeasureSpec(AndroidUtilities.displaySize.y, View.MeasureSpec.AT_MOST));
+                final int meeroMenuHeight = popupLayout.getMeasuredHeight();
+                final int meeroReactionsHeight = (isReactionsAvailable && reactionsLayout != null)
+                        ? (int) (dp(52) + reactionsLayout.getTopOffset() + dp(30))
+                        : 0;
+                int meeroRoom = contentView.getHeight() - meeroReactionsHeight - meeroMenuHeight - dp(90);
+                if (meeroRoom < dp(80)) {
+                    meeroRoom = dp(80);
+                }
+                // Cap the copy at the width the container would have anyway
+                // (menu + its margins). Letting it grow wider would re-align
+                // the reaction bar, which is positioned relative to the
+                // container, so this keeps the existing layout intact.
+                int meeroMaxW = popupLayout.getMeasuredWidth() + dp(isReactionsAvailable ? 52 : 0);
+                final int meeroScreenW = AndroidUtilities.displaySize.x - dp(24);
+                if (meeroMaxW > meeroScreenW) {
+                    meeroMaxW = meeroScreenW;
+                }
+                meeroSnapshotView.setMaxContentSize(meeroMaxW, meeroRoom);
+            }
             scrimPopupContainerLayout.measure(View.MeasureSpec.makeMeasureSpec(AndroidUtilities.dp(1000), View.MeasureSpec.AT_MOST), View.MeasureSpec.makeMeasureSpec(AndroidUtilities.dp(1000), View.MeasureSpec.AT_MOST));
             scrimPopupWindow.setInputMethodMode(ActionBarPopupWindow.INPUT_METHOD_NOT_NEEDED);
             scrimPopupWindow.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_NOTHING);
@@ -33819,6 +33871,28 @@ public class ChatActivity extends BaseFragment implements
                 popupX = AndroidUtilities.dp(6);
             } else if (popupX > chatListView.getMeasuredWidth() - AndroidUtilities.dp(6) - scrimPopupContainerLayout.getMeasuredWidth()) {
                 popupX = chatListView.getMeasuredWidth() - AndroidUtilities.dp(6) - scrimPopupContainerLayout.getMeasuredWidth();
+            }
+            // MeeroX: anchor the popup to the edge of the bubble rather than to
+            // the touch point, so the bubble copy inside the popup sits exactly
+            // over the real one. The menu then hangs off the same side as the
+            // message, which is what iOS does.
+            if (meeroSnapshotShown && meeroSnapshotView != null) {
+                final int containerW = scrimPopupContainerLayout.getMeasuredWidth();
+                final int bubbleLeftOnScreen = (int) (chatListView.getLeft() + v.getX()
+                        + meeroSnapshotView.getBubbleLeftInCell());
+                if (message != null && message.isOutOwner()) {
+                    final int bubbleRightOnScreen = bubbleLeftOnScreen + meeroSnapshotView.getBubbleWidthPx();
+                    popupX = bubbleRightOnScreen - containerW;
+                } else {
+                    popupX = bubbleLeftOnScreen;
+                }
+                final int minX = AndroidUtilities.dp(6);
+                final int maxX = Math.max(minX, chatListView.getMeasuredWidth() - AndroidUtilities.dp(6) - containerW);
+                if (popupX < minX) {
+                    popupX = minX;
+                } else if (popupX > maxX) {
+                    popupX = maxX;
+                }
             }
             if (AndroidUtilities.isTablet()) {
                 int[] location = new int[2];
@@ -33837,86 +33911,62 @@ public class ChatActivity extends BaseFragment implements
             int maxY = totalHeight - height - dp(8);
             if (height < totalHeight) {
                 popupY = (int) (chatListView.getY() + v.getTop() + y);
-                // MeeroX: iOS keeps the message visible and puts the menu a
-                // constant distance under it. Measured off the reference
-                // screenshot: bubble bottom to menu top is ~10dp.
+                // MeeroX: the popup now contains the bubble copy, so the whole
+                // stack - reactions, bubble, menu - is laid out by the
+                // LinearLayout and positioned as one unit.
                 //
-                // When the menu will not fit below, iOS slides the message up
-                // rather than covering it, so we compute how far the bubble
-                // has to travel and hand that to meeroScrimLift; the scrim
-                // draw code translates the bubble by that amount.
-                if (meeroMenuBlurEnabled() && !isInsideContainer) {
+                // The window is placed so the bubble copy lands exactly on top
+                // of the real bubble; the user sees the menu appear rather than
+                // the message jumping. Only when the menu would run off the
+                // bottom does the whole stack slide up, which is what iOS does.
+                if (meeroSnapshotShown && meeroSnapshotView != null) {
                     meeroPositioned = true;
-                    final int gap = dp(10);
 
-                    // popupY positions the whole container, which starts with
-                    // the reaction bar when reactions are shown - so the menu
-                    // itself begins this far into it.
-                    final int menuOffsetInContainer = (isReactionsAvailable && reactionsLayout != null)
-                            ? (int) (dp(52) + reactionsLayout.getTopOffset() + dp(30))
-                            : 0;
-
-                    // v is the whole list row, which is taller and wider than
-                    // the bubble itself. Measure the bubble so the gap and the
-                    // scale are computed against what the user actually sees.
-                    int bubbleLocalTop = 0;
-                    int bubbleLocalBottom = v.getHeight();
-                    if (v instanceof ChatMessageCell) {
-                        final ChatMessageCell mc = (ChatMessageCell) v;
-                        final int pad = mc.getPaddingTop();
-                        final int bt = pad + mc.getBackgroundDrawableTop();
-                        final int bb = pad + mc.getBackgroundDrawableBottom();
-                        if (bb > bt) {
-                            bubbleLocalTop = bt;
-                            bubbleLocalBottom = bb;
+                    // Distance from the top of the popup to the top of the
+                    // bubble copy inside it. Summed from the measured children
+                    // rather than assumed: the reaction bar carries a 50dp top
+                    // and a -20dp bottom margin, and its height depends on
+                    // getTopOffset(), so hardcoding it drifts.
+                    int bubbleOffsetInPopup = 0;
+                    for (int ci = 0, cn = scrimPopupContainerLayout.getChildCount(); ci < cn; ci++) {
+                        final View childAt = scrimPopupContainerLayout.getChildAt(ci);
+                        if (childAt == meeroSnapshotView) {
+                            final ViewGroup.LayoutParams glp = childAt.getLayoutParams();
+                            if (glp instanceof ViewGroup.MarginLayoutParams) {
+                                bubbleOffsetInPopup += ((ViewGroup.MarginLayoutParams) glp).topMargin;
+                            }
+                            break;
+                        }
+                        if (childAt.getVisibility() == View.GONE) {
+                            continue;
+                        }
+                        bubbleOffsetInPopup += childAt.getMeasuredHeight();
+                        final ViewGroup.LayoutParams glp = childAt.getLayoutParams();
+                        if (glp instanceof ViewGroup.MarginLayoutParams) {
+                            final ViewGroup.MarginLayoutParams mlp = (ViewGroup.MarginLayoutParams) glp;
+                            bubbleOffsetInPopup += mlp.topMargin + mlp.bottomMargin;
                         }
                     }
-                    final int bubbleTop = (int) (chatListView.getY() + v.getTop() + bubbleLocalTop);
-                    final int bubbleBottom = (int) (chatListView.getY() + v.getTop() + bubbleLocalBottom);
-                    final int bubbleH = bubbleLocalBottom - bubbleLocalTop;
 
-                    // Everything has to fit between the top of the list and the
-                    // bottom of the screen:
-                    //     [reaction bar][bubble][gap][menu]
-                    final int menuH = height - menuOffsetInContainer;
-                    final int screenTop = (int) (chatListView.getY() + dp(24));
+                    // Where the real bubble is drawn on screen right now. Use
+                    // getY(), not getTop(): a cell being animated carries a
+                    // translationY, and getTop() ignores it.
+                    final int realBubbleTop = (int) (chatListView.getY() + v.getY()
+                            + meeroSnapshotView.getBubbleTopInCell());
+
+                    // Line the copy up with the original.
+                    popupY = realBubbleTop - bubbleOffsetInPopup;
+
+                    // Keep the whole stack on screen. height already includes
+                    // the dp(48) slack upstream adds.
+                    final int screenTop = (int) Math.max(chatListView.getY(), dp(24));
                     final int screenBottom = totalHeight - dp(8);
-                    final int available = screenBottom - screenTop;
-                    final int needed = menuOffsetInContainer + bubbleH + gap + menuH;
-
-                    // A tall message is scaled down - as iOS does - so the
-                    // stack still fits. Never below 55%, never above 1.
-                    float scale = 1f;
-                    if (needed > available) {
-                        final int forBubble = available - menuOffsetInContainer - gap - menuH;
-                        scale = forBubble / (float) bubbleH;
-                        if (scale < 0.55f) scale = 0.55f;
-                        if (scale > 1f) scale = 1f;
+                    if (popupY + height > screenBottom) {
+                        popupY = screenBottom - height;
                     }
-                    meeroScrimScale = scale;
-
-                    final int scaledH = (int) (bubbleH * scale);
-
-                    // Place the bubble directly under the reaction bar, then
-                    // hang the menu below it.
-                    int bubbleTargetTop = screenTop + menuOffsetInContainer;
-                    int menuTop = bubbleTargetTop + scaledH + gap;
-                    if (menuTop + menuH > screenBottom) {
-                        menuTop = screenBottom - menuH;
-                        bubbleTargetTop = menuTop - gap - scaledH;
+                    if (popupY < screenTop) {
+                        popupY = screenTop;
                     }
-
-                    popupY = menuTop - menuOffsetInContainer;
-
-                    // The bubble is scaled about its centre, so compensate for
-                    // the shift that introduces when computing the travel.
-                    final int centreShift = (bubbleH - scaledH) / 2;
-                    int lift = bubbleTop - bubbleTargetTop + centreShift;
-                    if (lift < 0) lift = 0;
-                    meeroScrimLift = lift;
-                } else {
-                    meeroScrimLift = 0;
-                    meeroScrimScale = 1f;
                 }
                 if (isInsideContainer) {
                     int[] location = new int[2];
