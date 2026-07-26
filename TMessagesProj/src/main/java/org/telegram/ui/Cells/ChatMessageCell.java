@@ -12514,6 +12514,11 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
         invalidatesParent = value;
     }
 
+    /** MeeroX: read back so a snapshot capture can restore the previous value. */
+    public boolean isInvalidatesParentMeero() {
+        return invalidatesParent;
+    }
+
     private boolean invalidateParentForce() {
         return (
             !links.isEmpty() ||
