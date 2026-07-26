@@ -106,6 +106,17 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
     private static final int INDEX_SETTINGS = 2;
     private static final int INDEX_CALLS = 3;
     private static final int INDEX_PROFILE = 4;
+    /** MeeroX: extra search tab, shown at the end of the bar. */
+    private static final int INDEX_MEERO_SEARCH = 5;
+
+    /** MeeroX: master switch for the iOS-style dialogs chrome. */
+    private static boolean meeroDialogsStyleEnabled() {
+        try {
+            return tw.nekomimi.nekogram.NekoConfig.meeroDialogsStyle.Bool();
+        } catch (Throwable e) {
+            return false;
+        }
+    }
 
     private int indexToPosition(int index) {
         // return index > 2 ? index - 1 : index;
@@ -317,18 +328,28 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
         tabsView.setPadding(paddingH, paddingV, paddingH, paddingV);
         tabsView.setMaxWidth(dp(328 + DialogsActivity.MAIN_TABS_MARGIN * 2));
 
-        tabs = new GlassTabView[5];
+        final boolean meeroSearchTab = meeroDialogsStyleEnabled();
+        tabs = new GlassTabView[meeroSearchTab ? 6 : 5];
         tabs[INDEX_CHATS] = GlassTabView.createMainTab(context, resourceProvider, GlassTabView.TabAnimation.CHATS, R.string.MainTabsChats);
         tabs[INDEX_CONTACTS] = GlassTabView.createMainTab(context, resourceProvider, GlassTabView.TabAnimation.CONTACTS, R.string.MainTabsContacts);
         tabs[INDEX_SETTINGS] = GlassTabView.createMainTab(context, resourceProvider, GlassTabView.TabAnimation.SETTINGS, R.string.Settings);
         tabs[INDEX_CALLS] = GlassTabView.createMainTab(context, resourceProvider, GlassTabView.TabAnimation.CALLS, R.string.MainTabsCalls);
         tabs[INDEX_PROFILE] = GlassTabView.createAvatar(context, resourceProvider, currentAccount, R.string.MainTabsProfile);
+        if (meeroSearchTab) {
+            // MeeroX: a search entry on the bar, matching the iOS layout. It
+            // is a shortcut that focuses the search field on the chats screen,
+            // not a new page - the pager still has the same fragments.
+            tabs[INDEX_MEERO_SEARCH] = GlassTabView.createMainTab(context, resourceProvider,
+                    GlassTabView.TabAnimation.MEERO_SEARCH, R.string.Search);
+        }
         tabs[INDEX_CHATS].setOnLongClickListener(this::openFoldersSelector);
         tabs[INDEX_CONTACTS].setOnLongClickListener(this::openContactsSelector);
         tabs[INDEX_CALLS].setOnLongClickListener(this::openCallsSelector);
         tabs[INDEX_PROFILE].setOnLongClickListener(this::openAccountSelector);
         for (GlassTabView tab : tabs) {
-            tab.setMainTabsCompact(compact);
+            if (tab != null) {
+                tab.setMainTabsCompact(compact);
+            }
         }
 
         tabsView.addTabToIgnoreClick(tabs[INDEX_CHATS]);
@@ -341,6 +362,26 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
             final GlassTabView view = tabs[index];
             final int tabIndex = index;
             final int position = indexToPosition(index);
+            if (index == INDEX_MEERO_SEARCH) {
+                // MeeroX: this tab has no page of its own - it jumps to the
+                // chats page and opens the search that already lives there.
+                tabs[index].setOnClickListener(v -> {
+                    final int chats = MainTabsHelper.getChatsPosition();
+                    if (viewPager.getCurrentPosition() != chats) {
+                        selectTab(chats, true);
+                        viewPager.scrollToPosition(chats);
+                    }
+                    AndroidUtilities.runOnUIThread(() -> {
+                        final BaseFragment fragment = getCurrentVisibleFragment();
+                        if (fragment instanceof DialogsActivity) {
+                            ((DialogsActivity) fragment).meeroOpenSearch();
+                        }
+                    }, 120);
+                });
+                tabsView.addView(tabs[index]);
+                tabsView.setViewVisible(view, true, false);
+                continue;
+            }
             tabs[index].setOnLongClickListener(v -> processLongClick(v, tabIndex));
             tabs[index].setOnClickListener(v -> {
                 if (position < 0) {
@@ -799,12 +840,28 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
     public void selectTab(int position, boolean animated) {
         for (int a = 0; a < tabs.length; a++) {
             GlassTabView tab = tabs[a];
+            if (tab == null) {
+                continue;
+            }
+            // MeeroX: the search tab is an action, not a page, so it never
+            // shows as the selected one.
+            if (a == INDEX_MEERO_SEARCH) {
+                tab.setSelected(false, animated);
+                continue;
+            }
             tab.setSelected(indexToPosition(a) == position, animated);
         }
     }
 
     public void setGestureSelectedOverride(float animatedPosition, boolean allow) {
         for (int index = 0; index < tabs.length; index++) {
+            if (tabs[index] == null) {
+                continue;
+            }
+            if (index == INDEX_MEERO_SEARCH) {
+                tabs[index].setGestureSelectedOverride(0, allow);
+                continue;
+            }
             final int position = indexToPosition(index);
             final float visibility = Math.max(0, 1f - Math.abs(position - animatedPosition));
             tabs[index].setGestureSelectedOverride(visibility, allow);
