@@ -3582,6 +3582,13 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                     }
                     openWriteContacts();
                 });
+
+                // The reference sits each header button on a soft circular
+                // chip. Applied to the icon buttons only - the title and the
+                // search field keep their own styling.
+                meeroRoundHeaderButton(meeroComposeItem);
+                meeroRoundHeaderButton(optionsItem);
+                meeroRoundHeaderButton(meeroEditItem);
             }
         }
 
@@ -10524,6 +10531,20 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                 AndroidUtilities.showKeyboard(fragmentSearchField.editText);
             }
         }, 80);
+    }
+
+    /**
+     * MeeroX: gives a header button the round tinted background used in the
+     * iOS layout. Purely cosmetic - the click handling is untouched.
+     */
+    private void meeroRoundHeaderButton(ActionBarMenuItem item) {
+        if (item == null) {
+            return;
+        }
+        final int tint = getThemedColor(Theme.key_windowBackgroundWhiteBlackText);
+        final int bg = androidx.core.graphics.ColorUtils.setAlphaComponent(tint, 26);
+        item.setBackground(Theme.createSimpleSelectorCircleDrawable(dp(38), bg,
+                getThemedColor(Theme.key_listSelector)));
     }
 
     /** MeeroX: master switch for the iOS-style dialogs header. */
