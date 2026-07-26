@@ -705,4 +705,6 @@
     <string name="MeeroMenuBlurInfo">خلفية زجاجية ضبابية عند الضغط المطوّل على رسالة.</string>
     <string name="meeroIosBubbles">فقاعات رسائل بنمط iOS</string>
     <string name="MeeroIosBubblesInfo">شكل كبسولة مع ذيل واضح. أوقفه لاستعادة فقاعات تيليجرام الأصلية.</string>
+    <string name="meeroTapMenu">فتح القائمة بنقرة واحدة</string>
+    <string name="MeeroTapMenuInfo">انقر على فقاعة الرسالة لفتح قائمتها. الضغط المطوّل يبقى يعمل.</string>
 </resources>

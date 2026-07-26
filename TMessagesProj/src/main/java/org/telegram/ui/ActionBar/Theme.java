@@ -210,7 +210,12 @@ public class Theme {
         private static int meeroBubbleRadius() {
             try {
                 if (tw.nekomimi.nekogram.NekoConfig.meeroIosBubbles.Bool()) {
-                    return 30;
+                    // Measured from the reference screenshot: a 664x190 bubble
+                    // has a 40px corner, i.e. ~21% of its height. Telegram
+                    // wants the value in dp and clamps it to heightHalf, so 20
+                    // reproduces that curve on a normal two-line bubble while
+                    // short bubbles stay correct.
+                    return 20;
                 }
             } catch (Throwable ignore) {}
             return SharedConfig.bubbleRadius;
@@ -220,7 +225,8 @@ public class Theme {
         private static int meeroTailRadius() {
             try {
                 if (tw.nekomimi.nekogram.NekoConfig.meeroIosBubbles.Bool()) {
-                    return AndroidUtilities.dp(9);
+                    // The reference tail protrudes ~13px on a 190px bubble.
+                    return AndroidUtilities.dp(8);
                 }
             } catch (Throwable ignore) {}
             return AndroidUtilities.dp(6);

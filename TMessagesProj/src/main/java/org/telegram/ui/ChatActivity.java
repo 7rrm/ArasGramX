@@ -11383,8 +11383,23 @@ public class ChatActivity extends BaseFragment implements
         }
     }
 
+    /**
+     * MeeroX: blur the chat behind the message menu instead of only dimming
+     * it. The machinery already exists (scrimBlurBitmapPaint), upstream just
+     * passes blur=false from this overload, which is the one the message menu
+     * goes through.
+     */
+    private static boolean meeroMenuBlurEnabled() {
+        try {
+            return tw.nekomimi.nekogram.NekoConfig.meeroMenuBlur.Bool()
+                && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S;
+        } catch (Throwable e) {
+            return false;
+        }
+    }
+
     private void dimBehindView(View view, boolean enable) {
-        dimBehindView(view, false, enable);
+        dimBehindView(view, enable && meeroMenuBlurEnabled(), enable);
     }
 
     private void dimBehindView(View view, boolean blur, boolean enable) {
@@ -11394,7 +11409,7 @@ public class ChatActivity extends BaseFragment implements
 
     private void dimBehindView(View view, float value) {
         setScrimView(view);
-        dimBehindView(value, false, view != sideControlsButtonsLayout);
+        dimBehindView(value, value > 0 && meeroMenuBlurEnabled(), view != sideControlsButtonsLayout);
     }
 
     private void setScrimView(View scrimView) {

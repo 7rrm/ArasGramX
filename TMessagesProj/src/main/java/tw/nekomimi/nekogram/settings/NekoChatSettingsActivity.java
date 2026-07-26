@@ -94,6 +94,7 @@ public class NekoChatSettingsActivity extends BaseNekoXSettingsActivity implemen
     private final AbstractConfigCell headerMeero = cellGroup.appendCell(new ConfigCellHeader("MeeroX"));
     private final AbstractConfigCell meeroMenuBlurRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroMenuBlur, getString(R.string.MeeroMenuBlurInfo)));
     private final AbstractConfigCell meeroIosBubblesRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosBubbles, getString(R.string.MeeroIosBubblesInfo)));
+    private final AbstractConfigCell meeroTapMenuRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroTapMenu, getString(R.string.MeeroTapMenuInfo)));
     private final AbstractConfigCell dividerMeero = cellGroup.appendCell(new ConfigCellDivider());
 
     // Sticker Size

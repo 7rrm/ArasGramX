@@ -4932,6 +4932,17 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
     }
 
     @Override
+    private float meeroDownX, meeroDownY;
+    private long meeroDownTime;
+
+    private static boolean meeroTapMenuEnabled() {
+        try {
+            return tw.nekomimi.nekogram.NekoConfig.meeroTapMenu.Bool();
+        } catch (Throwable e) {
+            return false;
+        }
+    }
+
     public boolean onTouchEvent(MotionEvent event) {
         if (currentMessageObject == null || delegate != null && !delegate.canPerformActions() || animationRunning) {
             if (currentMessageObject != null && currentMessageObject.preview) {
@@ -5086,6 +5097,28 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
         }
         if (!result) {
             result = checkAdminTouchEvent(event);
+        }
+
+        // MeeroX: open the message menu on a plain tap.
+        // Reached only after every other hit test above has declined, so the
+        // touch landed on the bubble body - not a link, image, button, poll,
+        // reaction or reply. Long press keeps working as before.
+        if (!result && event.getAction() == MotionEvent.ACTION_UP && meeroTapMenuEnabled()) {
+            final float ux = getEventX(event);
+            final float uy = getEventY(event);
+            if (Math.abs(ux - meeroDownX) < AndroidUtilities.dp(12)
+                    && Math.abs(uy - meeroDownY) < AndroidUtilities.dp(12)
+                    && (System.currentTimeMillis() - meeroDownTime) < 350
+                    && delegate != null && delegate.canPerformActions()) {
+                cancelCheckLongPress();
+                delegate.didLongPress(this, ux, uy);
+                return true;
+            }
+        }
+        if (event.getAction() == MotionEvent.ACTION_DOWN) {
+            meeroDownX = getEventX(event);
+            meeroDownY = getEventY(event);
+            meeroDownTime = System.currentTimeMillis();
         }
 
         if (event.getAction() == MotionEvent.ACTION_CANCEL) {

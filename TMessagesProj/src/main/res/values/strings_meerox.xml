@@ -16,4 +16,6 @@
     <string name="MeeroMenuBlurInfo">Frosted glass backdrop when you long-press a message.</string>
     <string name="meeroIosBubbles">iOS-style message bubbles</string>
     <string name="MeeroIosBubblesInfo">Capsule shape with a visible tail. Turn off for stock Telegram bubbles.</string>
+    <string name="meeroTapMenu">Open menu with a single tap</string>
+    <string name="MeeroTapMenuInfo">Tap a message bubble to open its menu. Long press keeps working.</string>
 </resources>
