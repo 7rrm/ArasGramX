@@ -204,8 +204,21 @@ public class FragmentSearchField extends FrameLayout implements FactorAnimator.T
         canvas.restore();
     }
 
+    /**
+     * MeeroX: the iOS search field is a full pill rather than a lightly
+     * rounded box. 26dp fully rounds the 48dp-tall field; the theme still
+     * supplies the colour.
+     */
+    private static int meeroFieldRadius() {
+        try {
+            return tw.nekomimi.nekogram.NekoConfig.meeroDialogsStyle.Bool() ? dp(26) : dp(20);
+        } catch (Throwable e) {
+            return dp(20);
+        }
+    }
+
     public void setupBlurredBackground(BlurredBackgroundDrawable drawable) {
-        drawable.setRadius(dp(20));
+        drawable.setRadius(meeroFieldRadius());
         drawable.setPadding(dp(4));
         blurredBackgroundDrawable = drawable;
     }
@@ -270,9 +283,10 @@ public class FragmentSearchField extends FrameLayout implements FactorAnimator.T
     @Override
     public void updateColors() {
         final boolean isDark = resourcesProvider != null ? resourcesProvider.isDark() : Theme.isCurrentThemeDark();
+        final int meeroRad = meeroFieldRadius();
         bg = isSectionBackground ?
-            Theme.createRoundRectDrawableShadowed(dp(20), getThemedColor(Theme.key_windowBackgroundWhite)) :
-            Theme.createRoundRectDrawable(dp(20), isWhiteBackground ? getThemedColor(Theme.key_windowBackgroundWhite) : getThemedColor(Theme.key_windowBackgroundWhiteBlackText, isDark ? 0.07f : 0.05f));
+            Theme.createRoundRectDrawableShadowed(meeroRad, getThemedColor(Theme.key_windowBackgroundWhite)) :
+            Theme.createRoundRectDrawable(meeroRad, isWhiteBackground ? getThemedColor(Theme.key_windowBackgroundWhite) : getThemedColor(Theme.key_windowBackgroundWhiteBlackText, isDark ? 0.07f : 0.05f));
         searchIcon.setColorFilter(getThemedColor(Theme.key_windowBackgroundWhiteBlackText, 0.6f), PorterDuff.Mode.MULTIPLY);
         closeIcon.setColorFilter(getThemedColor(Theme.key_windowBackgroundWhiteBlackText, 0.6f), PorterDuff.Mode.MULTIPLY);
         closeIcon.setBackground(Theme.createSelectorDrawable(getThemedColor(Theme.key_listSelector), 1, dp(17)));
