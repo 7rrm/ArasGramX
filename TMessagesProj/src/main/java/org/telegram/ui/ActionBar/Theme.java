@@ -220,10 +220,10 @@ public class Theme {
         private static int meeroTailRadius() {
             try {
                 if (tw.nekomimi.nekogram.NekoConfig.meeroIosBubbles.Bool()) {
-                    return dp(9);
+                    return AndroidUtilities.dp(9);
                 }
             } catch (Throwable ignore) {}
-            return dp(6);
+            return AndroidUtilities.dp(6);
         }
 
 
