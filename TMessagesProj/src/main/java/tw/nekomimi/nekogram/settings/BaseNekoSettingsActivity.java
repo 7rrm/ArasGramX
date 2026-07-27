@@ -371,13 +371,12 @@ public abstract class BaseNekoSettingsActivity extends BaseFragment {
                 final TextCell cell = (TextCell) v;
                 // Each row gets its own hue so the list is scannable instead
                 // of a column of identical badges.
-                final int accent = tw.nekomimi.nekogram.MeeroCards.IconTileDrawable
-                        .accentFor(position, resourcesProvider);
-                cell.getImageView().setBackground(
-                        new tw.nekomimi.nekogram.MeeroCards.IconTileDrawable(resourcesProvider)
-                                .setTintIndex(position));
-                cell.getImageView().setColorFilter(
-                        new android.graphics.PorterDuffColorFilter(accent, android.graphics.PorterDuff.Mode.SRC_IN));
+                //
+                // The tile is asked for by index and painted by the cell
+                // itself. Setting it as the icon view's background - which is
+                // what this did before - stretched the square to that view's
+                // 24x31dp box and it came out as a clipped rectangle.
+                cell.setMeeroIconTile(position);
                 cell.setMeeroDividerEnabled(false);
             }
         }
