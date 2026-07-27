@@ -222,6 +222,23 @@ public class ChatInputViewsContainer extends FrameLayout {
         invalidate();
     }
 
+    /**
+     * MeeroX: pulls the glass bubble in from both edges so the attach and
+     * record buttons sit outside it as their own discs, matching the iOS
+     * input bar. Returns 0 when the style is off, leaving the bubble
+     * edge-to-edge exactly as upstream draws it.
+     */
+    public static int meeroInputSideInset() {
+        try {
+            if (!tw.nekomimi.nekogram.NekoConfig.meeroIosInput.Bool()) {
+                return 0;
+            }
+        } catch (Throwable e) {
+            return 0;
+        }
+        return dp(52);
+    }
+
     public float getInputBubbleHeight() {
         return inputBubbleHeight;
     }
@@ -259,10 +276,13 @@ public class ChatInputViewsContainer extends FrameLayout {
 
         final int blurTop = getMeasuredHeight() - currentBlurredHeight;
 
+        // MeeroX: shrink the glass pill away from both edges so the attach and
+        // record buttons read as separate discs beside it.
+        final int meeroInset = meeroInputSideInset();
         tmpRect.set(
-            Math.round(inputBubbleOffsetLeft),
+            Math.round(inputBubbleOffsetLeft) + meeroInset,
             0,
-            getMeasuredWidth() - Math.round(inputBubbleOffsetRight),
+            getMeasuredWidth() - Math.round(inputBubbleOffsetRight) - meeroInset,
             inputBubbleHeightRound
         );
         tmpRect.inset(0, -dp(7));
@@ -271,6 +291,27 @@ public class ChatInputViewsContainer extends FrameLayout {
         blurredBackgroundDrawable.setBounds(tmpRect);
         if (drawInputBackground)
             blurredBackgroundDrawable.draw(canvas);
+
+        // MeeroX: the buttons the pill just made room for get their own glass
+        // discs, so the bar reads as [attach] [field] [record] like iOS.
+        if (drawInputBackground && meeroInset > 0) {
+            final int cy = tmpRect.centerY();
+            final int d = Math.min(dp(46), tmpRect.height() - dp(6));
+            final int r = d / 2;
+            if (r > 0) {
+                final int leftCx = Math.round(inputBubbleOffsetLeft) + meeroInset / 2;
+                final int rightCx = getMeasuredWidth() - Math.round(inputBubbleOffsetRight) - meeroInset / 2;
+                final int savedRadius = dp(INPUT_BUBBLE_RADIUS);
+                blurredBackgroundDrawable.setRadius(r);
+                tmpRect.set(leftCx - r, cy - r, leftCx + r, cy + r);
+                blurredBackgroundDrawable.setBounds(tmpRect);
+                blurredBackgroundDrawable.draw(canvas);
+                tmpRect.set(rightCx - r, cy - r, rightCx + r, cy + r);
+                blurredBackgroundDrawable.setBounds(tmpRect);
+                blurredBackgroundDrawable.draw(canvas);
+                blurredBackgroundDrawable.setRadius(savedRadius);
+            }
+        }
 
         if (needDrawInAppKeyboard) {
             underKeyboardBackgroundDrawable.draw(canvas);
