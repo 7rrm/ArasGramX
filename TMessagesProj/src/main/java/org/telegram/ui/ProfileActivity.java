@@ -14833,10 +14833,12 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
 
         /** The detail rows that belong inside the card. */
         private boolean meeroIsProfileCardRow(int type) {
+            // VIEW_TYPE_ABOUT_LINK is deliberately excluded: AboutLinkCell
+            // paints its own bottom fade tinted with the page background, and
+            // on top of the lighter card that fade showed up as a black band.
             return type == VIEW_TYPE_TEXT_DETAIL
                     || type == VIEW_TYPE_TEXT_DETAIL_MULTILINE
-                    || type == VIEW_TYPE_TEXT_DETAIL_MULTILINE_2
-                    || type == VIEW_TYPE_ABOUT_LINK;
+                    || type == VIEW_TYPE_TEXT_DETAIL_MULTILINE_2;
         }
 
         @Override
