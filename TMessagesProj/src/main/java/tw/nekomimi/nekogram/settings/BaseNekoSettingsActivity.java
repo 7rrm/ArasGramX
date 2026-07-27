@@ -369,9 +369,13 @@ public abstract class BaseNekoSettingsActivity extends BaseFragment {
             // recolour the glyph to match.
             if (v instanceof TextCell) {
                 final TextCell cell = (TextCell) v;
-                final int accent = tw.nekomimi.nekogram.MeeroCards.IconTileDrawable.accent(resourcesProvider);
+                // Each row gets its own hue so the list is scannable instead
+                // of a column of identical badges.
+                final int accent = tw.nekomimi.nekogram.MeeroCards.IconTileDrawable
+                        .accentFor(position, resourcesProvider);
                 cell.getImageView().setBackground(
-                        new tw.nekomimi.nekogram.MeeroCards.IconTileDrawable(resourcesProvider));
+                        new tw.nekomimi.nekogram.MeeroCards.IconTileDrawable(resourcesProvider)
+                                .setTintIndex(position));
                 cell.getImageView().setColorFilter(
                         new android.graphics.PorterDuffColorFilter(accent, android.graphics.PorterDuff.Mode.SRC_IN));
                 cell.setMeeroDividerEnabled(false);
@@ -392,10 +396,13 @@ public abstract class BaseNekoSettingsActivity extends BaseFragment {
             }
             final View v = holder.itemView;
             v.setBackground(null);
-            v.setPadding(dp(20), dp(12), dp(20), dp(6));
+            // Sits just above its card, with more air above than below so the
+            // title clearly belongs to the group under it.
+            v.setPadding(dp(24), dp(18), dp(24), dp(4));
             if (v instanceof HeaderCell) {
-                ((HeaderCell) v).setTextColor(
-                        getThemedColor(Theme.key_windowBackgroundWhiteBlueHeader));
+                final HeaderCell header = (HeaderCell) v;
+                header.setTextColor(getThemedColor(Theme.key_windowBackgroundWhiteBlueHeader));
+                header.setTextSize(13);
             }
         }
 
