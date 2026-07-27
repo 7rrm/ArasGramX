@@ -90,6 +90,145 @@ public class MediaActionDrawable extends Drawable {
         void invalidate();
     }
 
+    /**
+     * MeeroX: iOS 26 download indicator.
+     *
+     * Telegram for iOS draws the ring in RadialProgressContentNode. Everything
+     * there is derived from a single factor - the node's width over 50 - so a
+     * 24dp mini ring and a 48dp full one keep the same proportions. Android
+     * instead hardcodes dp(3) for the stroke and dp(4) for the inset, which is
+     * why the ring reads heavier here than on iOS at the same size.
+     *
+     * The constants below are the ones from that Swift file, unchanged:
+     *   lineWidth    = max(1.6, 2.25 * factor)
+     *   pathDiameter = width - lineWidth - 2.5 * 2
+     *   crossSize    = 14 * factor,  cross stroke = max(1.3, 2.0 * factor)
+     * and the indefinite spinner runs 0 -> 2 over 2.5s while the layer itself
+     * turns once every 1.5s.
+     */
+    private static final float IOS_REFERENCE_DIAMETER = 50.0f;
+    private static final float IOS_LINE_WIDTH_FACTOR = 2.25f;
+    private static final float IOS_LINE_WIDTH_MIN = 1.6f;
+    private static final float IOS_PATH_INSET = 2.5f;
+    private static final float IOS_CROSS_SIZE_FACTOR = 14.0f;
+    private static final float IOS_CROSS_WIDTH_FACTOR = 2.0f;
+    private static final float IOS_CROSS_WIDTH_MIN = 1.3f;
+    /** Full turn of the ring itself, "progressRotation" on iOS. */
+    private static final float IOS_ROTATION_PERIOD = 1500.0f;
+    /** One 0 -> 2 sweep of the indefinite spinner. */
+    private static final float IOS_SWEEP_PERIOD = 2500.0f;
+
+    /** Angle of the iOS spinner's own rotation, degrees. */
+    private float iosRotation;
+    /** Sweep phase, 0 -> 2: grows to a full ring, then unwinds from the head. */
+    private float iosSweep;
+
+    public static boolean meeroIosLoadingEnabled() {
+        try {
+            return tw.nekomimi.nekogram.NekoConfig.meeroIosLoading.Bool();
+        } catch (Throwable e) {
+            return false;
+        }
+    }
+
+    /** iOS's factor: every dimension scales with the ring's diameter. */
+    private float iosFactor() {
+        final android.graphics.Rect bounds = getBounds();
+        final float diameter = Math.min(bounds.width(), bounds.height());
+        return diameter / (IOS_REFERENCE_DIAMETER * AndroidUtilities.density);
+    }
+
+    private float iosLineWidth() {
+        return Math.max(IOS_LINE_WIDTH_MIN * AndroidUtilities.density,
+                IOS_LINE_WIDTH_FACTOR * AndroidUtilities.density * iosFactor());
+    }
+
+    /**
+     * Draws the ring the way RadialProgressContentSpinnerNode does.
+     *
+     * With a known progress the arc simply runs from -90 degrees. Without one
+     * it follows the 0 -> 2 sweep: for the first half the head runs ahead of a
+     * pinned tail, for the second the tail catches up, which is what gives the
+     * iOS spinner its stretch-and-snap rather than a fixed-length arc.
+     */
+    private void drawIosRing(Canvas canvas, int alpha, boolean indefinite) {
+        final android.graphics.Rect bounds = getBounds();
+        final float lineWidth = iosLineWidth();
+        final float pathDiameter = Math.min(bounds.width(), bounds.height())
+                - lineWidth - IOS_PATH_INSET * 2.0f * AndroidUtilities.density * iosFactor();
+
+        final float cx = bounds.centerX();
+        final float cy = bounds.centerY();
+        final float r = pathDiameter / 2.0f;
+        rect.set(cx - r, cy - r, cx + r, cy + r);
+
+        float startAngle = -90.0f;
+        float endAngle;
+        if (indefinite) {
+            float progress = iosSweep;
+            endAngle = progress * 360.0f + startAngle;
+            if (progress > 1.0f) {
+                // Past the halfway point iOS swaps the two ends, so the arc
+                // unwinds from its head instead of its tail.
+                final float tmp = startAngle;
+                startAngle = endAngle;
+                endAngle = tmp + 360.0f;
+            }
+            startAngle += iosRotation;
+            endAngle += iosRotation;
+        } else {
+            endAngle = Math.max(0.02f, animatedDownloadProgress) * 360.0f + startAngle;
+            startAngle += iosRotation;
+            endAngle += iosRotation;
+        }
+
+        final Paint.Cap savedCap = paint.getStrokeCap();
+        final float savedWidth = paint.getStrokeWidth();
+        paint.setStrokeCap(Paint.Cap.ROUND);
+        paint.setStrokeWidth(lineWidth);
+        paint.setAlpha(alpha);
+        canvas.drawArc(rect, startAngle, endAngle - startAngle, false, paint);
+        paint.setStrokeWidth(savedWidth);
+        paint.setStrokeCap(savedCap);
+    }
+
+    /**
+     * The cancel cross, sized off the same factor as the ring.
+     *
+     * iOS strokes it thinner than the ring - 2.0 against 2.25 - so the cross
+     * never competes with the progress arc.
+     */
+    private void drawIosCross(Canvas canvas, int alpha) {
+        final android.graphics.Rect bounds = getBounds();
+        final float factor = iosFactor();
+        final float cx = bounds.centerX();
+        final float cy = bounds.centerY();
+        final float half = IOS_CROSS_SIZE_FACTOR * AndroidUtilities.density * factor / 2.0f;
+
+        final Paint.Cap savedCap = paint.getStrokeCap();
+        final float savedWidth = paint.getStrokeWidth();
+        paint.setStrokeCap(Paint.Cap.ROUND);
+        paint.setStrokeWidth(Math.max(IOS_CROSS_WIDTH_MIN * AndroidUtilities.density,
+                IOS_CROSS_WIDTH_FACTOR * AndroidUtilities.density * factor));
+        paint.setAlpha(alpha);
+        canvas.drawLine(cx - half, cy - half, cx + half, cy + half, paint);
+        canvas.drawLine(cx + half, cy - half, cx - half, cy + half, paint);
+        paint.setStrokeWidth(savedWidth);
+        paint.setStrokeCap(savedCap);
+    }
+
+    /** Advances the iOS spinner's own clocks. */
+    private void advanceIos(long dt) {
+        iosRotation += 360.0f * dt / IOS_ROTATION_PERIOD;
+        if (iosRotation >= 360.0f) {
+            iosRotation -= 360.0f;
+        }
+        iosSweep += 2.0f * dt / IOS_SWEEP_PERIOD;
+        if (iosSweep >= 2.0f) {
+            iosSweep = 0.0f;
+        }
+    }
+
     public MediaActionDrawable() {
         paint.setColor(0xffffffff);
         paint.setStrokeCap(Paint.Cap.ROUND);
@@ -539,6 +678,10 @@ public class MediaActionDrawable extends Drawable {
                     paint3.setAlpha((int) (alpha * overrideAlpha));
                     rect.set(cx - AndroidUtilities.dp(3.5f), cy - AndroidUtilities.dp(3.5f), cx + AndroidUtilities.dp(3.5f), cy + AndroidUtilities.dp(3.5f));
                     canvas.drawRoundRect(rect, AndroidUtilities.dp(2), AndroidUtilities.dp(2), paint3);
+                } else if (meeroIosLoadingEnabled()) {
+                    // iOS sizes the cross off the ring's diameter and strokes
+                    // it thinner than the ring; d here is a flat dp(7).
+                    drawIosCross(canvas, (int) (alpha * overrideAlpha));
                 } else {
                     canvas.drawLine(cx - d, cy - d, cx + d, cy + d, paint);
                     canvas.drawLine(cx + d, cy - d, cx - d, cy + d, paint);
@@ -564,7 +707,14 @@ public class MediaActionDrawable extends Drawable {
                     canvas.drawArc(rect, 0, 360, false, paint);
                     paint.setAlpha(alpha);
                 }
-                canvas.drawArc(rect, downloadRadOffset, rad, false, paint);
+                if (meeroIosLoadingEnabled()) {
+                    // A real download reports progress, so the arc tracks it.
+                    // Before the first byte lands the progress sits at 0 and
+                    // iOS shows its stretching spinner instead of a stub arc.
+                    drawIosRing(canvas, (int) (alpha * overrideAlpha), animatedDownloadProgress <= 0.001f);
+                } else {
+                    canvas.drawArc(rect, downloadRadOffset, rad, false, paint);
+                }
             }
             if (progressScale != 1.0f) {
                 canvas.restore();
@@ -585,7 +735,11 @@ public class MediaActionDrawable extends Drawable {
                 float rad = Math.max(4, 360 * animatedDownloadProgress);
                 int diff = AndroidUtilities.dp(isMini ? 2 : 4);
                 rect.set(bounds.left + diff, bounds.top + diff, bounds.right - diff, bounds.bottom - diff);
-                canvas.drawArc(rect, downloadRadOffset, rad, false, paint);
+                if (meeroIosLoadingEnabled()) {
+                    drawIosRing(canvas, (int) (alpha * overrideAlpha), animatedDownloadProgress <= 0.001f);
+                } else {
+                    canvas.drawArc(rect, downloadRadOffset, rad, false, paint);
+                }
             }
         }
 
@@ -865,6 +1019,9 @@ public class MediaActionDrawable extends Drawable {
         if (currentIcon == ICON_CANCEL || currentIcon == ICON_CANCEL_FILL || currentIcon == ICON_NONE && nextIcon == ICON_CANCEL_FILL || currentIcon == ICON_EMPTY || currentIcon == ICON_CANCEL_PERCENT) {
             downloadRadOffset += 360 * dt / 2500.0f;
             downloadRadOffset = getCircleValue(downloadRadOffset);
+            // iOS turns the ring on its own 1.5s clock and sweeps the arc on a
+            // separate 2.5s one; downloadRadOffset drives neither.
+            advanceIos(dt);
 
             if (nextIcon != ICON_DOWNLOAD) {
                 float progressDiff = downloadProgress - downloadProgressAnimationStart;
