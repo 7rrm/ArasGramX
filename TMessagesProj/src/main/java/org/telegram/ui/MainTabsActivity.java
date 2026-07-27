@@ -493,10 +493,10 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
             // pill up to roughly half the screen - which is what ate the
             // bar's labels. Pass raw dp units.
             final int barH = MainTabsHelper.getMainTabsHeightWithMargins();
-            final int pillW = MainTabsHelper.getMainTabsHeight() + MainTabsHelper.getMainTabsMargin() * 2;
-            // The reference keeps the pill close to the bar; 6dp plus each
-            // side's own inner margin read as a much wider gap on screen.
-            final int gap = dp(1);
+            final int pillW = MainTabsHelper.IOS_TAB_BUTTON + MainTabsHelper.getMainTabsMargin() * 2;
+            // Telegram-iOS TabBarComponent lays the search pill out as
+            // "width - 48.0 - 8.0", i.e. a 48pt button with an 8pt gap.
+            final int gap = dp(MainTabsHelper.IOS_TAB_GAP);
             final FrameLayout.LayoutParams barLp = LayoutHelper.createFrame(
                     LayoutHelper.MATCH_PARENT, barH, Gravity.BOTTOM | Gravity.LEFT);
             final FrameLayout.LayoutParams pillLp = LayoutHelper.createFrame(
