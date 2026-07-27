@@ -26,4 +26,6 @@
     <string name="MeeroDialogsStyleInfo">Centred title, filled folder tabs, pill search field and an always-visible Edit button. Restart to apply everywhere.</string>
     <string name="meeroIosIcons">Official iOS icons</string>
     <string name="MeeroIosIconsInfo">Use Telegram for iOS\'s own glyphs. They are static, so the animated tab icons are replaced.</string>
+    <string name="meeroIosInput">iOS message bar</string>
+    <string name="MeeroIosInputInfo">Detach the attach and record buttons from the text field, as separate round buttons.</string>
 </resources>
