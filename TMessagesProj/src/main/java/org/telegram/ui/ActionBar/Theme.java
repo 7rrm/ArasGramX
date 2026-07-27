@@ -232,6 +232,67 @@ public class Theme {
             return AndroidUtilities.dp(6);
         }
 
+        /**
+         * MeeroX: the tail Telegram for iOS actually draws.
+         *
+         * Android sweeps a single elliptical arc for the tail
+         * (arcTo(rect, 180, -83)), which curls back on itself and reads as a
+         * hook. iOS builds the same corner out of two quadratic curves and
+         * then subtracts an ellipse from the top, in
+         * ChatMessageBubbleImages.swift:
+         *
+         *   bottomEllipse = CGRect(x: 24, y: 16, w: 27, h: 17)
+         *   topEllipse    = CGRect(x: 33, y: 14, w: 23, h: 21)
+         *   move(to:    (bottomEllipse.minX, bottomEllipse.midY))
+         *   addQuadCurve(to: (midX, maxY), control: (minX, maxY))
+         *   addQuadCurve(to: (maxX, midY), control: (maxX, maxY))
+         *
+         * Solving that pair against the subtracted top ellipse - whose centre
+         * lands at (44.5, 24.5) with radii 11.5 x 10.5 - gives the visible
+         * outline: it leaves the body 8.5pt above the baseline and reaches
+         * 4.5pt past the body's edge, meeting the baseline exactly at the tip.
+         * Against the bubble's own 33pt diameter that is 25.8% tall and 13.6%
+         * wide, and those two ratios are what get reproduced here.
+         *
+         * Everything is expressed relative to the body edge and the baseline,
+         * so the shape follows whatever tail size the caller passes and no
+         * layout metric has to move.
+         */
+        private static final float MEERO_TAIL_HEIGHT_PT = 8.5f;
+        private static final float MEERO_TAIL_EXTENT_PT = 4.5f;
+
+        private static boolean meeroIosTail() {
+            try {
+                return tw.nekomimi.nekogram.NekoConfig.meeroIosBubbles.Bool();
+            } catch (Throwable ignore) {
+                return false;
+            }
+        }
+
+        /**
+         * Appends iOS's tail to a path that is already sitting on the body's
+         * trailing edge, just above the baseline.
+         *
+         * @param edgeX    x of the body's edge the tail grows out of
+         * @param baseY    y of the bubble's baseline
+         * @param tailSize the tail's height; the width follows iOS's ratio
+         * @param outgoing true for an outgoing bubble, whose tail points right
+         */
+        private void meeroAppendIosTail(Path path, float edgeX, float baseY, float tailSize, boolean outgoing) {
+            final float dir = outgoing ? 1f : -1f;
+            final float extent = tailSize * (MEERO_TAIL_EXTENT_PT / MEERO_TAIL_HEIGHT_PT);
+            final float tipX = edgeX + dir * extent;
+
+            // First curve: leave the body and fall to the baseline. iOS pins
+            // the control point straight below the start, which is what keeps
+            // the tail's inner side almost vertical instead of bowing inwards.
+            path.quadTo(edgeX, baseY, tipX, baseY);
+            // Second curve: the tip's outer side, curving back up into the
+            // body's corner rather than ending in a point.
+            path.quadTo(tipX - dir * extent * 0.28f, baseY - tailSize * 0.30f,
+                    edgeX - dir * tailSize * 0.16f, baseY - tailSize * 0.30f);
+        }
+
 
         private Shader gradientShader;
         private int currentBackgroundHeight;
@@ -926,9 +987,16 @@ public class Theme {
                     }
                 } else {
                     if (drawFullBubble || currentType == TYPE_PREVIEW || customPaint || drawFullBottom) {
-                        path.lineTo(bounds.right - dp(8), bounds.bottom - padding - smallRad - dp(3));
-                        rect.set(bounds.right - dp(8), bounds.bottom - padding - smallRad * 2 - dp(9), bounds.right - dp(7) + smallRad * 2, bounds.bottom - padding - dp(1));
-                        path.arcTo(rect, 180, -83, false);
+                        if (meeroIosTail()) {
+                            // iOS leaves the body one tail-height above the
+                            // baseline, then curves out and back in.
+                            path.lineTo(bounds.right - dp(8), bounds.bottom - padding - smallRad);
+                            meeroAppendIosTail(path, bounds.right - dp(8), bounds.bottom - padding, smallRad, true);
+                        } else {
+                            path.lineTo(bounds.right - dp(8), bounds.bottom - padding - smallRad - dp(3));
+                            rect.set(bounds.right - dp(8), bounds.bottom - padding - smallRad * 2 - dp(9), bounds.right - dp(7) + smallRad * 2, bounds.bottom - padding - dp(1));
+                            path.arcTo(rect, 180, -83, false);
+                        }
                     } else {
                         path.lineTo(bounds.right - dp(8), top - topY + currentBackgroundHeight);
                     }
@@ -983,9 +1051,15 @@ public class Theme {
                     }
                 } else {
                     if (drawFullBubble || currentType == TYPE_PREVIEW || customPaint || drawFullBottom) {
-                        path.lineTo(bounds.left + dp(8), bounds.bottom - padding - smallRad - dp(3));
-                        rect.set(bounds.left + dp(7) - smallRad * 2, bounds.bottom - padding - smallRad * 2 - dp(9), bounds.left + dp(8), bounds.bottom - padding - dp(1));
-                        path.arcTo(rect, 0, 83, false);
+                        if (meeroIosTail()) {
+                            // Mirrored: the incoming tail grows to the left.
+                            path.lineTo(bounds.left + dp(8), bounds.bottom - padding - smallRad);
+                            meeroAppendIosTail(path, bounds.left + dp(8), bounds.bottom - padding, smallRad, false);
+                        } else {
+                            path.lineTo(bounds.left + dp(8), bounds.bottom - padding - smallRad - dp(3));
+                            rect.set(bounds.left + dp(7) - smallRad * 2, bounds.bottom - padding - smallRad * 2 - dp(9), bounds.left + dp(8), bounds.bottom - padding - dp(1));
+                            path.arcTo(rect, 0, 83, false);
+                        }
                     } else {
                         path.lineTo(bounds.left + dp(8), top - topY + currentBackgroundHeight);
                     }
