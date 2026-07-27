@@ -3432,32 +3432,30 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                 // and is what the other two buttons use, so mirror them: the
                 // edit button is added to the menu and simply moved to the
                 // opposite side, inheriting the exact same vertical placement.
+                // ActionBar.onLayout puts the menu at additionalTop, which is
+                // statusBarHeight, but lays generic children at childTop =
+                // topMargin. A plain Gravity.TOP child therefore starts at 0 -
+                // exactly statusBarHeight too high, which is why this button
+                // kept landing on the status bar. Mirror the menu's own
+                // placement: statusBarHeight, then centre inside the bar.
                 final FrameLayout.LayoutParams meeroEditLp = LayoutHelper.createFrame(
                         MEERO_HEADER_BUTTON, MEERO_HEADER_BUTTON,
                         Gravity.TOP | Gravity.LEFT, 6, 0, 0, 0);
+                meeroEditLp.topMargin = AndroidUtilities.statusBarHeight
+                        + (ActionBar.getCurrentActionBarHeight() - dp(MEERO_HEADER_BUTTON)) / 2;
                 actionBar.addView(meeroEditItem, meeroEditLp);
-                // Rather than guessing the offset, copy whatever vertical
-                // position the menu buttons ended up at. They are laid out by
-                // ActionBar itself, so this stays correct on every device.
+                // Keep it aligned if the bar height changes (rotation, tablet).
                 actionBar.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, or_, ob) -> {
-                    if (meeroEditItem == null || optionsItem == null) {
+                    if (meeroEditItem == null) {
                         return;
                     }
-                    // optionsItem sits inside the menu, so its getTop() is
-                    // relative to the menu - not to the action bar. Using it
-                    // directly placed this button near the very top, over the
-                    // status bar. Convert through the menu's own offset.
-                    final View menuView = (View) optionsItem.getParent();
-                    final int menuTop = menuView != null ? menuView.getTop() : 0;
-                    final int target = menuTop + optionsItem.getTop()
-                            + (optionsItem.getHeight() - meeroEditItem.getHeight()) / 2;
-                    if (target > 0 && meeroEditItem.getTop() != target) {
-                        final ViewGroup.MarginLayoutParams mlp =
-                                (ViewGroup.MarginLayoutParams) meeroEditItem.getLayoutParams();
-                        if (mlp.topMargin != target) {
-                            mlp.topMargin = target;
-                            meeroEditItem.setLayoutParams(mlp);
-                        }
+                    final int want = AndroidUtilities.statusBarHeight
+                            + (ActionBar.getCurrentActionBarHeight() - dp(MEERO_HEADER_BUTTON)) / 2;
+                    final ViewGroup.MarginLayoutParams mlp =
+                            (ViewGroup.MarginLayoutParams) meeroEditItem.getLayoutParams();
+                    if (mlp != null && mlp.topMargin != want) {
+                        mlp.topMargin = want;
+                        meeroEditItem.setLayoutParams(mlp);
                     }
                 });
                 meeroEditItem.setOnClickListener(v -> {
