@@ -2604,26 +2604,24 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                     actionBar.getBackButton(),
                     actionBar.createMenu()
             };
+            final int size = AndroidUtilities.dp(MEERO_PROFILE_BUTTON);
             for (View target : targets) {
                 if (target == null) {
                     continue;
                 }
-                // Cap the back button at the iOS control size - its own view
-                // is wider than the glyph, which made the disc look inflated.
-                if (target == actionBar.getBackButton()) {
-                    final ViewGroup.LayoutParams blp = target.getLayoutParams();
-                    if (blp != null) {
-                        blp.width = AndroidUtilities.dp(MEERO_PROFILE_BUTTON);
-                        blp.height = AndroidUtilities.dp(MEERO_PROFILE_BUTTON);
-                        target.setLayoutParams(blp);
-                    }
+                // Pin both controls to one menu-item size (48dp), the same as
+                // the call button in the chat header. The back button's view
+                // is bigger than its glyph, and letting the glass follow that
+                // view is what made this disc look inflated.
+                final ViewGroup.LayoutParams blp = target.getLayoutParams();
+                if (blp != null && target == actionBar.getBackButton()) {
+                    blp.width = size;
+                    blp.height = size;
+                    target.setLayoutParams(blp);
                 }
-                // Use the control's real size instead of forcing 48dp: the
-                // back button is larger than that, so a 48dp radius made its
-                // glass look inflated next to the menu.
-                final int size = Math.min(
-                        target.getWidth() > 0 ? target.getWidth() : AndroidUtilities.dp(MEERO_PROFILE_BUTTON),
-                        target.getHeight() > 0 ? target.getHeight() : AndroidUtilities.dp(MEERO_PROFILE_BUTTON));
+                if (target instanceof ActionBarMenu) {
+                    ((ActionBarMenu) target).setGlassMode(true);
+                }
                 final BlurredBackgroundDrawable bg = iBlur3FactoryLiquidGlass.create(
                         target, BlurredBackgroundProviderImpl.topPanel(resourcesProvider));
                 bg.setRadius(size / 2f);
