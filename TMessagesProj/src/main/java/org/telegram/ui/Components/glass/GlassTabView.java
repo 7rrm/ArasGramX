@@ -552,6 +552,11 @@ public class GlassTabView extends FrameLayout implements MainTabsLayout.Tab, Fac
         SETTINGS(R.raw.tab_settings),
         /** MeeroX: static magnifier for the extra search tab. */
         MEERO_SEARCH(TabAnimationType.STATIC, R.drawable.outline_header_search),
+        /** MeeroX: the official Telegram-iOS tab glyphs, converted to vectors. */
+        MEERO_IOS_CHATS(TabAnimationType.STATIC, R.drawable.ios_chat_list_iconchats),
+        MEERO_IOS_CONTACTS(TabAnimationType.STATIC, R.drawable.ios_chat_list_iconcontacts),
+        MEERO_IOS_SETTINGS(TabAnimationType.STATIC, R.drawable.ios_chat_list_iconsettings),
+        MEERO_IOS_CALLS(TabAnimationType.STATIC, R.drawable.ios_chat_list_iconcalls),
 
         CHECKLIST(R.raw.tab_checklist, R.raw.tab_checklist_reverse),
         COLORS(R.raw.tab_colors, R.raw.tab_colors_reverse),
