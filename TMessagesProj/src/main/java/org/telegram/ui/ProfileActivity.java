@@ -13975,11 +13975,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
             meeroSuppressDividerFor = null;
             meeroApplyProfileCard(holder, position);
             meeroBindRow(holder, position);
-            // The setters above re-enable needDivider, so clear it last.
-            if (meeroSuppressDividerFor != null) {
-                meeroSuppressDividerFor.setMeeroDividerEnabled(false);
-                meeroSuppressDividerFor = null;
-            }
+            meeroSuppressDividerFor = null;
         }
 
         private void meeroBindRow(RecyclerView.ViewHolder holder, int position) {
@@ -14910,6 +14906,20 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
          * and click behaviour.
          */
         private void meeroApplyProfileCard(RecyclerView.ViewHolder holder, int position) {
+            // The profile list already groups its rows: listView.setSections()
+            // draws a rounded card behind each run of cells. Painting our own
+            // CardDrawable on top of that is what produced the doubled card -
+            // one shape inside another. Only the bio cell still needs a hand,
+            // to fade into the section colour instead of the page colour.
+            if (true) {
+                if (holder.itemView instanceof AboutLinkCell) {
+                    ((AboutLinkCell) holder.itemView).setMeeroSurfaceColor(
+                            tw.nekomimi.nekogram.MeeroCards.enabled()
+                                    ? tw.nekomimi.nekogram.MeeroCards.surfaceColor(resourcesProvider)
+                                    : 0);
+                }
+                return;
+            }
             if (!tw.nekomimi.nekogram.MeeroCards.enabled()) {
                 return;
             }
