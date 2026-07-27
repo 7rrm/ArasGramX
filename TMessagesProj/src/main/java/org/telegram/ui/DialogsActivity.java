@@ -1086,7 +1086,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                         // previous attempt only froze its alpha, so it stayed
                         // visible while still sliding into the title.
                         fragmentSearchField.setTranslationY(
-                                (meeroDialogsStyleEnabled() ? 0 : scrollYOffset) + getSearchFieldAdditionOffset());
+                                (meeroPinSearchField() ? 0 : scrollYOffset) + getSearchFieldAdditionOffset());
                     }
                 }
                 blurBounds.set(0, top, getMeasuredWidth(), top + actionBarHeight - dp(2 * searchAnimationProgress));
@@ -1134,7 +1134,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                 }
                 if (fragmentSearchField != null) {
                     // MeeroX: drop scrollYOffset so the field stays put.
-                    final float meeroScroll = meeroDialogsStyleEnabled() ? 0 : scrollYOffset;
+                    final float meeroScroll = meeroPinSearchField() ? 0 : scrollYOffset;
                     fragmentSearchField.setTranslationY(lerp(meeroScroll + tabsYOffset, -dp(hasStories ? DialogStoriesCell.HEIGHT_IN_DP : 0), rightSlidingProgress) + getSearchFieldAdditionOffset());
                 }
                 float rightFragmentOffset = 0;
@@ -1154,7 +1154,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                 if (fragmentSearchField != null) {
                     // MeeroX: same here - the field keeps its place while the
                     // list scrolls underneath it.
-                    final float meeroScroll2 = meeroDialogsStyleEnabled() ? 0 : scrollYOffset;
+                    final float meeroScroll2 = meeroPinSearchField() ? 0 : scrollYOffset;
                     fragmentSearchField.setTranslationY(lerp(
                         meeroScroll2 + tabsYOffset + storiesOverscroll - dp(4),
                         -dp(SEARCH_FIELD_HEIGHT + (hasStories ? DialogStoriesCell.HEIGHT_IN_DP : 0)),
@@ -10762,6 +10762,20 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
         }
     }
 
+    /**
+     * MeeroX: whether the search field should be held in place as the list
+     * scrolls.
+     *
+     * Not while the stories row is up: onLayout already pushes the field down
+     * by DialogStoriesCell.HEIGHT_IN_DP to make room for it, and pinning the
+     * translation on top of that put the field over the stories and merged it
+     * with the folder tabs. With stories visible we simply let upstream's
+     * scrolling behaviour run.
+     */
+    private boolean meeroPinSearchField() {
+        return meeroDialogsStyleEnabled() && !hasStories;
+    }
+
     /** MeeroX: master switch for the iOS-style dialogs header. */
     public static boolean meeroDialogsStyleEnabled() {
         try {
@@ -14779,9 +14793,9 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
     }
 
     private void checkUi_itemSearchVisibility() {
-        // With the field pinned there is nothing for the compact search icon
-        // to stand in for, so it stays hidden.
-        final float factor0 = (isSupportSearch() && !meeroDialogsStyleEnabled()) ? 1 : 0;
+        // The compact search icon stands in for the field once it scrolls
+        // away, so it is only redundant while the field is actually pinned.
+        final float factor0 = (isSupportSearch() && !meeroPinSearchField()) ? 1 : 0;
         final float factor1 = animatorSearchButtonVisible.getFloatValue();
         final float factor2 = 1f - getRightSlidingProgress();
         final float factor3 = 1f - animatorDoneButtonVisible.getFloatValue();
