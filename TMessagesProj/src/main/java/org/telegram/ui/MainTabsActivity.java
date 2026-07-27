@@ -499,12 +499,17 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
                     LayoutHelper.MATCH_PARENT, barH, Gravity.BOTTOM | Gravity.LEFT);
             final FrameLayout.LayoutParams pillLp = LayoutHelper.createFrame(
                     pillW, barH, Gravity.BOTTOM | Gravity.RIGHT);
+            // In a right-to-left locale the reading order starts on the right,
+            // so the search pill belongs on the right and the bar shifts left -
+            // the mirror of the LTR arrangement.
             if (LocaleController.isRTL) {
+                pillLp.gravity = Gravity.BOTTOM | Gravity.RIGHT;
+                barLp.gravity = Gravity.BOTTOM | Gravity.LEFT;
+                barLp.rightMargin = dp(pillW) + gap;
+            } else {
+                pillLp.gravity = Gravity.BOTTOM | Gravity.LEFT;
                 barLp.gravity = Gravity.BOTTOM | Gravity.RIGHT;
                 barLp.leftMargin = dp(pillW) + gap;
-                pillLp.gravity = Gravity.BOTTOM | Gravity.LEFT;
-            } else {
-                barLp.rightMargin = dp(pillW) + gap;
             }
             tabsViewWrapper.addView(tabsView, barLp);
             tabsViewWrapper.addView(meeroSearchTabSeparate, pillLp);
