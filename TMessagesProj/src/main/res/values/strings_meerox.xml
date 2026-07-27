@@ -24,4 +24,6 @@
     <string name="MeeroCardsInfo">Group settings rows into inset rounded cards, iOS 26 style.</string>
     <string name="meeroDialogsStyle">iOS chats header</string>
     <string name="MeeroDialogsStyleInfo">Centred title, filled folder tabs, pill search field and an always-visible Edit button. Restart to apply everywhere.</string>
+    <string name="meeroIosIcons">Official iOS icons</string>
+    <string name="MeeroIosIconsInfo">Use Telegram for iOS\'s own glyphs. They are static, so the animated tab icons are replaced.</string>
 </resources>
