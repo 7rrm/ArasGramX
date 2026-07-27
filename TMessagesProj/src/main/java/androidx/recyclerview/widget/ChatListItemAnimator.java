@@ -15,6 +15,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.view.ViewCompat;
 
+import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.BuildVars;
 import org.telegram.messenger.FileLog;
 import org.telegram.messenger.ImageReceiver;
@@ -390,21 +391,31 @@ public class ChatListItemAnimator extends DefaultItemAnimator {
             final int bb = mc.getPaddingTop() + mc.getBackgroundDrawableBottom();
             mc.setPivotX(out ? br : bl);
             mc.setPivotY(bb);
-            mc.setScaleX(0.86f);
-            mc.setScaleY(0.86f);
-            final android.animation.ValueAnimator pop = android.animation.ValueAnimator.ofFloat(0.86f, 1f);
-            pop.setDuration(340);
-            pop.setInterpolator(new android.view.animation.OvershootInterpolator(1.15f));
+            // iOS eases a new bubble in with a gentle settle rather than a
+            // visible bounce, and nudges it in from the sender's side. A
+            // shorter duration with a light overshoot reads much closer than
+            // the previous 340ms/1.15 spring, which looked rubbery.
+            final float fromScale = 0.92f;
+            final float slide = AndroidUtilities.dp(out ? 18 : -18);
+            mc.setScaleX(fromScale);
+            mc.setScaleY(fromScale);
+            final float baseOffsetX = mc.getAnimationOffsetX();
+            final android.animation.ValueAnimator pop = android.animation.ValueAnimator.ofFloat(0f, 1f);
+            pop.setDuration(280);
+            pop.setInterpolator(new android.view.animation.OvershootInterpolator(0.6f));
             pop.addUpdateListener(a -> {
-                final float sc = (float) a.getAnimatedValue();
+                final float t = (float) a.getAnimatedValue();
+                final float sc = fromScale + (1f - fromScale) * t;
                 mc.setScaleX(sc);
                 mc.setScaleY(sc);
+                mc.setAnimationOffsetX(baseOffsetX + slide * (1f - Math.min(1f, t)));
             });
             pop.addListener(new AnimatorListenerAdapter() {
                 @Override
                 public void onAnimationEnd(Animator animation2) {
                     mc.setScaleX(1f);
                     mc.setScaleY(1f);
+                    mc.setAnimationOffsetX(baseOffsetX);
                 }
             });
             pop.start();
