@@ -262,6 +262,38 @@ public class ChatInputViewsContainer extends FrameLayout {
     private final android.graphics.Rect meeroDiscRect = new android.graphics.Rect();
     public static final int MEERO_IOS_GAP = 8;
 
+    /**
+     * MeeroX: the enter view reports how wide its edge controls actually are,
+     * so the pill can end exactly where they start. Falls back to the fixed
+     * inset when nothing has been reported yet.
+     */
+    private int meeroLeftControls = -1, meeroRightControls = -1;
+
+    public void setMeeroControlWidths(int left, int right) {
+        if (meeroLeftControls == left && meeroRightControls == right) {
+            return;
+        }
+        meeroLeftControls = left;
+        meeroRightControls = right;
+        invalidate();
+    }
+
+    private int meeroLeftInset() {
+        final int base = meeroInputSideInset();
+        if (base == 0) {
+            return 0;
+        }
+        return meeroLeftControls > 0 ? meeroLeftControls + dp(MEERO_IOS_GAP) : base;
+    }
+
+    private int meeroRightInset() {
+        final int base = meeroInputSideInset();
+        if (base == 0) {
+            return 0;
+        }
+        return meeroRightControls > 0 ? meeroRightControls + dp(MEERO_IOS_GAP) : base;
+    }
+
     public static int meeroInputSideInset() {
         try {
             if (!tw.nekomimi.nekogram.NekoConfig.meeroIosInput.Bool()) {
@@ -313,10 +345,12 @@ public class ChatInputViewsContainer extends FrameLayout {
         // MeeroX: shrink the glass pill away from both edges so the attach and
         // record buttons read as separate discs beside it.
         final int meeroInset = meeroInputSideInset();
+        final int meeroLeft = meeroLeftInset();
+        final int meeroRight = meeroRightInset();
         tmpRect.set(
-            Math.round(inputBubbleOffsetLeft) + meeroInset,
+            Math.round(inputBubbleOffsetLeft) + meeroLeft,
             0,
-            getMeasuredWidth() - Math.round(inputBubbleOffsetRight) - meeroInset,
+            getMeasuredWidth() - Math.round(inputBubbleOffsetRight) - meeroRight,
             inputBubbleHeightRound
         );
         tmpRect.inset(0, -dp(7));
@@ -331,16 +365,25 @@ public class ChatInputViewsContainer extends FrameLayout {
         // for its own bounds.
         if (drawInputBackground && meeroInset > 0 && meeroLeftDisc != null && meeroRightDisc != null) {
             final int cy = tmpRect.centerY();
-            final int r = dp(MEERO_IOS_BUTTON) / 2;
-            final int leftCx = Math.round(inputBubbleOffsetLeft) + dp(MEERO_IOS_BUTTON + MEERO_IOS_GAP) / 2;
-            final int rightCx = getMeasuredWidth() - Math.round(inputBubbleOffsetRight)
-                    - dp(MEERO_IOS_BUTTON + MEERO_IOS_GAP) / 2;
+            final int h = dp(MEERO_IOS_BUTTON);
+            final int r = h / 2;
 
-            meeroDiscRect.set(leftCx - r, cy - r, leftCx + r, cy + r);
+            // The left side is a single emoji button, so a circle fits. The
+            // right side can hold several buttons (attach, bot, gift,
+            // stickers), so it gets a capsule as wide as they actually are -
+            // that is what was leaving the sticker button outside the glass.
+            final int leftW = Math.max(h, meeroLeft - dp(MEERO_IOS_GAP));
+            final int rightW = Math.max(h, meeroRight - dp(MEERO_IOS_GAP));
+            final int leftStart = Math.round(inputBubbleOffsetLeft);
+            final int rightEnd = getMeasuredWidth() - Math.round(inputBubbleOffsetRight);
+
+            meeroLeftDisc.setRadius(r);
+            meeroDiscRect.set(leftStart, cy - r, leftStart + leftW, cy + r);
             meeroLeftDisc.setBounds(meeroDiscRect);
             meeroLeftDisc.draw(canvas);
 
-            meeroDiscRect.set(rightCx - r, cy - r, rightCx + r, cy + r);
+            meeroRightDisc.setRadius(r);
+            meeroDiscRect.set(rightEnd - rightW, cy - r, rightEnd, cy + r);
             meeroRightDisc.setBounds(meeroDiscRect);
             meeroRightDisc.draw(canvas);
         }
