@@ -207,7 +207,12 @@ public class Theme {
          * value yields the capsule while short bubbles stay correct.
          * Off -> stock Telegram radius, unchanged.
          */
-        private static int meeroBubbleRadius() {
+        /**
+         * MeeroX: also read by ChatMessageCell, which sizes the photo's
+         * corners independently and would otherwise keep using
+         * SharedConfig.bubbleRadius while the bubble around it uses this.
+         */
+        public static int meeroBubbleRadius() {
             try {
                 if (tw.nekomimi.nekogram.NekoConfig.meeroIosBubbles.Bool()) {
                     // Measured from the reference screenshot: a 664x190 bubble
