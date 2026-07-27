@@ -23,6 +23,52 @@ import org.telegram.ui.Components.LayoutHelper;
 public class CodeFieldContainer extends LinearLayout {
     public final static int TYPE_PASSCODE = 10;
 
+    /**
+     * MeeroX: iOS 26 code entry metrics.
+     *
+     * Telegram for iOS lays this screen out in CodeInputView.swift. Its boxes
+     * are much softer and further apart than Android's, and that difference -
+     * a 4dp radius against iOS's 15 - is what makes the stock screen read as
+     * Android at a glance.
+     *
+     *   height       = compact ? 44.0 : 51.0
+     *   itemSize     = floor(24.0 * height / 28.0)   // width follows height
+     *   itemSpacing  = 15.0                          // when there is no prefix
+     *   cornerRadius = height == 28.0 ? 12.0 : 15.0
+     *   fontSize     = floor(13.0 * height / 28.0)
+     *   borderWidth  = 1.0 + UIScreenPixel
+     *
+     * The width is deliberately derived rather than hardcoded, so a compact
+     * layout keeps iOS's own proportions instead of squashing the boxes.
+     */
+    private static final float IOS_HEIGHT_DP = 51f;
+    private static final float IOS_HEIGHT_COMPACT_DP = 44f;
+    private static final float IOS_WIDTH_RATIO = 24f / 28f;
+    private static final float IOS_SPACING_DP = 15f;
+    private static final float IOS_RADIUS_DP = 15f;
+    private static final float IOS_FONT_RATIO = 13f / 28f;
+    /** iOS's own threshold for switching to the compact layout. */
+    private static final int IOS_COMPACT_WIDTH_DP = 375;
+    private static final int IOS_COMPACT_COUNT = 5;
+
+    public static boolean meeroIosCode() {
+        try {
+            return tw.nekomimi.nekogram.NekoConfig.meeroIosCode.Bool();
+        } catch (Throwable ignore) {
+            return false;
+        }
+    }
+
+    /** iOS drops to the shorter box on narrow screens or long codes. */
+    private static boolean meeroCompact(int count) {
+        final int widthDp = (int) (AndroidUtilities.displaySize.x / AndroidUtilities.density);
+        return widthDp <= 320 || (widthDp <= IOS_COMPACT_WIDTH_DP && count > IOS_COMPACT_COUNT);
+    }
+
+    private static float meeroBoxHeight(int count) {
+        return meeroCompact(count) ? IOS_HEIGHT_COMPACT_DP : IOS_HEIGHT_DP;
+    }
+
     Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
     Paint bitmapPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     float strokeWidth;
@@ -40,7 +86,11 @@ public class CodeFieldContainer extends LinearLayout {
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-        paint.setStrokeWidth(strokeWidth = AndroidUtilities.dp(1.5f));
+        // iOS strokes these at 1pt plus a single screen pixel; Android's 1.5dp
+        // reads noticeably heavier against the softer corners.
+        paint.setStrokeWidth(strokeWidth = meeroIosCode()
+                ? AndroidUtilities.dp(1f) + 1f
+                : AndroidUtilities.dp(1.5f));
     }
 
     @Override
@@ -67,7 +117,10 @@ public class CodeFieldContainer extends LinearLayout {
                     AndroidUtilities.rectTmp.inset(offset, offset);
                 }
 
-                canvas.drawRoundRect(AndroidUtilities.rectTmp, AndroidUtilities.dp(4), AndroidUtilities.dp(4), paint);
+                // iOS rounds these to 15pt, against Android's 4dp. That single
+                // number is the clearest tell between the two screens.
+                final float radius = AndroidUtilities.dp(meeroIosCode() ? IOS_RADIUS_DP : 4);
+                canvas.drawRoundRect(AndroidUtilities.rectTmp, radius, radius, paint);
             }
         }
         super.dispatchDraw(canvas);
@@ -169,9 +222,18 @@ public class CodeFieldContainer extends LinearLayout {
                 };
 
                 codeField[a].setImeOptions(EditorInfo.IME_ACTION_NEXT | EditorInfo.IME_FLAG_NO_EXTRACT_UI);
-                codeField[a].setTextSize(TypedValue.COMPLEX_UNIT_DIP, 20);
+                if (meeroIosCode()) {
+                    // iOS scales the digit with the box and sets it in the
+                    // system monospaced face, so the digits never shift
+                    // sideways as they are typed.
+                    codeField[a].setTextSize(TypedValue.COMPLEX_UNIT_DIP,
+                            (float) Math.floor(IOS_FONT_RATIO * meeroBoxHeight(length)));
+                    codeField[a].setTypeface(android.graphics.Typeface.MONOSPACE);
+                } else {
+                    codeField[a].setTextSize(TypedValue.COMPLEX_UNIT_DIP, 20);
+                    codeField[a].setTypeface(AndroidUtilities.bold());
+                }
                 codeField[a].setMaxLines(1);
-                codeField[a].setTypeface(AndroidUtilities.bold());
                 codeField[a].setPadding(0, 0, 0, 0);
                 codeField[a].setGravity(Gravity.CENTER);
                 if (currentType == 3) {
@@ -184,7 +246,14 @@ public class CodeFieldContainer extends LinearLayout {
                 int width;
                 int height;
                 int gapSize;
-                if (currentType == TYPE_PASSCODE) {
+                if (meeroIosCode() && currentType != LoginActivity.AUTH_TYPE_MISSED_CALL) {
+                    // iOS derives the width from the height, so the box keeps
+                    // its proportions whichever of the two heights applies.
+                    final float h = meeroBoxHeight(length);
+                    height = Math.round(h);
+                    width = (int) Math.floor(IOS_WIDTH_RATIO * h);
+                    gapSize = Math.round(IOS_SPACING_DP);
+                } else if (currentType == TYPE_PASSCODE) {
                     width = 42;
                     height = 47;
                     gapSize = 10;
