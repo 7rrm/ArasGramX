@@ -92,6 +92,7 @@ public class NekoConfig {
     public static ConfigItem meeroDialogsStyle = addConfig("meeroDialogsStyle", configTypeBool, true);
     public static ConfigItem meeroIosIcons = addConfig("meeroIosIcons", configTypeBool, true);
     public static ConfigItem meeroIosInput = addConfig("meeroIosInput", configTypeBool, true);
+    public static ConfigItem meeroIosSounds = addConfig("meeroIosSounds", configTypeBool, true);
 
     // From NekoConfig
     public static ConfigItem useIPv6 = addConfig("IPv6", configTypeBool, false);
