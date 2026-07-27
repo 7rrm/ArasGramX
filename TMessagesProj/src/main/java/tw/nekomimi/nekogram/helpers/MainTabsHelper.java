@@ -12,6 +12,15 @@ public final class MainTabsHelper {
     public static final int TAB_WIDTH = 80;
     public static final int TAB_PADDING = 4;
 
+    /**
+     * Measurements taken from Telegram-iOS:
+     * TabBarComponent lays a control out as 48pt wide with an 8pt gap, and
+     * TabBarNode spaces items by 4pt.
+     */
+    public static final int IOS_TAB_BUTTON = 48;
+    public static final int IOS_TAB_GAP = 8;
+    public static final int IOS_TAB_SPACING = 4;
+
     private MainTabsHelper() {
     }
 
