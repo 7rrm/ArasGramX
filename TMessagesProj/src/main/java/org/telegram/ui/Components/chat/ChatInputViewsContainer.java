@@ -228,6 +228,10 @@ public class ChatInputViewsContainer extends FrameLayout {
      * input bar. Returns 0 when the style is off, leaving the bubble
      * edge-to-edge exactly as upstream draws it.
      */
+    /** Telegram-iOS TabBarComponent: buttons are 48pt with an 8pt gap. */
+    public static final int MEERO_IOS_BUTTON = 48;
+    public static final int MEERO_IOS_GAP = 8;
+
     public static int meeroInputSideInset() {
         try {
             if (!tw.nekomimi.nekogram.NekoConfig.meeroIosInput.Bool()) {
@@ -236,7 +240,7 @@ public class ChatInputViewsContainer extends FrameLayout {
         } catch (Throwable e) {
             return 0;
         }
-        return dp(52);
+        return dp(MEERO_IOS_BUTTON + MEERO_IOS_GAP);
     }
 
     public float getInputBubbleHeight() {
@@ -296,11 +300,12 @@ public class ChatInputViewsContainer extends FrameLayout {
         // discs, so the bar reads as [attach] [field] [record] like iOS.
         if (drawInputBackground && meeroInset > 0) {
             final int cy = tmpRect.centerY();
-            final int d = Math.min(dp(46), tmpRect.height() - dp(6));
-            final int r = d / 2;
+            // iOS uses a fixed 48pt disc whose corner radius is half its
+            // height, rather than something derived from the bar height.
+            final int r = dp(MEERO_IOS_BUTTON) / 2;
             if (r > 0) {
-                final int leftCx = Math.round(inputBubbleOffsetLeft) + meeroInset / 2;
-                final int rightCx = getMeasuredWidth() - Math.round(inputBubbleOffsetRight) - meeroInset / 2;
+                final int leftCx = Math.round(inputBubbleOffsetLeft) + dp(MEERO_IOS_BUTTON) / 2;
+                final int rightCx = getMeasuredWidth() - Math.round(inputBubbleOffsetRight) - dp(MEERO_IOS_BUTTON) / 2;
                 final int savedRadius = dp(INPUT_BUBBLE_RADIUS);
                 blurredBackgroundDrawable.setRadius(r);
                 tmpRect.set(leftCx - r, cy - r, leftCx + r, cy + r);
