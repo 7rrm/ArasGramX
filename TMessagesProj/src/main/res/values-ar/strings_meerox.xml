@@ -721,6 +721,8 @@
     <string name="MeeroGlassBordersInfo">خط رفيع حول القوائم واللوحات وحقل البحث.</string>
     <string name="meeroIosLoading">مؤشّر التحميل بنمط iOS</string>
     <string name="MeeroIosLoadingInfo">حلقة أرفع تتمدّد وهي تدور، بنفس قياسات تلكرام آيفون.</string>
+    <string name="meeroIosCode">شاشة رمز التحقق بنمط iOS</string>
+    <string name="MeeroIosCodeInfo">خانات أطول وزواياها أنعم بخط ثابت العرض، بنفس قياسات تلكرام آيفون.</string>
     <string name="MeeroSectionCategories">الأقسام</string>
     <string name="MeeroSectionData">البيانات</string>
     <string name="MeeroSectionInfo">حول</string>
