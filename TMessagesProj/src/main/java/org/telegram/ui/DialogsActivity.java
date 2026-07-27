@@ -3573,7 +3573,10 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
             // picker the floating compose button uses - no new behaviour, just
             // a second way in that matches the reference layout.
             if (meeroDialogsStyleEnabled()) {
-                meeroComposeItem = menu.addItem(MEERO_ID_COMPOSE, R.drawable.msg_message_s);
+                // The official Telegram-iOS compose and overflow glyphs, so the
+                // two header buttons match the reference exactly.
+                meeroComposeItem = menu.addItem(MEERO_ID_COMPOSE,
+                        meeroIosIconsEnabled() ? R.drawable.ios_chat_list_composeicon : R.drawable.msg_message_s);
                 meeroComposeItem.setContentDescription(LocaleController.getString(R.string.NewMessageTitle));
                 meeroComposeItem.setOnClickListener(v -> {
                     if (MessagesController.getInstance(currentAccount).isFrozen()) {
@@ -3586,6 +3589,12 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                 // The reference sits each header button on a soft circular
                 // chip. Applied to the icon buttons only - the title and the
                 // search field keep their own styling.
+                if (meeroIosIconsEnabled() && optionsItem != null) {
+                    optionsItem.setIcon(R.drawable.ios_chat_list_navigationmore);
+                }
+                if (meeroIosIconsEnabled() && meeroEditItem != null) {
+                    meeroEditItem.setIcon(R.drawable.ios_chat_menuediticon);
+                }
                 meeroRoundHeaderButton(meeroComposeItem);
                 meeroRoundHeaderButton(optionsItem);
                 meeroRoundHeaderButton(meeroEditItem);
@@ -10556,6 +10565,15 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
         item.setMinimumWidth(size);
         item.setBackground(Theme.createSimpleSelectorCircleDrawable(size, bg,
                 getThemedColor(Theme.key_listSelector)));
+    }
+
+    /** MeeroX: use the official Telegram-iOS glyphs where we have them. */
+    public static boolean meeroIosIconsEnabled() {
+        try {
+            return tw.nekomimi.nekogram.NekoConfig.meeroIosIcons.Bool();
+        } catch (Throwable e) {
+            return false;
+        }
     }
 
     /** MeeroX: master switch for the iOS-style dialogs header. */
