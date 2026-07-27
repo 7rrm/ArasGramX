@@ -8834,6 +8834,10 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                         }
                         isPulledDown = true;
                         NotificationCenter.getGlobalInstance().postNotificationName(NotificationCenter.needCheckSystemBarColors, true);
+                        // Expanding the avatar re-themes the action bar, which
+                        // clears the glass we put on the back and menu
+                        // buttons. Put it back.
+                        meeroGlassProfileButtons();
                         overlaysView.setOverlaysVisible(true, durationFactor);
                         avatarsViewPagerIndicatorView.refreshVisibility(durationFactor);
                         avatarsViewPager.setCreateThumbFromParent(true);
@@ -8916,6 +8920,8 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                     if (isPulledDown) {
                         isPulledDown = false;
                         NotificationCenter.getGlobalInstance().postNotificationName(NotificationCenter.needCheckSystemBarColors, true);
+                        // Collapsing re-themes the bar too.
+                        meeroGlassProfileButtons();
                         if (otherItem != null) {
                             otherItem.hideSubItem(gallery_menu_save);
                             if (imageUpdater != null) {
@@ -13973,8 +13979,12 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
         @Override
         public void onBindViewHolder(RecyclerView.ViewHolder holder, @SuppressLint("RecyclerView") int position) {
             meeroSuppressDividerFor = null;
-            meeroApplyProfileCard(holder, position);
             meeroBindRow(holder, position);
+            // Applied after the row is bound: AboutLinkCell's setters rebuild
+            // its drawables from the theme, so setting the surface colour
+            // first was simply overwritten - which is why the dark band came
+            // back. The colour must be the section's, not the page's.
+            meeroApplyProfileCard(holder, position);
             meeroSuppressDividerFor = null;
         }
 
@@ -14913,10 +14923,11 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
             // to fade into the section colour instead of the page colour.
             if (true) {
                 if (holder.itemView instanceof AboutLinkCell) {
+                    // listView.setSections() paints the card with
+                    // key_windowBackgroundWhite, so the cell has to fade into
+                    // exactly that - not into a lifted variant of it.
                     ((AboutLinkCell) holder.itemView).setMeeroSurfaceColor(
-                            tw.nekomimi.nekogram.MeeroCards.enabled()
-                                    ? tw.nekomimi.nekogram.MeeroCards.surfaceColor(resourcesProvider)
-                                    : 0);
+                            getThemedColor(Theme.key_windowBackgroundWhite));
                 }
                 return;
             }
