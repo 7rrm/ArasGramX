@@ -3696,7 +3696,10 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                 }
                 statusDrawable = new AnimatedEmojiDrawable.SwapAnimatedEmojiDrawable(null, dp(26));
                 statusDrawable.center = true;
-                actionBar.setTitle(actionBarTitleNax = TypefaceHelper.getTitleText(currentAccount), statusDrawable);
+                // MeeroX: iOS titles this screen "Chats", not the app name.
+                actionBar.setTitle(actionBarTitleNax = meeroDialogsStyleEnabled()
+                        ? getString(R.string.MainTabsChats)
+                        : TypefaceHelper.getTitleText(currentAccount), statusDrawable);
                 actionBar.setOnLongClickListener(v -> {
                     if (NekoConfig.hideAllTab.Bool() && filterTabsView != null && filterTabsView.getCurrentTabId() != Integer.MAX_VALUE) {
                         filterTabsView.toggleAllTabs(true);
@@ -10573,7 +10576,18 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
             return;
         }
         try {
-            final int size = dp(42);
+            // The discs sat edge to edge and merged into one shape. Shrink
+            // them slightly and add a margin so each reads as its own button.
+            final int size = dp(38);
+            final ViewGroup.LayoutParams glp = item.getLayoutParams();
+            if (glp instanceof ViewGroup.MarginLayoutParams) {
+                final ViewGroup.MarginLayoutParams mlp = (ViewGroup.MarginLayoutParams) glp;
+                mlp.leftMargin = dp(3);
+                mlp.rightMargin = dp(3);
+                mlp.width = size;
+                mlp.height = size;
+                item.setLayoutParams(mlp);
+            }
             final BlurredBackgroundDrawable bg = iBlur3FactoryLiquidGlass.create(
                     item, BlurredBackgroundProviderImpl.topPanel(resourceProvider));
             bg.setRadius(size / 2f);
@@ -10598,11 +10612,15 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
         // OvalShape stretches to the view's bounds, and a menu item is wider
         // than it is tall - so the "circle" came out as an ellipse. Pin the
         // item to a square first, then the oval really is a circle.
-        final int size = dp(42);
+        final int size = dp(38);
         final ViewGroup.LayoutParams lp = item.getLayoutParams();
         if (lp != null) {
             lp.width = size;
             lp.height = size;
+            if (lp instanceof ViewGroup.MarginLayoutParams) {
+                ((ViewGroup.MarginLayoutParams) lp).leftMargin = dp(3);
+                ((ViewGroup.MarginLayoutParams) lp).rightMargin = dp(3);
+            }
             item.setLayoutParams(lp);
         }
         item.setMinimumWidth(size);
@@ -14574,11 +14592,13 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
         if (meeroEditItem == null) {
             return;
         }
-        final float factor0 = (filterTabsView != null && filterTabsView.getVisibility() == View.VISIBLE) ? 1 : 0;
+        // Previously this also required filterTabsView to be visible, so the
+        // button vanished for anyone without folders. It edits folders, but it
+        // is also how you reach folder creation - so it should always be there.
         final float factor1 = 1f - animatorSearchVisible.getFloatValue();
         final float factor2 = 1f - getRightSlidingProgress();
         final float factor3 = 1f - animatorDoneButtonVisible.getFloatValue();
-        FragmentFloatingButton.setAnimatedVisibility(meeroEditItem, factor0 * factor1 * factor2 * factor3);
+        FragmentFloatingButton.setAnimatedVisibility(meeroEditItem, factor1 * factor2 * factor3);
     }
 
     private void checkUi_itemBackButtonVisibility() {
