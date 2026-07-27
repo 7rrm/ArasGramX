@@ -358,20 +358,24 @@ public abstract class BaseNekoSettingsActivity extends BaseFragment {
             if (!meeroIsCardRow(type)) {
                 return;
             }
-            final boolean prevIsCard = position > 0 && meeroIsCardRow(getItemViewType(position - 1));
-            final boolean nextIsCard = position + 1 < getItemCount() && meeroIsCardRow(getItemViewType(position + 1));
-            final int pos;
-            if (prevIsCard && nextIsCard) {
-                pos = tw.nekomimi.nekogram.MeeroCards.POS_MIDDLE;
-            } else if (prevIsCard) {
-                pos = tw.nekomimi.nekogram.MeeroCards.POS_LAST;
-            } else if (nextIsCard) {
-                pos = tw.nekomimi.nekogram.MeeroCards.POS_FIRST;
-            } else {
-                pos = tw.nekomimi.nekogram.MeeroCards.POS_SINGLE;
-            }
+            // The reference layout gives every row its own card with a gap
+            // between them, rather than merging a run of rows into one long
+            // panel. POS_SINGLE draws all four corners rounded.
             final View v = holder.itemView;
-            v.setBackground(new tw.nekomimi.nekogram.MeeroCards.CardDrawable(pos, resourcesProvider));
+            v.setBackground(new tw.nekomimi.nekogram.MeeroCards.CardDrawable(
+                    tw.nekomimi.nekogram.MeeroCards.POS_SINGLE, resourcesProvider));
+
+            // Give the icon the accent-tinted tile the reference uses, and
+            // recolour the glyph to match.
+            if (v instanceof TextCell) {
+                final TextCell cell = (TextCell) v;
+                final int accent = tw.nekomimi.nekogram.MeeroCards.IconTileDrawable.accent(resourcesProvider);
+                cell.getImageView().setBackground(
+                        new tw.nekomimi.nekogram.MeeroCards.IconTileDrawable(resourcesProvider));
+                cell.getImageView().setColorFilter(
+                        new android.graphics.PorterDuffColorFilter(accent, android.graphics.PorterDuff.Mode.SRC_IN));
+                cell.setMeeroDividerEnabled(false);
+            }
         }
 
         /**
