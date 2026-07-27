@@ -713,4 +713,6 @@
     <string name="MeeroCardsInfo">تجميع صفوف الإعدادات ببطاقات مدوّرة بأسلوب iOS 26.</string>
     <string name="meeroDialogsStyle">رأس المحادثات بنمط iOS</string>
     <string name="MeeroDialogsStyleInfo">عنوان بالنص، تبويبات ممتلئة، حقل بحث مدوّر، وزر تحرير ظاهر دائماً. أعد التشغيل للتطبيق الكامل.</string>
+    <string name="meeroIosIcons">أيقونات iOS الرسمية</string>
+    <string name="MeeroIosIconsInfo">استخدام أيقونات تلكرام آيفون الأصلية. هي ثابتة، فتُستبدل أيقونات التبويبات المتحركة.</string>
 </resources>
