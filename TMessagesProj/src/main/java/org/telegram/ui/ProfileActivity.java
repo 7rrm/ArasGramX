@@ -2592,6 +2592,50 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
     private static final int MEERO_PROFILE_BUTTON = 48;
 
     /**
+     * MeeroX: wraps a drawable so it paints at a fixed height, centred in
+     * whatever bounds it is given. Action bar children are measured at the
+     * full bar height, so without this the glass stretches to match them.
+     *
+     * A width of 0 means "use the full width".
+     */
+    private static class MeeroCenteredDrawable extends android.graphics.drawable.Drawable {
+        private final android.graphics.drawable.Drawable inner;
+        private final int fixedWidth, fixedHeight;
+
+        MeeroCenteredDrawable(android.graphics.drawable.Drawable inner, int fixedWidth, int fixedHeight) {
+            this.inner = inner;
+            this.fixedWidth = fixedWidth;
+            this.fixedHeight = fixedHeight;
+        }
+
+        @Override
+        public void draw(android.graphics.Canvas canvas) {
+            final android.graphics.Rect b = getBounds();
+            final int w = fixedWidth > 0 ? fixedWidth : b.width();
+            final int h = fixedHeight > 0 ? fixedHeight : b.height();
+            final int left = b.left + (b.width() - w) / 2;
+            final int top = b.top + (b.height() - h) / 2;
+            inner.setBounds(left, top, left + w, top + h);
+            inner.draw(canvas);
+        }
+
+        @Override
+        public void setAlpha(int alpha) {
+            inner.setAlpha(alpha);
+        }
+
+        @Override
+        public void setColorFilter(android.graphics.ColorFilter cf) {
+            inner.setColorFilter(cf);
+        }
+
+        @Override
+        public int getOpacity() {
+            return android.graphics.PixelFormat.TRANSLUCENT;
+        }
+    }
+
+    /**
      * MeeroX: gives the profile's back and overflow buttons the same glass
      * disc the rest of the iOS chrome uses. No-op when the style is off.
      */
@@ -2604,36 +2648,24 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                     actionBar.getBackButton(),
                     actionBar.createMenu()
             };
+            // Both the back button and the menu are laid out at the full
+            // action bar height, so a background set on them is stretched to
+            // that height. Paint a 48dp capsule centred inside each instead.
             final int size = AndroidUtilities.dp(MEERO_PROFILE_BUTTON);
-            for (View target : targets) {
-                if (target == null) {
-                    continue;
-                }
-                // Pin both controls to one menu-item size (48dp), the same as
-                // the call button in the chat header. The back button's view
-                // is bigger than its glyph, and letting the glass follow that
-                // view is what made this disc look inflated.
-                final ViewGroup.LayoutParams blp = target.getLayoutParams();
-                if (blp != null && target == actionBar.getBackButton()) {
-                    blp.width = size;
-                    blp.height = size;
-                    target.setLayoutParams(blp);
-                }
-                if (target instanceof ActionBarMenu) {
-                    ((ActionBarMenu) target).setGlassMode(true);
-                }
+            final View back = actionBar.getBackButton();
+            if (back != null) {
                 final BlurredBackgroundDrawable bg = iBlur3FactoryLiquidGlass.create(
-                        target, BlurredBackgroundProviderImpl.topPanel(resourcesProvider));
+                        back, BlurredBackgroundProviderImpl.topPanel(resourcesProvider));
                 bg.setRadius(size / 2f);
-                target.setBackground(bg);
-                target.setClipToOutline(true);
-                target.setOutlineProvider(new ViewOutlineProvider() {
-                    @Override
-                    public void getOutline(View view, android.graphics.Outline outline) {
-                        outline.setRoundRect(0, 0, view.getWidth(), view.getHeight(),
-                                Math.min(view.getWidth(), view.getHeight()) / 2f);
-                    }
-                });
+                back.setBackground(new MeeroCenteredDrawable(bg, size, size));
+            }
+            final ActionBarMenu menu = actionBar.createMenu();
+            if (menu != null) {
+                menu.setGlassMode(true);
+                final BlurredBackgroundDrawable bg = iBlur3FactoryLiquidGlass.create(
+                        menu, BlurredBackgroundProviderImpl.topPanel(resourcesProvider));
+                bg.setRadius(size / 2f);
+                menu.setBackground(new MeeroCenteredDrawable(bg, 0, size));
             }
         } catch (Throwable ignore) {
         }
