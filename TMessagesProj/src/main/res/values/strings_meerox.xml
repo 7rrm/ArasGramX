@@ -30,4 +30,7 @@
     <string name="MeeroIosSoundsInfo">Use Telegram for iOS\'s own send and receive tones.</string>
     <string name="meeroGlassBorders">Glass edges</string>
     <string name="MeeroGlassBordersInfo">A hairline outline on menus, panels and the search field.</string>
+    <string name="MeeroSectionCategories">Categories</string>
+    <string name="MeeroSectionData">Data</string>
+    <string name="MeeroSectionInfo">About</string>
 </resources>
