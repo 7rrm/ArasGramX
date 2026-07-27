@@ -3871,7 +3871,7 @@ public class LoginActivity extends BaseFragment implements NotificationCenter.No
                     }
                 };
 
-                addView(codeFieldContainer, LayoutHelper.createLinear(LayoutHelper.WRAP_CONTENT, 42, Gravity.CENTER_HORIZONTAL, 0, 32, 0, 0));
+                addView(codeFieldContainer, LayoutHelper.createLinear(LayoutHelper.WRAP_CONTENT, CodeFieldContainer.meeroHostHeight(), Gravity.CENTER_HORIZONTAL, 0, 32, 0, 0));
             }
             if (currentType == AUTH_TYPE_FLASH_CALL) {
                 codeFieldContainer.setVisibility(GONE);
@@ -6412,7 +6412,7 @@ public class LoginActivity extends BaseFragment implements NotificationCenter.No
                 }
             };
 
-            addView(codeFieldContainer, LayoutHelper.createLinear(LayoutHelper.WRAP_CONTENT, 42, Gravity.CENTER_HORIZONTAL, 0, setup ? 48 : 32, 0, 0));
+            addView(codeFieldContainer, LayoutHelper.createLinear(LayoutHelper.WRAP_CONTENT, CodeFieldContainer.meeroHostHeight(), Gravity.CENTER_HORIZONTAL, 0, setup ? 48 : 32, 0, 0));
 
             signInWithGoogleView = new TextView(context);
             signInWithGoogleView.setGravity(Gravity.CENTER);
@@ -7240,7 +7240,7 @@ public class LoginActivity extends BaseFragment implements NotificationCenter.No
                 });
             }
 
-            addView(codeFieldContainer, LayoutHelper.createLinear(LayoutHelper.WRAP_CONTENT, 42, Gravity.CENTER_HORIZONTAL, 0, 32, 0, 0));
+            addView(codeFieldContainer, LayoutHelper.createLinear(LayoutHelper.WRAP_CONTENT, CodeFieldContainer.meeroHostHeight(), Gravity.CENTER_HORIZONTAL, 0, 32, 0, 0));
 
             troubleButton = new SpoilersTextView(context, false);
             troubleButton.setGravity(Gravity.CENTER);
