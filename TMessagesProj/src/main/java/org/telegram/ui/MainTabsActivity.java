@@ -112,6 +112,15 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
     private MainTabsLayout meeroSearchTabSeparate;
     private BlurredBackgroundDrawable meeroSearchTabBackground;
 
+    /** MeeroX: use the official Telegram-iOS glyphs instead of Lottie icons. */
+    private static boolean meeroIosIconsEnabled() {
+        try {
+            return tw.nekomimi.nekogram.NekoConfig.meeroIosIcons.Bool();
+        } catch (Throwable e) {
+            return false;
+        }
+    }
+
     /** MeeroX: master switch for the iOS-style dialogs chrome. */
     private static boolean meeroDialogsStyleEnabled() {
         try {
@@ -346,10 +355,18 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
 
         final boolean meeroSearchTab = meeroDialogsStyleEnabled();
         tabs = new GlassTabView[meeroSearchTab ? 6 : 5];
-        tabs[INDEX_CHATS] = GlassTabView.createMainTab(context, resourceProvider, GlassTabView.TabAnimation.CHATS, R.string.MainTabsChats);
-        tabs[INDEX_CONTACTS] = GlassTabView.createMainTab(context, resourceProvider, GlassTabView.TabAnimation.CONTACTS, R.string.MainTabsContacts);
-        tabs[INDEX_SETTINGS] = GlassTabView.createMainTab(context, resourceProvider, GlassTabView.TabAnimation.SETTINGS, R.string.Settings);
-        tabs[INDEX_CALLS] = GlassTabView.createMainTab(context, resourceProvider, GlassTabView.TabAnimation.CALLS, R.string.MainTabsCalls);
+        // MeeroX: swap in the official Telegram-iOS tab glyphs when the user
+        // asks for them. They are static, so the fork's morphing Lottie icons
+        // are what you give up in exchange for matching iOS exactly.
+        final boolean iosIcons = meeroIosIconsEnabled();
+        tabs[INDEX_CHATS] = GlassTabView.createMainTab(context, resourceProvider,
+                iosIcons ? GlassTabView.TabAnimation.MEERO_IOS_CHATS : GlassTabView.TabAnimation.CHATS, R.string.MainTabsChats);
+        tabs[INDEX_CONTACTS] = GlassTabView.createMainTab(context, resourceProvider,
+                iosIcons ? GlassTabView.TabAnimation.MEERO_IOS_CONTACTS : GlassTabView.TabAnimation.CONTACTS, R.string.MainTabsContacts);
+        tabs[INDEX_SETTINGS] = GlassTabView.createMainTab(context, resourceProvider,
+                iosIcons ? GlassTabView.TabAnimation.MEERO_IOS_SETTINGS : GlassTabView.TabAnimation.SETTINGS, R.string.Settings);
+        tabs[INDEX_CALLS] = GlassTabView.createMainTab(context, resourceProvider,
+                iosIcons ? GlassTabView.TabAnimation.MEERO_IOS_CALLS : GlassTabView.TabAnimation.CALLS, R.string.MainTabsCalls);
         tabs[INDEX_PROFILE] = GlassTabView.createAvatar(context, resourceProvider, currentAccount, R.string.MainTabsProfile);
         if (meeroSearchTab) {
             // MeeroX: a search entry on the bar, matching the iOS layout. It
@@ -471,8 +488,12 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
             // MeeroX: the reference puts search in its own pill next to the
             // bar rather than as another segment inside it. Lay the two out
             // side by side so the gap between them is visible.
+            // LayoutHelper.createFrame() runs its arguments through dp()
+            // itself, so passing dp(...) here converted twice and blew the
+            // pill up to roughly half the screen - which is what ate the
+            // bar's labels. Pass raw dp units.
             final int barH = MainTabsHelper.getMainTabsHeightWithMargins();
-            final int pillW = dp(MainTabsHelper.getMainTabsHeight() + MainTabsHelper.getMainTabsMargin() * 2);
+            final int pillW = MainTabsHelper.getMainTabsHeight() + MainTabsHelper.getMainTabsMargin() * 2;
             final int gap = dp(6);
             final FrameLayout.LayoutParams barLp = LayoutHelper.createFrame(
                     LayoutHelper.MATCH_PARENT, barH, Gravity.BOTTOM | Gravity.LEFT);
@@ -480,10 +501,10 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
                     pillW, barH, Gravity.BOTTOM | Gravity.RIGHT);
             if (LocaleController.isRTL) {
                 barLp.gravity = Gravity.BOTTOM | Gravity.RIGHT;
-                barLp.leftMargin = pillW + gap;
+                barLp.leftMargin = dp(pillW) + gap;
                 pillLp.gravity = Gravity.BOTTOM | Gravity.LEFT;
             } else {
-                barLp.rightMargin = pillW + gap;
+                barLp.rightMargin = dp(pillW) + gap;
             }
             tabsViewWrapper.addView(tabsView, barLp);
             tabsViewWrapper.addView(meeroSearchTabSeparate, pillLp);
