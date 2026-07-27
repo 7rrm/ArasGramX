@@ -1457,7 +1457,16 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
 
         for (int i = 0; i < 2; i++) {
             if (titleTextView[0] != null && titleTextView[0].getVisibility() != GONE || subtitleTextView != null && subtitleTextView.getVisibility() != GONE) {
-                int availableWidth = isCentered() ? (width - dp(120)) : width - (menu != null ? menu.getMeasuredWidth() : 0) - dp(16) - textLeft - titleRightMargin;
+                // A centred title assumes a fixed 120dp of chrome. When the
+                // menu is wider than that - which happens once the stories
+                // avatar joins it - the title runs into the buttons and gets
+                // shoved off to one side. Reserve whatever the menu really
+                // takes, on both sides so the text stays centred.
+                int meeroReserve = dp(120);
+                if (isCentered() && menu != null) {
+                    meeroReserve = Math.max(meeroReserve, menu.getMeasuredWidth() * 2 + dp(24));
+                }
+                int availableWidth = isCentered() ? (width - meeroReserve) : width - (menu != null ? menu.getMeasuredWidth() : 0) - dp(16) - textLeft - titleRightMargin;
 
                 if (((fromBottom && i == 0) || (!fromBottom && i == 1)) && overlayTitleAnimation && titleAnimationRunning) {
                     titleTextView[i].setTextSize(glassMode ? 17 : !AndroidUtilities.isTablet() && getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE ? 18 : 20);
