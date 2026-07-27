@@ -8347,6 +8347,20 @@ public class ChatActivity extends BaseFragment implements
             }
 
             @Override
+            protected void onLayout(boolean changed, int l, int t, int r, int b) {
+                super.onLayout(changed, l, t, r, b);
+                // MeeroX: hand the container the real width of the edge
+                // controls so the glass pill ends exactly where they begin.
+                // attachLayout grows and shrinks with the buttons it shows,
+                // so this has to be read after every layout pass.
+                if (chatInputViewsContainer != null) {
+                    chatInputViewsContainer.setMeeroControlWidths(
+                            getMeeroLeftControlsWidth(),
+                            getMeeroRightControlsWidth());
+                }
+            }
+
+            @Override
             public boolean onInterceptTouchEvent(MotionEvent ev) {
                 if (getAlpha() != 1.0f) {
                     return false;
