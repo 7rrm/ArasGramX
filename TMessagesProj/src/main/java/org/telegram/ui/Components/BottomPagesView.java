@@ -51,6 +51,15 @@ public class BottomPagesView extends View {
     }
 
     @Override
+    /** MeeroX: iOS page dots never stretch; they only move. */
+    private static boolean meeroIosDots() {
+        try {
+            return tw.nekomimi.nekogram.NekoConfig.meeroIosIntro.Bool();
+        } catch (Throwable ignore) {
+            return false;
+        }
+    }
+
     protected void onDraw(Canvas canvas) {
         float d = AndroidUtilities.dp(5);
         if (colorKey >= 0) {
@@ -74,12 +83,20 @@ public class BottomPagesView extends View {
             paint.setColor(ThemeColors.TELEGRAM_COLOR);
         }
         x = currentPage * AndroidUtilities.dp(11);
-        if (progress != 0) {
+        // MeeroX: iOS keeps every page dot the same circle and only moves the
+        // highlight between them. Android stretches the active dot into a
+        // capsule that spans towards the next page while you swipe, which is
+        // the one thing that stops this control reading as a UIPageControl.
+        if (progress != 0 && !meeroIosDots()) {
             if (scrollPosition >= currentPage) {
                 rect.set(x, 0, x + AndroidUtilities.dp(5) + AndroidUtilities.dp(11) * progress, AndroidUtilities.dp(5));
             } else {
                 rect.set(x - AndroidUtilities.dp(11) * (1.0f - progress), 0, x + AndroidUtilities.dp(5), AndroidUtilities.dp(5));
             }
+        } else if (progress != 0) {
+            // Slide the dot itself across instead of growing it.
+            final float shift = AndroidUtilities.dp(11) * (scrollPosition >= currentPage ? progress : progress - 1f);
+            rect.set(x + shift, 0, x + shift + AndroidUtilities.dp(5), AndroidUtilities.dp(5));
         } else {
             rect.set(x, 0, x + AndroidUtilities.dp(5), AndroidUtilities.dp(5));
         }
