@@ -258,6 +258,20 @@ public class TextDetailCell extends FrameLayout {
         setWillNotDraw(!divider);
     }
 
+    /**
+     * MeeroX: lets a host turn the built-in divider off after the cell has
+     * been bound. Inside a grouped card the card draws its own inset
+     * separator, and the cell's full-width one doubles up with it.
+     */
+    public void setMeeroDividerEnabled(boolean enabled) {
+        if (needDivider == enabled) {
+            return;
+        }
+        needDivider = enabled;
+        setWillNotDraw(!needDivider);
+        invalidate();
+    }
+
     public void setContentDescriptionValueFirst(boolean contentDescriptionValueFirst) {
         this.contentDescriptionValueFirst = contentDescriptionValueFirst;
     }
