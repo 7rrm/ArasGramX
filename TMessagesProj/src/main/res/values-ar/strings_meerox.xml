@@ -717,4 +717,6 @@
     <string name="MeeroIosIconsInfo">استخدام أيقونات تلكرام آيفون الأصلية. هي ثابتة، فتُستبدل أيقونات التبويبات المتحركة.</string>
     <string name="meeroIosInput">شريط الكتابة بنمط iOS</string>
     <string name="MeeroIosInputInfo">فصل زرّي المرفقات والتسجيل عن حقل الكتابة، كأزرار دائرية مستقلة.</string>
+    <string name="meeroIosSounds">أصوات الرسائل بنمط iOS</string>
+    <string name="MeeroIosSoundsInfo">استخدام نغمات الإرسال والاستقبال الأصلية من تلكرام آيفون.</string>
 </resources>
