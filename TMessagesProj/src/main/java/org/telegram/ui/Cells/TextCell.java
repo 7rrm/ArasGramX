@@ -170,7 +170,50 @@ public class TextCell extends FrameLayout {
             return;
         }
         needDivider = enabled;
-        setWillNotDraw(!needDivider);
+        // The tile is painted in onDraw too, so drawing may not be skipped
+        // just because the divider went away.
+        setWillNotDraw(!needDivider && meeroTileIndex < 0);
+        invalidate();
+    }
+
+    /**
+     * MeeroX: index of the accent this row's icon tile is painted with, or -1
+     * for no tile.
+     */
+    private int meeroTileIndex = -1;
+    private Paint meeroTilePaint;
+
+    /**
+     * MeeroX: asks the cell to paint an iOS-style icon tile behind its glyph.
+     *
+     * The tile used to be the icon view's background, but a background fills
+     * the host view's bounds and that view is 24dp wide by 31dp tall - 24dp of
+     * glyph plus the dp(7) top padding set in setTextAndIcon. A 29dp square
+     * cannot fit in that rectangle, so it was drawn clipped: the visible
+     * result was a coloured rectangle with two cut corners rather than a
+     * rounded square. Painting it here instead lets the square be centred on
+     * the glyph and stay square whatever the icon view's shape is.
+     *
+     * @param index accent index, or -1 to remove the tile
+     */
+    public void setMeeroIconTile(int index) {
+        if (meeroTileIndex == index) {
+            return;
+        }
+        meeroTileIndex = index;
+        if (index >= 0) {
+            if (meeroTilePaint == null) {
+                meeroTilePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+            }
+            // The glyph reads as part of the tile only if it is knocked out of
+            // it, the way iOS draws settings icons.
+            imageView.setColorFilter(new PorterDuffColorFilter(
+                    tw.nekomimi.nekogram.MeeroCards.IconTileDrawable.glyphColor(),
+                    PorterDuff.Mode.SRC_IN));
+            imageView.setBackground(null);
+        }
+        // onDraw has to run for the tile even when there is no divider.
+        setWillNotDraw(!needDivider && meeroTileIndex < 0);
         invalidate();
     }
 
@@ -847,6 +890,17 @@ public class TextCell extends FrameLayout {
 
     @Override
     protected void onDraw(Canvas canvas) {
+        // MeeroX: the accent tile goes down before super's content is drawn,
+        // so the glyph lands on top of it. It is centred on the glyph rather
+        // than on the icon view, whose box includes the dp(7) top padding and
+        // would push the square off-centre.
+        if (meeroTileIndex >= 0 && imageView.getVisibility() == VISIBLE) {
+            final float cx = imageView.getLeft() + imageView.getMeasuredWidth() / 2f;
+            final float cy = imageView.getTop() + imageView.getPaddingTop()
+                    + (imageView.getMeasuredHeight() - imageView.getPaddingTop()) / 2f;
+            tw.nekomimi.nekogram.MeeroCards.IconTileDrawable.drawTile(
+                    canvas, cx, cy, meeroTileIndex, resourcesProvider, meeroTilePaint);
+        }
         if (needDivider) {
             Paint paint = resourcesProvider != null ? resourcesProvider.getPaint(Theme.key_paint_divider) : null;
             if (paint == null) {
