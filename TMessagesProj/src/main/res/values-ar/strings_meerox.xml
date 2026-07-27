@@ -725,6 +725,10 @@
     <string name="MeeroIosCodeInfo">خانات أطول وزواياها أنعم بخط ثابت العرض، بنفس قياسات تلكرام آيفون.</string>
     <string name="meeroIosIntro">شاشة الترحيب بنمط iOS</string>
     <string name="MeeroIosIntroInfo">خطوط وأزرار بقياسات آيفون بصفحات الترحيب، ونقاط تنقّل تنزلق بدل ما تتمدّد. الرسوم المتحركة تظل مثل ما هي.</string>
+    <string name="meeroIosSearch">حقل البحث بنمط iOS</string>
+    <string name="MeeroIosSearchInfo">كبسولة ممتلئة بعدسة أصغر وأخفت، مثل ما يرسمها آيفون. تشيل الحد الرفيع.</string>
+    <string name="meeroBottomActions">أزرار التحديد بالأسفل</string>
+    <string name="MeeroBottomActionsInfo">ينزّل شريط الأزرار الي يظهر عند تحديد الرسائل إلى أسفل الشاشة، قرب الإبهام.</string>
     <string name="MeeroSectionCategories">الأقسام</string>
     <string name="MeeroSectionData">البيانات</string>
     <string name="MeeroSectionInfo">حول</string>
