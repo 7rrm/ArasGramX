@@ -494,7 +494,9 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
             // bar's labels. Pass raw dp units.
             final int barH = MainTabsHelper.getMainTabsHeightWithMargins();
             final int pillW = MainTabsHelper.getMainTabsHeight() + MainTabsHelper.getMainTabsMargin() * 2;
-            final int gap = dp(6);
+            // The reference keeps the pill close to the bar; 6dp plus each
+            // side's own inner margin read as a much wider gap on screen.
+            final int gap = dp(1);
             final FrameLayout.LayoutParams barLp = LayoutHelper.createFrame(
                     LayoutHelper.MATCH_PARENT, barH, Gravity.BOTTOM | Gravity.LEFT);
             final FrameLayout.LayoutParams pillLp = LayoutHelper.createFrame(
