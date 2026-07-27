@@ -1037,7 +1037,13 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                     actionBarSearchPaint.setColor(getThemedColor(Theme.key_windowBackgroundWhite));
                 } else if (searchAnimationProgress == 0) {
                     if (fragmentSearchField != null) {
-                        fragmentSearchField.setTranslationY(scrollYOffset + getSearchFieldAdditionOffset());
+                        // MeeroX: scrollYOffset is what slides the field up
+                        // under the title as the list scrolls. Holding it at
+                        // zero pins the field, which is what iOS does - the
+                        // previous attempt only froze its alpha, so it stayed
+                        // visible while still sliding into the title.
+                        fragmentSearchField.setTranslationY(
+                                (meeroDialogsStyleEnabled() ? 0 : scrollYOffset) + getSearchFieldAdditionOffset());
                     }
                 }
                 blurBounds.set(0, top, getMeasuredWidth(), top + actionBarHeight - dp(2 * searchAnimationProgress));
@@ -1084,7 +1090,9 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                     tabsYOffset -= (1f - animatorFilterTabsVisible.getFloatValue()) * filterTabsView.getMeasuredHeight();
                 }
                 if (fragmentSearchField != null) {
-                    fragmentSearchField.setTranslationY(lerp(scrollYOffset + tabsYOffset, -dp(hasStories ? DialogStoriesCell.HEIGHT_IN_DP : 0), rightSlidingProgress) + getSearchFieldAdditionOffset());
+                    // MeeroX: drop scrollYOffset so the field stays put.
+                    final float meeroScroll = meeroDialogsStyleEnabled() ? 0 : scrollYOffset;
+                    fragmentSearchField.setTranslationY(lerp(meeroScroll + tabsYOffset, -dp(hasStories ? DialogStoriesCell.HEIGHT_IN_DP : 0), rightSlidingProgress) + getSearchFieldAdditionOffset());
                 }
                 float rightFragmentOffset = 0;
                 if (rightFragmentTransitionInProgress) {
@@ -1101,8 +1109,11 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                 viewPages[0].setTranslationY(rightFragmentOffset - addH);
             } else {
                 if (fragmentSearchField != null) {
+                    // MeeroX: same here - the field keeps its place while the
+                    // list scrolls underneath it.
+                    final float meeroScroll2 = meeroDialogsStyleEnabled() ? 0 : scrollYOffset;
                     fragmentSearchField.setTranslationY(lerp(
-                        scrollYOffset + tabsYOffset + storiesOverscroll - dp(4),
+                        meeroScroll2 + tabsYOffset + storiesOverscroll - dp(4),
                         -dp(SEARCH_FIELD_HEIGHT + (hasStories ? DialogStoriesCell.HEIGHT_IN_DP : 0)),
                         searchAnimationProgress
                     ));
@@ -14608,10 +14619,10 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
         final int maxScrollWithoutSearch = getMaxScrollYOffsetWithoutSearch();
         // MeeroX: iOS keeps the search field on screen while the list scrolls
         // instead of trading it for a small icon, so hold it at full alpha.
-        final float alphaByScrollOffset = shouldShowIdleSearchField()
-                ? (meeroDialogsStyleEnabled() ? 1f
-                        : 1f - MathUtils.clamp((-scrollYOffset - maxScrollWithoutSearch) / dp(SEARCH_FIELD_HEIGHT), 0, 1))
-                : 0f;
+        // MeeroX: the field is pinned by translation now, so its alpha follows
+        // upstream again. Forcing it to 1 here is what left it visible while
+        // it slid up into the title.
+        final float alphaByScrollOffset = shouldShowIdleSearchField() ? 1f - MathUtils.clamp((-scrollYOffset - maxScrollWithoutSearch) / dp(SEARCH_FIELD_HEIGHT), 0, 1) : 0f;
 
         final float actionModeVisible = Math.max(progressToActionMode, animatorActionModeVisible.getFloatValue());
         final float searchFieldVisible = animatorSearchVisible.getFloatValue();
