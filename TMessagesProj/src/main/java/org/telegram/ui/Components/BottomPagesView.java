@@ -50,7 +50,6 @@ public class BottomPagesView extends View {
         selectedColorKey = selectedKey;
     }
 
-    @Override
     /** MeeroX: iOS page dots never stretch; they only move. */
     private static boolean meeroIosDots() {
         try {
@@ -60,6 +59,7 @@ public class BottomPagesView extends View {
         }
     }
 
+    @Override
     protected void onDraw(Canvas canvas) {
         float d = AndroidUtilities.dp(5);
         if (colorKey >= 0) {
