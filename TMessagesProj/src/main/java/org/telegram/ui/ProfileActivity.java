@@ -13968,9 +13968,21 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
             }
         }
 
+        private TextDetailCell meeroSuppressDividerFor;
+
         @Override
         public void onBindViewHolder(RecyclerView.ViewHolder holder, @SuppressLint("RecyclerView") int position) {
+            meeroSuppressDividerFor = null;
             meeroApplyProfileCard(holder, position);
+            meeroBindRow(holder, position);
+            // The setters above re-enable needDivider, so clear it last.
+            if (meeroSuppressDividerFor != null) {
+                meeroSuppressDividerFor.setMeeroDividerEnabled(false);
+                meeroSuppressDividerFor = null;
+            }
+        }
+
+        private void meeroBindRow(RecyclerView.ViewHolder holder, int position) {
             switch (holder.getItemViewType()) {
                 case VIEW_TYPE_HEADER:
                     HeaderCell headerCell = (HeaderCell) holder.itemView;
@@ -14918,6 +14930,12 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                 pos = tw.nekomimi.nekogram.MeeroCards.POS_SINGLE;
             }
             holder.itemView.setBackground(new tw.nekomimi.nekogram.MeeroCards.CardDrawable(pos, resourcesProvider));
+            // TextDetailCell paints its own full-width divider. Ours is inset
+            // to sit inside the card, so both together read as a doubled line
+            // - suppress the cell's and keep the card's.
+            if (holder.itemView instanceof TextDetailCell) {
+                meeroSuppressDividerFor = (TextDetailCell) holder.itemView;
+            }
             if (holder.itemView instanceof AboutLinkCell) {
                 ((AboutLinkCell) holder.itemView).setMeeroSurfaceColor(
                         tw.nekomimi.nekogram.MeeroCards.surfaceColor(resourcesProvider));
