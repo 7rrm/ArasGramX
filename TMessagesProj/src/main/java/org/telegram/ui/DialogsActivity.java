@@ -518,6 +518,8 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
     /** MeeroX: standalone compose button in the iOS dialogs header. */
     private ActionBarMenuItem meeroComposeItem;
     private static final int MEERO_ID_COMPOSE = 9711;
+    /** Telegram-iOS sizes its header controls at 48pt. */
+    private static final int MEERO_HEADER_BUTTON = 48;
     private ActionBarMenuItem downloadsItem;
     private DownloadProgressIcon downloadProgressIcon;
     private boolean downloadsItemVisible;
@@ -3370,11 +3372,34 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                 // that edge sits behind the status bar. Gravity.TOP therefore
                 // pushed the button up over the clock and battery. Centre it
                 // in the bar proper and offset by the status bar instead.
+                // Added as a direct ActionBar child, this button had to
+                // position itself - and got it wrong twice, ending up over the
+                // status bar. The menu already lays its items out correctly
+                // and is what the other two buttons use, so mirror them: the
+                // edit button is added to the menu and simply moved to the
+                // opposite side, inheriting the exact same vertical placement.
                 final FrameLayout.LayoutParams meeroEditLp = LayoutHelper.createFrame(
-                        54, 54, Gravity.TOP | Gravity.LEFT, 4, 0, 0, 0);
-                meeroEditLp.topMargin = (AndroidUtilities.statusBarHeight
-                        + (ActionBar.getCurrentActionBarHeight() - dp(54)) / 2);
+                        MEERO_HEADER_BUTTON, MEERO_HEADER_BUTTON,
+                        Gravity.TOP | Gravity.LEFT, 6, 0, 0, 0);
                 actionBar.addView(meeroEditItem, meeroEditLp);
+                // Rather than guessing the offset, copy whatever vertical
+                // position the menu buttons ended up at. They are laid out by
+                // ActionBar itself, so this stays correct on every device.
+                actionBar.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, or_, ob) -> {
+                    if (meeroEditItem == null || optionsItem == null) {
+                        return;
+                    }
+                    final int target = optionsItem.getTop()
+                            + (optionsItem.getHeight() - meeroEditItem.getHeight()) / 2;
+                    if (target > 0 && meeroEditItem.getTop() != target) {
+                        final ViewGroup.MarginLayoutParams mlp =
+                                (ViewGroup.MarginLayoutParams) meeroEditItem.getLayoutParams();
+                        if (mlp.topMargin != target) {
+                            mlp.topMargin = target;
+                            meeroEditItem.setLayoutParams(mlp);
+                        }
+                    }
+                });
                 meeroEditItem.setOnClickListener(v -> {
                     if (filterTabsView == null) {
                         return;
@@ -5399,8 +5424,11 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
         // MeeroX: give the round header buttons the same liquid-glass disc the
         // rest of the chrome uses, instead of a flat tinted circle. Done here
         // because the blur factories only exist once the content view is up.
-        meeroGlassHeaderButton(meeroComposeItem);
-        meeroGlassHeaderButton(optionsItem);
+        // iOS groups adjacent header controls under one glass surface
+        // (GlassControlGroup) instead of giving each its own disc. The two
+        // menu buttons sit side by side, so they share one; the edit button
+        // is alone on the far side and keeps a single disc.
+        meeroGlassHeaderGroup();
         meeroGlassHeaderButton(meeroEditItem);
 
         dialogStoriesCell = new DialogStoriesCell(context, this, currentAccount, isArchive() ? DialogStoriesCell.TYPE_ARCHIVE : DialogStoriesCell.TYPE_DIALOGS) {
@@ -10571,6 +10599,51 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
      * disc. Falls back silently when the blur pipeline is unavailable, in
      * which case the tinted circle from meeroRoundHeaderButton stays.
      */
+    /**
+     * MeeroX: one glass capsule behind the compose and overflow buttons, so
+     * they read as a single grouped control the way iOS draws them.
+     */
+    private void meeroGlassHeaderGroup() {
+        if (!meeroDialogsStyleEnabled() || iBlur3FactoryLiquidGlass == null) {
+            return;
+        }
+        if (meeroComposeItem == null || optionsItem == null) {
+            meeroGlassHeaderButton(meeroComposeItem);
+            meeroGlassHeaderButton(optionsItem);
+            return;
+        }
+        try {
+            final int size = dp(MEERO_HEADER_BUTTON);
+            for (ActionBarMenuItem it : new ActionBarMenuItem[]{meeroComposeItem, optionsItem}) {
+                final ViewGroup.LayoutParams lp = it.getLayoutParams();
+                if (lp != null) {
+                    lp.width = size;
+                    lp.height = size;
+                    if (lp instanceof ViewGroup.MarginLayoutParams) {
+                        ((ViewGroup.MarginLayoutParams) lp).leftMargin = 0;
+                        ((ViewGroup.MarginLayoutParams) lp).rightMargin = 0;
+                    }
+                    it.setLayoutParams(lp);
+                }
+                it.setBackground(null);
+            }
+            // The capsule is painted by the menu itself, behind both items.
+            final ActionBarMenu menu = actionBar.createMenu();
+            final BlurredBackgroundDrawable group = iBlur3FactoryLiquidGlass.create(
+                    menu, BlurredBackgroundProviderImpl.topPanel(resourceProvider));
+            group.setRadius(size / 2f);
+            menu.setBackground(group);
+            menu.setClipToOutline(true);
+            menu.setOutlineProvider(new ViewOutlineProvider() {
+                @Override
+                public void getOutline(View view, android.graphics.Outline outline) {
+                    outline.setRoundRect(0, 0, view.getWidth(), view.getHeight(), view.getHeight() / 2f);
+                }
+            });
+        } catch (Throwable ignore) {
+        }
+    }
+
     private void meeroGlassHeaderButton(ActionBarMenuItem item) {
         if (item == null || !meeroDialogsStyleEnabled() || iBlur3FactoryLiquidGlass == null) {
             return;
@@ -14533,7 +14606,12 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
         }
 
         final int maxScrollWithoutSearch = getMaxScrollYOffsetWithoutSearch();
-        final float alphaByScrollOffset = shouldShowIdleSearchField() ? 1f - MathUtils.clamp((-scrollYOffset - maxScrollWithoutSearch) / dp(SEARCH_FIELD_HEIGHT), 0, 1) : 0f;
+        // MeeroX: iOS keeps the search field on screen while the list scrolls
+        // instead of trading it for a small icon, so hold it at full alpha.
+        final float alphaByScrollOffset = shouldShowIdleSearchField()
+                ? (meeroDialogsStyleEnabled() ? 1f
+                        : 1f - MathUtils.clamp((-scrollYOffset - maxScrollWithoutSearch) / dp(SEARCH_FIELD_HEIGHT), 0, 1))
+                : 0f;
 
         final float actionModeVisible = Math.max(progressToActionMode, animatorActionModeVisible.getFloatValue());
         final float searchFieldVisible = animatorSearchVisible.getFloatValue();
@@ -14649,7 +14727,9 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
     }
 
     private void checkUi_itemSearchVisibility() {
-        final float factor0 = isSupportSearch() ? 1 : 0;
+        // With the field pinned there is nothing for the compact search icon
+        // to stand in for, so it stays hidden.
+        final float factor0 = (isSupportSearch() && !meeroDialogsStyleEnabled()) ? 1 : 0;
         final float factor1 = animatorSearchButtonVisible.getFloatValue();
         final float factor2 = 1f - getRightSlidingProgress();
         final float factor3 = 1f - animatorDoneButtonVisible.getFloatValue();
