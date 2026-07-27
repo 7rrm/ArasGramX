@@ -82,6 +82,146 @@ public class ChatInputViewsContainer extends FrameLayout {
         blurredBackgroundDrawable.setRadius(dp(INPUT_BUBBLE_RADIUS));
     }
 
+    public void setUnderKeyboardBackgroundDrawable(BlurredBackgroundDrawable drawable) {
+        underKeyboardBackgroundDrawable = drawable;
+        underKeyboardBackgroundDrawable.enableInAppKeyboardOptimization();
+        underKeyboardBackgroundDrawable.setRadius(dp(INPUT_KEYBOARD_RADIUS), dp(INPUT_KEYBOARD_RADIUS), 0, 0);
+        underKeyboardBackgroundDrawable.setThickness(dp(32));
+        underKeyboardBackgroundDrawable.setIntensity(0.4f);
+    }
+
+    public void updateColors() {
+        blurredBackgroundDrawable.updateColors();
+        underKeyboardBackgroundDrawable.updateColors();
+        invalidate();
+    }
+
+
+    @NonNull
+    public FrameLayout getInputIslandBubbleContainer() {
+        return inputIslandBubbleContainer;
+    }
+
+    @NonNull
+    public FrameLayout getInAppKeyboardBubbleContainer() {
+        return inAppKeyboardBubbleContainer;
+    }
+
+    @Override
+    protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
+        super.onLayout(changed, left, top, right, bottom);
+        checkViewsPositions();
+        checkInAppKeyboardChild();
+    }
+
+
+
+    private void checkInAppKeyboardViewHeight() {
+        LayoutParams lp = (LayoutParams) inAppKeyboardBubbleContainer.getLayoutParams();
+
+        final int oldHeight = lp.height;
+        final int newHeight = windowInsetsProvider.getInAppKeyboardRecommendedViewHeight();
+
+        if (oldHeight != newHeight) {
+            lp.height = newHeight;
+            requestLayout();
+        }
+    }
+
+    private final Path underKeyboardPath = new Path();
+
+    private int currentBlurredHeight;
+    private void checkBlurredHeight(boolean force) {
+        checkViewsPositions();
+
+        final int blurredHeight = inputBubbleHeightRound + dp(INPUT_BUBBLE_BOTTOM) + Math.round(maxBottomInset);
+        if (currentBlurredHeight != blurredHeight || force) {
+            currentBlurredHeight = blurredHeight;
+
+            final int r = dp(INPUT_KEYBOARD_RADIUS);
+            tmpRectF.set(0, getMeasuredHeight() - imeBottomInset, getMeasuredWidth(), getMeasuredHeight());
+            underKeyboardPath.rewind();
+            underKeyboardPath.addRoundRect(tmpRectF, new float[] {r, r, r, r, 0, 0, 0, 0}, Path.Direction.CW);
+            underKeyboardPath.close();
+            invalidate();
+        }
+    }
+
+    private float maxBottomInset;
+    private float imeBottomInset;
+    private boolean needDrawInAppKeyboard;
+
+    public void checkInsets() {
+        maxBottomInset = windowInsetsProvider.getAnimatedMaxBottomInset();
+        imeBottomInset = windowInsetsProvider.getAnimatedImeBottomInset();
+
+        needDrawInAppKeyboard = windowInsetsProvider.inAppViewIsVisible();
+
+        if ((inAppKeyboardBubbleContainer.getVisibility() == VISIBLE) != needDrawInAppKeyboard) {
+            inAppKeyboardBubbleContainer.setVisibility(needDrawInAppKeyboard ? VISIBLE : GONE);
+        }
+
+        checkInAppKeyboardViewHeight();
+        checkBlurredHeight(false);
+        checkInAppKeyboardChild();
+
+        if (underKeyboardBackgroundDrawable != null) {
+            int leftBottomRadius = 0;
+            int rightBottomRadius = 0;
+            if (Build.VERSION.SDK_INT >= 31) {
+                final WindowInsets insets = getRootWindowInsets();
+                if (insets != null) {
+                    final RoundedCorner bottomLeft = insets.getRoundedCorner(RoundedCorner.POSITION_BOTTOM_LEFT);
+                    final RoundedCorner bottomRight = insets.getRoundedCorner(RoundedCorner.POSITION_BOTTOM_RIGHT);
+                    leftBottomRadius = bottomLeft == null ? 0 : bottomLeft.getRadius();
+                    rightBottomRadius = bottomRight == null ? 0 : bottomRight.getRadius();
+                }
+            }
+            underKeyboardBackgroundDrawable.setRadius(dp(INPUT_KEYBOARD_RADIUS), dp(INPUT_KEYBOARD_RADIUS), rightBottomRadius, leftBottomRadius, true);
+        }
+    }
+
+    private void checkViewsPositions() {
+        inputIslandBubbleContainer.setTranslationY(-maxBottomInset - dp(INPUT_BUBBLE_BOTTOM));
+        inAppKeyboardBubbleContainer.setTranslationY(inAppKeyboardBubbleContainer.getMeasuredHeight() - imeBottomInset);
+    }
+
+
+    private void checkInAppKeyboardChild() {
+        final int navbarHeight = windowInsetsProvider.getCurrentNavigationBarInset();
+        final float keyboardHeight = windowInsetsProvider.getAnimatedImeBottomInset();
+
+        for (int a = 0, N = inAppKeyboardBubbleContainer.getChildCount(); a < N; a++) {
+            final View child = inAppKeyboardBubbleContainer.getChildAt(a);
+            if (child instanceof InAppKeyboardInsetView) {
+                InAppKeyboardInsetView insetView = (InAppKeyboardInsetView) child;
+                insetView.applyNavigationBarHeight(navbarHeight);
+                insetView.applyInAppKeyboardAnimatedHeight(keyboardHeight);
+            }
+        }
+    }
+
+
+
+    /* */
+
+    private float inputBubbleOffsetLeft;
+    private float inputBubbleOffsetRight;
+
+    private float inputBubbleHeight;
+    private int inputBubbleHeightRound;
+    public void setInputBubbleHeight(float height) {
+        inputBubbleHeight = height;
+        inputBubbleHeightRound = Math.round(inputBubbleHeight);
+        checkBlurredHeight(false);
+    }
+
+    public void setInputBubbleOffsets(float left, float right) {
+        inputBubbleOffsetLeft = left;
+        inputBubbleOffsetRight = right;
+        invalidate();
+    }
+
     public float getInputBubbleHeight() {
         return inputBubbleHeight;
     }
