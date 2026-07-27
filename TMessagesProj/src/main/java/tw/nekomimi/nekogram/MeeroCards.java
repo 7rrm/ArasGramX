@@ -86,8 +86,41 @@ public class MeeroCards {
             this.rp = rp;
         }
 
+        /**
+         * Per-row accent.
+         *
+         * One colour for every icon made the list read as a wall of identical
+         * badges. Spreading the hue across the rows gives each entry its own
+         * identity while staying inside the theme's own palette, so it still
+         * follows whatever colours the user picked.
+         */
+        private static final int[] PALETTE_KEYS = {
+            Theme.key_statisticChartLine_blue,
+            Theme.key_statisticChartLine_green,
+            Theme.key_statisticChartLine_orange,
+            Theme.key_statisticChartLine_purple,
+            Theme.key_statisticChartLine_cyan,
+            Theme.key_statisticChartLine_red,
+            Theme.key_statisticChartLine_golden,
+            Theme.key_statisticChartLine_lightgreen,
+        };
+
+        private int tintIndex = -1;
+
+        public IconTileDrawable setTintIndex(int index) {
+            this.tintIndex = index;
+            return this;
+        }
+
         public static int accent(Theme.ResourcesProvider rp) {
             return Theme.getColor(Theme.key_windowBackgroundWhiteBlueText, rp);
+        }
+
+        public static int accentFor(int index, Theme.ResourcesProvider rp) {
+            if (index < 0) {
+                return accent(rp);
+            }
+            return Theme.getColor(PALETTE_KEYS[Math.abs(index) % PALETTE_KEYS.length], rp);
         }
 
         @Override
@@ -97,7 +130,7 @@ public class MeeroCards {
             final float left = b.centerX() - size / 2f;
             final float top = b.centerY() - size / 2f;
             r.set(left, top, left + size, top + size);
-            paint.setColor(accent(rp));
+            paint.setColor(accentFor(tintIndex, rp));
             paint.setAlpha((int) (255 * FILL_ALPHA));
             canvas.drawRoundRect(r, dp(RADIUS_DP), dp(RADIUS_DP), paint);
         }
