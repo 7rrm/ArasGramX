@@ -660,6 +660,29 @@ public class ChatActivityEnterView extends FrameLayout implements
 
     private int originalViewHeight;
     private LinearLayout attachLayout;
+
+    /**
+     * MeeroX: how far the glass pill must stay clear of the right edge.
+     *
+     * attachLayout holds the attach/bot/gift/sticker buttons and its width
+     * changes with how many of them are showing, so a fixed inset either cut
+     * into the buttons or left a gap. Report the real width instead.
+     */
+    public int getMeeroRightControlsWidth() {
+        int w = 0;
+        if (attachLayout != null && attachLayout.getVisibility() == View.VISIBLE) {
+            w = attachLayout.getMeasuredWidth();
+        }
+        return w + AndroidUtilities.dp(DEFAULT_HEIGHT);
+    }
+
+    /** Width of the controls sitting at the left edge of the field. */
+    public int getMeeroLeftControlsWidth() {
+        if (emojiButton != null && emojiButton.getVisibility() == View.VISIBLE) {
+            return AndroidUtilities.dp(DEFAULT_HEIGHT);
+        }
+        return 0;
+    }
     private ViewPropertyAnimator attachButtonAnimator;
     private ImageView attachButton;
     private AiButtonDrawable aiButtonIcon;
