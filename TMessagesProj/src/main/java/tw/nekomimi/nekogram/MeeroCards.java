@@ -36,15 +36,33 @@ public class MeeroCards {
     /** The fill colour a card is drawn with, for hosts that must match it. */
     public static int surfaceColor(Theme.ResourcesProvider rp) {
         final int base = Theme.getColor(Theme.key_windowBackgroundWhite, rp);
-        final boolean dark = (0.299 * Color.red(base) + 0.587 * Color.green(base)
-                + 0.114 * Color.blue(base)) < 128;
-        if (!dark) {
-            return base;
+        return meeroLift(base);
+    }
+
+    /**
+     * Lifts a surface just enough to read as a card on top of the page.
+     *
+     * A flat 10% shift only worked for grey themes: on a saturated
+     * background - the purple and blue themes especially - adding the same
+     * amount to every channel drags the hue around and the card ends up a
+     * different colour from the page. Working in HSV keeps the hue and
+     * saturation fixed and moves only the brightness, and the step scales
+     * with saturation so vivid themes get a gentler lift.
+     */
+    private static int meeroLift(int base) {
+        final float[] hsv = new float[3];
+        Color.colorToHSV(base, hsv);
+        final float sat = hsv[1];
+        final float val = hsv[2];
+        // Vivid colours need a smaller step to stay recognisable.
+        final float step = 0.10f - 0.05f * Math.min(1f, sat);
+        if (val < 0.5f) {
+            hsv[2] = Math.min(1f, val + step);
+        } else {
+            // Light themes read better with the card slightly recessed.
+            hsv[2] = Math.max(0f, val - step * 0.35f);
         }
-        final int r = (int) Math.min(255, Color.red(base) + 255 * 0.10f);
-        final int g = (int) Math.min(255, Color.green(base) + 255 * 0.10f);
-        final int b = (int) Math.min(255, Color.blue(base) + 255 * 0.10f);
-        return Color.argb(Color.alpha(base), r, g, b);
+        return Color.HSVToColor(Color.alpha(base), hsv);
     }
 
     public static boolean enabled() {
@@ -99,7 +117,7 @@ public class MeeroCards {
             // Lift the card slightly off the page so it reads as a surface,
             // the way iOS 26 tints grouped cells.
             final boolean dark = isDark(base);
-            fill.setColor(dark ? lighten(base, 0.10f) : base);
+            fill.setColor(meeroLift(base));
 
             final int m = dp(SIDE_MARGIN_DP);
             final float r = dp(RADIUS_DP);
