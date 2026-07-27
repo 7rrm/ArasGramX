@@ -209,6 +209,20 @@ public class FragmentSearchField extends FrameLayout implements FactorAnimator.T
      * rounded box. 26dp fully rounds the 48dp-tall field; the theme still
      * supplies the colour.
      */
+    /** MeeroX: hairline edge, drawn over whatever background is in use. */
+    private int meeroBorderRadius;
+
+    @Override
+    protected void dispatchDraw(android.graphics.Canvas canvas) {
+        super.dispatchDraw(canvas);
+        if (meeroBorderRadius > 0 && tw.nekomimi.nekogram.MeeroGlass.enabled()) {
+            final android.graphics.RectF r = new android.graphics.RectF(
+                    getPaddingLeft(), getPaddingTop(),
+                    getWidth() - getPaddingRight(), getHeight() - getPaddingBottom());
+            tw.nekomimi.nekogram.MeeroGlass.drawBorder(canvas, r, meeroBorderRadius, resourcesProvider);
+        }
+    }
+
     private static int meeroFieldRadius() {
         try {
             return tw.nekomimi.nekogram.NekoConfig.meeroDialogsStyle.Bool() ? dp(26) : dp(20);
@@ -219,6 +233,7 @@ public class FragmentSearchField extends FrameLayout implements FactorAnimator.T
 
     public void setupBlurredBackground(BlurredBackgroundDrawable drawable) {
         drawable.setRadius(meeroFieldRadius());
+        meeroBorderRadius = meeroFieldRadius();
         drawable.setPadding(dp(4));
         blurredBackgroundDrawable = drawable;
     }
