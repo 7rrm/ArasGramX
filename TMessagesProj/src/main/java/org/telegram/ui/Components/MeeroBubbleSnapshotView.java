@@ -151,6 +151,15 @@ public class MeeroBubbleSnapshotView extends FrameLayout {
                 canvas.restore();
             }
             cell.draw(canvas);
+            // The sender avatar and name are painted by ChatActivity after the
+            // cell, not inside cell.draw(), so a plain draw() left the avatar
+            // out of the snapshot - it stayed behind in the blurred layer and
+            // looked sliced. Render that pass here too.
+            if (cell.hasNameLayout()) {
+                canvas.save();
+                cell.drawNamesLayout(canvas, 1f);
+                canvas.restore();
+            }
             if (cell.hasOutboundsContent()) {
                 canvas.save();
                 canvas.translate(0, cell.getPaddingTop());
