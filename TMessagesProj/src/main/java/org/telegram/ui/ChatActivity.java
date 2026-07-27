@@ -5059,6 +5059,11 @@ public class ChatActivity extends BaseFragment implements
         chatInputViewsContainer.setWindowInsetsProvider(windowInsetsStateHolder);
         chatInputViewsContainer.setInputIslandBubbleDrawable(
             glassBackgroundDrawableFactory.create(chatInputViewsContainer, blurredBackgroundColorProvider));
+        // MeeroX: the iOS input bar's two side discs each need their own
+        // blur drawable - one instance cannot hold three sets of bounds.
+        chatInputViewsContainer.setMeeroSideDiscDrawables(
+            glassBackgroundDrawableFactory.create(chatInputViewsContainer, blurredBackgroundColorProvider),
+            glassBackgroundDrawableFactory.create(chatInputViewsContainer, blurredBackgroundColorProvider));
         chatInputViewsContainer.setUnderKeyboardBackgroundDrawable(
             glassBackgroundDrawableFactoryFrosted.create(chatInputViewsContainer, blurredBackgroundColorProvider));
 
