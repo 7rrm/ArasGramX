@@ -100,6 +100,24 @@ import tw.nekomimi.nekogram.helpers.LocaleHelper;
 public class IntroActivity extends BaseFragment implements NotificationCenter.NotificationCenterDelegate {
     private final static int ICON_WIDTH_DP = 200, ICON_HEIGHT_DP = 150;
 
+    /**
+     * MeeroX: iOS 26 intro typography and button sizing.
+     *
+     * Only the text layer is restyled. The artwork itself cannot be ported:
+     * Intro.java is entirely native (OpenGL ES 2.0, 23 textures on a
+     * dedicated EGLThread), and iOS has no TelegramIntro module to take
+     * assets from - its own artwork is baked into Apple's renderer. So the
+     * globe, plane and lock keep animating exactly as they do now, and what
+     * changes is the headline, the body copy and the button around them.
+     */
+    public static boolean meeroIosIntro() {
+        try {
+            return tw.nekomimi.nekogram.NekoConfig.meeroIosIntro.Bool();
+        } catch (Throwable ignore) {
+            return false;
+        }
+    }
+
     private final Object pagerHeaderTag = new Object(),
             pagerMessageTag = new Object();
 
@@ -382,9 +400,12 @@ public class IntroActivity extends BaseFragment implements NotificationCenter.No
         startMessagingButton.setText(LocaleController.getString(R.string.StartMessaging));
         startMessagingButton.setGravity(Gravity.CENTER);
         startMessagingButton.setTypeface(AndroidUtilities.bold());
-        startMessagingButton.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 15);
+        // MeeroX: iOS labels its solid buttons at 17pt regular, not 15 bold.
+        startMessagingButton.setTextSize(TypedValue.COMPLEX_UNIT_DIP, meeroIosIntro() ? 17 : 15);
         startMessagingButton.setPadding(dp(34), 0, dp(34), 0);
-        frameContainerView.addView(startMessagingButton, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, 48, Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM, 16, 0, 16, 76));
+        // MeeroX: iOS's SolidRoundedButtonNode is 50pt tall; the shape is
+        // already a capsule here, so only the height needs to follow.
+        frameContainerView.addView(startMessagingButton, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, meeroIosIntro() ? 50 : 48, Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM, 16, 0, 16, 76));
         startMessagingButton.setOnClickListener(view -> {
             if (startPressed) {
                 return;
@@ -651,7 +672,10 @@ public class IntroActivity extends BaseFragment implements NotificationCenter.No
             };
 
             headerTextView.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText));
-            headerTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 26);
+            // MeeroX: iOS sets the intro headline at 28pt semibold
+            // (AuthorizationSequenceSplashController). Android's 26 sits just
+            // under it, so the page reads slightly quieter than the original.
+            headerTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, meeroIosIntro() ? 28 : 26);
             headerTextView.setTypeface(AndroidUtilities.bold());
             headerTextView.setGravity(Gravity.CENTER);
             frameLayout.addView(headerTextView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, Gravity.TOP | Gravity.LEFT, 18, 244, 18, 0));
