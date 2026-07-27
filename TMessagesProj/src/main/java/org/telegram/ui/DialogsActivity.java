@@ -10624,22 +10624,16 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
             return;
         }
         try {
-            final int size = dp(MEERO_HEADER_BUTTON);
+            // Menu items are already 48dp - the size ChatActivity's own glass
+            // capsule uses. Resizing them here is what made this capsule
+            // larger than the reference, so leave the items alone and let
+            // ActionBarMenu's glass mode apply its -5dp overlap.
             for (ActionBarMenuItem it : new ActionBarMenuItem[]{meeroComposeItem, optionsItem}) {
-                final ViewGroup.LayoutParams lp = it.getLayoutParams();
-                if (lp != null) {
-                    lp.width = size;
-                    lp.height = size;
-                    if (lp instanceof ViewGroup.MarginLayoutParams) {
-                        ((ViewGroup.MarginLayoutParams) lp).leftMargin = 0;
-                        ((ViewGroup.MarginLayoutParams) lp).rightMargin = 0;
-                    }
-                    it.setLayoutParams(lp);
-                }
                 it.setBackground(null);
             }
             // The capsule is painted by the menu itself, behind both items.
             final ActionBarMenu menu = actionBar.createMenu();
+            menu.setGlassMode(true);
             final BlurredBackgroundDrawable group = iBlur3FactoryLiquidGlass.create(
                     menu, BlurredBackgroundProviderImpl.topPanel(resourceProvider));
             group.setRadius(size / 2f);
@@ -10660,17 +10654,14 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
             return;
         }
         try {
-            // The discs sat edge to edge and merged into one shape. Shrink
-            // them slightly and add a margin so each reads as its own button.
-            final int size = dp(38);
+            // One menu-item-sized disc, so it matches the call button in the
+            // chat header exactly.
+            final int size = dp(MEERO_HEADER_BUTTON);
             final ViewGroup.LayoutParams glp = item.getLayoutParams();
-            if (glp instanceof ViewGroup.MarginLayoutParams) {
-                final ViewGroup.MarginLayoutParams mlp = (ViewGroup.MarginLayoutParams) glp;
-                mlp.leftMargin = dp(3);
-                mlp.rightMargin = dp(3);
-                mlp.width = size;
-                mlp.height = size;
-                item.setLayoutParams(mlp);
+            if (glp != null) {
+                glp.width = size;
+                glp.height = size;
+                item.setLayoutParams(glp);
             }
             final BlurredBackgroundDrawable bg = iBlur3FactoryLiquidGlass.create(
                     item, BlurredBackgroundProviderImpl.topPanel(resourceProvider));
@@ -10696,15 +10687,11 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
         // OvalShape stretches to the view's bounds, and a menu item is wider
         // than it is tall - so the "circle" came out as an ellipse. Pin the
         // item to a square first, then the oval really is a circle.
-        final int size = dp(38);
+        final int size = dp(MEERO_HEADER_BUTTON);
         final ViewGroup.LayoutParams lp = item.getLayoutParams();
         if (lp != null) {
             lp.width = size;
             lp.height = size;
-            if (lp instanceof ViewGroup.MarginLayoutParams) {
-                ((ViewGroup.MarginLayoutParams) lp).leftMargin = dp(3);
-                ((ViewGroup.MarginLayoutParams) lp).rightMargin = dp(3);
-            }
             item.setLayoutParams(lp);
         }
         item.setMinimumWidth(size);
