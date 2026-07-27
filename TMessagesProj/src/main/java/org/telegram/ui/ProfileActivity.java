@@ -2600,7 +2600,6 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
             return;
         }
         try {
-            final int size = AndroidUtilities.dp(MEERO_PROFILE_BUTTON);
             final View[] targets = new View[]{
                     actionBar.getBackButton(),
                     actionBar.createMenu()
@@ -2609,6 +2608,22 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                 if (target == null) {
                     continue;
                 }
+                // Cap the back button at the iOS control size - its own view
+                // is wider than the glyph, which made the disc look inflated.
+                if (target == actionBar.getBackButton()) {
+                    final ViewGroup.LayoutParams blp = target.getLayoutParams();
+                    if (blp != null) {
+                        blp.width = AndroidUtilities.dp(MEERO_PROFILE_BUTTON);
+                        blp.height = AndroidUtilities.dp(MEERO_PROFILE_BUTTON);
+                        target.setLayoutParams(blp);
+                    }
+                }
+                // Use the control's real size instead of forcing 48dp: the
+                // back button is larger than that, so a 48dp radius made its
+                // glass look inflated next to the menu.
+                final int size = Math.min(
+                        target.getWidth() > 0 ? target.getWidth() : AndroidUtilities.dp(MEERO_PROFILE_BUTTON),
+                        target.getHeight() > 0 ? target.getHeight() : AndroidUtilities.dp(MEERO_PROFILE_BUTTON));
                 final BlurredBackgroundDrawable bg = iBlur3FactoryLiquidGlass.create(
                         target, BlurredBackgroundProviderImpl.topPanel(resourcesProvider));
                 bg.setRadius(size / 2f);
