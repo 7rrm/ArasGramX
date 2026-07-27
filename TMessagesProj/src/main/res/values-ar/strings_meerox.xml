@@ -719,4 +719,7 @@
     <string name="MeeroIosSoundsInfo">استخدام نغمات الإرسال والاستقبال الأصلية من تلكرام آيفون.</string>
     <string name="meeroGlassBorders">حدود زجاجية</string>
     <string name="MeeroGlassBordersInfo">خط رفيع حول القوائم واللوحات وحقل البحث.</string>
+    <string name="MeeroSectionCategories">الأقسام</string>
+    <string name="MeeroSectionData">البيانات</string>
+    <string name="MeeroSectionInfo">حول</string>
 </resources>
