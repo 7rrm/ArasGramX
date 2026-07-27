@@ -68,14 +68,24 @@ public class MeeroCards {
     /**
      * MeeroX: the rounded tile that sits behind a row's icon.
      *
-     * Taken from the reference layout's SettingsRow: a 40dp box with a 12dp
-     * radius, filled with the accent colour at 15%. The icon itself is tinted
-     * with the same accent, so the pair reads as one badge.
+     * iOS draws these as a solid square of colour with a white glyph on top,
+     * 29pt across with a 7pt radius - not a tinted wash behind a coloured
+     * glyph. SIZE_DP/RADIUS_DP follow those numbers.
+     *
+     * This is NOT used as the icon view's background any more. A Drawable
+     * background is stretched to the host view's bounds, and the icon view is
+     * 24dp wide by 31dp tall (24dp of glyph plus the dp(7) top padding
+     * TextCell applies), so the square came out as a clipped rectangle. The
+     * tile is painted by TextCell.onDraw instead, which can centre a true
+     * square on the glyph regardless of the view's own shape.
      */
     public static class IconTileDrawable extends Drawable {
 
-        public static final int SIZE_DP = 40;
-        public static final int RADIUS_DP = 12;
+        /** Side of the tile. iOS uses a 29pt square for settings icons. */
+        public static final int SIZE_DP = 29;
+        /** Corner radius of the tile, iOS's continuous-corner square. */
+        public static final int RADIUS_DP = 7;
+        /** Fill opacity when the tile is drawn as a wash rather than solid. */
         private static final float FILL_ALPHA = 0.15f;
 
         private final Theme.ResourcesProvider rp;
@@ -121,6 +131,31 @@ public class MeeroCards {
                 return accent(rp);
             }
             return Theme.getColor(PALETTE_KEYS[Math.abs(index) % PALETTE_KEYS.length], rp);
+        }
+
+        /**
+         * Paints the tile as iOS does: a solid square of the row's accent,
+         * centred on the glyph, with the glyph itself knocked out in white.
+         *
+         * Drawn straight onto the row's canvas rather than set as the icon
+         * view's background - the icon view is 24x31dp, so a background could
+         * only ever be that rectangle, which is exactly what produced the
+         * clipped shape.
+         *
+         * @param cx,cy centre of the glyph, in the row's coordinates
+         */
+        public static void drawTile(Canvas canvas, float cx, float cy, int index,
+                                    Theme.ResourcesProvider rp, Paint paint) {
+            final float half = dp(SIZE_DP) / 2f;
+            final RectF box = new RectF(cx - half, cy - half, cx + half, cy + half);
+            paint.setColor(accentFor(index, rp));
+            paint.setAlpha(255);
+            canvas.drawRoundRect(box, dp(RADIUS_DP), dp(RADIUS_DP), paint);
+        }
+
+        /** The glyph colour that sits on top of a solid tile. */
+        public static int glyphColor() {
+            return Color.WHITE;
         }
 
         @Override
