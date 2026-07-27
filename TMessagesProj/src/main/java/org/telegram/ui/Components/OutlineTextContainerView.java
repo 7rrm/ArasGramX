@@ -61,13 +61,34 @@ public class OutlineTextContainerView extends FrameLayout {
     private final SpringAnimation errorSpring = new SpringAnimation(this, ERROR_PROGRESS_PROPERTY);
     private float errorProgress;
 
-    private float strokeWidthRegular = Math.max(2, AndroidUtilities.dp(0.5f));
-    private float strokeWidthSelected = AndroidUtilities.dp(1.6667f);
+    // MeeroX: iOS strokes its fields at 1pt plus a screen pixel whether or
+    // not they are focused, and marks focus with colour alone. Android's
+    // 0.5 -> 1.67 jump makes the border visibly thicken, which iOS never does.
+    private float strokeWidthRegular = meeroIosField()
+            ? AndroidUtilities.dp(1f) + 1f
+            : Math.max(2, AndroidUtilities.dp(0.5f));
+    private float strokeWidthSelected = meeroIosField()
+            ? AndroidUtilities.dp(1f) + 1f
+            : AndroidUtilities.dp(1.6667f);
 
     private EditText attachedEditText;
     private boolean forceUseCenter, forceUseCenter2, forceForceUseCenter;
 
     private final Theme.ResourcesProvider resourcesProvider;
+
+    /**
+     * MeeroX: whether the iOS field styling is on.
+     *
+     * Shares the code screen's switch: the phone field and the code boxes sit
+     * one after the other in the same flow, so they have to agree.
+     */
+    public static boolean meeroIosField() {
+        try {
+            return tw.nekomimi.nekogram.NekoConfig.meeroIosCode.Bool();
+        } catch (Throwable ignore) {
+            return false;
+        }
+    }
 
     public OutlineTextContainerView(Context context) {
         this(context, null);
@@ -208,7 +229,12 @@ public class OutlineTextContainerView extends FrameLayout {
         rect.set(getPaddingLeft() + AndroidUtilities.dp(PADDING_LEFT - PADDING_TEXT), getPaddingTop(), getWidth() - AndroidUtilities.dp(PADDING_LEFT + PADDING_TEXT) - getPaddingRight(), getPaddingTop() + stroke * 2);
         canvas.clipRect(rect, Region.Op.DIFFERENCE);
         rect.set(getPaddingLeft() + stroke, getPaddingTop() + stroke, getWidth() - stroke - getPaddingRight(), getHeight() - stroke - getPaddingBottom());
-        canvas.drawRoundRect(rect, AndroidUtilities.dp(8), AndroidUtilities.dp(8), outlinePaint);
+        // MeeroX: iOS rounds its text fields to 15pt, the same figure
+        // CodeInputView uses for the code boxes. Android's 8dp leaves the
+        // phone field noticeably squarer than the verification screen that
+        // follows it, so the two read as different apps.
+        final float outlineRadius = AndroidUtilities.dp(meeroIosField() ? 15 : 8);
+        canvas.drawRoundRect(rect, outlineRadius, outlineRadius, outlinePaint);
         canvas.restore();
 
         float left = getPaddingLeft() + AndroidUtilities.dp(PADDING_LEFT - PADDING_TEXT), lineY = getPaddingTop() + stroke,
