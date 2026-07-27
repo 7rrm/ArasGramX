@@ -32,6 +32,8 @@
     <string name="MeeroGlassBordersInfo">A hairline outline on menus, panels and the search field.</string>
     <string name="meeroIosLoading">iOS download indicator</string>
     <string name="MeeroIosLoadingInfo">Thinner ring that stretches as it spins, sized the way Telegram for iOS draws it.</string>
+    <string name="meeroIosCode">iOS verification screen</string>
+    <string name="MeeroIosCodeInfo">Taller, softly rounded code boxes set in a monospaced face, sized the way Telegram for iOS draws them.</string>
     <string name="MeeroSectionCategories">Categories</string>
     <string name="MeeroSectionData">Data</string>
     <string name="MeeroSectionInfo">About</string>
