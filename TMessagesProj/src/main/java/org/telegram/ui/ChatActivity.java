@@ -5059,11 +5059,6 @@ public class ChatActivity extends BaseFragment implements
         chatInputViewsContainer.setWindowInsetsProvider(windowInsetsStateHolder);
         chatInputViewsContainer.setInputIslandBubbleDrawable(
             glassBackgroundDrawableFactory.create(chatInputViewsContainer, blurredBackgroundColorProvider));
-        // MeeroX: the iOS input bar's two side discs each need their own
-        // blur drawable - one instance cannot hold three sets of bounds.
-        chatInputViewsContainer.setMeeroSideDiscDrawables(
-            glassBackgroundDrawableFactory.create(chatInputViewsContainer, blurredBackgroundColorProvider),
-            glassBackgroundDrawableFactory.create(chatInputViewsContainer, blurredBackgroundColorProvider));
         chatInputViewsContainer.setUnderKeyboardBackgroundDrawable(
             glassBackgroundDrawableFactoryFrosted.create(chatInputViewsContainer, blurredBackgroundColorProvider));
 
@@ -8344,20 +8339,6 @@ public class ChatActivity extends BaseFragment implements
             @Override
             protected void onChangedIslandTotalHeight(float h) {
                 checkUi_inputIslandHeight();
-            }
-
-            @Override
-            protected void onLayout(boolean changed, int l, int t, int r, int b) {
-                super.onLayout(changed, l, t, r, b);
-                // MeeroX: hand the container the real width of the edge
-                // controls so the glass pill ends exactly where they begin.
-                // attachLayout grows and shrinks with the buttons it shows,
-                // so this has to be read after every layout pass.
-                if (chatInputViewsContainer != null) {
-                    chatInputViewsContainer.setMeeroControlWidths(
-                            getMeeroLeftControlsWidth(),
-                            getMeeroRightControlsWidth());
-                }
             }
 
             @Override
@@ -32541,11 +32522,15 @@ public class ChatActivity extends BaseFragment implements
                 popupLayout.setBackgroundColor(android.graphics.Color.TRANSPARENT);
                 popupLayout.setClipToOutline(true);
                 popupLayout.setOutlineProvider(ViewOutlineProviderImpl.boundsWithPaddingRoundRect(dp(8), dp(16)));
-                popupLayout.setBackground(scrimBlur3Factory.create(popupLayout, true)
-                        .setColorProvider(BlurredBackgroundProviderImpl.scrimMenuBackground(resourceProvider))
-                        .setRadius(dp(16))
-                        .setPadding(dp(8))
-                        .setHasPadding(true));
+                // MeeroX: the hairline edge goes on top of the blurred panel,
+                // matching the reference app's 1dp / 18% outline.
+                popupLayout.setBackground(new tw.nekomimi.nekogram.MeeroGlass.BorderedDrawable(
+                        scrimBlur3Factory.create(popupLayout, true)
+                                .setColorProvider(BlurredBackgroundProviderImpl.scrimMenuBackground(resourceProvider))
+                                .setRadius(dp(16))
+                                .setPadding(dp(8))
+                                .setHasPadding(true),
+                        dp(16), dp(8), resourceProvider));
             } else {
                 popupLayout.setBackgroundColor(getThemedColor(Theme.key_actionBarDefaultSubmenuBackground));
             }
