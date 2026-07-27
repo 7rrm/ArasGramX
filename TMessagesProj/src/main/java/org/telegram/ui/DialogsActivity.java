@@ -10632,6 +10632,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                 it.setBackground(null);
             }
             // The capsule is painted by the menu itself, behind both items.
+            final int size = dp(MEERO_HEADER_BUTTON);
             final ActionBarMenu menu = actionBar.createMenu();
             menu.setGlassMode(true);
             final BlurredBackgroundDrawable group = iBlur3FactoryLiquidGlass.create(
