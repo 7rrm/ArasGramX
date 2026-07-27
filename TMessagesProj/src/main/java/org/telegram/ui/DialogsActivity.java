@@ -10543,7 +10543,18 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
         }
         final int tint = getThemedColor(Theme.key_windowBackgroundWhiteBlackText);
         final int bg = androidx.core.graphics.ColorUtils.setAlphaComponent(tint, 26);
-        item.setBackground(Theme.createSimpleSelectorCircleDrawable(dp(38), bg,
+        // OvalShape stretches to the view's bounds, and a menu item is wider
+        // than it is tall - so the "circle" came out as an ellipse. Pin the
+        // item to a square first, then the oval really is a circle.
+        final int size = dp(42);
+        final ViewGroup.LayoutParams lp = item.getLayoutParams();
+        if (lp != null) {
+            lp.width = size;
+            lp.height = size;
+            item.setLayoutParams(lp);
+        }
+        item.setMinimumWidth(size);
+        item.setBackground(Theme.createSimpleSelectorCircleDrawable(size, bg,
                 getThemedColor(Theme.key_listSelector)));
     }
 
