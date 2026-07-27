@@ -11059,10 +11059,19 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
                 int tl, tr, bl, br;
                 int minRad = dp(4);
                 int rad;
-                if (SharedConfig.bubbleRadius > 2) {
-                    rad = dp(SharedConfig.bubbleRadius - 2);
+                // MeeroX: the photo's corners are worked out here, separately
+                // from the bubble drawn behind it, and they were still reading
+                // SharedConfig.bubbleRadius. With the iOS bubble on, the
+                // bubble curves at 20dp while the photo inside stayed at
+                // 17-2=15dp, so the image sat visibly squarer than the shape
+                // holding it - a 5dp mismatch on every photo. Take the same
+                // source the bubble uses; the -2 inset that keeps the image
+                // just inside the bubble's own curve still applies.
+                final int meeroBase = Theme.MessageDrawable.meeroBubbleRadius();
+                if (meeroBase > 2) {
+                    rad = dp(meeroBase - 2);
                 } else {
-                    rad = dp(SharedConfig.bubbleRadius);
+                    rad = dp(meeroBase);
                 }
                 int nearRad = Math.min(dp(3), rad);
                 tl = tr = bl = br = rad;
