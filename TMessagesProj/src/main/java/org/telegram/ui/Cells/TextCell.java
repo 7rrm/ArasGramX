@@ -159,6 +159,21 @@ public class TextCell extends FrameLayout {
         return textView;
     }
 
+    /**
+     * MeeroX: turn the built-in divider off after the cell has been bound.
+     *
+     * When each row is its own rounded card the gap between cards already
+     * separates them, and the cell's own full-width line cuts across that gap.
+     */
+    public void setMeeroDividerEnabled(boolean enabled) {
+        if (needDivider == enabled) {
+            return;
+        }
+        needDivider = enabled;
+        setWillNotDraw(!needDivider);
+        invalidate();
+    }
+
     public RLottieImageView getImageView() {
         return imageView;
     }
