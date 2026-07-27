@@ -230,6 +230,7 @@ public class ChatInputViewsContainer extends FrameLayout {
      */
     /** Telegram-iOS TabBarComponent: buttons are 48pt with an 8pt gap. */
     public static final int MEERO_IOS_BUTTON = 48;
+    private final android.graphics.Rect meeroDiscRect = new android.graphics.Rect();
     public static final int MEERO_IOS_GAP = 8;
 
     public static int meeroInputSideInset() {
@@ -298,26 +299,31 @@ public class ChatInputViewsContainer extends FrameLayout {
 
         // MeeroX: the buttons the pill just made room for get their own glass
         // discs, so the bar reads as [attach] [field] [record] like iOS.
+        //
+        // These are drawn with a separate Rect and the radius is restored
+        // afterwards: the previous version reused tmpRect and left the
+        // drawable's radius changed, which corrupted the pill on the next
+        // frame - that is why the text field lost its glass.
         if (drawInputBackground && meeroInset > 0) {
+            final int savedRadius = dp(INPUT_BUBBLE_RADIUS);
             final int cy = tmpRect.centerY();
-            // The pill's rect was grown by dp(7) on each side above, and the
-            // drawable adds its own dp(7) padding on top. Sizing the discs
-            // from the raw 48pt made them render noticeably larger than the
-            // field beside them, so take that padding back off here.
-            final int r = dp(MEERO_IOS_BUTTON) / 2 - dp(7);
-            if (r > 0) {
-                final int leftCx = Math.round(inputBubbleOffsetLeft) + dp(MEERO_IOS_BUTTON + MEERO_IOS_GAP) / 2;
-                final int rightCx = getMeasuredWidth() - Math.round(inputBubbleOffsetRight) - dp(MEERO_IOS_BUTTON + MEERO_IOS_GAP) / 2;
-                final int savedRadius = dp(INPUT_BUBBLE_RADIUS);
-                blurredBackgroundDrawable.setRadius(r);
-                tmpRect.set(leftCx - r, cy - r, leftCx + r, cy + r);
-                blurredBackgroundDrawable.setBounds(tmpRect);
-                blurredBackgroundDrawable.draw(canvas);
-                tmpRect.set(rightCx - r, cy - r, rightCx + r, cy + r);
-                blurredBackgroundDrawable.setBounds(tmpRect);
-                blurredBackgroundDrawable.draw(canvas);
-                blurredBackgroundDrawable.setRadius(savedRadius);
-            }
+            final int d = dp(MEERO_IOS_BUTTON);
+            final int r = d / 2;
+            final int leftCx = Math.round(inputBubbleOffsetLeft) + dp(MEERO_IOS_BUTTON + MEERO_IOS_GAP) / 2;
+            final int rightCx = getMeasuredWidth() - Math.round(inputBubbleOffsetRight)
+                    - dp(MEERO_IOS_BUTTON + MEERO_IOS_GAP) / 2;
+
+            blurredBackgroundDrawable.setRadius(r);
+            meeroDiscRect.set(leftCx - r, cy - r, leftCx + r, cy + r);
+            blurredBackgroundDrawable.setBounds(meeroDiscRect);
+            blurredBackgroundDrawable.draw(canvas);
+
+            meeroDiscRect.set(rightCx - r, cy - r, rightCx + r, cy + r);
+            blurredBackgroundDrawable.setBounds(meeroDiscRect);
+            blurredBackgroundDrawable.draw(canvas);
+
+            blurredBackgroundDrawable.setRadius(savedRadius);
+            blurredBackgroundDrawable.setBounds(tmpRect);
         }
 
         if (needDrawInAppKeyboard) {
