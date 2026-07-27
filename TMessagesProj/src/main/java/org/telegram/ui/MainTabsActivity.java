@@ -344,11 +344,13 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
         // spans the screen and the tabs share it; otherwise keep upstream's
         // fixed cap exactly as it was.
         if (meeroDialogsStyleEnabled()) {
-            // The bar holds the four pages; the search pill is laid out beside
-            // it and takes its own width.
+            // Telegram-iOS: the bar takes the full width minus the 48pt search
+            // control and the 8pt gap between them. Earlier this also
+            // subtracted the side margins twice, which is why the bar came out
+            // narrower than the reference.
             tabsView.setMaxWidth(AndroidUtilities.displaySize.x
-                    - dp(MainTabsHelper.getMainTabsHeight() + MainTabsHelper.getMainTabsMargin() * 2)
-                    - dp(DialogsActivity.MAIN_TABS_MARGIN * 2 + 6));
+                    - dp(MainTabsHelper.IOS_TAB_BUTTON + MainTabsHelper.IOS_TAB_GAP)
+                    - dp(DialogsActivity.MAIN_TABS_MARGIN * 2));
         } else {
             tabsView.setMaxWidth(dp(328 + DialogsActivity.MAIN_TABS_MARGIN * 2));
         }
@@ -493,7 +495,11 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
             // pill up to roughly half the screen - which is what ate the
             // bar's labels. Pass raw dp units.
             final int barH = MainTabsHelper.getMainTabsHeightWithMargins();
-            final int pillW = MainTabsHelper.IOS_TAB_BUTTON + MainTabsHelper.getMainTabsMargin() * 2;
+            // 48pt is the control's full width in iOS, not its inner content,
+            // so adding the bar's margins on top squeezed the icon. The pill
+            // also carries the bar's own padding, which has to be included
+            // here or the glass clips the glyph.
+            final int pillW = MainTabsHelper.IOS_TAB_BUTTON + (mainTabsMargin + 4) * 2;
             // Telegram-iOS TabBarComponent lays the search pill out as
             // "width - 48.0 - 8.0", i.e. a 48pt button with an 8pt gap.
             final int gap = dp(MainTabsHelper.IOS_TAB_GAP);
