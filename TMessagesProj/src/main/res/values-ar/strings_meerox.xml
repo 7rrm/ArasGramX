@@ -715,4 +715,6 @@
     <string name="MeeroDialogsStyleInfo">عنوان بالنص، تبويبات ممتلئة، حقل بحث مدوّر، وزر تحرير ظاهر دائماً. أعد التشغيل للتطبيق الكامل.</string>
     <string name="meeroIosIcons">أيقونات iOS الرسمية</string>
     <string name="MeeroIosIconsInfo">استخدام أيقونات تلكرام آيفون الأصلية. هي ثابتة، فتُستبدل أيقونات التبويبات المتحركة.</string>
+    <string name="meeroIosInput">شريط الكتابة بنمط iOS</string>
+    <string name="MeeroIosInputInfo">فصل زرّي المرفقات والتسجيل عن حقل الكتابة، كأزرار دائرية مستقلة.</string>
 </resources>
