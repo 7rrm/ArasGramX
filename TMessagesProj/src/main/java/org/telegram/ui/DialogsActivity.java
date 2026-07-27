@@ -520,6 +520,49 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
     private static final int MEERO_ID_COMPOSE = 9711;
     /** Telegram-iOS sizes its header controls at 48pt. */
     private static final int MEERO_HEADER_BUTTON = 48;
+    private BlurredBackgroundDrawable meeroHeaderGroupGlass;
+
+    /**
+     * MeeroX: paints a drawable at a fixed size, centred in its bounds.
+     * Action bar children are measured at the full bar height, so without
+     * this the glass stretches to match them.
+     */
+    private static class MeeroCenteredDrawable extends android.graphics.drawable.Drawable {
+        private final android.graphics.drawable.Drawable inner;
+        private final int fixedWidth, fixedHeight;
+
+        MeeroCenteredDrawable(android.graphics.drawable.Drawable inner, int fixedWidth, int fixedHeight) {
+            this.inner = inner;
+            this.fixedWidth = fixedWidth;
+            this.fixedHeight = fixedHeight;
+        }
+
+        @Override
+        public void draw(android.graphics.Canvas canvas) {
+            final android.graphics.Rect b = getBounds();
+            final int w = fixedWidth > 0 ? fixedWidth : b.width();
+            final int h = fixedHeight > 0 ? fixedHeight : b.height();
+            final int left = b.left + (b.width() - w) / 2;
+            final int top = b.top + (b.height() - h) / 2;
+            inner.setBounds(left, top, left + w, top + h);
+            inner.draw(canvas);
+        }
+
+        @Override
+        public void setAlpha(int alpha) {
+            inner.setAlpha(alpha);
+        }
+
+        @Override
+        public void setColorFilter(android.graphics.ColorFilter cf) {
+            inner.setColorFilter(cf);
+        }
+
+        @Override
+        public int getOpacity() {
+            return android.graphics.PixelFormat.TRANSLUCENT;
+        }
+    }
     private ActionBarMenuItem downloadsItem;
     private DownloadProgressIcon downloadProgressIcon;
     private boolean downloadsItemVisible;
@@ -10631,20 +10674,30 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
             for (ActionBarMenuItem it : new ActionBarMenuItem[]{meeroComposeItem, optionsItem}) {
                 it.setBackground(null);
             }
-            // The capsule is painted by the menu itself, behind both items.
+            // ActionBar measures its menu at the full action bar height
+            // (~56dp), so anything used as the menu's background is stretched
+            // to that height - which is why every attempt so far came out
+            // taller than the reference capsule. Setting a background cannot
+            // win against that, so paint the capsule ourselves, centred at
+            // 48dp, and leave the menu's own size untouched.
             final int size = dp(MEERO_HEADER_BUTTON);
             final ActionBarMenu menu = actionBar.createMenu();
             menu.setGlassMode(true);
+            menu.setBackground(null);
+            menu.setClipToOutline(false);
+            menu.setWillNotDraw(false);
             final BlurredBackgroundDrawable group = iBlur3FactoryLiquidGlass.create(
                     menu, BlurredBackgroundProviderImpl.topPanel(resourceProvider));
             group.setRadius(size / 2f);
-            menu.setBackground(group);
-            menu.setClipToOutline(true);
-            menu.setOutlineProvider(new ViewOutlineProvider() {
-                @Override
-                public void getOutline(View view, android.graphics.Outline outline) {
-                    outline.setRoundRect(0, 0, view.getWidth(), view.getHeight(), view.getHeight() / 2f);
+            meeroHeaderGroupGlass = group;
+            menu.setMeeroBackgroundPainter(canvas -> {
+                if (meeroHeaderGroupGlass == null) {
+                    return;
                 }
+                final int h = menu.getHeight();
+                final int top = (h - size) / 2;
+                meeroHeaderGroupGlass.setBounds(0, Math.max(0, top), menu.getWidth(), Math.max(size, top + size));
+                meeroHeaderGroupGlass.draw(canvas);
             });
         } catch (Throwable ignore) {
         }
@@ -10667,14 +10720,10 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
             final BlurredBackgroundDrawable bg = iBlur3FactoryLiquidGlass.create(
                     item, BlurredBackgroundProviderImpl.topPanel(resourceProvider));
             bg.setRadius(size / 2f);
-            item.setBackground(bg);
-            item.setClipToOutline(true);
-            item.setOutlineProvider(new ViewOutlineProvider() {
-                @Override
-                public void getOutline(View view, android.graphics.Outline outline) {
-                    outline.setOval(0, 0, view.getWidth(), view.getHeight());
-                }
-            });
+            // Wrapped so the disc keeps its 48dp size even though the action
+            // bar lays this view out at the full bar height.
+            item.setBackground(new MeeroCenteredDrawable(bg, size, size));
+            item.setClipToOutline(false);
         } catch (Throwable ignore) {
         }
     }
