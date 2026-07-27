@@ -660,7 +660,17 @@ public class ChatActivityEnterView extends FrameLayout implements
 
     private int originalViewHeight;
     private LinearLayout attachLayout;
-
+    private ViewPropertyAnimator attachButtonAnimator;
+    private ImageView attachButton;
+    private AiButtonDrawable aiButtonIcon;
+    private ImageView aiButton;
+    private ImageView richButton;
+    private float attachButtonAlpha = 1.0f;
+    private ImageView suggestButton;
+    @Nullable
+    private ImageView botButton;
+    @Nullable
+    private ImageView reactionsButton;
     public FrameLayout messageEditTextContainer;
     public FrameLayout textFieldContainer;
     public FrameLayout sendButtonContainer;
