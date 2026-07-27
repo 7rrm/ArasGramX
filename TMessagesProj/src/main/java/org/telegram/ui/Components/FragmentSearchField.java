@@ -94,7 +94,9 @@ public class FragmentSearchField extends FrameLayout implements FactorAnimator.T
                 return super.onKeyDown(keyCode, event);
             }
         };
-        editText.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 15);
+        // iOS sets the search field at 17pt, the same body size it uses
+        // everywhere else; 15 makes the placeholder look shrunken by contrast.
+        editText.setTextSize(TypedValue.COMPLEX_UNIT_DIP, meeroIosSearch() ? 17 : 15);
         editText.setCursorWidth(1.5f);
         editText.setInputType(editText.getInputType() | InputType.TYPE_TEXT_VARIATION_FILTER);
         editText.setSingleLine(true);
@@ -127,9 +129,12 @@ public class FragmentSearchField extends FrameLayout implements FactorAnimator.T
         addView(editText, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT, Gravity.FILL, 0, 0, 0, 0));
 
         searchIcon = new ImageView(context);
-        searchIcon.setScaleType(ImageView.ScaleType.CENTER);
+        // iOS scales the magnifier down to about 16pt and lets it sit closer
+        // to the edge; Android's 24dp glyph dominates the short pill.
+        searchIcon.setScaleType(meeroIosSearch() ? ImageView.ScaleType.FIT_CENTER : ImageView.ScaleType.CENTER);
         searchIcon.setImageResource(R.drawable.outline_search_1_24);
-        addView(searchIcon, LayoutHelper.createFrame(24, 24, Gravity.CENTER_VERTICAL | (LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT), 12, 0, 12, 0));
+        final int meeroIconSize = meeroIosSearch() ? 17 : 24;
+        addView(searchIcon, LayoutHelper.createFrame(meeroIconSize, meeroIconSize, Gravity.CENTER_VERTICAL | (LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT), meeroIosSearch() ? 16 : 12, 0, meeroIosSearch() ? 16 : 12, 0));
 
         additionalIconsLayout = new LinearLayout(context);
         additionalIconsLayout.setOrientation(LinearLayout.HORIZONTAL);
@@ -202,7 +207,9 @@ public class FragmentSearchField extends FrameLayout implements FactorAnimator.T
         }
         // MeeroX: hairline edge over whichever background was just drawn,
         // matching the reference app's 1dp / 18% outline.
-        if (meeroBorderRadius > 0 && tw.nekomimi.nekogram.MeeroGlass.enabled()) {
+        // iOS has no outline on its search bar - the fill alone defines it -
+        // so the hairline is skipped while the iOS style is on.
+        if (meeroBorderRadius > 0 && !meeroIosSearch() && tw.nekomimi.nekogram.MeeroGlass.enabled()) {
             android.graphics.RectF r = new android.graphics.RectF(
                     getPaddingLeft(), getPaddingTop(),
                     getWidth() - getPaddingRight(), getHeight() - getPaddingBottom());
@@ -225,6 +232,23 @@ public class FragmentSearchField extends FrameLayout implements FactorAnimator.T
             return tw.nekomimi.nekogram.NekoConfig.meeroDialogsStyle.Bool() ? dp(26) : dp(20);
         } catch (Throwable e) {
             return dp(20);
+        }
+    }
+
+    /**
+     * MeeroX: iOS search bar styling.
+     *
+     * The pill shape was already right - meeroFieldRadius returns a full 26dp
+     * round - so what separates this from UISearchBar is everything inside it:
+     * iOS fills the bar with a solid tint instead of showing the list through
+     * it, drops the outline entirely, and sets the magnifier smaller and
+     * dimmer than the placeholder next to it.
+     */
+    public static boolean meeroIosSearch() {
+        try {
+            return tw.nekomimi.nekogram.NekoConfig.meeroIosSearch.Bool();
+        } catch (Throwable e) {
+            return false;
         }
     }
 
@@ -296,10 +320,18 @@ public class FragmentSearchField extends FrameLayout implements FactorAnimator.T
     public void updateColors() {
         final boolean isDark = resourcesProvider != null ? resourcesProvider.isDark() : Theme.isCurrentThemeDark();
         final int meeroRad = meeroFieldRadius();
+        // MeeroX: iOS fills its search bar with a solid tint rather than
+        // letting the list show through. UISearchBar sits at roughly 12% of
+        // the label colour on dark and 8% on light; the stock 0.07/0.05 here
+        // is faint enough that the field reads as an outline, not a surface.
+        final float fillAlpha = meeroIosSearch()
+                ? (isDark ? 0.12f : 0.08f)
+                : (isDark ? 0.07f : 0.05f);
         bg = isSectionBackground ?
             Theme.createRoundRectDrawableShadowed(meeroRad, getThemedColor(Theme.key_windowBackgroundWhite)) :
-            Theme.createRoundRectDrawable(meeroRad, isWhiteBackground ? getThemedColor(Theme.key_windowBackgroundWhite) : getThemedColor(Theme.key_windowBackgroundWhiteBlackText, isDark ? 0.07f : 0.05f));
-        searchIcon.setColorFilter(getThemedColor(Theme.key_windowBackgroundWhiteBlackText, 0.6f), PorterDuff.Mode.MULTIPLY);
+            Theme.createRoundRectDrawable(meeroRad, isWhiteBackground ? getThemedColor(Theme.key_windowBackgroundWhite) : getThemedColor(Theme.key_windowBackgroundWhiteBlackText, fillAlpha));
+        // iOS draws the magnifier smaller and dimmer than the text beside it.
+        searchIcon.setColorFilter(getThemedColor(Theme.key_windowBackgroundWhiteBlackText, meeroIosSearch() ? 0.45f : 0.6f), PorterDuff.Mode.MULTIPLY);
         closeIcon.setColorFilter(getThemedColor(Theme.key_windowBackgroundWhiteBlackText, 0.6f), PorterDuff.Mode.MULTIPLY);
         closeIcon.setBackground(Theme.createSelectorDrawable(getThemedColor(Theme.key_listSelector), 1, dp(17)));
         editText.setHintTextColor(getThemedColor(Theme.key_windowBackgroundWhiteBlackText, 0.5f));
