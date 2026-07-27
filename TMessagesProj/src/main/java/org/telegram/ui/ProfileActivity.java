@@ -89,6 +89,7 @@ import android.view.MotionEvent;
 import android.view.VelocityTracker;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewOutlineProvider;
 import android.view.ViewTreeObserver;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.animation.AccelerateInterpolator;
@@ -286,6 +287,7 @@ import org.telegram.ui.Components.UItem;
 import org.telegram.ui.Components.UndoView;
 import org.telegram.ui.Components.VectorAvatarThumbDrawable;
 import org.telegram.ui.Components.blur3.BlurredBackgroundDrawableViewFactory;
+import org.telegram.ui.Components.blur3.drawable.color.impl.BlurredBackgroundProviderImpl;
 import org.telegram.ui.Components.blur3.DownscaleScrollableNoiseSuppressor;
 import org.telegram.ui.Components.blur3.ViewGroupPartRenderer;
 import org.telegram.ui.Components.blur3.capture.IBlur3Capture;
@@ -2586,6 +2588,44 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
         }
     }
 
+    /** Telegram-iOS draws its header controls as 48pt glass discs. */
+    private static final int MEERO_PROFILE_BUTTON = 48;
+
+    /**
+     * MeeroX: gives the profile's back and overflow buttons the same glass
+     * disc the rest of the iOS chrome uses. No-op when the style is off.
+     */
+    private void meeroGlassProfileButtons() {
+        if (!tw.nekomimi.nekogram.MeeroCards.enabled() || iBlur3FactoryLiquidGlass == null || actionBar == null) {
+            return;
+        }
+        try {
+            final int size = AndroidUtilities.dp(MEERO_PROFILE_BUTTON);
+            final View[] targets = new View[]{
+                    actionBar.getBackButton(),
+                    actionBar.createMenu()
+            };
+            for (View target : targets) {
+                if (target == null) {
+                    continue;
+                }
+                final BlurredBackgroundDrawable bg = iBlur3FactoryLiquidGlass.create(
+                        target, BlurredBackgroundProviderImpl.topPanel(resourcesProvider));
+                bg.setRadius(size / 2f);
+                target.setBackground(bg);
+                target.setClipToOutline(true);
+                target.setOutlineProvider(new ViewOutlineProvider() {
+                    @Override
+                    public void getOutline(View view, android.graphics.Outline outline) {
+                        outline.setRoundRect(0, 0, view.getWidth(), view.getHeight(),
+                                Math.min(view.getWidth(), view.getHeight()) / 2f);
+                    }
+                });
+            }
+        } catch (Throwable ignore) {
+        }
+    }
+
     @Override
     public View createView(Context context) {
         Theme.createProfileResources(context);
@@ -3567,6 +3607,10 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
 
         viewPositionWatcher = new ViewPositionWatcher(fragmentView);
         iBlur3FactoryLiquidGlass.setSourceRootView(viewPositionWatcher, (ViewGroup) fragmentView);
+
+        // MeeroX: the back and overflow controls sat as bare icons on the
+        // cover photo and were hard to see. iOS puts them on a glass disc.
+        meeroGlassProfileButtons();
 
         FrameLayout frameLayout = (FrameLayout) fragmentView;
 
@@ -14829,16 +14873,21 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                 pos = tw.nekomimi.nekogram.MeeroCards.POS_SINGLE;
             }
             holder.itemView.setBackground(new tw.nekomimi.nekogram.MeeroCards.CardDrawable(pos, resourcesProvider));
+            if (holder.itemView instanceof AboutLinkCell) {
+                ((AboutLinkCell) holder.itemView).setMeeroSurfaceColor(
+                        tw.nekomimi.nekogram.MeeroCards.surfaceColor(resourcesProvider));
+            }
         }
 
         /** The detail rows that belong inside the card. */
         private boolean meeroIsProfileCardRow(int type) {
-            // VIEW_TYPE_ABOUT_LINK is deliberately excluded: AboutLinkCell
-            // paints its own bottom fade tinted with the page background, and
-            // on top of the lighter card that fade showed up as a black band.
+            // AboutLinkCell is back in the card: it now takes the card's
+            // colour for its bottom fade, so that fade no longer reads as a
+            // black band the way it did when it used the page background.
             return type == VIEW_TYPE_TEXT_DETAIL
                     || type == VIEW_TYPE_TEXT_DETAIL_MULTILINE
-                    || type == VIEW_TYPE_TEXT_DETAIL_MULTILINE_2;
+                    || type == VIEW_TYPE_TEXT_DETAIL_MULTILINE_2
+                    || type == VIEW_TYPE_ABOUT_LINK;
         }
 
         @Override
