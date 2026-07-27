@@ -252,8 +252,13 @@ public class ChatInputViewsContainer extends FrameLayout {
      * input bar. Returns 0 when the style is off, leaving the bubble
      * edge-to-edge exactly as upstream draws it.
      */
-    /** Telegram-iOS TabBarComponent: buttons are 48pt with an 8pt gap. */
-    public static final int MEERO_IOS_BUTTON = 48;
+    /**
+     * The real buttons in the input bar are ChatActivityEnterView.DEFAULT_HEIGHT
+     * (44dp), not the 48pt of the iOS tab bar. Drawing 48dp discs behind 44dp
+     * buttons is what left the glass looking oversized and only partly under
+     * the controls.
+     */
+    public static final int MEERO_IOS_BUTTON = 44;
     private final android.graphics.Rect meeroDiscRect = new android.graphics.Rect();
     public static final int MEERO_IOS_GAP = 8;
 
