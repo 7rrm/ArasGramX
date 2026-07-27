@@ -3443,7 +3443,13 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                     if (meeroEditItem == null || optionsItem == null) {
                         return;
                     }
-                    final int target = optionsItem.getTop()
+                    // optionsItem sits inside the menu, so its getTop() is
+                    // relative to the menu - not to the action bar. Using it
+                    // directly placed this button near the very top, over the
+                    // status bar. Convert through the menu's own offset.
+                    final View menuView = (View) optionsItem.getParent();
+                    final int menuTop = menuView != null ? menuView.getTop() : 0;
+                    final int target = menuTop + optionsItem.getTop()
                             + (optionsItem.getHeight() - meeroEditItem.getHeight()) / 2;
                     if (target > 0 && meeroEditItem.getTop() != target) {
                         final ViewGroup.MarginLayoutParams mlp =
