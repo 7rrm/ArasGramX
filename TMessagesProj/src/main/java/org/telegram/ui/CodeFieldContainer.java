@@ -69,6 +69,20 @@ public class CodeFieldContainer extends LinearLayout {
         return meeroCompact(count) ? IOS_HEIGHT_COMPACT_DP : IOS_HEIGHT_DP;
     }
 
+    /**
+     * MeeroX: the layout height a host should give this container.
+     *
+     * The callers in LoginActivity hardcode 42dp, which was exactly the old
+     * box height. iOS's box is 51dp, so the bottom 9dp of every box - the
+     * whole lower curve - was clipped and each outline read as an upside-down
+     * U. They also run before setNumbersCount, so they cannot know the digit
+     * count yet; WRAP_CONTENT lets onMeasure claim the right height once the
+     * boxes exist.
+     */
+    public static int meeroHostHeight() {
+        return meeroIosCode() ? LayoutHelper.WRAP_CONTENT : 42;
+    }
+
     Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
     Paint bitmapPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     float strokeWidth;
@@ -85,6 +99,20 @@ public class CodeFieldContainer extends LinearLayout {
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        // MeeroX: the hosts in LoginActivity size this slot before
+        // setNumbersCount has run, so the boxes did not exist yet and the
+        // slot fell back to the old 42dp. iOS's box is 51dp, so the bottom
+        // 9dp - the whole lower curve - was being clipped away, which is what
+        // made every outline read as an upside-down U.
+        //
+        // Measuring the children first and then claiming their real height
+        // keeps the slot correct no matter when the digits get added.
+        if (meeroIosCode() && codeField != null && codeField.length > 0) {
+            super.onMeasure(widthMeasureSpec, MeasureSpec.makeMeasureSpec(
+                    AndroidUtilities.dp(meeroBoxHeight(codeField.length)), MeasureSpec.EXACTLY));
+            paint.setStrokeWidth(strokeWidth = AndroidUtilities.dp(1f) + 1f);
+            return;
+        }
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
         // iOS strokes these at 1pt plus a single screen pixel; Android's 1.5dp
         // reads noticeably heavier against the softer corners.
