@@ -300,12 +300,14 @@ public class ChatInputViewsContainer extends FrameLayout {
         // discs, so the bar reads as [attach] [field] [record] like iOS.
         if (drawInputBackground && meeroInset > 0) {
             final int cy = tmpRect.centerY();
-            // iOS uses a fixed 48pt disc whose corner radius is half its
-            // height, rather than something derived from the bar height.
-            final int r = dp(MEERO_IOS_BUTTON) / 2;
+            // The pill's rect was grown by dp(7) on each side above, and the
+            // drawable adds its own dp(7) padding on top. Sizing the discs
+            // from the raw 48pt made them render noticeably larger than the
+            // field beside them, so take that padding back off here.
+            final int r = dp(MEERO_IOS_BUTTON) / 2 - dp(7);
             if (r > 0) {
-                final int leftCx = Math.round(inputBubbleOffsetLeft) + dp(MEERO_IOS_BUTTON) / 2;
-                final int rightCx = getMeasuredWidth() - Math.round(inputBubbleOffsetRight) - dp(MEERO_IOS_BUTTON) / 2;
+                final int leftCx = Math.round(inputBubbleOffsetLeft) + dp(MEERO_IOS_BUTTON + MEERO_IOS_GAP) / 2;
+                final int rightCx = getMeasuredWidth() - Math.round(inputBubbleOffsetRight) - dp(MEERO_IOS_BUTTON + MEERO_IOS_GAP) / 2;
                 final int savedRadius = dp(INPUT_BUBBLE_RADIUS);
                 blurredBackgroundDrawable.setRadius(r);
                 tmpRect.set(leftCx - r, cy - r, leftCx + r, cy + r);
