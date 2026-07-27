@@ -28,4 +28,6 @@
     <string name="MeeroIosIconsInfo">Use Telegram for iOS\'s own glyphs. They are static, so the animated tab icons are replaced.</string>
     <string name="meeroIosInput">iOS message bar</string>
     <string name="MeeroIosInputInfo">Detach the attach and record buttons from the text field, as separate round buttons.</string>
+    <string name="meeroIosSounds">iOS message sounds</string>
+    <string name="MeeroIosSoundsInfo">Use Telegram for iOS\'s own send and receive tones.</string>
 </resources>
