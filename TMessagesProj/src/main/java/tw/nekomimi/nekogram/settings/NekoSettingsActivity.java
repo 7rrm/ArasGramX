@@ -69,6 +69,15 @@ public class NekoSettingsActivity extends BaseNekoSettingsActivity {
     private static final int MENU_SEARCH = 1;
     private static final int MENU_SYNC = 2;
 
+    /**
+     * MeeroX: section titles. This screen had none - every entry was a plain
+     * row - so the grouped-card styling had nothing to title. These give each
+     * card a heading the way the reference settings layout does.
+     */
+    private int meeroHeaderCategories;
+    private int meeroHeaderData;
+    private int meeroHeaderInfo;
+
     private int generalRow;
     private int translatorRow;
     private int chatRow;
@@ -86,10 +95,20 @@ public class NekoSettingsActivity extends BaseNekoSettingsActivity {
 
     private int aboutRow;
 
+    /** MeeroX: section titles follow the grouped-card style switch. */
+    private static boolean meeroHeadersEnabled() {
+        try {
+            return tw.nekomimi.nekogram.NekoConfig.meeroCards.Bool();
+        } catch (Throwable e) {
+            return false;
+        }
+    }
+
     @Override
     protected void updateRows() {
         super.updateRows();
 
+        meeroHeaderCategories = meeroHeadersEnabled() ? addRow() : -1;
         generalRow = addRow();
         translatorRow = addRow();
         chatRow = addRow();
@@ -102,12 +121,14 @@ public class NekoSettingsActivity extends BaseNekoSettingsActivity {
         fontsRow = addRow();
         categoriesEndRow = addRow();
 
+        meeroHeaderData = meeroHeadersEnabled() ? addRow() : -1;
         importSettingsRow = addRow();
         exportSettingsRow = addRow();
         resetSettingsRow = addRow();
         appRestartRow = addRow();
         nSettingsEndRow = addRow();
 
+        meeroHeaderInfo = meeroHeadersEnabled() ? addRow() : -1;
         aboutRow = addRow();
     }
 
@@ -446,6 +467,18 @@ public class NekoSettingsActivity extends BaseNekoSettingsActivity {
         public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position, boolean partial) {
             int viewType = holder.getItemViewType();
             switch (viewType) {
+                case TYPE_HEADER: {
+                    final tw.nekomimi.nekogram.ui.cells.HeaderCell header =
+                            (tw.nekomimi.nekogram.ui.cells.HeaderCell) holder.itemView;
+                    if (position == meeroHeaderCategories) {
+                        header.setText(getString(R.string.MeeroSectionCategories));
+                    } else if (position == meeroHeaderData) {
+                        header.setText(getString(R.string.MeeroSectionData));
+                    } else if (position == meeroHeaderInfo) {
+                        header.setText(getString(R.string.MeeroSectionInfo));
+                    }
+                    break;
+                }
                 case TYPE_SHADOW: {
                     holder.itemView.setBackground(Theme.getThemedDrawable(mContext, R.drawable.greydivider, Theme.key_windowBackgroundGrayShadow));
                     break;
@@ -483,6 +516,10 @@ public class NekoSettingsActivity extends BaseNekoSettingsActivity {
 
         @Override
         public int getItemViewType(int position) {
+            if (position != -1 && (position == meeroHeaderCategories
+                    || position == meeroHeaderData || position == meeroHeaderInfo)) {
+                return TYPE_HEADER;
+            }
             if (position == categoriesEndRow || position == nSettingsEndRow) {
                 return TYPE_SHADOW;
             } else if (position == chatRow || position == generalRow || position == passcodeRow || position == experimentRow || position == translatorRow ||
