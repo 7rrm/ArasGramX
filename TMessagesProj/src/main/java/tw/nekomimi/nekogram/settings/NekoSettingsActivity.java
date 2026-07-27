@@ -118,6 +118,10 @@ public class NekoSettingsActivity extends BaseNekoSettingsActivity {
         ActionBarMenu menu = actionBar.createMenu();
         menu.addItem(MENU_SEARCH, R.drawable.outline_header_search, resourcesProvider);
         menu.addItem(MENU_SYNC, R.drawable.cloud_sync, resourcesProvider);
+        // MeeroX: group the two header buttons under one rounded surface, the
+        // way the chats header does. This screen has no liquid-glass factory,
+        // so the capsule is a tinted rounded rect rather than real blur.
+        meeroGroupHeaderButtons(menu);
 
         actionBar.setActionBarMenuOnItemClick(new ActionBar.ActionBarMenuOnItemClick() {
             @Override
@@ -323,6 +327,58 @@ public class NekoSettingsActivity extends BaseNekoSettingsActivity {
             showDialog(dialog);
         } catch (Exception ignore) {
         }
+    }
+
+    /**
+     * MeeroX: one capsule behind the search and overflow buttons.
+     *
+     * ActionBar measures its menu at the full bar height, so the background is
+     * drawn centred at the control size instead of filling the view.
+     */
+    private void meeroGroupHeaderButtons(ActionBarMenu menu) {
+        if (menu == null) {
+            return;
+        }
+        try {
+            if (!tw.nekomimi.nekogram.NekoConfig.meeroDialogsStyle.Bool()) {
+                return;
+            }
+        } catch (Throwable e) {
+            return;
+        }
+        final int size = AndroidUtilities.dp(48);
+        final int tint = Theme.getColor(Theme.key_windowBackgroundWhiteBlackText, resourcesProvider);
+        final int bg = androidx.core.graphics.ColorUtils.setAlphaComponent(tint, 26);
+        menu.setGlassMode(true);
+        menu.setBackground(new android.graphics.drawable.Drawable() {
+            private final android.graphics.Paint paint =
+                    new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+            private final android.graphics.RectF r = new android.graphics.RectF();
+
+            @Override
+            public void draw(@NonNull android.graphics.Canvas canvas) {
+                final android.graphics.Rect b = getBounds();
+                final int top = b.top + (b.height() - size) / 2;
+                r.set(b.left, top, b.right, top + size);
+                paint.setColor(bg);
+                canvas.drawRoundRect(r, size / 2f, size / 2f, paint);
+            }
+
+            @Override
+            public void setAlpha(int alpha) {
+                paint.setAlpha(alpha);
+            }
+
+            @Override
+            public void setColorFilter(android.graphics.ColorFilter cf) {
+                paint.setColorFilter(cf);
+            }
+
+            @Override
+            public int getOpacity() {
+                return android.graphics.PixelFormat.TRANSLUCENT;
+            }
+        });
     }
 
     @Override
