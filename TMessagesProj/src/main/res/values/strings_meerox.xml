@@ -34,6 +34,8 @@
     <string name="MeeroIosLoadingInfo">Thinner ring that stretches as it spins, sized the way Telegram for iOS draws it.</string>
     <string name="meeroIosCode">iOS verification screen</string>
     <string name="MeeroIosCodeInfo">Taller, softly rounded code boxes set in a monospaced face, sized the way Telegram for iOS draws them.</string>
+    <string name="meeroIosIntro">iOS welcome screen</string>
+    <string name="MeeroIosIntroInfo">iOS typography and button sizing on the intro pages, with page dots that slide instead of stretching. The animations themselves stay as they are.</string>
     <string name="MeeroSectionCategories">Categories</string>
     <string name="MeeroSectionData">Data</string>
     <string name="MeeroSectionInfo">About</string>
