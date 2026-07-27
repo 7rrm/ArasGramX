@@ -339,6 +339,7 @@ public abstract class BaseNekoSettingsActivity extends BaseFragment {
             var payload = holder.getPayload();
             onBindViewHolder(holder, position, PARTIAL.equals(payload));
             meeroApplyCard(holder, position);
+            meeroStyleHeader(holder);
         }
 
         /**
@@ -373,9 +374,36 @@ public abstract class BaseNekoSettingsActivity extends BaseFragment {
             v.setBackground(new tw.nekomimi.nekogram.MeeroCards.CardDrawable(pos, resourcesProvider));
         }
 
-        /** Row types that live inside a card. Shadows and dividers do not. */
+        /**
+         * MeeroX: section titles rendered the way the reference app does -
+         * sitting on the page above their card, in the accent colour, with
+         * 20dp/12dp padding rather than a filled row.
+         */
+        private void meeroStyleHeader(RecyclerView.ViewHolder holder) {
+            if (!tw.nekomimi.nekogram.MeeroCards.enabled()) {
+                return;
+            }
+            if (holder.getItemViewType() != TYPE_HEADER) {
+                return;
+            }
+            final View v = holder.itemView;
+            v.setBackground(null);
+            v.setPadding(dp(20), dp(12), dp(20), dp(6));
+            if (v instanceof HeaderCell) {
+                ((HeaderCell) v).setTextColor(
+                        getThemedColor(Theme.key_windowBackgroundWhiteBlueHeader));
+            }
+        }
+
+        /**
+         * Row types that live inside a card.
+         *
+         * Headers are deliberately excluded: the reference layout puts a
+         * section title above its card in the accent colour, not inside it as
+         * a first row.
+         */
         private boolean meeroIsCardRow(int type) {
-            return type == TYPE_SETTINGS || type == TYPE_CHECK || type == TYPE_HEADER
+            return type == TYPE_SETTINGS || type == TYPE_CHECK
                     || type == TYPE_NOTIFICATION_CHECK || type == TYPE_DETAIL_SETTINGS
                     || type == TYPE_TEXT || type == TYPE_CHECKBOX || type == TYPE_RADIO
                     || type == TYPE_ACCOUNT || type == TYPE_CREATION
