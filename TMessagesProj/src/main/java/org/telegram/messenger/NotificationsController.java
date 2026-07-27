@@ -104,6 +104,21 @@ import xyz.nextalone.nagram.NaConfig;
 
 public class NotificationsController extends BaseController implements NotificationCenter.NotificationCenterDelegate {
 
+    /**
+     * MeeroX: use Telegram for iOS's own send/receive sounds.
+     *
+     * Both clips ship as plain MP3 in the iOS repo, so they drop in as-is -
+     * no transcoding needed.
+     */
+    private static boolean meeroIosSounds() {
+        try {
+            return tw.nekomimi.nekogram.NekoConfig.meeroIosSounds.Bool();
+        } catch (Throwable e) {
+            return false;
+        }
+    }
+
+
     public static final String EXTRA_VOICE_REPLY = "extra_voice_reply";
     public static String OTHER_NOTIFICATIONS_CHANNEL = null;
 
@@ -3356,7 +3371,7 @@ public class NotificationsController extends BaseController implements Notificat
                     }
                     if (soundIn == 0 && !soundInLoaded) {
                         soundInLoaded = true;
-                        soundIn = soundPool.load(ApplicationLoader.applicationContext, R.raw.sound_in, 1);
+                        soundIn = soundPool.load(ApplicationLoader.applicationContext, meeroIosSounds() ? R.raw.meerox_ios_in : R.raw.sound_in, 1);
                     }
                     if (soundIn != 0) {
                         try {
@@ -5955,7 +5970,7 @@ public class NotificationsController extends BaseController implements Notificat
                 }
                 if (soundOut == 0 && !soundOutLoaded) {
                     soundOutLoaded = true;
-                    soundOut = soundPool.load(ApplicationLoader.applicationContext, R.raw.sound_out, 1);
+                    soundOut = soundPool.load(ApplicationLoader.applicationContext, meeroIosSounds() ? R.raw.meerox_ios_out : R.raw.sound_out, 1);
                 }
                 if (soundOut != 0) {
                     try {
