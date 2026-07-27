@@ -138,7 +138,7 @@ public class AboutLinkCell extends FrameLayout {
         container.addView(valueTextView, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, (LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT) | Gravity.BOTTOM, 18, 0, 18, 10));
 
         bottomShadow = new FrameLayout(context);
-        Drawable shadowDrawable = context.getResources().getDrawable(R.drawable.gradient_bottom).mutate();
+        Drawable shadowDrawable = meeroBottomShadowDrawable = context.getResources().getDrawable(R.drawable.gradient_bottom).mutate();
         shadowDrawable.setColorFilter(new PorterDuffColorFilter(Theme.getColor(Theme.key_windowBackgroundWhite, resourcesProvider), PorterDuff.Mode.SRC_ATOP));
         bottomShadow.setBackground(shadowDrawable);
         addView(bottomShadow, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, 12, Gravity.BOTTOM | Gravity.FILL_HORIZONTAL, 16, 0, 16, 0));
@@ -195,6 +195,32 @@ public class AboutLinkCell extends FrameLayout {
         backgroundPaint.setColor(Theme.getColor(Theme.key_windowBackgroundWhite, resourcesProvider));
 
         setWillNotDraw(false);
+    }
+
+    /**
+     * MeeroX: this cell fades its text out against the page background. When
+     * it is placed on a lighter grouped card that fade is the wrong colour and
+     * shows up as a dark band, so let the host tell us what to fade into.
+     *
+     * Passing 0 restores the theme colour.
+     */
+    private Drawable meeroBottomShadowDrawable;
+    private int meeroSurfaceColor;
+
+    public void setMeeroSurfaceColor(int color) {
+        if (meeroSurfaceColor == color) {
+            return;
+        }
+        meeroSurfaceColor = color;
+        final int c = color != 0 ? color : Theme.getColor(Theme.key_windowBackgroundWhite, resourcesProvider);
+        if (meeroBottomShadowDrawable != null) {
+            meeroBottomShadowDrawable.setColorFilter(new PorterDuffColorFilter(c, PorterDuff.Mode.SRC_ATOP));
+        }
+        if (showMoreBackgroundDrawable != null) {
+            showMoreBackgroundDrawable.setColorFilter(new PorterDuffColorFilter(c, PorterDuff.Mode.MULTIPLY));
+        }
+        backgroundPaint.setColor(c);
+        invalidate();
     }
 
     protected int processColor(int color) {
