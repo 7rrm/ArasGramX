@@ -71,6 +71,7 @@ import android.view.VelocityTracker;
 import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
+import android.view.ViewOutlineProvider;
 import android.view.ViewTreeObserver;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.animation.Interpolator;
@@ -3184,6 +3185,12 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
     @Override
     public ActionBar createActionBar(Context context) {
         ActionBar actionBar = new ActionBar(context, resourceProvider) {
+            {
+                // Set before any title view exists: ActionBar decides a
+                // title's gravity at creation time, so flipping this later in
+                // createView() left the label stuck on the side.
+                meeroAllowCenteredTitle = meeroDialogsStyleEnabled();
+            }
 
             @Override
             public void setTranslationY(float translationY) {
@@ -5386,6 +5393,13 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
             fragmentSearchField.setupBlurredBackground(iBlur3FactoryLiquidGlass.create(fragmentSearchField, BlurredBackgroundProviderImpl.topPanel(resourceProvider)));
         }
 
+        // MeeroX: give the round header buttons the same liquid-glass disc the
+        // rest of the chrome uses, instead of a flat tinted circle. Done here
+        // because the blur factories only exist once the content view is up.
+        meeroGlassHeaderButton(meeroComposeItem);
+        meeroGlassHeaderButton(optionsItem);
+        meeroGlassHeaderButton(meeroEditItem);
+
         dialogStoriesCell = new DialogStoriesCell(context, this, currentAccount, isArchive() ? DialogStoriesCell.TYPE_ARCHIVE : DialogStoriesCell.TYPE_DIALOGS) {
             @Override
             public void onUserLongPressed(View view, long dialogId) {
@@ -5574,11 +5588,14 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
             actionBar.setTitleColor(getThemedColor(Theme.key_telegram_color_dialogsLogo));
         }
 
-        // MeeroX: opt this screen into the centred title. The flag is local to
-        // this ActionBar, so every other screen keeps its own alignment.
+        // MeeroX: the flag itself is set in createActionBar (before the title
+        // is built). Here we only undo the fork's left nudge so the centred
+        // label really sits in the middle, and switch it off for the pickers
+        // and the archive, which keep the stock layout.
         if (meeroDialogsStyleEnabled() && !onlySelect && folderId == 0) {
-            actionBar.meeroAllowCenteredTitle = true;
             actionBar.getTitlesContainer().setTranslationX(0);
+        } else {
+            actionBar.meeroAllowCenteredTitle = false;
         }
 
         if (folderId != 0 || communityId != 0) {
@@ -10546,6 +10563,32 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
      * MeeroX: gives a header button the round tinted background used in the
      * iOS layout. Purely cosmetic - the click handling is untouched.
      */
+    /**
+     * MeeroX: swaps a header button's flat circle for a real blurred glass
+     * disc. Falls back silently when the blur pipeline is unavailable, in
+     * which case the tinted circle from meeroRoundHeaderButton stays.
+     */
+    private void meeroGlassHeaderButton(ActionBarMenuItem item) {
+        if (item == null || !meeroDialogsStyleEnabled() || iBlur3FactoryLiquidGlass == null) {
+            return;
+        }
+        try {
+            final int size = dp(42);
+            final BlurredBackgroundDrawable bg = iBlur3FactoryLiquidGlass.create(
+                    item, BlurredBackgroundProviderImpl.topPanel(resourceProvider));
+            bg.setRadius(size / 2f);
+            item.setBackground(bg);
+            item.setClipToOutline(true);
+            item.setOutlineProvider(new ViewOutlineProvider() {
+                @Override
+                public void getOutline(View view, android.graphics.Outline outline) {
+                    outline.setOval(0, 0, view.getWidth(), view.getHeight());
+                }
+            });
+        } catch (Throwable ignore) {
+        }
+    }
+
     private void meeroRoundHeaderButton(ActionBarMenuItem item) {
         if (item == null) {
             return;
