@@ -33,6 +33,20 @@ public class MeeroCards {
     public static final int POS_MIDDLE = 2;
     public static final int POS_LAST   = 3;
 
+    /** The fill colour a card is drawn with, for hosts that must match it. */
+    public static int surfaceColor(Theme.ResourcesProvider rp) {
+        final int base = Theme.getColor(Theme.key_windowBackgroundWhite, rp);
+        final boolean dark = (0.299 * Color.red(base) + 0.587 * Color.green(base)
+                + 0.114 * Color.blue(base)) < 128;
+        if (!dark) {
+            return base;
+        }
+        final int r = (int) Math.min(255, Color.red(base) + 255 * 0.10f);
+        final int g = (int) Math.min(255, Color.green(base) + 255 * 0.10f);
+        final int b = (int) Math.min(255, Color.blue(base) + 255 * 0.10f);
+        return Color.argb(Color.alpha(base), r, g, b);
+    }
+
     public static boolean enabled() {
         try {
             return NekoConfig.meeroCards.Bool();
