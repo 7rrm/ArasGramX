@@ -654,6 +654,33 @@ public class ActionBarMenu extends LinearLayout {
         this.glassMode = glassMode;
     }
 
+    /**
+     * MeeroX: lets a host paint behind the menu's items.
+     *
+     * The menu is measured at the full action bar height, so a plain
+     * background is always stretched to that height. A painter can draw a
+     * correctly sized capsule instead, without changing the menu's layout.
+     */
+    public interface MeeroBackgroundPainter {
+        void draw(android.graphics.Canvas canvas);
+    }
+
+    private MeeroBackgroundPainter meeroBackgroundPainter;
+
+    public void setMeeroBackgroundPainter(MeeroBackgroundPainter painter) {
+        this.meeroBackgroundPainter = painter;
+        setWillNotDraw(painter == null);
+        invalidate();
+    }
+
+    @Override
+    protected void onDraw(android.graphics.Canvas canvas) {
+        if (meeroBackgroundPainter != null) {
+            meeroBackgroundPainter.draw(canvas);
+        }
+        super.onDraw(canvas);
+    }
+
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         if (glassMode) {
