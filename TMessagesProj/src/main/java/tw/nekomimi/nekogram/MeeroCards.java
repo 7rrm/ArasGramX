@@ -65,6 +65,59 @@ public class MeeroCards {
         return Color.HSVToColor(Color.alpha(base), hsv);
     }
 
+    /**
+     * MeeroX: the rounded tile that sits behind a row's icon.
+     *
+     * Taken from the reference layout's SettingsRow: a 40dp box with a 12dp
+     * radius, filled with the accent colour at 15%. The icon itself is tinted
+     * with the same accent, so the pair reads as one badge.
+     */
+    public static class IconTileDrawable extends Drawable {
+
+        public static final int SIZE_DP = 40;
+        public static final int RADIUS_DP = 12;
+        private static final float FILL_ALPHA = 0.15f;
+
+        private final Theme.ResourcesProvider rp;
+        private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        private final RectF r = new RectF();
+
+        public IconTileDrawable(Theme.ResourcesProvider rp) {
+            this.rp = rp;
+        }
+
+        public static int accent(Theme.ResourcesProvider rp) {
+            return Theme.getColor(Theme.key_windowBackgroundWhiteBlueText, rp);
+        }
+
+        @Override
+        public void draw(Canvas canvas) {
+            final android.graphics.Rect b = getBounds();
+            final int size = dp(SIZE_DP);
+            final float left = b.centerX() - size / 2f;
+            final float top = b.centerY() - size / 2f;
+            r.set(left, top, left + size, top + size);
+            paint.setColor(accent(rp));
+            paint.setAlpha((int) (255 * FILL_ALPHA));
+            canvas.drawRoundRect(r, dp(RADIUS_DP), dp(RADIUS_DP), paint);
+        }
+
+        @Override
+        public void setAlpha(int alpha) {
+            paint.setAlpha(alpha);
+        }
+
+        @Override
+        public void setColorFilter(ColorFilter cf) {
+            paint.setColorFilter(cf);
+        }
+
+        @Override
+        public int getOpacity() {
+            return PixelFormat.TRANSLUCENT;
+        }
+    }
+
     public static boolean enabled() {
         try {
             return NekoConfig.meeroCards.Bool();
@@ -126,14 +179,16 @@ public class MeeroCards {
             // Bleed a hair past the shared edges. Without this the rounding
             // left a sliver of page colour between rows, which read as a dark
             // line running through the card.
-            final float bleed = 1f;
-            float top = b.top;
-            float bottom = b.bottom;
+            // Every row is now a standalone card, so instead of bleeding into
+            // its neighbours it insets vertically to leave a visible gap.
+            final float gap = position == POS_SINGLE ? dp(3) : 0f;
+            float top = b.top + gap;
+            float bottom = b.bottom - gap;
             if (position == POS_MIDDLE || position == POS_LAST) {
-                top -= bleed;
+                top -= 1f;
             }
             if (position == POS_MIDDLE || position == POS_FIRST) {
-                bottom += bleed;
+                bottom += 1f;
             }
             rect.set(b.left + m, top, b.right - m, bottom);
 
@@ -156,6 +211,8 @@ public class MeeroCards {
             // both sides so it never touches the rounded edge. Drawn from the
             // card colour rather than key_divider, which is tuned for the page
             // background and came out almost black on top of the card.
+            // A separator only makes sense inside a shared card; standalone
+            // cards are already told apart by the gap between them.
             if (position == POS_FIRST || position == POS_MIDDLE) {
                 hairline.setColor(dark ? lighten(fill.getColor(), 0.10f) : darken(fill.getColor(), 0.08f));
                 final float inset = dp(SIDE_MARGIN_DP + 14);
