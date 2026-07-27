@@ -82,6 +82,30 @@ public class ChatInputViewsContainer extends FrameLayout {
         blurredBackgroundDrawable.setRadius(dp(INPUT_BUBBLE_RADIUS));
     }
 
+    /**
+     * MeeroX: separate drawables for the two side discs.
+     *
+     * A BlurredBackgroundDrawable samples the backdrop for the bounds it was
+     * last given, so reusing the pill's drawable for the discs left whichever
+     * shape drew last holding the blur and the others flat. Each shape needs
+     * its own instance.
+     */
+    private BlurredBackgroundDrawable meeroLeftDisc, meeroRightDisc;
+
+    public void setMeeroSideDiscDrawables(BlurredBackgroundDrawable left, BlurredBackgroundDrawable right) {
+        meeroLeftDisc = left;
+        meeroRightDisc = right;
+        final int r = dp(MEERO_IOS_BUTTON) / 2;
+        if (meeroLeftDisc != null) {
+            meeroLeftDisc.setPadding(dp(7));
+            meeroLeftDisc.setRadius(r);
+        }
+        if (meeroRightDisc != null) {
+            meeroRightDisc.setPadding(dp(7));
+            meeroRightDisc.setRadius(r);
+        }
+    }
+
     public void setUnderKeyboardBackgroundDrawable(BlurredBackgroundDrawable drawable) {
         underKeyboardBackgroundDrawable = drawable;
         underKeyboardBackgroundDrawable.enableInAppKeyboardOptimization();
@@ -298,32 +322,22 @@ public class ChatInputViewsContainer extends FrameLayout {
             blurredBackgroundDrawable.draw(canvas);
 
         // MeeroX: the buttons the pill just made room for get their own glass
-        // discs, so the bar reads as [attach] [field] [record] like iOS.
-        //
-        // These are drawn with a separate Rect and the radius is restored
-        // afterwards: the previous version reused tmpRect and left the
-        // drawable's radius changed, which corrupted the pill on the next
-        // frame - that is why the text field lost its glass.
-        if (drawInputBackground && meeroInset > 0) {
-            final int savedRadius = dp(INPUT_BUBBLE_RADIUS);
+        // discs, drawn with their own drawables so each samples the backdrop
+        // for its own bounds.
+        if (drawInputBackground && meeroInset > 0 && meeroLeftDisc != null && meeroRightDisc != null) {
             final int cy = tmpRect.centerY();
-            final int d = dp(MEERO_IOS_BUTTON);
-            final int r = d / 2;
+            final int r = dp(MEERO_IOS_BUTTON) / 2;
             final int leftCx = Math.round(inputBubbleOffsetLeft) + dp(MEERO_IOS_BUTTON + MEERO_IOS_GAP) / 2;
             final int rightCx = getMeasuredWidth() - Math.round(inputBubbleOffsetRight)
                     - dp(MEERO_IOS_BUTTON + MEERO_IOS_GAP) / 2;
 
-            blurredBackgroundDrawable.setRadius(r);
             meeroDiscRect.set(leftCx - r, cy - r, leftCx + r, cy + r);
-            blurredBackgroundDrawable.setBounds(meeroDiscRect);
-            blurredBackgroundDrawable.draw(canvas);
+            meeroLeftDisc.setBounds(meeroDiscRect);
+            meeroLeftDisc.draw(canvas);
 
             meeroDiscRect.set(rightCx - r, cy - r, rightCx + r, cy + r);
-            blurredBackgroundDrawable.setBounds(meeroDiscRect);
-            blurredBackgroundDrawable.draw(canvas);
-
-            blurredBackgroundDrawable.setRadius(savedRadius);
-            blurredBackgroundDrawable.setBounds(tmpRect);
+            meeroRightDisc.setBounds(meeroDiscRect);
+            meeroRightDisc.draw(canvas);
         }
 
         if (needDrawInAppKeyboard) {
