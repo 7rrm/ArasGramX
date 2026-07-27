@@ -18659,44 +18659,12 @@ public class ChatActivity extends BaseFragment implements
          * @return a canvas save count to restore, or -1 when no clip was applied
          */
         private int meeroBlurClipOut(Canvas canvas) {
-            if (!meeroSnapshotShown || meeroSnapshotView == null || scrimView == null) {
-                return -1;
-            }
-            final View v = scrimView;
-            final int w = meeroSnapshotView.getBubbleWidthPx();
-            final int h = meeroSnapshotView.getBubbleHeightPx();
-            if (w <= 0 || h <= 0) {
-                return -1;
-            }
-            final int top = (int) (chatListView.getY() + v.getY() + meeroSnapshotView.getBubbleTopInCell());
-            final int left = (int) (chatListView.getLeft() + v.getX() + meeroSnapshotView.getBubbleLeftInCell());
-            meeroGhostRect.set(left, top, left + w, top + h);
-            if (meeroGhostRect.bottom <= 0 || meeroGhostRect.top >= getMeasuredHeight()) {
-                return -1;
-            }
-            final int save = canvas.save();
-            // Clip a rounded shape, not a rectangle: the bubble has 20dp
-            // corners, and cutting a hard rectangle around it left visible
-            // square edges in the blur. Insetting slightly keeps the popup
-            // copy overlapping the hole so no seam shows through.
-            // The captured region can be wider than the bubble when an avatar
-            // is included, so keep the rounding modest - a large radius on a
-            // wide rect would expose the baked-in copy at the corners.
-            final float r = dp(14);
-            final float inset = dp(1);
-            meeroGhostPath.reset();
-            meeroGhostRectF.set(
-                    meeroGhostRect.left + inset,
-                    meeroGhostRect.top + inset,
-                    meeroGhostRect.right - inset,
-                    meeroGhostRect.bottom - inset);
-            meeroGhostPath.addRoundRect(meeroGhostRectF, r, r, Path.Direction.CW);
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                canvas.clipOutPath(meeroGhostPath);
-            } else {
-                canvas.clipPath(meeroGhostPath, android.graphics.Region.Op.DIFFERENCE);
-            }
-            return save;
+            // Superseded. Punching a hole in the blur exposed the sharp
+            // wallpaper underneath, which is what looked like the blur
+            // "cutting" the background around the bubble. The duplicate the
+            // hole was meant to hide is already handled by skipping the
+            // scrim cell in drawChild(), so the blur is now drawn whole.
+            return -1;
         }
 
         @Override
