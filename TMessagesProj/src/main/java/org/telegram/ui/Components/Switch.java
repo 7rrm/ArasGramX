@@ -54,6 +54,26 @@ public class Switch extends View {
     public static final int SWITCH_STYLE_DEFAULT = 0;
     public static final int SWITCH_STYLE_MODERN = 1;
     public static final int SWITCH_STYLE_MD3 = 2;
+    /**
+     * MeeroX: iOS's UISwitch.
+     *
+     * The other three styles are all Material at heart: a small thumb inside a
+     * thin track, a ripple under the finger, and a linear 200ms crossfade.
+     * iOS uses a track the thumb almost fills, no ripple at all, and a spring
+     * that lets the thumb overshoot slightly before it settles - that
+     * overshoot is most of what makes the control feel like iOS.
+     *
+     * Proportions come from UISwitch's own 51x31pt frame: the track is
+     * 51 x 31 with a 15.5 radius, and the thumb is 27 across, leaving a 2pt
+     * margin all round.
+     */
+    public static final int SWITCH_STYLE_IOS = 3;
+
+    /** UISwitch geometry, in points. */
+    private static final float IOS_TRACK_W = 51f;
+    private static final float IOS_TRACK_H = 31f;
+    private static final float IOS_THUMB = 27f;
+    private static final float IOS_MARGIN = 2f;
     private int separateTrackColorKey = -1;
     private int lastCheckColor = Integer.MIN_VALUE;
     private final Paint googleBorderPaint;
@@ -180,6 +200,12 @@ public class Switch extends View {
     }
 
     public void setDrawRipple(boolean value) {
+        // MeeroX: UISwitch has no ripple - the thumb's own movement is the
+        // whole response to a touch. Leaving Material's expanding circle under
+        // an otherwise iOS-shaped control is the giveaway that it is not one.
+        if (isIosStyle()) {
+            return;
+        }
         if (Build.VERSION.SDK_INT < 21 || value == drawRipple) {
             return;
         }
@@ -258,9 +284,27 @@ public class Switch extends View {
         thumbCheckedColorKey = thumbChecked;
     }
 
+    private static boolean isIosStyle() {
+        try {
+            return NaConfig.INSTANCE.getSwitchStyle().Int() == SWITCH_STYLE_IOS;
+        } catch (Throwable ignore) {
+            return false;
+        }
+    }
+
     private void animateToCheckedState(boolean newCheckedState) {
         checkAnimator = ObjectAnimator.ofFloat(this, "progress", newCheckedState ? 1 : 0);
-        checkAnimator.setDuration(200);
+        if (isIosStyle()) {
+            // iOS runs its switch on a spring, so the thumb overshoots a
+            // little and settles rather than stopping dead at the end of a
+            // 200ms ramp. OvershootInterpolator is the closest single-curve
+            // equivalent; the tension is kept low so the thumb does not visibly
+            // leave the track.
+            checkAnimator.setDuration(300);
+            checkAnimator.setInterpolator(new android.view.animation.OvershootInterpolator(1.2f));
+        } else {
+            checkAnimator.setDuration(200);
+        }
         checkAnimator.addListener(new AnimatorListenerAdapter() {
             @Override
             public void onAnimationEnd(Animator animation) {
@@ -601,7 +645,56 @@ public class Switch extends View {
         invalidate();
     }
 
+    /**
+     * MeeroX: draws the control as UISwitch.
+     *
+     * Everything is derived from the 51x31pt frame so the proportions hold at
+     * any density: the thumb is inset by a fixed 2pt margin and travels
+     * between the two ends of the track, and the track itself is fully
+     * rounded rather than a thin bar behind a smaller knob.
+     *
+     * The thumb also stretches while it moves. iOS widens it as it leaves one
+     * end and lets it settle back at the other, which - together with the
+     * spring the progress animator now uses - is what stops the movement
+     * reading as a straight slide.
+     */
+    private void drawIosSwitch(Canvas canvas) {
+        final float trackW = dpf2(IOS_TRACK_W);
+        final float trackH = dpf2(IOS_TRACK_H);
+        final float margin = dpf2(IOS_MARGIN);
+        final float thumbD = dpf2(IOS_THUMB);
+
+        final float left = (getMeasuredWidth() - trackW) / 2f;
+        final float top = (getMeasuredHeight() - trackH) / 2f;
+        final float cy = top + trackH / 2f;
+        final float radius = trackH / 2f;
+
+        final int offColor = processColor(Theme.getColor(
+                separateTrackColorKey >= 0 ? separateTrackColorKey : trackColorKey, resourcesProvider));
+        final int onColor = processColor(Theme.getColor(trackCheckedColorKey >= 0
+                ? trackCheckedColorKey : Theme.key_switchTrackChecked, resourcesProvider));
+
+        rectF.set(left, top, left + trackW, top + trackH);
+        paint.setColor(lerpColor(offColor, onColor, progress));
+        canvas.drawRoundRect(rectF, radius, radius, paint);
+
+        // Widen the thumb mid-travel, easing back to a circle at either end.
+        final float stretch = dpf2(4) * (float) Math.sin(Math.PI * Math.max(0, Math.min(1, progress)));
+        final float thumbW = thumbD + stretch;
+        final float travel = trackW - thumbD - margin * 2f;
+        final float thumbLeft = left + margin + travel * progress - stretch * progress;
+
+        rectF.set(thumbLeft, cy - thumbD / 2f, thumbLeft + thumbW, cy + thumbD / 2f);
+        paint.setColor(processColor(Theme.getColor(
+                thumbColorKey >= 0 ? thumbColorKey : Theme.key_windowBackgroundWhite, resourcesProvider)));
+        canvas.drawRoundRect(rectF, thumbD / 2f, thumbD / 2f, paint);
+    }
+
     private void drawCustomSwitch(Canvas canvas, int switchStyle) {
+        if (switchStyle == SWITCH_STYLE_IOS) {
+            drawIosSwitch(canvas);
+            return;
+        }
         int width = dp(36);
         int x = (getMeasuredWidth() - width) / 2;
         float y = (getMeasuredHeight() - dpf2(14)) / 2;
