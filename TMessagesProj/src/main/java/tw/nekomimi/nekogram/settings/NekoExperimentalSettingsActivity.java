@@ -102,14 +102,17 @@ public class NekoExperimentalSettingsActivity extends BaseNekoXSettingsActivity 
 
     // General
     private final AbstractConfigCell headerGeneral = cellGroup.appendCell(new ConfigCellHeader(getString(R.string.General)));
+    // MeeroX: iOS is appended as a fourth style. The stored value is the
+    // option's index, so iOS has to sit at 3 on every device - dropping
+    // Predictive on API < 34 would slide iOS down to 2 and silently turn an
+    // existing "iOS" preference into Predictive. Predictive is therefore
+    // always listed; LaunchActivity already gates it behind SDK_INT >= 34.
     private final AbstractConfigCell backAnimationStyleRow = cellGroup.appendCell(new ConfigCellSelectBox(null, NaConfig.INSTANCE.getBackAnimationStyle(),
-            Build.VERSION.SDK_INT >= 34 ? new String[]{
+            new String[]{
                     getString(R.string.BackAnimationClassic),
                     getString(R.string.BackAnimationSpring),
                     getString(R.string.BackAnimationPredictive),
-            } : new String[]{
-                    getString(R.string.BackAnimationClassic),
-                    getString(R.string.BackAnimationSpring),
+                    getString(R.string.BackAnimationIos),
             }, null));
     private final AbstractConfigCell springAnimationCrossfadeRow = cellGroup.appendCell(new ConfigCellTextCheck(NaConfig.INSTANCE.getSpringAnimationCrossfade()));
     private final AbstractConfigCell localPremiumRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.localPremium));
@@ -194,6 +197,12 @@ public class NekoExperimentalSettingsActivity extends BaseNekoXSettingsActivity 
     private final AbstractConfigCell enablePanguOnSendingRow = cellGroup.appendCell(new ConfigCellTextCheck(NaConfig.INSTANCE.getEnablePanguOnSending(), getString(R.string.PanguInfo)));
     private final AbstractConfigCell dividerPangu = cellGroup.appendCell(new ConfigCellDivider());
 
+    /** MeeroX: both spring-driven styles share the crossfade option. */
+    private static boolean meeroIsSpringStyle(int style) {
+        return style == ActionBarLayout.BACK_ANIMATION_SPRING
+                || style == ActionBarLayout.BACK_ANIMATION_IOS;
+    }
+
     public NekoExperimentalSettingsActivity() {
         if (NaConfig.INSTANCE.getUseDeletedIcon().Bool()) {
             cellGroup.rows.remove(customDeletedMarkRow);
@@ -201,7 +210,9 @@ public class NekoExperimentalSettingsActivity extends BaseNekoXSettingsActivity 
         if (!NaConfig.INSTANCE.getSaveDeletedMessageForBotUser().Bool()) {
             cellGroup.rows.remove(saveDeletedMessageInBotChatRow);
         }
-        if (NaConfig.INSTANCE.getBackAnimationStyle().Int() != ActionBarLayout.BACK_ANIMATION_SPRING) {
+        // MeeroX: the crossfade option applies to the iOS style too, since
+        // both run on the same spring transition.
+        if (!meeroIsSpringStyle(NaConfig.INSTANCE.getBackAnimationStyle().Int())) {
             cellGroup.rows.remove(springAnimationCrossfadeRow);
         }
         checkStoriesRows();
@@ -258,7 +269,7 @@ public class NekoExperimentalSettingsActivity extends BaseNekoXSettingsActivity 
                 checkSaveBotMsgRows();
             } else if (key.equals(NaConfig.INSTANCE.getBackAnimationStyle().getKey())) {
                 final int style = (int) newValue;
-                if (style != ActionBarLayout.BACK_ANIMATION_SPRING) {
+                if (!meeroIsSpringStyle(style)) {
                     if (cellGroup.rows.contains(springAnimationCrossfadeRow)) {
                         final int index = cellGroup.rows.indexOf(springAnimationCrossfadeRow);
                         cellGroup.rows.remove(springAnimationCrossfadeRow);
