@@ -10738,8 +10738,17 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
         if (item == null) {
             return;
         }
-        final int tint = getThemedColor(Theme.key_windowBackgroundWhiteBlackText);
-        final int bg = androidx.core.graphics.ColorUtils.setAlphaComponent(tint, 26);
+        // MeeroX: iOS fills these with secondarySystemFill - a fixed grey that
+        // does not follow the label colour. Deriving the fill from
+        // key_windowBackgroundWhiteBlackText meant it inverted with the theme:
+        // white at 10% over a dark page reads as a faint disc, but the same
+        // rule on a light theme produces black at 10%, so the buttons turned
+        // into dark blobs. Basing it on the page colour instead keeps the disc
+        // a step away from the background whichever way round the theme is.
+        final int page = getThemedColor(Theme.key_windowBackgroundWhite);
+        final boolean darkPage = tw.nekomimi.nekogram.MeeroShadow.isDark(page);
+        final int bg = androidx.core.graphics.ColorUtils.setAlphaComponent(
+                darkPage ? 0xFFFFFFFF : 0xFF000000, darkPage ? 28 : 20);
         // OvalShape stretches to the view's bounds, and a menu item is wider
         // than it is tall - so the "circle" came out as an ellipse. Pin the
         // item to a square first, then the oval really is a circle.
