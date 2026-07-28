@@ -3289,6 +3289,24 @@ public class LoginActivity extends BaseFragment implements NotificationCenter.No
                     }
                 } else {
                     if (error.text != null) {
+                        // MeeroX: some failures blame the api_id rather than
+                        // the number - the credential is rate-limited or
+                        // restricted, and no code is ever sent. Move to the
+                        // next key in the pool and retry once, silently, so
+                        // the user just sees the request take a moment longer.
+                        if (activityMode == MODE_LOGIN
+                                && tw.nekomimi.nekogram.NekoXConfig.customApi != tw.nekomimi.nekogram.NekoXConfig.API_TYPE_CUSTOM
+                                && tw.nekomimi.nekogram.MeeroApiKeys.isKeyError(error.text)
+                                && tw.nekomimi.nekogram.MeeroApiKeys.advance()) {
+                            // nextPressed was cleared at the top of this
+                            // callback, and the spinner is deliberately left
+                            // running so the retry reads as one attempt.
+                            // confirmedNumber skips the confirm sheet, which
+                            // the user already answered.
+                            confirmedNumber = true;
+                            AndroidUtilities.runOnUIThread(() -> onNextPressed(null), 150);
+                            return;
+                        }
                         if (error.text.contains("SESSION_PASSWORD_NEEDED")) {
                             TL_account.getPassword req2 = new TL_account.getPassword();
                             ConnectionsManager.getInstance(currentAccount).sendRequest(req2, (response1, error1) -> AndroidUtilities.runOnUIThread(() -> {
