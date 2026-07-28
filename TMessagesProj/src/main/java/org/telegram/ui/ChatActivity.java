@@ -11440,8 +11440,17 @@ public class ChatActivity extends BaseFragment implements
             }
             final float from = meeroSnapshotProgress;
             meeroSnapshotAnimator = ValueAnimator.ofFloat(from, 0f);
-            meeroSnapshotAnimator.setDuration(180);
-            meeroSnapshotAnimator.setInterpolator(CubicBezierInterpolator.EASE_OUT_QUINT);
+            // The popup - and the snapshot drawn inside it - is gone after
+            // ActionBarPopupWindow's 150ms dismiss. Fading the real bubble
+            // back in over 180ms therefore left a ~30ms window where neither
+            // copy was on screen, which read as the bubble blinking out and
+            // reappearing. Coming back faster than the popup leaves means the
+            // real bubble is already solid by the time the copy disappears.
+            meeroSnapshotAnimator.setDuration(120);
+            // Ease-in on the way back: the bubble gains opacity quickly and
+            // then settles, rather than lingering near invisible the way
+            // EASE_OUT does at the start of its curve.
+            meeroSnapshotAnimator.setInterpolator(CubicBezierInterpolator.EASE_IN);
             meeroSnapshotAnimator.addUpdateListener(a -> {
                 meeroSnapshotProgress = (float) a.getAnimatedValue();
                 if (contentView != null) contentView.invalidate();
