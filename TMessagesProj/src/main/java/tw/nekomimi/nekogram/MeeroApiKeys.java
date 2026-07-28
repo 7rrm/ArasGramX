@@ -31,25 +31,47 @@ public class MeeroApiKeys {
      * Built-in credentials, tried in order.
      *
      * The first entry is whatever the build was compiled with, so a build-time
-     * override through TELEGRAM_APP_ID still takes precedence. The rest are
-     * public credentials that established Telegram forks ship.
+     * override through TELEGRAM_APP_ID still takes precedence.
+     *
+     * Ordering matters. Id 6 is what NagramX and NagramXF ship, which means
+     * every build of those forks - and this one - competes for the same quota;
+     * Telegram throttles it hard and answers new sign-ins with an internal
+     * error before any code is sent. Id 11535358 belongs to Nagram, a fork
+     * with its own registered credential rather than a shared public one, so
+     * it carries far less traffic and is tried first. Id 4 is the official
+     * Android client's and is rate-limited per device - the first sign-in on a
+     * device works and the next is refused - so it sits last as a fallback
+     * only.
      */
     private static final int[] IDS = {
             BuildConfig.APP_ID,
-            6,
+            11535358,
             2040,
+            6,
             4,
     };
 
     private static final String[] HASHES = {
             BuildConfig.APP_HASH,
-            "eb06d4abfb49dc3eeb1aeb98ae0f581e",
+            "33d372962fadb01df47e6ceed4e33cd6",
             "b18441a1ff607e10a989891a5462e627",
+            "eb06d4abfb49dc3eeb1aeb98ae0f581e",
             "014b35b6184100b085b0d0572f9b5103",
     };
 
     private static final String PREFS = "meerox_api";
     private static final String KEY_INDEX = "api_index";
+    /**
+     * Bumped whenever the pool changes.
+     *
+     * A saved index points at a position in the old list, so reordering the
+     * entries would leave anyone who had already rotated stuck on whichever
+     * key now happens to sit there - including the throttled ones this
+     * reordering was meant to move away from. Changing the generation resets
+     * the choice once, and the automatic failover takes it from there.
+     */
+    private static final String KEY_GENERATION = "api_generation";
+    private static final int GENERATION = 2;
 
     private static int index = -1;
 
@@ -60,7 +82,14 @@ public class MeeroApiKeys {
     private static int index() {
         if (index < 0) {
             try {
-                index = prefs().getInt(KEY_INDEX, 0);
+                final SharedPreferences p = prefs();
+                if (p.getInt(KEY_GENERATION, 0) != GENERATION) {
+                    // The pool was rebuilt; start again from the top.
+                    index = 0;
+                    p.edit().putInt(KEY_INDEX, 0).putInt(KEY_GENERATION, GENERATION).apply();
+                } else {
+                    index = p.getInt(KEY_INDEX, 0);
+                }
             } catch (Throwable e) {
                 index = 0;
             }
@@ -104,7 +133,7 @@ public class MeeroApiKeys {
         }
         index = next;
         try {
-            prefs().edit().putInt(KEY_INDEX, index).apply();
+            prefs().edit().putInt(KEY_INDEX, index).putInt(KEY_GENERATION, GENERATION).apply();
         } catch (Throwable ignore) {
         }
         FileLog.d("MeeroX: switching to api id " + IDS[index]);
@@ -115,7 +144,7 @@ public class MeeroApiKeys {
     public static void reset() {
         index = 0;
         try {
-            prefs().edit().putInt(KEY_INDEX, 0).apply();
+            prefs().edit().putInt(KEY_INDEX, 0).putInt(KEY_GENERATION, GENERATION).apply();
         } catch (Throwable ignore) {
         }
     }
