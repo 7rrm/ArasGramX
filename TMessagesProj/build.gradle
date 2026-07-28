@@ -88,8 +88,20 @@ android {
         // TL_auth_sentCodePaymentRequired ("SMS Fee") instead of delivering a
         // code. Id 4 is the one the official Android client and every major
         // fork (Nagram, Telegram-FOSS) ship, and it delivers codes normally.
-        def appId = '4'
-        def appHash = '014b35b6184100b085b0d0572f9b5103'
+        // MeeroX: back to id 6, the credential NagramX itself ships.
+        //
+        // Id 4 is the official Android client's, and Telegram rates it per
+        // device: the first sign-in on a device goes through and the next one
+        // is refused outright - auth.sendCode returns before any code is sent,
+        // which is why adding a second account failed while the first had
+        // worked. Id 6 is the one this fork was built against and does not
+        // carry that per-device cap.
+        //
+        // MeeroApiKeys holds this pair plus fallbacks, and rotates to the next
+        // one when the server rejects a key, so a future restriction on any
+        // single id no longer blocks signing in.
+        def appId = '6'
+        def appHash = 'eb06d4abfb49dc3eeb1aeb98ae0f581e'
 
         if (properties != null) {
             appId = properties.getProperty('TELEGRAM_APP_ID') ?: System.getenv('TELEGRAM_APP_ID') ?: appId
