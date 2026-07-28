@@ -840,12 +840,52 @@ public class ActionBarPopupWindow extends PopupWindow {
         }
     }
 
+    /**
+     * MeeroX: where the menu should appear to grow from.
+     *
+     * Android pins the pivot to the menu's top-right corner, so a menu always
+     * unfolds from the same place no matter where it was summoned. iOS grows
+     * its context menus out of the point that was actually touched, which is
+     * what makes the menu feel attached to the thing it belongs to.
+     *
+     * Set in the popup's own coordinates before it is shown; -1 leaves the
+     * stock corner behaviour alone.
+     */
+    private static float meeroPivotX = -1f;
+    private static float meeroPivotY = -1f;
+
+    public static void setMeeroPivot(float x, float y) {
+        meeroPivotX = x;
+        meeroPivotY = y;
+    }
+
+    public static void clearMeeroPivot() {
+        meeroPivotX = -1f;
+        meeroPivotY = -1f;
+    }
+
+    private static boolean meeroIosMenu() {
+        try {
+            return tw.nekomimi.nekogram.NekoConfig.meeroIosMenuAnim.Bool();
+        } catch (Throwable ignore) {
+            return false;
+        }
+    }
+
     public static AnimatorSet startAnimation(ActionBarPopupWindowLayout content) {
         content.startAnimationPending = true;
         content.setTranslationY(0);
         content.setAlpha(1.0f);
-        content.setPivotX(content.getMeasuredWidth());
-        content.setPivotY(0);
+        if (meeroIosMenu() && meeroPivotX >= 0 && meeroPivotY >= 0) {
+            // Clamped so a touch outside the menu's own box still yields a
+            // pivot on its edge rather than off it, which would swing the
+            // menu in from the side instead of scaling it up.
+            content.setPivotX(Math.max(0, Math.min(content.getMeasuredWidth(), meeroPivotX)));
+            content.setPivotY(Math.max(0, Math.min(content.getMeasuredHeight(), meeroPivotY)));
+        } else {
+            content.setPivotX(content.getMeasuredWidth());
+            content.setPivotY(0);
+        }
         final int count = content.getItemsCount();
         content.positions.clear();
         int visibleCount = 0;
