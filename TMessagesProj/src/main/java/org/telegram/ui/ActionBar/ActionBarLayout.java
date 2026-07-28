@@ -1649,7 +1649,7 @@ public class ActionBarLayout extends FrameLayout implements INavigationLayout, F
                 currentSpringAnimation = new SpringAnimation(valueHolder)
                         .setSpring(new SpringForce(SPRING_MULTIPLIER)
                                 .setStiffness(SPRING_STIFFNESS)
-                                .setDampingRatio(SpringForce.DAMPING_RATIO_NO_BOUNCY));
+                                .setDampingRatio(SPRING_DAMPING_RATIO));
                 if (velX != 0) {
                     currentSpringAnimation.setStartVelocity(velX / 15f);
                 }
@@ -1657,7 +1657,7 @@ public class ActionBarLayout extends FrameLayout implements INavigationLayout, F
                 currentSpringAnimation = new SpringAnimation(valueHolder)
                         .setSpring(new SpringForce(0f)
                                 .setStiffness(SPRING_STIFFNESS)
-                                .setDampingRatio(SpringForce.DAMPING_RATIO_NO_BOUNCY));
+                                .setDampingRatio(SPRING_DAMPING_RATIO));
             }
             currentSpringAnimation.addUpdateListener((animation, value, velocity) -> {
                 var progress = value / SPRING_MULTIPLIER;
@@ -1919,7 +1919,7 @@ public class ActionBarLayout extends FrameLayout implements INavigationLayout, F
             currentSpringAnimation = new SpringAnimation(valueHolder)
                     .setSpring(new SpringForce(SPRING_MULTIPLIER)
                             .setStiffness(preview ? open ? SPRING_STIFFNESS_PREVIEW : SPRING_STIFFNESS_PREVIEW_OUT : SPRING_STIFFNESS)
-                            .setDampingRatio(preview ? 0.6f : 1f));
+                            .setDampingRatio(preview ? 0.6f : SPRING_DAMPING_RATIO));
             currentSpringAnimation.addUpdateListener((animation, value, velocity) -> {
                 animationProgress = value / SPRING_MULTIPLIER;
                 if (USE_ACTIONBAR_CROSSFADE) {
@@ -3849,12 +3849,36 @@ public class ActionBarLayout extends FrameLayout implements INavigationLayout, F
     // public static final int BACK_ANIMATION_CLASSIC = 0;
     public static final int BACK_ANIMATION_SPRING = 1;
     public static final int BACK_ANIMATION_PREDICTIVE = 2;
-    private static final boolean USE_SPRING_ANIMATION = NaConfig.INSTANCE.getBackAnimationStyle().Int() == BACK_ANIMATION_SPRING;
+    /**
+     * MeeroX: the same spring transition, retuned to Apple's numbers.
+     *
+     * Telegram for Android already animates screens with a SpringAnimation,
+     * so this is not a new mechanism - it is the existing one with iOS's
+     * constants. Telegram for iOS declares them in
+     * ContainedViewLayoutTransition.swift:
+     *
+     *   customSpring(mass: 5.0, stiffness: 900.0, damping: 88.0)
+     *   bounceParameters -> (damping: 88.0, stiffness: 750.0)
+     *
+     * Android's SpringForce takes a damping ratio rather than a raw damping
+     * coefficient, so Apple's figure converts as
+     * c / (2 * sqrt(k * m)) = 88 / (2 * sqrt(900 * 5)) = 0.656 - under-damped,
+     * which is what gives an iOS push its slight settle. Android's stock
+     * ratio of 1.0 is critically damped and stops dead instead, and its 700
+     * stiffness makes the push about 22% slower than Apple's 900.
+     */
+    public static final int BACK_ANIMATION_IOS = 3;
+    private static final int BACK_ANIMATION_STYLE = NaConfig.INSTANCE.getBackAnimationStyle().Int();
+    private static final boolean USE_IOS_SPRING = BACK_ANIMATION_STYLE == BACK_ANIMATION_IOS;
+    // iOS runs on the same spring machinery as the Spring style.
+    private static final boolean USE_SPRING_ANIMATION = BACK_ANIMATION_STYLE == BACK_ANIMATION_SPRING || USE_IOS_SPRING;
     private static final boolean USE_ACTIONBAR_CROSSFADE = USE_SPRING_ANIMATION && NaConfig.INSTANCE.getSpringAnimationCrossfade().Bool();
-    private static final float SPRING_STIFFNESS = 700f;
-    private static final float SPRING_STIFFNESS_PREVIEW = 650f;
-    private static final float SPRING_STIFFNESS_PREVIEW_OUT = 800f;
+    private static final float SPRING_STIFFNESS = USE_IOS_SPRING ? 900f : 700f;
+    private static final float SPRING_STIFFNESS_PREVIEW = USE_IOS_SPRING ? 750f : 650f;
+    private static final float SPRING_STIFFNESS_PREVIEW_OUT = USE_IOS_SPRING ? 900f : 800f;
     private static final float SPRING_STIFFNESS_PREVIEW_EXPAND = 750f;
+    /** 88 / (2 * sqrt(900 * 5)) - Apple's damping, as a ratio. */
+    private static final float SPRING_DAMPING_RATIO = USE_IOS_SPRING ? 0.656f : 1f;
     private static final float SPRING_MULTIPLIER = 1000f;
     private float swipeProgress;
     private SpringAnimation currentSpringAnimation;
