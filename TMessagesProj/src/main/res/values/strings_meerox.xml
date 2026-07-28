@@ -43,6 +43,8 @@
     <string name="BackAnimationIos">iOS</string>
     <string name="meeroIosShadows">Soft card shadows</string>
     <string name="MeeroIosShadowsInfo">A wide, faint shadow under settings and profile cards, the way iOS suggests depth instead of drawing an outline.</string>
+    <string name="meeroIosHaptics">iOS haptic weights</string>
+    <string name="MeeroIosHapticsInfo">Distinct feedback for selections, confirmations and errors instead of one buzz for everything. Needs Android 11 or newer for the full set.</string>
     <string name="MeeroSectionCategories">Categories</string>
     <string name="MeeroSectionData">Data</string>
     <string name="MeeroSectionInfo">About</string>
