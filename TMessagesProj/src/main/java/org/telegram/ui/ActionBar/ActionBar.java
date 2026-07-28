@@ -738,58 +738,6 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
         return actionMode != null ? actionMode.getAlpha() : 0;
     }
 
-    /**
-     * MeeroX: drops the selection toolbar to the bottom of the screen.
-     *
-     * iOS puts the actions for a selection within thumb reach at the bottom
-     * edge; Android keeps them in the action bar, where a narrow screen also
-     * forces some of them behind an overflow menu.
-     *
-     * The bar is not reparented to do this. Every item routes its taps
-     * through parentActionBar.actionBarMenuOnItemClick, showActionMode
-     * animates views that live inside this ActionBar, and sixteen places in
-     * ChatActivity measure against the bar's height - moving the view out
-     * would break all three. Translating it instead leaves the hierarchy, the
-     * click path and the animations exactly as they are, and ActionBar
-     * already sets clipChildren(false) with actionMode absent from
-     * shouldClipChild, so the bar stays fully drawn outside its parent's
-     * bounds.
-     */
-    private boolean meeroBottomActionsApplied;
-
-    public static boolean meeroBottomActionsEnabled() {
-        try {
-            return tw.nekomimi.nekogram.NekoConfig.meeroBottomActions.Bool();
-        } catch (Throwable e) {
-            return false;
-        }
-    }
-
-    private void meeroApplyBottomActions() {
-        if (actionMode == null || !meeroBottomActionsEnabled()) {
-            return;
-        }
-        meeroBottomActionsApplied = true;
-        // Height is resolved on every layout pass, since the screen size and
-        // the status bar inset are not known yet at creation time.
-        actionMode.setPadding(actionMode.getPaddingLeft(), 0,
-                actionMode.getPaddingRight(), actionMode.getPaddingBottom());
-        meeroUpdateBottomActionsOffset();
-    }
-
-    /** Distance from the action bar down to the bottom toolbar's slot. */
-    private void meeroUpdateBottomActionsOffset() {
-        if (actionMode == null || !meeroBottomActionsApplied) {
-            return;
-        }
-        final int screen = AndroidUtilities.displaySize.y;
-        final int barHeight = getCurrentActionBarHeight();
-        final int top = occupyStatusBar ? AndroidUtilities.statusBarHeight : 0;
-        // Sit the toolbar on the bottom edge, above the navigation inset.
-        final int offset = screen - top - barHeight - AndroidUtilities.navigationBarHeight;
-        actionMode.setTranslationY(Math.max(0, offset));
-    }
-
     public ActionBarMenu createActionMode(boolean needTop, String tag) {
         if (actionModeIsExist(tag)) {
             return actionMode;
@@ -844,7 +792,6 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
             }
         };
         actionMode.setTranslationX(glassMode ? -dp(10) : 0);
-        meeroApplyBottomActions();
         actionMode.setGlassMode(glassMode);
         actionMode.isActionMode = true;
         actionMode.setClickable(true);
@@ -1594,9 +1541,6 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
     @Override
     protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
         int additionalTop = occupyStatusBar ? AndroidUtilities.statusBarHeight : 0;
-        // MeeroX: the offset depends on the screen height and the status bar
-        // inset, neither of which is settled when the bar is created.
-        meeroUpdateBottomActionsOffset();
         if (prevWidth != getMeasuredWidth()) {
             prevWidth = getMeasuredWidth();
             checkAvatarContainerWidth(animatorAvatarContainerWidth.isAnimating());
