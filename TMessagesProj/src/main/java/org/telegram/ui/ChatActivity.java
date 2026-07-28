@@ -5500,7 +5500,11 @@ public class ChatActivity extends BaseFragment implements
                         if (Math.abs(dx) >= AndroidUtilities.dp(50)) {
                             if (!wasTrackingVibrate) {
                                 try {
-                                    if (!NekoConfig.disableVibration.Bool()) performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
+                                    // Swiping a message far enough to reply is
+                                    // a selection crossing a threshold, not a
+                                    // committed action - iOS ticks rather than
+                                    // taps for these.
+                                    tw.nekomimi.nekogram.MeeroHaptics.perform(this, tw.nekomimi.nekogram.MeeroHaptics.LIGHT);
                                 } catch (Exception ignore) {}
                                 wasTrackingVibrate = true;
                             }
@@ -8649,7 +8653,7 @@ public class ChatActivity extends BaseFragment implements
         });
         if (!noForwards) {
             actionsButtonsLayout.setReplyButtonOnLongClickListener(v -> {
-                if (!NekoConfig.disableVibration.Bool()) v.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
+                tw.nekomimi.nekogram.MeeroHaptics.perform(v, tw.nekomimi.nekogram.MeeroHaptics.MEDIUM);
                 chatsHelper.makeReplyButtonLongClick(this, isCurrentLeftButtonNoForwards(), getResourceProvider());
                 return false;
             });
@@ -14062,7 +14066,7 @@ public class ChatActivity extends BaseFragment implements
         }
 
         try {
-            if (!NekoConfig.disableVibration.Bool()) fragmentView.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
+            tw.nekomimi.nekogram.MeeroHaptics.perform(fragmentView, tw.nekomimi.nekogram.MeeroHaptics.MEDIUM);
         } catch (Exception e) {
             FileLog.e(e);
         }
@@ -24326,7 +24330,9 @@ public class ChatActivity extends BaseFragment implements
                         }
                         if (hasChosen) {
                             try {
-                                if (!NekoConfig.disableVibration.Bool()) pollView.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
+                                // A cast vote is a completed action, so it
+                                // gets the confirmation weight.
+                                tw.nekomimi.nekogram.MeeroHaptics.perform(pollView, tw.nekomimi.nekogram.MeeroHaptics.SUCCESS);
                                 } catch (Exception ignored) {
                             }
                             if (isQuizWin) {
@@ -29827,7 +29833,7 @@ public class ChatActivity extends BaseFragment implements
                         if (botButton instanceof TLRPC.TL_keyboardButtonUrl) {
                             openClickableLink(null, botButton.url, true, null, buttonMessage, false);
                             try {
-                                if (!NekoConfig.disableVibration.Bool()) buttonTextView.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS, HapticFeedbackConstants.FLAG_IGNORE_VIEW_SETTING);
+                                tw.nekomimi.nekogram.MeeroHaptics.perform(buttonTextView, tw.nekomimi.nekogram.MeeroHaptics.LONG_PRESS);
                             } catch (Exception ignore) {}
                             return true;
                         }
@@ -34473,7 +34479,7 @@ public class ChatActivity extends BaseFragment implements
             if (bigEmoji) {
                 if (cell != null) {
                     try {
-                        if (!NekoConfig.disableVibration.Bool()) cell.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
+                        tw.nekomimi.nekogram.MeeroHaptics.perform(cell, tw.nekomimi.nekogram.MeeroHaptics.LONG_PRESS);
                     } catch (Exception ignored) {}
                 }
                 ArrayList<TLRPC.MessageReactor> reactors = null;
@@ -34495,7 +34501,7 @@ public class ChatActivity extends BaseFragment implements
             }
             if (fragmentView != null) {
                 try {
-                    if (!NekoConfig.disableVibration.Bool()) fragmentView.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP, HapticFeedbackConstants.FLAG_IGNORE_VIEW_SETTING);
+                    tw.nekomimi.nekogram.MeeroHaptics.perform(fragmentView, tw.nekomimi.nekogram.MeeroHaptics.MEDIUM);
                 } catch (Exception ignore) {}
             }
             final long chatId = -StarsController.MessageId.from(primaryMessage).did;
@@ -35721,7 +35727,7 @@ public class ChatActivity extends BaseFragment implements
                     View view = bulletin.getLayout();
                     view.postDelayed(() -> {
                         try {
-                            if (!NekoConfig.disableVibration.Bool()) view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
+                            tw.nekomimi.nekogram.MeeroHaptics.perform(view, tw.nekomimi.nekogram.MeeroHaptics.MEDIUM);
                         } catch (Exception ignored) {}
                     }, 550);
                 });
@@ -42105,7 +42111,7 @@ public class ChatActivity extends BaseFragment implements
                     getMessagesController().pressTranscribeButton();
                 });
                 try {
-                    if (!NekoConfig.disableVibration.Bool()) topUndoView.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
+                    tw.nekomimi.nekogram.MeeroHaptics.perform(topUndoView, tw.nekomimi.nekogram.MeeroHaptics.MEDIUM);
                 } catch (Exception ignored) {}
             } else if (type == 1) {
                 String until = LocaleController.formatDateTime(getMessagesController().transcribeAudioTrialCooldownUntil, true);
@@ -42114,7 +42120,7 @@ public class ChatActivity extends BaseFragment implements
                     AndroidUtilities.replaceTags(LocaleController.formatPluralString("TranscriptionTrialLeft", TranscribeButton.getTranscribeTrialCount(currentAccount)));
                 BulletinFactory.of(ChatActivity.this).createSimpleBulletin(R.raw.transcribe, text, 6).show(true);
                 try {
-                    if (!NekoConfig.disableVibration.Bool()) fragmentView.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
+                    tw.nekomimi.nekogram.MeeroHaptics.perform(fragmentView, tw.nekomimi.nekogram.MeeroHaptics.MEDIUM);
                 } catch (Exception ignored) {}
             } else if (type == 2 || type == 3) {
                 String until = LocaleController.formatDateTime(getMessagesController().transcribeAudioTrialCooldownUntil, true);
@@ -42183,7 +42189,7 @@ public class ChatActivity extends BaseFragment implements
                 showDialog(builder.create());
             }
             try {
-                if (!NekoConfig.disableVibration.Bool()) cell.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS, HapticFeedbackConstants.FLAG_IGNORE_VIEW_SETTING);
+                tw.nekomimi.nekogram.MeeroHaptics.perform(cell, tw.nekomimi.nekogram.MeeroHaptics.LONG_PRESS);
             } catch (Exception ignore) {}
             return true;
         }
@@ -46515,7 +46521,7 @@ public class ChatActivity extends BaseFragment implements
                         getNotificationCenter().postNotificationName(NotificationCenter.closeChats);
                         finishFragment();
                     });
-                    if (!NekoConfig.disableVibration.Bool()) LaunchActivity.getLastFragment().getFragmentView().performHapticFeedback(HapticFeedbackConstants.LONG_PRESS, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
+                    tw.nekomimi.nekogram.MeeroHaptics.perform(LaunchActivity.getLastFragment().getFragmentView(), tw.nekomimi.nekogram.MeeroHaptics.LONG_PRESS);
                 });
             });
             builder.setNegativeButton(LocaleController.getString(R.string.Cancel), null);
@@ -47935,7 +47941,7 @@ public class ChatActivity extends BaseFragment implements
             return;
         }
         if (longpress && reaction.reaction instanceof TLRPC.TL_reactionPaid) {
-            if (!NekoConfig.disableVibration.Bool()) cell.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
+            tw.nekomimi.nekogram.MeeroHaptics.perform(cell, tw.nekomimi.nekogram.MeeroHaptics.LONG_PRESS);
             ArrayList<TLRPC.MessageReactor> reactors = null;
             if (messageObject.messageOwner != null && messageObject.messageOwner.reactions != null) {
                 reactors = messageObject.messageOwner.reactions.top_reactors;
@@ -47948,7 +47954,7 @@ public class ChatActivity extends BaseFragment implements
             return;
         }
         if (longpress || messageObject.areTags() && (isInsideContainer || searchingReaction != null && searchingReaction.isSame(reaction.reaction))) {
-            if (!NekoConfig.disableVibration.Bool()) cell.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
+            tw.nekomimi.nekogram.MeeroHaptics.perform(cell, tw.nekomimi.nekogram.MeeroHaptics.LONG_PRESS);
             FrameLayout scrimPopupContainerLayout = new FrameLayout(getParentActivity()) {
                 @Override
                 public boolean dispatchKeyEvent(KeyEvent event) {
@@ -50086,7 +50092,7 @@ public class ChatActivity extends BaseFragment implements
             }
         });
         try {
-            if (!NekoConfig.disableVibration.Bool()) view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
+            tw.nekomimi.nekogram.MeeroHaptics.perform(view, tw.nekomimi.nekogram.MeeroHaptics.LONG_PRESS);
         } catch (Exception ignored) {}
         return true;
     }
@@ -50276,7 +50282,7 @@ public class ChatActivity extends BaseFragment implements
         }
         fireworksOverlay.start();
         try {
-            if (!NekoConfig.disableVibration.Bool()) fireworksOverlay.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
+            tw.nekomimi.nekogram.MeeroHaptics.perform(fireworksOverlay, tw.nekomimi.nekogram.MeeroHaptics.MEDIUM);
         } catch (Exception ignored) {};
     }
 
