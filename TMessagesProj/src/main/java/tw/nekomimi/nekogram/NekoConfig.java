@@ -100,6 +100,7 @@ public class NekoConfig {
     public static ConfigItem meeroIosFastScroll = addConfig("meeroIosFastScroll", configTypeBool, true);
     public static ConfigItem meeroIosShadows = addConfig("meeroIosShadows", configTypeBool, true);
     public static ConfigItem meeroIosHaptics = addConfig("meeroIosHaptics", configTypeBool, true);
+    public static ConfigItem meeroIosMenuAnim = addConfig("meeroIosMenuAnim", configTypeBool, true);
 
     // From NekoConfig
     public static ConfigItem useIPv6 = addConfig("IPv6", configTypeBool, false);
