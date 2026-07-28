@@ -732,6 +732,8 @@
     <string name="BackAnimationIos">آي أو إس</string>
     <string name="meeroIosShadows">ظلال ناعمة للبطاقات</string>
     <string name="MeeroIosShadowsInfo">ظل واسع وخفيف تحت بطاقات الإعدادات والملف الشخصي، مثل ما يوحي آيفون بالعمق بدل رسم حد.</string>
+    <string name="meeroIosHaptics">شدّات الاهتزاز بنمط iOS</string>
+    <string name="MeeroIosHapticsInfo">اهتزاز مختلف للتنقّل والتأكيد والخطأ بدل اهتزاز واحد لكل شي. الشدّات الكاملة تحتاج أندرويد 11 أو أحدث.</string>
     <string name="MeeroSectionCategories">الأقسام</string>
     <string name="MeeroSectionData">البيانات</string>
     <string name="MeeroSectionInfo">حول</string>
