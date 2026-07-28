@@ -38,8 +38,8 @@
     <string name="MeeroIosIntroInfo">iOS typography and button sizing on the intro pages, with page dots that slide instead of stretching. The animations themselves stay as they are.</string>
     <string name="meeroIosSearch">iOS search field</string>
     <string name="MeeroIosSearchInfo">Solid tinted pill with a smaller, dimmer magnifier, the way UISearchBar is drawn. Removes the hairline edge.</string>
-    <string name="meeroBottomActions">Selection actions at the bottom</string>
-    <string name="MeeroBottomActionsInfo">Moves the toolbar shown while messages are selected down to the bottom edge, within thumb reach.</string>
+    <string name="meeroIosFastScroll">iOS index bar</string>
+    <string name="MeeroIosFastScrollInfo">Lists every section letter down the edge so you can tap straight to one, instead of dragging a handle. Long indexes are thinned to fit.</string>
     <string name="MeeroSectionCategories">Categories</string>
     <string name="MeeroSectionData">Data</string>
     <string name="MeeroSectionInfo">About</string>
