@@ -210,9 +210,7 @@ public class MeeroCards {
         if (view == null) {
             return;
         }
-        if (CardDrawable.shadowsEnabled()) {
-            view.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
-        }
+        MeeroShadow.prepare(view);
         view.setBackground(drawable);
     }
 
@@ -255,17 +253,8 @@ public class MeeroCards {
          * and the layer type is switched on the host view when the drawable is
          * attached.
          */
-        private static final float SHADOW_BLUR_DP = 10f;
-        private static final float SHADOW_DY_DP = 2f;
-        private static final int SHADOW_ALPHA_DARK = 0x40;
-        private static final int SHADOW_ALPHA_LIGHT = 0x1A;
-
         public static boolean shadowsEnabled() {
-            try {
-                return NekoConfig.meeroIosShadows.Bool();
-            } catch (Throwable e) {
-                return false;
-            }
+            return MeeroShadow.enabled();
         }
 
         public CardDrawable(int position, Theme.ResourcesProvider rp) {
@@ -284,12 +273,7 @@ public class MeeroCards {
             fill.setColor(meeroLift(base));
             // A wide, faint shadow reads as depth; a tight dark one reads as
             // a border, which is what the stock helper produces.
-            if (shadowsEnabled()) {
-                fill.setShadowLayer(dp(SHADOW_BLUR_DP), 0, dp(SHADOW_DY_DP),
-                        Color.argb(dark ? SHADOW_ALPHA_DARK : SHADOW_ALPHA_LIGHT, 0, 0, 0));
-            } else {
-                fill.clearShadowLayer();
-            }
+            MeeroShadow.apply(fill, MeeroShadow.TIER_CARD, dark);
 
             final int m = dp(SIDE_MARGIN_DP);
             final float r = dp(RADIUS_DP);
