@@ -1181,6 +1181,16 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
         tabsView.setEnabled(factor > 1);
         tabsView.setAlpha(factor);
         tabsView.setVisibility(factor > 0 ? View.VISIBLE : View.GONE);
+        // MeeroX: the search pill is a sibling of tabsView inside the same
+        // wrapper, not a child of it, so hiding the bar left the pill behind -
+        // stranded in the corner over the search screen. It follows the same
+        // factor so the two leave and return together.
+        if (meeroSearchTabSeparate != null) {
+            meeroSearchTabSeparate.setAlpha(factor);
+            meeroSearchTabSeparate.setClickable(factor > 0);
+            meeroSearchTabSeparate.setEnabled(factor > 0);
+            meeroSearchTabSeparate.setVisibility(factor > 0 ? View.VISIBLE : View.GONE);
+        }
     }
 
     private void checkUi_callTabVisible(boolean callTabsVisible, boolean animated) {
