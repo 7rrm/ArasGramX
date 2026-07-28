@@ -37,6 +37,7 @@ import android.text.Layout;
 import android.text.SpannableStringBuilder;
 import android.text.StaticLayout;
 import android.text.TextPaint;
+import android.text.TextUtils;
 import android.util.Pair;
 import android.util.SparseIntArray;
 import android.util.StateSet;
@@ -635,6 +636,15 @@ public class RecyclerListView extends RecyclerView implements IBlur3Capture {
                 pressed = false;
                 return false;
             }
+            if (meeroIndexActive()) {
+                // Tapping or sliding along the index jumps straight to a
+                // section; there is no handle to pick up first.
+                final int action = event.getAction();
+                if (action == MotionEvent.ACTION_DOWN || action == MotionEvent.ACTION_MOVE) {
+                    return meeroHandleIndexTouch(event.getX(), event.getY());
+                }
+                return action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL;
+            }
             switch (event.getAction()) {
                 case MotionEvent.ACTION_DOWN:
                     float x = event.getX();
@@ -782,8 +792,194 @@ public class RecyclerListView extends RecyclerView implements IBlur3Capture {
             }
         }
 
+        /**
+         * MeeroX: iOS's index bar.
+         *
+         * Android shows a single 5x30dp grab handle and only reveals the
+         * letter, in a large bubble, while you drag it. iOS instead lists
+         * every section letter down the edge permanently and lets you tap
+         * straight onto one.
+         *
+         * The letters come from the adapter's own getLetter(position), walked
+         * once per layout, so the bar always matches however the list is
+         * actually sectioned - Arabic contacts give Arabic letters, Latin
+         * ones give A-Z, and a mixed book gives both.
+         *
+         * A long index would not fit on a phone, so the list is capped: once
+         * there are more letters than fit, evenly spaced ones are kept and the
+         * gaps are shown as the bullet iOS uses for the same purpose.
+         */
+        private static final int MEERO_INDEX_WIDTH_DP = 16;
+        private static final float MEERO_INDEX_TEXT_DP = 11f;
+        private static final float MEERO_INDEX_STEP_DP = 14f;
+        private static final String MEERO_INDEX_GAP = "•";
+
+        private final ArrayList<String> meeroLetters = new ArrayList<>();
+        private final ArrayList<Integer> meeroLetterPositions = new ArrayList<>();
+        private TextPaint meeroIndexPaint;
+        private int meeroLettersItemCount = -1;
+
+        public static boolean meeroIosFastScroll() {
+            try {
+                return tw.nekomimi.nekogram.NekoConfig.meeroIosFastScroll.Bool();
+            } catch (Throwable ignore) {
+                return false;
+            }
+        }
+
+        private boolean meeroIndexActive() {
+            return type == LETTER_TYPE && meeroIosFastScroll();
+        }
+
+        /** Collects one entry per section change, then thins it to fit. */
+        private void meeroBuildLetters() {
+            final Adapter adapter = getAdapter();
+            if (!(adapter instanceof FastScrollAdapter)) {
+                return;
+            }
+            final int count = adapter.getItemCount();
+            if (count == meeroLettersItemCount) {
+                return;
+            }
+            meeroLettersItemCount = count;
+            meeroLetters.clear();
+            meeroLetterPositions.clear();
+
+            String previous = null;
+            for (int i = 0; i < count; i++) {
+                String letter;
+                try {
+                    letter = ((FastScrollAdapter) adapter).getLetter(i);
+                } catch (Throwable ignore) {
+                    continue;
+                }
+                if (TextUtils.isEmpty(letter)) {
+                    continue;
+                }
+                letter = letter.substring(0, 1).toUpperCase();
+                if (letter.equals(previous)) {
+                    continue;
+                }
+                previous = letter;
+                meeroLetters.add(letter);
+                meeroLetterPositions.add(i);
+            }
+            meeroThinLetters();
+        }
+
+        /** Keeps the index within the height available, iOS style. */
+        private void meeroThinLetters() {
+            final int height = getMeasuredHeight() - (usePadding ? getPaddingTop() + getPaddingBottom() : 0);
+            if (height <= 0) {
+                return;
+            }
+            final int maxRows = Math.max(4, (int) (height / AndroidUtilities.dp(MEERO_INDEX_STEP_DP)));
+            final int total = meeroLetters.size();
+            if (total <= maxRows) {
+                return;
+            }
+            final ArrayList<String> letters = new ArrayList<>(meeroLetters);
+            final ArrayList<Integer> positions = new ArrayList<>(meeroLetterPositions);
+            meeroLetters.clear();
+            meeroLetterPositions.clear();
+            // Alternate kept letters with a bullet so the spacing still reads
+            // as a continuous index rather than an arbitrary subset.
+            final int keep = maxRows / 2;
+            for (int i = 0; i < keep; i++) {
+                final int index = (int) ((long) i * (total - 1) / Math.max(1, keep - 1));
+                meeroLetters.add(letters.get(index));
+                meeroLetterPositions.add(positions.get(index));
+                if (i < keep - 1) {
+                    meeroLetters.add(MEERO_INDEX_GAP);
+                    meeroLetterPositions.add(-1);
+                }
+            }
+        }
+
+        /** Draws the permanent letter column. */
+        private void meeroDrawIndex(Canvas canvas) {
+            meeroBuildLetters();
+            if (meeroLetters.isEmpty()) {
+                return;
+            }
+            if (meeroIndexPaint == null) {
+                meeroIndexPaint = new TextPaint(Paint.ANTI_ALIAS_FLAG);
+                meeroIndexPaint.setTextAlign(Paint.Align.CENTER);
+            }
+            meeroIndexPaint.setTextSize(AndroidUtilities.dp(MEERO_INDEX_TEXT_DP));
+            meeroIndexPaint.setColor(ColorUtils.blendARGB(inactiveColor, activeColor, bubbleProgress));
+
+            final int rows = meeroLetters.size();
+            final int top = usePadding ? getPaddingTop() : 0;
+            final int bottom = getMeasuredHeight() - (usePadding ? getPaddingBottom() : 0);
+            final float step = (bottom - top) / (float) rows;
+            final float cx = isRtl
+                    ? AndroidUtilities.dp(MEERO_INDEX_WIDTH_DP) / 2f
+                    : getMeasuredWidth() - AndroidUtilities.dp(MEERO_INDEX_WIDTH_DP) / 2f;
+            final float baselineShift = (meeroIndexPaint.descent() + meeroIndexPaint.ascent()) / 2f;
+
+            for (int i = 0; i < rows; i++) {
+                final float cy = top + step * (i + 0.5f) - baselineShift;
+                canvas.drawText(meeroLetters.get(i), cx, cy, meeroIndexPaint);
+            }
+        }
+
+        /**
+         * Maps a touch on the index column to a list position.
+         *
+         * @return true when the touch landed on the index
+         */
+        private boolean meeroHandleIndexTouch(float x, float y) {
+            if (meeroLetters.isEmpty()) {
+                return false;
+            }
+            final float edge = AndroidUtilities.dp(MEERO_INDEX_WIDTH_DP + 8);
+            final boolean onBar = isRtl ? x <= edge : x >= getMeasuredWidth() - edge;
+            if (!onBar) {
+                return false;
+            }
+            final int top = usePadding ? getPaddingTop() : 0;
+            final int bottom = getMeasuredHeight() - (usePadding ? getPaddingBottom() : 0);
+            final float step = (bottom - top) / (float) meeroLetters.size();
+            int row = (int) ((y - top) / Math.max(1f, step));
+            row = Math.max(0, Math.min(meeroLetters.size() - 1, row));
+
+            // A bullet is a spacer; snap to the nearest real letter instead.
+            int probe = row;
+            while (probe >= 0 && meeroLetterPositions.get(probe) < 0) {
+                probe--;
+            }
+            if (probe < 0) {
+                probe = row;
+                while (probe < meeroLetters.size() && meeroLetterPositions.get(probe) < 0) {
+                    probe++;
+                }
+            }
+            if (probe < 0 || probe >= meeroLetters.size()) {
+                return false;
+            }
+            final int position = meeroLetterPositions.get(probe);
+            if (position < 0) {
+                return false;
+            }
+            final LayoutManager lm = getLayoutManager();
+            if (lm instanceof LinearLayoutManager) {
+                ((LinearLayoutManager) lm).scrollToPositionWithOffset(position, 0);
+            } else {
+                scrollToPosition(position);
+            }
+            return true;
+        }
+
         @Override
         protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+            if (meeroIndexActive()) {
+                // A permanent index needs only its own column, not the 132dp
+                // gutter the drag handle reserved for its pop-up bubble.
+                setMeasuredDimension(AndroidUtilities.dp(MEERO_INDEX_WIDTH_DP + 8), MeasureSpec.getSize(heightMeasureSpec));
+                meeroLettersItemCount = -1;
+                return;
+            }
             setMeasuredDimension(AndroidUtilities.dp(type == LETTER_TYPE ? 132 : 240), MeasureSpec.getSize(heightMeasureSpec));
 
             arrowPath.reset();
@@ -796,6 +992,12 @@ public class RecyclerListView extends RecyclerView implements IBlur3Capture {
 
         @Override
         protected void onDraw(Canvas canvas) {
+            if (meeroIndexActive()) {
+                // The index replaces the handle entirely; iOS has no separate
+                // grab target.
+                meeroDrawIndex(canvas);
+                return;
+            }
             int topPadding = usePadding ? getPaddingTop() : 0;
             int y = topPadding + (int) Math.ceil((getMeasuredHeight() - topPadding - AndroidUtilities.dp(24 + 30)) * progress);
             rect.set(scrollX, AndroidUtilities.dp(12) + y, scrollX + AndroidUtilities.dp(5), AndroidUtilities.dp(12 + 30) + y);
