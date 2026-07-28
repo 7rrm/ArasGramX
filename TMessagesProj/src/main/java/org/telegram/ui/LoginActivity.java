@@ -1223,7 +1223,7 @@ public class LoginActivity extends BaseFragment implements NotificationCenter.No
 
     private void onFieldError(View view, boolean allowErrorSelection) {
         try {
-            if (!NekoConfig.disableVibration.Bool()) view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
+            tw.nekomimi.nekogram.MeeroHaptics.perform(view, tw.nekomimi.nekogram.MeeroHaptics.ERROR);
         } catch (Exception ignored) {}
         AndroidUtilities.shakeViewSpring(view, 3.5f);
 
@@ -4884,7 +4884,7 @@ public class LoginActivity extends BaseFragment implements NotificationCenter.No
 
                             animateSuccess(()-> {
                                 try {
-                                    if (!NekoConfig.disableVibration.Bool()) fragmentView.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
+                                    tw.nekomimi.nekogram.MeeroHaptics.perform(fragmentView, tw.nekomimi.nekogram.MeeroHaptics.ERROR);
                                 } catch (Exception ignored) {}
                                 new AlertDialog.Builder(getContext())
                                         .setTitle(getString(R.string.YourPasswordSuccess))
@@ -5146,7 +5146,7 @@ public class LoginActivity extends BaseFragment implements NotificationCenter.No
 
         private void shakeWrongCode() {
             try {
-                if (!NekoConfig.disableVibration.Bool()) codeFieldContainer.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
+                tw.nekomimi.nekogram.MeeroHaptics.perform(codeFieldContainer, tw.nekomimi.nekogram.MeeroHaptics.ERROR);
             } catch (Exception ignore) {}
 
             for (int a = 0; a < codeFieldContainer.codeField.length; a++) {
@@ -6201,7 +6201,7 @@ public class LoginActivity extends BaseFragment implements NotificationCenter.No
                 return;
             }
             try {
-                if (!NekoConfig.disableVibration.Bool()) emailOutlineView.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
+                tw.nekomimi.nekogram.MeeroHaptics.perform(emailOutlineView, tw.nekomimi.nekogram.MeeroHaptics.ERROR);
             } catch (Exception ignore) {}
             if (clear) {
                 emailField.setText("");
@@ -6899,7 +6899,7 @@ public class LoginActivity extends BaseFragment implements NotificationCenter.No
                 return;
             }
             try {
-                if (!NekoConfig.disableVibration.Bool()) codeFieldContainer.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
+                tw.nekomimi.nekogram.MeeroHaptics.perform(codeFieldContainer, tw.nekomimi.nekogram.MeeroHaptics.ERROR);
             } catch (Exception ignore) {}
             if (clear) {
                 for (CodeNumberField f : codeFieldContainer.codeField) {
@@ -7107,7 +7107,7 @@ public class LoginActivity extends BaseFragment implements NotificationCenter.No
 
         private void shakeWrongCode() {
             try {
-                if (!NekoConfig.disableVibration.Bool()) codeFieldContainer.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
+                tw.nekomimi.nekogram.MeeroHaptics.perform(codeFieldContainer, tw.nekomimi.nekogram.MeeroHaptics.ERROR);
             } catch (Exception ignore) {}
 
             for (int a = 0; a < codeFieldContainer.codeField.length; a++) {
@@ -7353,7 +7353,7 @@ public class LoginActivity extends BaseFragment implements NotificationCenter.No
                 return;
             }
             try {
-                if (!NekoConfig.disableVibration.Bool()) codeFieldContainer.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
+                tw.nekomimi.nekogram.MeeroHaptics.perform(codeFieldContainer, tw.nekomimi.nekogram.MeeroHaptics.ERROR);
             } catch (Exception ignore) {}
             if (clear) {
                 for (CodeNumberField f : codeFieldContainer.codeField) {
@@ -7690,7 +7690,7 @@ public class LoginActivity extends BaseFragment implements NotificationCenter.No
                 return;
             }
             try {
-                if (!NekoConfig.disableVibration.Bool()) codeField[num].performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
+                tw.nekomimi.nekogram.MeeroHaptics.perform(codeField[num], tw.nekomimi.nekogram.MeeroHaptics.ERROR);
             } catch (Exception ignore) {}
             AndroidUtilities.shakeView(codeField[num]);
         }
@@ -9649,7 +9649,7 @@ public class LoginActivity extends BaseFragment implements NotificationCenter.No
                 return;
             }
             try {
-                if (!NekoConfig.disableVibration.Bool()) codeField.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
+                tw.nekomimi.nekogram.MeeroHaptics.perform(codeField, tw.nekomimi.nekogram.MeeroHaptics.ERROR);
             } catch (Exception ignore) {}
             final int a = currentType == AUTH_TYPE_WORD ? 0 : 1;
             if (asBeginning) {
