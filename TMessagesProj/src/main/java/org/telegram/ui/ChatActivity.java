@@ -11440,17 +11440,19 @@ public class ChatActivity extends BaseFragment implements
             }
             final float from = meeroSnapshotProgress;
             meeroSnapshotAnimator = ValueAnimator.ofFloat(from, 0f);
-            // The popup - and the snapshot drawn inside it - is gone after
-            // ActionBarPopupWindow's 150ms dismiss. Fading the real bubble
-            // back in over 180ms therefore left a ~30ms window where neither
-            // copy was on screen, which read as the bubble blinking out and
-            // reappearing. Coming back faster than the popup leaves means the
-            // real bubble is already solid by the time the copy disappears.
-            meeroSnapshotAnimator.setDuration(120);
-            // Ease-in on the way back: the bubble gains opacity quickly and
-            // then settles, rather than lingering near invisible the way
-            // EASE_OUT does at the start of its curve.
-            meeroSnapshotAnimator.setInterpolator(CubicBezierInterpolator.EASE_IN);
+            // Two things have to hold at once here. The popup, and the
+            // snapshot drawn inside it, is gone after ActionBarPopupWindow's
+            // 150ms dismiss - so a fade longer than that leaves a window where
+            // neither copy is on screen and the bubble appears to blink. But
+            // cutting it to 120ms with an ease-in went too far the other way:
+            // the bubble was effectively opaque within the first few frames,
+            // so there was no visible return at all, just a pop.
+            //
+            // 150ms matches the dismiss exactly, and EASE_OUT spends most of
+            // that time in the visible part of the curve, so the bubble is
+            // seen easing back rather than snapping.
+            meeroSnapshotAnimator.setDuration(150);
+            meeroSnapshotAnimator.setInterpolator(CubicBezierInterpolator.EASE_OUT);
             meeroSnapshotAnimator.addUpdateListener(a -> {
                 meeroSnapshotProgress = (float) a.getAnimatedValue();
                 if (contentView != null) contentView.invalidate();
