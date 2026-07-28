@@ -1144,13 +1144,31 @@ public class ItemOptions {
         return this;
     }
 
+    /**
+     * MeeroX: the corner radius iOS gives a context menu.
+     *
+     * ContextActionsContainerNode sets containerNode.cornerRadius = 14.0.
+     * Android uses 16, which is close enough that the menu still looks
+     * rounded but far enough that it does not line up with the other iOS
+     * surfaces around it once those are in place.
+     */
+    private static float meeroMenuRadius() {
+        try {
+            if (tw.nekomimi.nekogram.NekoConfig.meeroIosMenuAnim.Bool()) {
+                return dp(14);
+            }
+        } catch (Throwable ignore) {
+        }
+        return dp(16);
+    }
+
     public ItemOptions setBlurBackground(BlurredBackgroundDrawableViewFactory factory, BlurredBackgroundProvider colorProvider, boolean multiwindow) {
         if (layout instanceof ActionBarPopupWindow.ActionBarPopupWindowLayout) {
             layout.setBackground(factory.create(layout, multiwindow)
                 .setColorProvider(colorProvider)
                 .setPadding(dp(8))
                 .setHasPadding(true)
-                .setRadius(dp(16)));
+                .setRadius(meeroMenuRadius()));
         }
         return this;
     }
@@ -1519,7 +1537,7 @@ public class ItemOptions {
                 .setColorProvider(BlurredBackgroundProviderImpl.scrimMenuBackground(resourcesProvider))
                 .setPadding(dp(8))
                 .setHasPadding(true)
-                .setRadius(dp(16));
+                .setRadius(meeroMenuRadius());
 
             bg.setSourceOffset(X + this.translateX, Y + this.translateY);
             layout.setBackground(bg);
