@@ -49,14 +49,18 @@ public class NekoXConfig {
     public static int currentAppId() {
         return switch (customApi) {
             case API_TYPE_CUSTOM -> customAppId;
-            default -> BuildConfig.APP_ID;
+            // MeeroX: the built-in credential now comes from a pool that
+            // rotates when Telegram rejects a key, instead of being pinned to
+            // whatever the build was compiled with. A user-supplied key still
+            // takes precedence.
+            default -> MeeroApiKeys.currentId();
         };
     }
 
     public static String currentAppHash() {
         return switch (customApi) {
             case API_TYPE_CUSTOM -> customAppHash;
-            default -> BuildConfig.APP_HASH;
+            default -> MeeroApiKeys.currentHash();
         };
     }
 
