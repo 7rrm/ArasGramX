@@ -199,6 +199,23 @@ public class MeeroCards {
      *
      * @param position one of POS_SINGLE / POS_FIRST / POS_MIDDLE / POS_LAST
      */
+    /**
+     * MeeroX: installs a card background, switching the host to software
+     * rendering when the drawable carries a shadow.
+     *
+     * Paint.setShadowLayer is ignored under hardware acceleration, so a card
+     * asking for one has to say so on the view that hosts it.
+     */
+    public static void attach(View view, CardDrawable drawable) {
+        if (view == null) {
+            return;
+        }
+        if (CardDrawable.shadowsEnabled()) {
+            view.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
+        }
+        view.setBackground(drawable);
+    }
+
     public static void apply(View view, int position, Theme.ResourcesProvider rp) {
         if (view == null) {
             return;
@@ -207,7 +224,7 @@ public class MeeroCards {
             view.setBackgroundColor(Theme.getColor(Theme.key_windowBackgroundWhite, rp));
             return;
         }
-        view.setBackground(new CardDrawable(position, rp));
+        attach(view, new CardDrawable(position, rp));
         // Inset the content so the text is not flush against the rounded edge.
         final int pad = dp(6);
         view.setPadding(view.getPaddingLeft() + pad, view.getPaddingTop(),
@@ -225,6 +242,32 @@ public class MeeroCards {
         private final float[] radii = new float[8];
         private final android.graphics.Path path = new android.graphics.Path();
 
+        /**
+         * MeeroX: the soft shadow iOS puts under a grouped card.
+         *
+         * iOS separates a card from the page with a wide, very faint shadow -
+         * a large blur at a low opacity - rather than an outline. Android's
+         * own helper (Theme.createRoundRectDrawableShadowed) uses a 2dp blur
+         * at 0x11 alpha, which is tight and dark enough to read as a border
+         * instead of depth.
+         *
+         * A shadow layer needs software rendering, so it is set up once here
+         * and the layer type is switched on the host view when the drawable is
+         * attached.
+         */
+        private static final float SHADOW_BLUR_DP = 10f;
+        private static final float SHADOW_DY_DP = 2f;
+        private static final int SHADOW_ALPHA_DARK = 0x40;
+        private static final int SHADOW_ALPHA_LIGHT = 0x1A;
+
+        public static boolean shadowsEnabled() {
+            try {
+                return NekoConfig.meeroIosShadows.Bool();
+            } catch (Throwable e) {
+                return false;
+            }
+        }
+
         public CardDrawable(int position, Theme.ResourcesProvider rp) {
             this.position = position;
             this.rp = rp;
@@ -239,6 +282,14 @@ public class MeeroCards {
             // the way iOS 26 tints grouped cells.
             final boolean dark = isDark(base);
             fill.setColor(meeroLift(base));
+            // A wide, faint shadow reads as depth; a tight dark one reads as
+            // a border, which is what the stock helper produces.
+            if (shadowsEnabled()) {
+                fill.setShadowLayer(dp(SHADOW_BLUR_DP), 0, dp(SHADOW_DY_DP),
+                        Color.argb(dark ? SHADOW_ALPHA_DARK : SHADOW_ALPHA_LIGHT, 0, 0, 0));
+            } else {
+                fill.clearShadowLayer();
+            }
 
             final int m = dp(SIDE_MARGIN_DP);
             final float r = dp(RADIUS_DP);
