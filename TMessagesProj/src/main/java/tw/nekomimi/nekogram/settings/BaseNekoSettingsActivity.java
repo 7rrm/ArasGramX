@@ -362,8 +362,9 @@ public abstract class BaseNekoSettingsActivity extends BaseFragment {
             // between them, rather than merging a run of rows into one long
             // panel. POS_SINGLE draws all four corners rounded.
             final View v = holder.itemView;
-            v.setBackground(new tw.nekomimi.nekogram.MeeroCards.CardDrawable(
-                    tw.nekomimi.nekogram.MeeroCards.POS_SINGLE, resourcesProvider));
+            tw.nekomimi.nekogram.MeeroCards.attach(v,
+                    new tw.nekomimi.nekogram.MeeroCards.CardDrawable(
+                            tw.nekomimi.nekogram.MeeroCards.POS_SINGLE, resourcesProvider));
 
             // Give the icon the accent-tinted tile the reference uses, and
             // recolour the glyph to match.
