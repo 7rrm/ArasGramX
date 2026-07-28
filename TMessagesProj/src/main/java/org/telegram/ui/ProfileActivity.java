@@ -14952,7 +14952,8 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
             } else {
                 pos = tw.nekomimi.nekogram.MeeroCards.POS_SINGLE;
             }
-            holder.itemView.setBackground(new tw.nekomimi.nekogram.MeeroCards.CardDrawable(pos, resourcesProvider));
+            tw.nekomimi.nekogram.MeeroCards.attach(holder.itemView,
+                    new tw.nekomimi.nekogram.MeeroCards.CardDrawable(pos, resourcesProvider));
             // TextDetailCell paints its own full-width divider. Ours is inset
             // to sit inside the card, so both together read as a doubled line
             // - suppress the cell's and keep the card's.
