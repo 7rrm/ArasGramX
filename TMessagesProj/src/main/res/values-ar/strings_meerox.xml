@@ -730,6 +730,8 @@
     <string name="meeroIosFastScroll">شريط الأحرف بنمط iOS</string>
     <string name="MeeroIosFastScrollInfo">يعرض كل أحرف الأقسام على الحافة حتى تضغط الحرف وتنتقل له مباشرة، بدل سحب المقبض. القوائم الطويلة تُختصر لتناسب الشاشة.</string>
     <string name="BackAnimationIos">آي أو إس</string>
+    <string name="meeroIosShadows">ظلال ناعمة للبطاقات</string>
+    <string name="MeeroIosShadowsInfo">ظل واسع وخفيف تحت بطاقات الإعدادات والملف الشخصي، مثل ما يوحي آيفون بالعمق بدل رسم حد.</string>
     <string name="MeeroSectionCategories">الأقسام</string>
     <string name="MeeroSectionData">البيانات</string>
     <string name="MeeroSectionInfo">حول</string>
