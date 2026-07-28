@@ -40,6 +40,7 @@
     <string name="MeeroIosSearchInfo">Solid tinted pill with a smaller, dimmer magnifier, the way UISearchBar is drawn. Removes the hairline edge.</string>
     <string name="meeroIosFastScroll">iOS index bar</string>
     <string name="MeeroIosFastScrollInfo">Lists every section letter down the edge so you can tap straight to one, instead of dragging a handle. Long indexes are thinned to fit.</string>
+    <string name="BackAnimationIos">iOS</string>
     <string name="MeeroSectionCategories">Categories</string>
     <string name="MeeroSectionData">Data</string>
     <string name="MeeroSectionInfo">About</string>
