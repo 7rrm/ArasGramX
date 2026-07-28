@@ -118,6 +118,20 @@ public class DialogStoriesCell extends FrameLayout implements NotificationCenter
 
     private final int type;
     public final static int HEIGHT_IN_DP = 81;
+
+    /**
+     * MeeroX: whether the iOS chats header is on.
+     *
+     * Shares meeroDialogsStyle with DialogsActivity, since this row draws the
+     * same header while stories are showing and the two must not disagree.
+     */
+    public static boolean meeroIosHeader() {
+        try {
+            return tw.nekomimi.nekogram.NekoConfig.meeroDialogsStyle.Bool();
+        } catch (Throwable ignore) {
+            return false;
+        }
+    }
     private final Drawable addNewStoryDrawable;
     private final DefaultItemAnimator miniItemAnimator;
     private int addNewStoryLastColor;
@@ -342,7 +356,15 @@ public class DialogStoriesCell extends FrameLayout implements NotificationCenter
         telegramLogoView.setTypeface(AndroidUtilities.bold());
         telegramLogoView.setPadding(0, dp(8), 0, dp(8));
         telegramLogoView.setTextSize(dp(!AndroidUtilities.isTablet() && getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE ? 18 : 20));
-        telegramLogoView.setText(TypefaceHelper.getTitleText(currentAccount));
+        // MeeroX: the stories row carries its own header, and it falls back to
+        // the app name whenever there is no story count to show. That is why
+        // the title flipped to "Nagram X" the moment stories appeared - the
+        // fix applied to DialogsActivity never reached this view. iOS keeps
+        // the screen titled "Chats" throughout, so the same string is used
+        // here when the iOS header style is on.
+        telegramLogoView.setText(meeroIosHeader()
+                ? getString(R.string.MainTabsChats)
+                : TypefaceHelper.getTitleText(currentAccount));
         telegramLogoView.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_YES);
         telegramLogoView.setFocusableInTouchMode(true);
         addView(telegramLogoView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
@@ -958,6 +980,13 @@ public class DialogStoriesCell extends FrameLayout implements NotificationCenter
             titleView.getDrawable().setRightPadding(lastViewRight - dp(12) + actionBar.menu.getVisibleItemsMeasuredWidthWithAlpha() * progress);
 
             offset = (telegramLogoView.getMeasuredHeight() - telegramLogoView.getTextHeight()) / 2f;
+            // The logo is laid out MATCH_PARENT, so unlike titleView above it
+            // never reserved room for the action bar's buttons and ran
+            // underneath the third one. Give it the same right padding the
+            // title already uses.
+            telegramLogoView.getDrawable().setRightPadding(
+                    titleView.getTranslationX() - dp(12)
+                            + actionBar.menu.getVisibleItemsMeasuredWidthWithAlpha() * progress);
             telegramLogoView.setTranslationX(titleView.getTranslationX() + dp(1));
             telegramLogoView.setTranslationY(bottomY + dp(14) - offset + AndroidUtilities.dp(FAKE_TOP_PADDING) + translationOffset /*titleView.getTranslationY() + dpf2(37.33f)*/);
 
