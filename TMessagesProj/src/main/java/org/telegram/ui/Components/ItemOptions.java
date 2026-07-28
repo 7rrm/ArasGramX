@@ -1526,12 +1526,29 @@ public class ItemOptions {
         }
 
         actionBarPopupWindow.setScaleOut(scaleOut);
+        // MeeroX: grow the menu out of the item it belongs to, the way iOS
+        // does, rather than always from its own top-right corner. The anchor
+        // is the scrim view's centre expressed in the popup's coordinates -
+        // the scrim is the row or bubble that was long-pressed, so this is the
+        // closest thing to the touch point that is known here.
+        final float meeroFinalX = X + this.translateX;
+        final float meeroFinalY = Y + this.translateY;
+        if (scrimView != null) {
+            final int[] meeroLoc = new int[2];
+            scrimView.getLocationInWindow(meeroLoc);
+            ActionBarPopupWindow.setMeeroPivot(
+                    meeroLoc[0] + scrimView.getWidth() / 2f - meeroFinalX,
+                    meeroLoc[1] + scrimView.getHeight() / 2f - meeroFinalY);
+        } else {
+            ActionBarPopupWindow.clearMeeroPivot();
+        }
         actionBarPopupWindow.showAtLocation(
             container,
             0,
-            (int) (offsetX = (X + this.translateX)),
-            (int) (offsetY = (Y + this.translateY))
+            (int) (offsetX = meeroFinalX),
+            (int) (offsetY = meeroFinalY)
         );
+        ActionBarPopupWindow.clearMeeroPivot();
 
         installHoverReleaseListener();
 
