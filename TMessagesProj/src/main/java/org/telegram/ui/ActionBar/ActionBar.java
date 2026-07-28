@@ -1516,7 +1516,12 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
                     subtitleTextView.measure(subtitleSpec, MeasureSpec.makeMeasureSpec(dp(20), MeasureSpec.AT_MOST));
                 }
                 if (additionalSubTitleOverlayContainer != null) {
-                    additionalSubTitleOverlayContainer.measure(MeasureSpec.makeMeasureSpec(availableWidth, MeasureSpec.AT_MOST), MeasureSpec.makeMeasureSpec(height, MeasureSpec.AT_MOST));
+                    // Same reserve as the title, so a long status string is
+                    // ellipsised inside the gap between the buttons rather
+                    // than measuring wide enough to slide under them.
+                    additionalSubTitleOverlayContainer.measure(
+                            MeasureSpec.makeMeasureSpec(availableWidth, isCentered() ? MeasureSpec.EXACTLY : MeasureSpec.AT_MOST),
+                            MeasureSpec.makeMeasureSpec(height, MeasureSpec.AT_MOST));
                 }
                 if (additionalSubtitleTextView != null && additionalSubtitleTextView.getVisibility() != GONE) {
                     additionalSubtitleTextView.measure(MeasureSpec.makeMeasureSpec(availableWidth, MeasureSpec.AT_MOST), MeasureSpec.makeMeasureSpec(dp(20), MeasureSpec.AT_MOST));
@@ -1592,7 +1597,19 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
         }
         if (additionalSubTitleOverlayContainer != null) {
             int textTop = getCurrentActionBarHeight() / 2 + (getCurrentActionBarHeight() / 2 - additionalSubTitleOverlayContainer.getMeasuredHeight()) / 2 - dp(2);
-            additionalSubTitleOverlayContainer.layout(textLeft, additionalTop + textTop, textLeft + additionalSubTitleOverlayContainer.getMeasuredWidth(), additionalTop + textTop + additionalSubTitleOverlayContainer.getMeasuredHeight());
+            // MeeroX: this container carries the connection status - "Proxy
+            // server setup" and friends - and was the one line in the header
+            // still pinned to textLeft. The title and the plain subtitle both
+            // honour isCentered(), so with a centred header the status sat
+            // alone on the left and ran under the third button. Centre it the
+            // same way they are.
+            if (isCentered()) {
+                final int cw = additionalSubTitleOverlayContainer.getMeasuredWidth();
+                final int cl = getMeasuredWidth() / 2 - cw / 2;
+                additionalSubTitleOverlayContainer.layout(cl, additionalTop + textTop, cl + cw, additionalTop + textTop + additionalSubTitleOverlayContainer.getMeasuredHeight());
+            } else {
+                additionalSubTitleOverlayContainer.layout(textLeft, additionalTop + textTop, textLeft + additionalSubTitleOverlayContainer.getMeasuredWidth(), additionalTop + textTop + additionalSubTitleOverlayContainer.getMeasuredHeight());
+            }
         }
         if (subtitleTextView != null && subtitleTextView.getVisibility() != GONE) {
             int textTop = getCurrentActionBarHeight() / 2 + (getCurrentActionBarHeight() / 2 - subtitleTextView.getTextHeight()) / 2 - dp(2);
