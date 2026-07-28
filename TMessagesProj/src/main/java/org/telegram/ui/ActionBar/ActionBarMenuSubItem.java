@@ -101,13 +101,17 @@ public class ActionBarMenuSubItem extends FrameLayout {
         setPadding(dp(meeroPad), 0, dp(meeroPad), 0);
 
         imageView = new RLottieImageView(context);
-        imageView.setScaleType(ImageView.ScaleType.CENTER);
+        // MeeroX: CENTER draws the drawable at its own size and clips whatever
+        // falls outside the view, so pinning the frame to iOS's 16dp simply
+        // cut 24dp glyphs off at the edges. FIT_CENTER scales them down to fit
+        // instead, which is what "a 16pt icon" has to mean here.
+        imageView.setScaleType(meeroIosRows() ? ImageView.ScaleType.FIT_CENTER : ImageView.ScaleType.CENTER);
         imageView.setColorFilter(new PorterDuffColorFilter(iconColor, PorterDuff.Mode.MULTIPLY));
         // ContextActionsContainerNode draws its glyphs at a fixed 16x16;
         // Android lets the drawable size itself, which on the solar icon set
         // comes out around 24 and leaves the row looking heavier than iOS's.
         addView(imageView, meeroIosRows()
-                ? LayoutHelper.createFrame(16, 40, Gravity.CENTER_VERTICAL | (LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT))
+                ? LayoutHelper.createFrame(20, 40, Gravity.CENTER_VERTICAL | (LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT))
                 : LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, 40, Gravity.CENTER_VERTICAL | (LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT)));
 
         textView = new AnimatedEmojiSpan.TextViewEmojis(context);
