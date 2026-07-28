@@ -31,6 +31,21 @@ import org.telegram.ui.Components.RLottieImageView;
 
 public class ActionBarMenuSubItem extends FrameLayout {
 
+    /**
+     * MeeroX: whether context rows follow iOS's metrics.
+     *
+     * Shares the menu switch, since the row and the panel around it have to
+     * agree - a 14dp iOS panel wrapped around 16sp Material rows looks worse
+     * than either done consistently.
+     */
+    private static boolean meeroIosRows() {
+        try {
+            return tw.nekomimi.nekogram.NekoConfig.meeroIosMenuAnim.Bool();
+        } catch (Throwable ignore) {
+            return false;
+        }
+    }
+
     public AnimatedEmojiSpan.TextViewEmojis textView;
     public TextView subtextView;
     public RLottieImageView imageView;
@@ -81,12 +96,19 @@ public class ActionBarMenuSubItem extends FrameLayout {
         selectorColor = getThemedColor(Theme.key_dialogButtonSelector);
 
         updateBackground();
-        setPadding(dp(18), 0, dp(18), 0);
+        // MeeroX: iOS context rows sit on a 16pt side inset, not 18.
+        final int meeroPad = meeroIosRows() ? 16 : 18;
+        setPadding(dp(meeroPad), 0, dp(meeroPad), 0);
 
         imageView = new RLottieImageView(context);
         imageView.setScaleType(ImageView.ScaleType.CENTER);
         imageView.setColorFilter(new PorterDuffColorFilter(iconColor, PorterDuff.Mode.MULTIPLY));
-        addView(imageView, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, 40, Gravity.CENTER_VERTICAL | (LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT)));
+        // ContextActionsContainerNode draws its glyphs at a fixed 16x16;
+        // Android lets the drawable size itself, which on the solar icon set
+        // comes out around 24 and leaves the row looking heavier than iOS's.
+        addView(imageView, meeroIosRows()
+                ? LayoutHelper.createFrame(16, 40, Gravity.CENTER_VERTICAL | (LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT))
+                : LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, 40, Gravity.CENTER_VERTICAL | (LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT)));
 
         textView = new AnimatedEmojiSpan.TextViewEmojis(context);
         textView.setLines(1);
@@ -94,7 +116,10 @@ public class ActionBarMenuSubItem extends FrameLayout {
         textView.setGravity(Gravity.LEFT);
         textView.setEllipsize(TextUtils.TruncateAt.END);
         textView.setTextColor(textColor);
-        textView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 16);
+        // iOS derives the row's text size from the body size as 13/17, which
+        // on the default 17pt body gives 13. Android's flat 16 makes the menu
+        // read noticeably chunkier than the one it is imitating.
+        textView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, meeroIosRows() ? 15 : 16);
         addView(textView, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, (LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT) | Gravity.CENTER_VERTICAL));
 
         checkViewLeft = LocaleController.isRTL;
