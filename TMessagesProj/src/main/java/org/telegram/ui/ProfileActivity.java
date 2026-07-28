@@ -8892,7 +8892,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                         avatarsViewPager.setVisibility(View.VISIBLE);
 
                         try {
-                            if (!NekoConfig.disableVibration.Bool()) avatarContainer.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS, HapticFeedbackConstants.FLAG_IGNORE_VIEW_SETTING);
+                            tw.nekomimi.nekogram.MeeroHaptics.perform(avatarContainer, tw.nekomimi.nekogram.MeeroHaptics.LONG_PRESS);
                         } catch (Exception ignore) {
                         }
                     }
@@ -8978,7 +8978,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                         expandAnimator.start();
                         ignoreScrollOnFullExpand = false;
                         try {
-                            if (!NekoConfig.disableVibration.Bool()) avatarContainer.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP, HapticFeedbackConstants.FLAG_IGNORE_VIEW_SETTING);
+                            tw.nekomimi.nekogram.MeeroHaptics.perform(avatarContainer, tw.nekomimi.nekogram.MeeroHaptics.MEDIUM);
                         } catch (Exception ignore) {
                         }
                     }
