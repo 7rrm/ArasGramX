@@ -659,10 +659,27 @@ public class Switch extends View {
      * reading as a straight slide.
      */
     private void drawIosSwitch(Canvas canvas) {
-        final float trackW = dpf2(IOS_TRACK_W);
-        final float trackH = dpf2(IOS_TRACK_H);
-        final float margin = dpf2(IOS_MARGIN);
-        final float thumbD = dpf2(IOS_THUMB);
+        // Every host sizes this view for the Material switch it replaces -
+        // 37x40dp in NotificationsCheckCell, 38x22dp in TextCell - and a few
+        // are narrower than UISwitch's 51pt. Drawing the full width there just
+        // ran the track off the edge, so the geometry is scaled down to fit
+        // whatever room the host actually gave, keeping iOS's proportions.
+        float trackW = dpf2(IOS_TRACK_W);
+        float trackH = dpf2(IOS_TRACK_H);
+        float margin = dpf2(IOS_MARGIN);
+        float thumbD = dpf2(IOS_THUMB);
+
+        final float availW = getMeasuredWidth();
+        final float availH = getMeasuredHeight();
+        if (availW > 0 && availH > 0) {
+            final float scale = Math.min(1f, Math.min(availW / trackW, availH / trackH));
+            if (scale < 1f) {
+                trackW *= scale;
+                trackH *= scale;
+                margin *= scale;
+                thumbD *= scale;
+            }
+        }
 
         final float left = (getMeasuredWidth() - trackW) / 2f;
         final float top = (getMeasuredHeight() - trackH) / 2f;
@@ -679,7 +696,8 @@ public class Switch extends View {
         canvas.drawRoundRect(rectF, radius, radius, paint);
 
         // Widen the thumb mid-travel, easing back to a circle at either end.
-        final float stretch = dpf2(4) * (float) Math.sin(Math.PI * Math.max(0, Math.min(1, progress)));
+        // Tied to the thumb's own size so it scales with the track above.
+        final float stretch = thumbD * 0.148f * (float) Math.sin(Math.PI * Math.max(0, Math.min(1, progress)));
         final float thumbW = thumbD + stretch;
         final float travel = trackW - thumbD - margin * 2f;
         final float thumbLeft = left + margin + travel * progress - stretch * progress;
