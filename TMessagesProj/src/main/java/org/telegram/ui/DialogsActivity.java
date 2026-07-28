@@ -2342,7 +2342,8 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                                 if (!canShowHiddenArchive) {
                                     canShowHiddenArchive = true;
                                     try {
-                                        if (!NekoConfig.disableVibration.Bool()) performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
+                                        // Revealing the hidden archive is a threshold being crossed.
+                                        tw.nekomimi.nekogram.MeeroHaptics.perform(this, tw.nekomimi.nekogram.MeeroHaptics.LIGHT);
                                     } catch (Exception ignored) {}
                                     if (parentPage.pullForegroundDrawable != null) {
                                         parentPage.pullForegroundDrawable.colorize(true);
@@ -3828,7 +3829,8 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                 protected void onDefaultTabMoved() {
                     if (!getMessagesController().premiumFeaturesBlocked()) {
                         try {
-                            if (!NekoConfig.disableVibration.Bool()) performHapticFeedback(HapticFeedbackConstants.KEYBOARD_PRESS, HapticFeedbackConstants.FLAG_IGNORE_VIEW_SETTING);
+                            // A folder tab settling into a new slot.
+                            tw.nekomimi.nekogram.MeeroHaptics.perform(this, tw.nekomimi.nekogram.MeeroHaptics.LIGHT);
                         } catch (Exception ignore) {}
                         topBulletin = BulletinFactory.of(DialogsActivity.this).createSimpleBulletin(R.raw.filter_reorder, AndroidUtilities.replaceTags(LocaleController.formatString(R.string.LimitReachedReorderFolder, LocaleController.getString(R.string.FilterAllChats))), LocaleController.getString(R.string.PremiumMore), Bulletin.DURATION_PROLONG, () -> {
                             showDialog(new PremiumFeatureBottomSheet(DialogsActivity.this, PremiumPreviewFragment.PREMIUM_FEATURE_ADVANCED_CHAT_MANAGEMENT, true));
@@ -4610,7 +4612,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                                 canShowHiddenArchive = canShowInternal;
                                 if (viewPage.archivePullViewState == ARCHIVE_ITEM_STATE_HIDDEN) {
                                     try {
-                                        if (!NekoConfig.disableVibration.Bool()) viewPage.listView.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
+                                        tw.nekomimi.nekogram.MeeroHaptics.perform(viewPage.listView, tw.nekomimi.nekogram.MeeroHaptics.MEDIUM);
                                     } catch (Exception ignored) {}
                                     if (viewPage.pullForegroundDrawable != null) {
                                         viewPage.pullForegroundDrawable.colorize(canShowInternal);
@@ -5505,7 +5507,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                     return;
                 }
                 try {
-                    if (!NekoConfig.disableVibration.Bool()) view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
+                    tw.nekomimi.nekogram.MeeroHaptics.perform(view, tw.nekomimi.nekogram.MeeroHaptics.LONG_PRESS);
                 } catch (Exception ignored) {}
                 if (dialogId == UserConfig.getInstance(currentAccount).getClientUserId()) {
                     if (!storiesEnabled) {
@@ -8790,7 +8792,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
 
     private void onArchiveLongPress(View view) {
         try {
-            if (!NekoConfig.disableVibration.Bool()) view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
+            tw.nekomimi.nekogram.MeeroHaptics.perform(view, tw.nekomimi.nekogram.MeeroHaptics.LONG_PRESS);
         } catch (Exception ignored) {}
         BottomSheet.Builder builder = new BottomSheet.Builder(getParentActivity());
         final boolean hasUnread = getMessagesStorage().getArchiveUnreadCount() != 0;
@@ -9363,7 +9365,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
             }
             if (isOpen && afterSignup) {
                 try {
-                    if (!NekoConfig.disableVibration.Bool()) fragmentView.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
+                    tw.nekomimi.nekogram.MeeroHaptics.perform(fragmentView, tw.nekomimi.nekogram.MeeroHaptics.MEDIUM);
                 } catch (Exception ignored) {}
                 if (getParentActivity() instanceof LaunchActivity) {
                     ((LaunchActivity) getParentActivity()).getFireworksOverlay().start();
@@ -14165,7 +14167,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
 
                 Bulletin.make(DialogsActivity.this, layout, duration).show();
                 try {
-                    if (!NekoConfig.disableVibration.Bool()) fragmentView.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
+                    tw.nekomimi.nekogram.MeeroHaptics.perform(fragmentView, tw.nekomimi.nekogram.MeeroHaptics.MEDIUM);
                 } catch (Exception ignored) {}
 
             }, () -> getMessagesController().removeSuggestion(0, "SETUP_LOGIN_EMAIL"),
