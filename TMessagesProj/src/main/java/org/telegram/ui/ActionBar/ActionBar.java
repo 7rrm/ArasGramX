@@ -1504,7 +1504,16 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
                     }
                 }
                 if (subtitleTextView != null && subtitleTextView.getVisibility() != GONE) {
-                    subtitleTextView.measure(MeasureSpec.makeMeasureSpec(availableWidth, MeasureSpec.AT_MOST), MeasureSpec.makeMeasureSpec(dp(20), MeasureSpec.AT_MOST));
+                    // MeeroX: a centred subtitle is laid out around the bar's
+                    // midpoint using its measured width, so AT_MOST lets a long
+                    // string - "Proxy server setup" and the like - measure wider
+                    // than the gap between the buttons and slide underneath
+                    // them. Pinning the width to the same reserve the title
+                    // uses keeps it inside that gap and ellipsised instead.
+                    final int subtitleSpec = isCentered()
+                            ? MeasureSpec.makeMeasureSpec(availableWidth, MeasureSpec.EXACTLY)
+                            : MeasureSpec.makeMeasureSpec(availableWidth, MeasureSpec.AT_MOST);
+                    subtitleTextView.measure(subtitleSpec, MeasureSpec.makeMeasureSpec(dp(20), MeasureSpec.AT_MOST));
                 }
                 if (additionalSubTitleOverlayContainer != null) {
                     additionalSubTitleOverlayContainer.measure(MeasureSpec.makeMeasureSpec(availableWidth, MeasureSpec.AT_MOST), MeasureSpec.makeMeasureSpec(height, MeasureSpec.AT_MOST));
