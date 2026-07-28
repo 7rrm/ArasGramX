@@ -5614,6 +5614,20 @@ public class Theme {
     public static InsetDrawable createRoundRectDrawableShadowed(int rad, int defaultColor) {
         ShapeDrawable defaultDrawable = new ShapeDrawable(new RoundRectShape(new float[]{rad, rad, rad, rad, rad, rad, rad, rad}, null, null));
         defaultDrawable.getPaint().setColor(defaultColor);
+        // MeeroX: iOS separates a floating surface from the page with a wide,
+        // faint shadow. The stock 2dp blur at 0x11 is tight and dark enough
+        // that it reads as a border instead, so with the iOS shadows on the
+        // paint is handed to MeeroShadow, which uses the same figures as the
+        // settings cards. The inset grows to match, otherwise the wider blur
+        // would be clipped by the drawable's own bounds.
+        if (tw.nekomimi.nekogram.MeeroShadow.enabled()) {
+            tw.nekomimi.nekogram.MeeroShadow.apply(defaultDrawable.getPaint(),
+                    tw.nekomimi.nekogram.MeeroShadow.TIER_MENU,
+                    tw.nekomimi.nekogram.MeeroShadow.isDark(defaultColor));
+            final int inset = tw.nekomimi.nekogram.MeeroShadow.inset(
+                    tw.nekomimi.nekogram.MeeroShadow.TIER_MENU);
+            return new InsetDrawable(defaultDrawable, inset, inset, inset, inset);
+        }
         defaultDrawable.getPaint().setShadowLayer(dpf2(2), 0, dpf2(0.33f), multAlpha(0x11000000, Color.alpha(defaultColor) / 255.0f));
         return new InsetDrawable(defaultDrawable, dp(3), dp(3), dp(3), dp(3));
     }
