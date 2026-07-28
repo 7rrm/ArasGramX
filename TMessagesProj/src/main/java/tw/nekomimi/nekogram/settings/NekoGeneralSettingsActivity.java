@@ -188,10 +188,14 @@ public class NekoGeneralSettingsActivity extends BaseNekoXSettingsActivity {
             getString(R.string.Default),
             getString(R.string.IconReplacementSolar),
     }, null));
+    // MeeroX: iOS is appended as a fourth switch style. The stored value is
+    // the option's index, so it has to stay last - inserting it anywhere else
+    // would silently reinterpret an existing preference as a different style.
     private final AbstractConfigCell switchStyleRow = cellGroup.appendCell(new ConfigCellSelectBox("SwitchStyle", NaConfig.INSTANCE.getSwitchStyle(), new String[]{
             getString(R.string.Default),
             getString(R.string.StyleModern),
-            getString(R.string.StyleMaterialDesign3)
+            getString(R.string.StyleMaterialDesign3),
+            getString(R.string.StyleIos)
     }, null));
     private final AbstractConfigCell sliderStyleRow = cellGroup.appendCell(new ConfigCellSelectBox("SliderStyle", NaConfig.INSTANCE.getSliderStyle(), new String[]{
             getString(R.string.Default),
