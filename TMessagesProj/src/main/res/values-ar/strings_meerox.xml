@@ -736,6 +736,7 @@
     <string name="MeeroIosHapticsInfo">اهتزاز مختلف للتنقّل والتأكيد والخطأ بدل اهتزاز واحد لكل شي. الشدّات الكاملة تحتاج أندرويد 11 أو أحدث.</string>
     <string name="meeroIosMenuAnim">القوائم تكبر من العنصر</string>
     <string name="MeeroIosMenuAnimInfo">قائمة السياق تتوسّع من الرسالة أو الصف الي تخصّه، بدل ما تنفتح دائماً من زاويتها.</string>
+    <string name="StyleIos">آي أو إس</string>
     <string name="MeeroSectionCategories">الأقسام</string>
     <string name="MeeroSectionData">البيانات</string>
     <string name="MeeroSectionInfo">حول</string>
