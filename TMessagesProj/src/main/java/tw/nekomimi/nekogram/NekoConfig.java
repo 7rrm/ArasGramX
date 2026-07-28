@@ -98,6 +98,7 @@ public class NekoConfig {
     public static ConfigItem meeroIosIntro = addConfig("meeroIosIntro", configTypeBool, true);
     public static ConfigItem meeroIosSearch = addConfig("meeroIosSearch", configTypeBool, true);
     public static ConfigItem meeroIosFastScroll = addConfig("meeroIosFastScroll", configTypeBool, true);
+    public static ConfigItem meeroIosShadows = addConfig("meeroIosShadows", configTypeBool, true);
 
     // From NekoConfig
     public static ConfigItem useIPv6 = addConfig("IPv6", configTypeBool, false);
