@@ -1740,6 +1740,52 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
         }
     }
 
+    /**
+     * MeeroX: puts the connecting ring on a title view, or takes it off.
+     *
+     * The gap is set to 8dp rather than the title's usual 4dp: the ellipsis
+     * animating at the end of the text is itself three round dots, and at 4dp
+     * the ring reads as a fourth one in the same run instead of as a separate
+     * indicator.
+     *
+     * setLeftDrawable is a no-op when the drawable is already the one set, so
+     * calling this on every state change is cheap and does not restart the
+     * animation.
+     */
+    private void meeroApplyConnectingSpinner(SimpleTextView view) {
+        if (view == null) {
+            return;
+        }
+        if (!meeroConnectingSpinnerEnabled()) {
+            return;
+        }
+        if (meeroConnectingDrawable == null) {
+            meeroConnectingDrawable = new tw.nekomimi.nekogram.MeeroConnectingDrawable();
+        }
+        meeroConnectingDrawable.setColor(view.getTextColor());
+        view.setDrawablePadding(dp(8));
+        view.setLeftDrawableOutside(true);
+        view.setLeftDrawable(meeroConnectingDrawable);
+    }
+
+    /**
+     * MeeroX: removes the ring when the title stops being a connection state.
+     *
+     * Without this the ring would stay behind on a normal title - the overlay
+     * is cleared by passing a null title, which restores the text but leaves
+     * whatever was in the left slot.
+     */
+    private void meeroClearConnectingSpinner(SimpleTextView view) {
+        if (view == null || meeroConnectingDrawable == null) {
+            return;
+        }
+        if (view.getLeftDrawable() == meeroConnectingDrawable) {
+            view.setLeftDrawable((Drawable) null);
+            view.setLeftDrawableOutside(false);
+            view.setDrawablePadding(dp(4));
+        }
+    }
+
     public void setTitleOverlayText(String title, int titleId, Runnable action) {
         if (!allowOverlayTitle || parentFragment.parentLayout == null) {
             return;
@@ -1781,24 +1827,30 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
             // Android animates the three dots and leaves it at that, which
             // reads as a sentence rather than as work in progress.
             //
-            // The drawable goes in the title's right slot, which is free here
-            // - the line above sets it to null for every overlay title, since
-            // the emoji status it normally holds belongs to a chat title, not
-            // to "Connecting...". It is created once and reused: a new
-            // instance per state change would restart the sweep from zero and
-            // make the ring stutter as the connection flips between states.
-            if (meeroConnectingSpinnerEnabled()) {
-                if (meeroConnectingDrawable == null) {
-                    meeroConnectingDrawable = new tw.nekomimi.nekogram.MeeroConnectingDrawable();
-                    meeroConnectingDrawable.setBounds(0, 0,
-                            meeroConnectingDrawable.getIntrinsicWidth(),
-                            meeroConnectingDrawable.getIntrinsicHeight());
-                }
-                meeroConnectingDrawable.setColor(titleTextView[0] != null
-                        ? titleTextView[0].getTextColor()
-                        : getThemedColor(Theme.key_actionBarDefaultTitle));
-                rightDrawableToSet = meeroConnectingDrawable;
-            }
+            // The ring goes in the LEFT slot, not the right one. The first
+            // attempt used setRightDrawable and the ring never appeared: all
+            // three of SimpleTextView's right-hand draw paths position it at
+            // textOffsetX + textWidth + drawablePadding, which for a title as
+            // long as "Waiting for network..." lands past the measured width,
+            // and onMeasure only reserves room for a right drawable when
+            // rightDrawableOutside is set - which it was not, so the glyph was
+            // clipped away entirely.
+            //
+            // leftDrawableOutside has neither problem: onMeasure subtracts its
+            // width on the same line, onDraw places it at x = 0 after the
+            // canvas is restored, and textOffsetX is shifted to make room. It
+            // also puts the ring exactly where it is wanted - the title draws
+            // from the physical left, so the ellipsis animating at the end of
+            // the Arabic text sits at that edge too, and the ring lands right
+            // next to it.
+            //
+            // Created once and reused: a new instance per state change would
+            // restart the sweep and make the ring stutter as the connection
+            // flips between Connecting, Waiting and Updating.
+            //
+            // Applied further down, once the title view exists and has had its
+            // own setDrawablePadding call - doing it here would be undone by
+            // that call, and titleTextView[0] may still be null at this point.
         }
         titleOverlayShown = title != null;
         if ((textToSet != null && titleTextView[0] == null) || getMeasuredWidth() == 0 || (titleTextView[0] != null && titleTextView[0].getVisibility() != View.VISIBLE)) {
@@ -1811,6 +1863,13 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
             titleTextView[0].setDrawablePadding(dp(4));
             titleTextView[0].setRightDrawable(rightDrawableToSet);
             titleTextView[0].setRightDrawableOnClick(rightDrawableOnClickListener);
+            // MeeroX: after setDrawablePadding above, which would otherwise
+            // overwrite the wider gap the ring needs.
+            if (title != null) {
+                meeroApplyConnectingSpinner(titleTextView[0]);
+            } else {
+                meeroClearConnectingSpinner(titleTextView[0]);
+            }
             if (rightDrawableToSet instanceof AnimatedEmojiDrawable.SwapAnimatedEmojiDrawable) {
                 ((AnimatedEmojiDrawable.SwapAnimatedEmojiDrawable) rightDrawableToSet).setParentView(titleTextView[0]);
             }
@@ -1831,6 +1890,15 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
             titleTextView[1].setDrawablePadding(dp(4));
             titleTextView[1].setRightDrawable(rightDrawableToSet);
             titleTextView[1].setRightDrawableOnClick(rightDrawableOnClickListener);
+            // MeeroX: this is the crossfade path - the incoming title is
+            // built in slot 1 and the two are swapped once it finishes, so
+            // the ring has to be put on whichever view is arriving, and
+            // taken off it when the arriving title is an ordinary one.
+            if (title != null) {
+                meeroApplyConnectingSpinner(titleTextView[1]);
+            } else {
+                meeroClearConnectingSpinner(titleTextView[1]);
+            }
             if (rightDrawableToSet instanceof AnimatedEmojiDrawable.SwapAnimatedEmojiDrawable) {
                 ((AnimatedEmojiDrawable.SwapAnimatedEmojiDrawable) rightDrawableToSet).setParentView(titleTextView[1]);
             }
