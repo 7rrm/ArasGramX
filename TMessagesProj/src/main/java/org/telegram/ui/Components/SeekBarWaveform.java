@@ -35,6 +35,49 @@ import java.util.ArrayList;
 
 public class SeekBarWaveform {
 
+    /**
+     * MeeroX: how much horizontal room one waveform bar occupies.
+     *
+     * Telegram for Android packs a bar every 3dp. iOS lays them out on a 4pt
+     * pitch - AudioWaveformComponent uses sampleWidth 2.0 with distance 2.0 -
+     * so its waveform reads as a row of distinct strokes where Android's reads
+     * as a dense block.
+     *
+     * Every place that converts between a pixel position and a bar index has
+     * to agree on this number, so it is resolved here rather than repeated:
+     * the bar count, the hit-testing and the drawing all derive from it, and a
+     * mismatch between any two of them would misalign the played-progress
+     * split against the bars actually on screen.
+     */
+    public static float meeroBarPitch() {
+        try {
+            if (tw.nekomimi.nekogram.NekoConfig.meeroIosWaveform.Bool()) {
+                return AndroidUtilities.dpf2(4);
+            }
+        } catch (Throwable ignore) {
+        }
+        return AndroidUtilities.dpf2(3);
+    }
+
+    /** Bar thickness; iOS draws 2pt against Android's 2dp-with-1dp-inset. */
+    public static float meeroBarWidth() {
+        try {
+            if (tw.nekomimi.nekogram.NekoConfig.meeroIosWaveform.Bool()) {
+                return AndroidUtilities.dpf2(2);
+            }
+        } catch (Throwable ignore) {
+        }
+        return AndroidUtilities.dpf2(2);
+    }
+
+    public static boolean meeroIosWaveform() {
+        try {
+            return tw.nekomimi.nekogram.NekoConfig.meeroIosWaveform.Bool();
+        } catch (Throwable ignore) {
+            return false;
+        }
+    }
+
     private static Paint paintInner;
     private static Paint paintOuter;
     private int thumbX = 0;
@@ -98,7 +141,7 @@ public class SeekBarWaveform {
 
     public void setWaveform(byte[] waveform) {
         waveformBytes = waveform;
-        heights = calculateHeights((int) (width / AndroidUtilities.dpf2(3)));
+        heights = calculateHeights((int) (width / meeroBarPitch()));
         if (!delegate.isSeekBarDragAllowed()) {
             this.progress = 1f;
         }
@@ -222,14 +265,14 @@ public class SeekBarWaveform {
         int wasWidth = width;
         width = w;
         height = h;
-        if (heights == null || heights.length != (int) (width / AndroidUtilities.dpf2(3))) {
-            heights = calculateHeights((int) (width / AndroidUtilities.dpf2(3)));
+        if (heights == null || heights.length != (int) (width / meeroBarPitch())) {
+            heights = calculateHeights((int) (width / meeroBarPitch()));
         }
         if (fromW != toW && (fromWidth != fromW || toWidth != toW)) {
             fromWidth = fromW;
             toWidth = toW;
-            fromHeights = calculateHeights((int) (fromWidth / AndroidUtilities.dpf2(3)));
-            toHeights = calculateHeights((int) (toWidth / AndroidUtilities.dpf2(3)));
+            fromHeights = calculateHeights((int) (fromWidth / meeroBarPitch()));
+            toHeights = calculateHeights((int) (toWidth / meeroBarPitch()));
         } else if (fromW == toW) {
             fromHeights = toHeights = null;
         }
@@ -315,7 +358,7 @@ public class SeekBarWaveform {
         if (waveformBytes == null || width == 0 || alpha <= 0) {
             return;
         }
-        float totalBarsCount = width / AndroidUtilities.dpf2(3);
+        float totalBarsCount = width / meeroBarPitch();
         if (totalBarsCount <= 0.1f) {
             return;
         }
@@ -356,12 +399,12 @@ public class SeekBarWaveform {
             for (int barNum = 0; barNum < maxlen; ++barNum) {
                 int l = MathUtils.clamp((int) Math.floor(barNum / (float) maxlen * minlen), 0, minlen - 1);
                 if (k < l) {
-                    float x = AndroidUtilities.lerp((float) l, (float) barNum, T) * AndroidUtilities.dpf2(3);
+                    float x = AndroidUtilities.lerp((float) l, (float) barNum, T) * meeroBarPitch();
                     float h = AndroidUtilities.dpf2(AndroidUtilities.lerp(minarr[reverse ? minarr.length - 1 - l : l], maxarr[reverse ? maxarr.length - 1 - barNum : barNum], T));
                     addBar(path, x, h);
                     k = l;
                 } else {
-                    float x = AndroidUtilities.lerp((float) l, (float) barNum, T) * AndroidUtilities.dpf2(3);
+                    float x = AndroidUtilities.lerp((float) l, (float) barNum, T) * meeroBarPitch();
                     float h = AndroidUtilities.dpf2(AndroidUtilities.lerp(minarr[reverse ? minarr.length - 1 - l : l], maxarr[reverse ? maxarr.length - 1 - barNum : barNum], T));
                     addBar(alphaPath, x, h);
                     alpha = T;
@@ -372,7 +415,7 @@ public class SeekBarWaveform {
                 if (barNum >= heights.length) {
                     break;
                 }
-                float x = barNum * AndroidUtilities.dpf2(3);
+                float x = barNum * meeroBarPitch();
                 float bart = MathUtils.clamp(appearProgress * totalBarsCount - barNum, 0, 1);
                 float h = AndroidUtilities.dpf2(heights[reverse ? heights.length - 1 - barNum : barNum]) * bart;
                 h -= AndroidUtilities.dpf2(1) * (1f - bart);
@@ -382,7 +425,7 @@ public class SeekBarWaveform {
 
         if (exploding || explosionRate > 0) {
             canvas.save();
-            final float w = totalBarsCount * AndroidUtilities.dpf2(3);
+            final float w = totalBarsCount * meeroBarPitch();
             canvas.clipRect(0, 0, w * (1f - explodeProgress * explosionRate), height);
         }
 
@@ -413,7 +456,7 @@ public class SeekBarWaveform {
                     float bart = MathUtils.clamp(appearProgress * totalBarsCount - barNum, 0, 1);
                     float h = AndroidUtilities.dpf2(heights[barNum]) * bart;
                     emitArea = AndroidUtilities.rectTmp;
-                    final float x = (totalBarsCount * (1f - explodeProgress)) * AndroidUtilities.dpf2(3);
+                    final float x = (totalBarsCount * (1f - explodeProgress)) * meeroBarPitch();
                     final float strokeWidth = AndroidUtilities.dpf2(2);
                     final int y = (height - dp(14)) / 2;
                     h *= waveScaling;
@@ -476,16 +519,25 @@ public class SeekBarWaveform {
     }
 
     private void addBar(Path path, float x, float h) {
-        final float strokeWidth = AndroidUtilities.dpf2(2);
+        final float strokeWidth = meeroBarWidth();
         final int y = (height - dp(14)) / 2;
         h *= waveScaling;
+        // Centre the bar in its slot. With the wider iOS pitch the bar no
+        // longer sits at a fixed 1dp offset, or the row would drift left of
+        // the space it is supposed to occupy.
+        final float cx = x + (meeroIosWaveform() ? meeroBarPitch() / 2f : AndroidUtilities.dpf2(1));
         AndroidUtilities.rectTmp.set(
-            x + AndroidUtilities.dpf2(1) - strokeWidth / 2f,
+            cx - strokeWidth / 2f,
             y + dp(7) + (-h - strokeWidth / 2f),
-            x + AndroidUtilities.dpf2(1) + strokeWidth / 2f,
+            cx + strokeWidth / 2f,
             y + dp(7) + (h + strokeWidth / 2f)
         );
-        path.addRoundRect(AndroidUtilities.rectTmp, strokeWidth, strokeWidth, Path.Direction.CW);
+        // iOS caps each bar with a circle at both ends, so a bar shorter than
+        // it is wide collapses to a single dot rather than a stub. Using half
+        // the width as the radius gives exactly that: the corners meet in the
+        // middle and the shape becomes a capsule, or a dot when h is 0.
+        final float r = meeroIosWaveform() ? strokeWidth / 2f : strokeWidth;
+        path.addRoundRect(AndroidUtilities.rectTmp, r, r, Path.Direction.CW);
     }
 
     public void setWaveScaling(float waveScaling) {
