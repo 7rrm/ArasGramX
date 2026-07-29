@@ -63,4 +63,5 @@
     <string name="MeeroGroupMotion">Motion &amp; feedback</string>
     <string name="MeeroGroupSound">Sound &amp; launch</string>
     <string name="MeeroSearchHint">Search</string>
+    <string name="MeeroHeaderEdit">Edit</string>
 </resources>
