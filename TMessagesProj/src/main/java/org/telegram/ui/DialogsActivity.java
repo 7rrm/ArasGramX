@@ -3494,7 +3494,14 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                 return super.dispatchTouchEvent(ev);
             }
         };
-        fragmentSearchField.setPadding(dp(4), dp(4), dp(4), dp(4));
+        // MeeroX: the capsule is drawn inside this padding, so the vertical
+        // inset is what sets its height within the fixed 48dp frame. iOS's bar
+        // measures 41dp against the reference screenshot, which needs 3.5dp
+        // top and bottom rather than 4dp - a small change, but it is the only
+        // way to alter the pill's height without touching SEARCH_FIELD_HEIGHT,
+        // which nine other call sites reserve layout space with.
+        final int meeroFieldPadV = FragmentSearchField.meeroIosSearch() ? dp(3.5f) : dp(4);
+        fragmentSearchField.setPadding(dp(4), meeroFieldPadV, dp(4), meeroFieldPadV);
         fragmentSearchField.setPivotX(0);
         fragmentSearchField.setPivotY(0);
         if (initialDialogsType == DIALOGS_TYPE_DEFAULT) {
@@ -5666,7 +5673,24 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
             contentView.addView(animatedStatusView, LayoutHelper.createFrame(20, 20, Gravity.LEFT | Gravity.TOP));
         }
         if (fragmentSearchField != null) {
-            contentView.addView(fragmentSearchField, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, 48, Gravity.TOP, 7, -2, 7, 0));
+            // MeeroX: iOS insets its search bar further from the screen edge
+            // than this fork does.
+            //
+            // Measured off the reference screenshot, calibrated against the
+            // dialog avatar in the same image (54dp by Telegram's own layout,
+            // 103px there, so 1dp = 1.907px): the capsule starts 29px in and
+            // is 78px tall - 15dp and 41dp.
+            //
+            // The view carries 4dp of padding and the capsule is drawn inside
+            // it, so the margin is 15 - 4 = 11dp. Only the margin is set here:
+            // the frame height stays SEARCH_FIELD_HEIGHT because that constant
+            // is what nine other call sites reserve space with, and a frame
+            // taller than the reserve would leave the list, the tabs and the
+            // stories row each off by the difference. The capsule's own height
+            // comes from the padding inside FragmentSearchField instead, which
+            // nothing else measures against.
+            final int meeroFieldMargin = FragmentSearchField.meeroIosSearch() ? 11 : 7;
+            contentView.addView(fragmentSearchField, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, SEARCH_FIELD_HEIGHT, Gravity.TOP, meeroFieldMargin, -2, meeroFieldMargin, 0));
         }
 
 
