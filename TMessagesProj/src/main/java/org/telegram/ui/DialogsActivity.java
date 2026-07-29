@@ -14734,7 +14734,19 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
 
     private void checkUi_searchFieldHint() {
         final boolean topics = getRightSlidingProgress() > 0.5f;
-        final String hint = getString(topics ? R.string.SearchTopics : R.string.SearchChats);
+        // MeeroX: iOS labels its search bar with the single word "Search" and
+        // lets the screen it sits on say what is being searched. Telegram uses
+        // SearchChats, which reads "Search Chats" - and in Arabic expands to
+        // "بحث في المحادثات", long enough that the centred icon-and-text group
+        // fills most of the pill instead of sitting as a short label in the
+        // middle of it.
+        //
+        // Only the chats hint is replaced. The topics one is shown while a
+        // topic list is open, where "Search" alone would not say which list is
+        // being searched.
+        final String hint = topics
+                ? getString(R.string.SearchTopics)
+                : getString(FragmentSearchField.meeroIosSearch() ? R.string.MeeroSearchHint : R.string.SearchChats);
 
         fragmentSearchField.editText.setContentDescription(hint);
         fragmentSearchField.editText.setHint(hint);
