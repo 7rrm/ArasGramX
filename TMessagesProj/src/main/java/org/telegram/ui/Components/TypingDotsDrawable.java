@@ -121,9 +121,11 @@ public class TypingDotsDrawable extends StatusDrawable {
             paint = currentPaint;
         }
 
-        canvas.drawCircle(x + AndroidUtilities.dp(3), y, scales[0] * AndroidUtilities.density, paint);
-        canvas.drawCircle(x + AndroidUtilities.dp(9), y, scales[1] * AndroidUtilities.density, paint);
-        canvas.drawCircle(x + AndroidUtilities.dp(15), y, scales[2] * AndroidUtilities.density, paint);
+        // MeeroX: iOS sets these dots a touch smaller than Android's
+        // 1.33x-density circles, which sit heavy next to a 14sp name.
+        canvas.drawCircle(x + AndroidUtilities.dp(3), y, tw.nekomimi.nekogram.MeeroStatus.dot(scales[0] * AndroidUtilities.density), paint);
+        canvas.drawCircle(x + AndroidUtilities.dp(9), y, tw.nekomimi.nekogram.MeeroStatus.dot(scales[1] * AndroidUtilities.density), paint);
+        canvas.drawCircle(x + AndroidUtilities.dp(15), y, tw.nekomimi.nekogram.MeeroStatus.dot(scales[2] * AndroidUtilities.density), paint);
         checkUpdate();
     }
 
