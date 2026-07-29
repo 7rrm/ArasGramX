@@ -395,9 +395,34 @@ public class FragmentSearchField extends FrameLayout implements FactorAnimator.T
             }
         }
 
+        // MeeroX: the clip has to be wider than the padding when the group is
+        // centred. Upstream can clip exactly at its paddings because those sit
+        // at a fixed 48dp, far from any glyph. The centred paddings are
+        // derived from measureText, which returns the advance width - the pen
+        // travel - and Arabic glyphs routinely paint outside it: "بحث" ends in
+        // a ث whose bowl and dots swing past where the pen stops, so clipping
+        // exactly at the advance sliced the letter off with a hard vertical
+        // edge.
+        //
+        // The clip is kept only to stop a long typed value spilling under the
+        // icons, and while the field is idle showing a placeholder there is no
+        // value to spill. Widening it by the padding difference keeps the
+        // original guarantee for the icons while giving the glyphs their
+        // overhang back.
+        final int clipLeft;
+        final int clipRight;
+        if (meeroIdleCentered() && getMeasuredWidth() > 0) {
+            clipLeft = Math.min(pLeft, LocaleController.isRTL ? pEnd : pStart);
+            clipRight = editText.getMeasuredWidth()
+                    - Math.min(pRight, LocaleController.isRTL ? pStart : pEnd);
+        } else {
+            clipLeft = pLeft;
+            clipRight = editText.getMeasuredWidth() - pRight;
+        }
+
         AndroidUtilities.rectTmp2.set(
-            pLeft, 0,
-            editText.getMeasuredWidth() - pRight,
+            clipLeft, 0,
+            clipRight,
             editText.getMeasuredHeight()
         );
         editText.setClipBounds(AndroidUtilities.rectTmp2);
