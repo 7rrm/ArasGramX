@@ -87,7 +87,7 @@ public class RecordStatusDrawable extends StatusDrawable {
         // MeeroX: iOS strokes this indicator thinner than Android's flat 2dp,
         // which at this size is heavy enough that the four arcs blur into one
         // wedge instead of reading as separate ripples.
-        final float meeroStroke = meeroIosStatus() ? AndroidUtilities.dpf2(1.5f) : AndroidUtilities.dp(2);
+        final float meeroStroke = tw.nekomimi.nekogram.MeeroStatus.stroke(2f);
         if (paint.getStrokeWidth() != meeroStroke) {
             paint.setStrokeWidth(meeroStroke);
         }
@@ -100,9 +100,10 @@ public class RecordStatusDrawable extends StatusDrawable {
             } else if (a == 3) {
                 paint.setAlpha((int) (alpha * (1.0f - progress)));
             } else if (ios) {
-                // iOS fades each ring further out, so the ripple looks like it
-                // is dissipating rather than four arcs at equal weight.
-                paint.setAlpha((int) (alpha * (1f - 0.22f * a)));
+                // Fade each ring further out, so the ripple dissipates instead
+                // of showing four arcs at equal weight. Shared with the other
+                // status indicators so they age the same way.
+                paint.setAlpha(tw.nekomimi.nekogram.MeeroStatus.fade(alpha, a, 4));
             } else {
                 paint.setAlpha(alpha);
             }
