@@ -511,8 +511,26 @@ public class ProfileActionsView extends View {
         }
     }
 
+    /** MeeroX: rides on the iOS card styling switch. */
+    private static boolean meeroIosButtons() {
+        try {
+            return tw.nekomimi.nekogram.MeeroCards.enabled();
+        } catch (Throwable ignore) {
+            return false;
+        }
+    }
+
     public float getRoundRadius() {
-        return dp(16);
+        // MeeroX: iOS rounds these action buttons less than this fork does.
+        // PeerInfoHeaderActionButtonNode.swift:27 sets
+        //     self.backgroundNode.cornerRadius = 11.0
+        // against the 16dp here, which is round enough that the row of four
+        // reads as pills rather than as the squarish tiles iOS shows.
+        //
+        // This is the single place the radius is decided - the background, the
+        // ripple and the loading shimmer all call it - so the four stay in
+        // agreement without touching any of them.
+        return dp(meeroIosButtons() ? 11 : 16);
     }
 
     private Action hit = null;
