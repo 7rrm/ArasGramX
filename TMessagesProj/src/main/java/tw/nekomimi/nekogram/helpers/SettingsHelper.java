@@ -16,6 +16,7 @@ import java.util.Map;
 
 import tw.nekomimi.nekogram.settings.BaseNekoSettingsActivity;
 import tw.nekomimi.nekogram.settings.BaseNekoXSettingsActivity;
+import tw.nekomimi.nekogram.settings.MeeroSettingsActivity;
 import tw.nekomimi.nekogram.settings.NekoAboutActivity;
 import tw.nekomimi.nekogram.settings.NekoChatSettingsActivity;
 import tw.nekomimi.nekogram.settings.NekoEmojiSettingsActivity;
@@ -65,6 +66,16 @@ public class SettingsHelper {
                 case "g":
                     fragment = nekox_fragment = new NekoGeneralSettingsActivity();
                     break;
+                // MeeroX: the combined screen returns "meerox" from
+                // getSettingsPrefix(), so the links its rows copy on long
+                // press are .../nasettings/meerox?r=<key>. Without a case here
+                // those links would fall through to unknown.run() and do
+                // nothing - the row would offer a link that never opens.
+                case "meerox":
+                case "meero":
+                case "m":
+                    fragment = nekox_fragment = new MeeroSettingsActivity();
+                    break;
                 case "translator":
                 case "translate":
                 case "t":
@@ -111,6 +122,12 @@ public class SettingsHelper {
     public static ArrayList<SettingsSearchResult> onCreateSearchArray(Callback callback) {
         ArrayList<SettingsSearchResult> items = new ArrayList<>();
         ArrayList<BaseNekoXSettingsActivity> fragments = new ArrayList<>();
+        // MeeroX: indexed first so its rows are searchable like every other
+        // screen's. Its rows share their ConfigItem keys with the Chat,
+        // General and Experimental screens, so a search for one of them
+        // returns two results - both correct, and both writing the same
+        // preference; they differ only in which screen they open.
+        fragments.add(new MeeroSettingsActivity());
         fragments.add(new NekoGeneralSettingsActivity());
         fragments.add(new NekoChatSettingsActivity());
         fragments.add(new NekoExperimentalSettingsActivity());
