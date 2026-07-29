@@ -737,6 +737,8 @@
     <string name="meeroIosMenuAnim">القوائم تكبر من العنصر</string>
     <string name="MeeroIosMenuAnimInfo">قائمة السياق تتوسّع من الرسالة أو الصف الي تخصّه، بدل ما تنفتح دائماً من زاويتها.</string>
     <string name="StyleIos">آي أو إس</string>
+    <string name="meeroIosInputPill">حقل الكتابة مدوّر</string>
+    <string name="MeeroIosInputPillInfo">يرسم منطقة كتابة الرسالة ككبسولة ممتلئة مثل آيفون، وأزرار الإيموجي والمرفقات تظل خارجها.</string>
     <string name="MeeroSectionCategories">الأقسام</string>
     <string name="MeeroSectionData">البيانات</string>
     <string name="MeeroSectionInfo">حول</string>
