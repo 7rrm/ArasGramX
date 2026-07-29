@@ -1722,6 +1722,24 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
 
     boolean overlayTitleAnimationInProgress;
 
+    /**
+     * MeeroX: the spinner shown beside a connection-state title.
+     *
+     * Held rather than rebuilt so its rotation survives a state change - the
+     * connection can move between Connecting, Waiting and Updating several
+     * times in a row, and a fresh drawable each time would visibly reset.
+     */
+    private tw.nekomimi.nekogram.MeeroConnectingDrawable meeroConnectingDrawable;
+
+    /** MeeroX: rides on the iOS loading indicator switch. */
+    private static boolean meeroConnectingSpinnerEnabled() {
+        try {
+            return tw.nekomimi.nekogram.MeeroConnectingDrawable.enabled();
+        } catch (Throwable ignore) {
+            return false;
+        }
+    }
+
     public void setTitleOverlayText(String title, int titleId, Runnable action) {
         if (!allowOverlayTitle || parentFragment.parentLayout == null) {
             return;
@@ -1758,6 +1776,28 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
                 ellipsizeSpanAnimator.wrap(spannableString, index);
                 textToSet = spannableString;
                 ellipsize = true;
+            }
+            // MeeroX: iOS puts a turning ring beside the connection state.
+            // Android animates the three dots and leaves it at that, which
+            // reads as a sentence rather than as work in progress.
+            //
+            // The drawable goes in the title's right slot, which is free here
+            // - the line above sets it to null for every overlay title, since
+            // the emoji status it normally holds belongs to a chat title, not
+            // to "Connecting...". It is created once and reused: a new
+            // instance per state change would restart the sweep from zero and
+            // make the ring stutter as the connection flips between states.
+            if (meeroConnectingSpinnerEnabled()) {
+                if (meeroConnectingDrawable == null) {
+                    meeroConnectingDrawable = new tw.nekomimi.nekogram.MeeroConnectingDrawable();
+                    meeroConnectingDrawable.setBounds(0, 0,
+                            meeroConnectingDrawable.getIntrinsicWidth(),
+                            meeroConnectingDrawable.getIntrinsicHeight());
+                }
+                meeroConnectingDrawable.setColor(titleTextView[0] != null
+                        ? titleTextView[0].getTextColor()
+                        : getThemedColor(Theme.key_actionBarDefaultTitle));
+                rightDrawableToSet = meeroConnectingDrawable;
             }
         }
         titleOverlayShown = title != null;
