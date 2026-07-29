@@ -29,7 +29,7 @@ public class SendingFileDrawable extends StatusDrawable {
             currentPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
             currentPaint.setStyle(Paint.Style.STROKE);
             currentPaint.setStrokeCap(Paint.Cap.ROUND);
-            currentPaint.setStrokeWidth(AndroidUtilities.dp(2));
+            currentPaint.setStrokeWidth(tw.nekomimi.nekogram.MeeroStatus.stroke(2f));
         }
     }
 
@@ -78,7 +78,9 @@ public class SendingFileDrawable extends StatusDrawable {
             } else if (a == 2) {
                 paint.setAlpha((int) (255 * (1.0f - progress)));
             } else {
-                paint.setAlpha(255);
+                // MeeroX: fade the middle chevron with its position so the
+                // three read as one moving trail, not three stamps.
+                paint.setAlpha(tw.nekomimi.nekogram.MeeroStatus.fade(255, a, 3));
             }
             float side = AndroidUtilities.dp(5) * a + AndroidUtilities.dp(5) * progress;
             side += getBounds().left;
