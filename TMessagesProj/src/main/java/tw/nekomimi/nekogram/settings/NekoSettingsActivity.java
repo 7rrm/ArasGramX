@@ -78,6 +78,14 @@ public class NekoSettingsActivity extends BaseNekoSettingsActivity {
     private int meeroHeaderData;
     private int meeroHeaderInfo;
 
+    /**
+     * MeeroX: entry for the combined MeeroX screen.
+     *
+     * Sits first in the categories card because it is the fork's own section -
+     * the rows under it are all stock Nekogram ones.
+     */
+    private int meeroRow;
+
     private int generalRow;
     private int translatorRow;
     private int chatRow;
@@ -109,6 +117,7 @@ public class NekoSettingsActivity extends BaseNekoSettingsActivity {
         super.updateRows();
 
         meeroHeaderCategories = meeroHeadersEnabled() ? addRow() : -1;
+        meeroRow = addRow();
         generalRow = addRow();
         translatorRow = addRow();
         chatRow = addRow();
@@ -410,7 +419,9 @@ public class NekoSettingsActivity extends BaseNekoSettingsActivity {
     @SuppressLint("ApplySharedPref")
     @Override
     protected void onItemClick(View view, int position, float x, float y) {
-        if (position == chatRow) {
+        if (position == meeroRow) {
+            presentFragment(new MeeroSettingsActivity());
+        } else if (position == chatRow) {
             presentFragment(new NekoChatSettingsActivity());
         } else if (position == generalRow) {
             presentFragment(new NekoGeneralSettingsActivity());
@@ -485,7 +496,9 @@ public class NekoSettingsActivity extends BaseNekoSettingsActivity {
                 }
                 case TYPE_TEXT: {
                     TextCell textCell = (TextCell) holder.itemView;
-                    if (position == chatRow) {
+                    if (position == meeroRow) {
+                        textCell.setTextAndIcon(getString(R.string.MeeroSettingsTitle), R.drawable.msg_photo_settings_solar, true);
+                    } else if (position == chatRow) {
                         textCell.setTextAndIcon(getString(R.string.Chat), R.drawable.msg_discussion, true);
                     } else if (position == generalRow) {
                         textCell.setTextAndIcon(getString(R.string.General), R.drawable.msg_theme, true);
@@ -522,7 +535,8 @@ public class NekoSettingsActivity extends BaseNekoSettingsActivity {
             }
             if (position == categoriesEndRow || position == nSettingsEndRow) {
                 return TYPE_SHADOW;
-            } else if (position == chatRow || position == generalRow || position == passcodeRow || position == experimentRow || position == translatorRow ||
+            } else if (position == meeroRow ||
+                    position == chatRow || position == generalRow || position == passcodeRow || position == experimentRow || position == translatorRow ||
                     position == fontsRow ||
                     position == importSettingsRow || position == exportSettingsRow || position == resetSettingsRow || position == appRestartRow ||
                     position == aboutRow) {
