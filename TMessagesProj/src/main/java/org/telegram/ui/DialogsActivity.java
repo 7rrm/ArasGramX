@@ -3444,8 +3444,15 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                 // this header look unlike the reference even once the sizes
                 // matched, because the left one was answering a question the
                 // reference answers with a label.
-                meeroEditItem.setText(LocaleController.getString(R.string.Edit));
-                meeroEditItem.setContentDescription(LocaleController.getString(R.string.Edit));
+                // MeeroHeaderEdit, not the stock Edit string. Telegram's Edit
+                // translates to "تعديل" in Arabic, which is the word for
+                // editing a thing - amending a message. What this button opens
+                // is folder reordering, and Arabic iOS labels that "تحرير".
+                // The English text is the same either way; only the Arabic
+                // differs, which is why the stock string looked right until it
+                // was read on an Arabic device.
+                meeroEditItem.setText(LocaleController.getString(R.string.MeeroHeaderEdit));
+                meeroEditItem.setContentDescription(LocaleController.getString(R.string.MeeroHeaderEdit));
                 // ActionBar lays its children out from its own top edge, and
                 // that edge sits behind the status bar. Gravity.TOP therefore
                 // pushed the button up over the clock and battery. Centre it
@@ -10736,18 +10743,26 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
             // capsule uses. Resizing them here is what made this capsule
             // larger than the reference, so leave the items alone and let
             // ActionBarMenu's glass mode apply its -5dp overlap.
+            // ActionBarMenu is a horizontal LinearLayout that never sets a
+            // gravity, so its children default to top-aligned. Pinning the
+            // items to the capsule height was therefore only half the fix:
+            // they became 30dp tall but stayed stuck to the top of the ~56dp
+            // menu, while the glass band behind them is centred - which is
+            // exactly the 21dp offset the icons were floating above it by.
+            // Centring the menu's children puts the two on the same line.
+            menu.setGravity(Gravity.CENTER_VERTICAL);
             for (ActionBarMenuItem it : new ActionBarMenuItem[]{meeroComposeItem, optionsItem}) {
                 it.setBackground(null);
                 // Pin each item to the capsule's height. The comment below
                 // used to say the items were already the right size and must
                 // be left alone - that was true while MEERO_HEADER_BUTTON was
-                // 48, close to the menu's own height. At 30 it no longer is:
-                // the items stayed full-height, so their glyphs were centred
-                // against ~56dp while the glass band behind them was 30dp,
-                // and the icons ended up sitting above the capsule.
+                // 48, close to the menu's own height. At 30 it no longer is.
                 final ViewGroup.LayoutParams ilp = it.getLayoutParams();
                 if (ilp != null) {
                     ilp.height = dp(MEERO_HEADER_BUTTON);
+                    if (ilp instanceof LinearLayout.LayoutParams) {
+                        ((LinearLayout.LayoutParams) ilp).gravity = Gravity.CENTER_VERTICAL;
+                    }
                     it.setLayoutParams(ilp);
                 }
             }
