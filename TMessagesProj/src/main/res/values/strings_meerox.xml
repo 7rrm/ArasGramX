@@ -55,4 +55,11 @@
     <string name="MeeroSectionCategories">Categories</string>
     <string name="MeeroSectionData">Data</string>
     <string name="MeeroSectionInfo">About</string>
+    <string name="MeeroSettingsTitle">MeeroX</string>
+    <string name="MeeroSettingsInfo">Every MeeroX switch in one place, grouped by what it changes.</string>
+    <string name="MeeroGroupAppearance">Appearance</string>
+    <string name="MeeroGroupChat">Chat</string>
+    <string name="MeeroGroupNavigation">Navigation</string>
+    <string name="MeeroGroupMotion">Motion &amp; feedback</string>
+    <string name="MeeroGroupSound">Sound &amp; launch</string>
 </resources>
