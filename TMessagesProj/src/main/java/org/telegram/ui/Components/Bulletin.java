@@ -837,7 +837,8 @@ public class Bulletin {
                 // constant: the toast grows with its text, and a fixed radius
                 // that looked like a capsule on one line would be a box on
                 // three. Height is not known yet when this runs, so the
-                // drawable is rebuilt in onMeasure - see meeroUpdateCapsule.
+                // drawable is rebuilt before it is drawn - see
+                // meeroUpdateCapsule.
                 if (meeroIosToast()) {
                     meeroCapsuleColor = color;
                     background = meeroMakeCapsule(color, getMeasuredHeight());
@@ -1329,6 +1330,17 @@ public class Bulletin {
                 return;
             }
 
+            // MeeroX: the capsule's radius is half its height, so it has to be
+            // rebuilt whenever that height changes - a two-line toast is
+            // taller than a one-line one. Done here rather than in onMeasure
+            // because Layout does not override that method, and the two
+            // subclasses that do are the wrong scope: ButtonLayout's onMeasure
+            // cannot see a private member of Layout. This runs immediately
+            // before the bounds are applied, so the drawable is always the
+            // right shape for the height it is about to be stretched to, and
+            // meeroUpdateCapsule returns straight away unless the height
+            // actually changed.
+            meeroUpdateCapsule();
             background.setBounds(getPaddingLeft(), getPaddingTop(), getMeasuredWidth() - getPaddingRight(), getMeasuredBackgroundHeight() - getPaddingBottom());
             if (isTransitionRunning() && delegate != null) {
                 final float top = delegate.getTopOffset(bulletin.tag) - getY();
@@ -1411,10 +1423,6 @@ public class Bulletin {
             if (button != null && MeasureSpec.getMode(widthMeasureSpec) == MeasureSpec.AT_MOST) {
                 setMeasuredDimension(childrenMeasuredWidth + button.getMeasuredWidth(), getMeasuredHeight());
             }
-            // MeeroX: the capsule's radius is half its height, so it has to be
-            // rebuilt whenever that height changes - a two-line toast is
-            // taller than a one-line one.
-            meeroUpdateCapsule();
         }
 
         @Override
