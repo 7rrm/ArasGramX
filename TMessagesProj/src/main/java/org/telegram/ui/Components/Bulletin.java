@@ -13,9 +13,11 @@ import android.app.Dialog;
 import android.content.Context;
 import android.content.res.Configuration;
 import android.graphics.Canvas;
+import android.graphics.ColorFilter;
 import android.graphics.LinearGradient;
 import android.graphics.Matrix;
 import android.graphics.Paint;
+import android.graphics.PixelFormat;
 import android.graphics.Path;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
@@ -860,40 +862,81 @@ public class Bulletin {
          * than a sharp-cornered rectangle.
          */
         private android.graphics.drawable.Drawable meeroMakeCapsule(int color, int height) {
-            final int h = height > 0 ? height : dp(48);
-            final android.graphics.drawable.ShapeDrawable d =
-                    Theme.createRoundRectDrawable(h / 2, color);
-            // TIER_CARD, not TIER_MENU. The shadow is painted by the same
-            // drawable as the capsule, so it can only spread as far as this
-            // view's padding - 8dp top and bottom. TIER_MENU asks for a 16dp
-            // blur offset 4dp down, which would be cut off at the edge and
-            // leave a visible straight line where the fade stops. TIER_CARD's
-            // 10dp blur at 2dp fits inside 8dp once the offset is accounted
-            // for, so it fades out completely within the view.
-            tw.nekomimi.nekogram.MeeroShadow.apply(d.getPaint(),
-                    tw.nekomimi.nekogram.MeeroShadow.TIER_CARD,
-                    tw.nekomimi.nekogram.MeeroShadow.isDark(color));
-            return d;
+            return new MeeroCapsuleDrawable(color);
         }
 
         /**
-         * MeeroX: keeps the capsule's radius equal to half its height.
+         * MeeroX: a pill whose radius is always half of its own bounds.
          *
-         * Called from onMeasure, which is the first point the height is known
-         * and the only place it changes.
+         * The first attempt used Theme.createRoundRectDrawable, which wraps a
+         * RoundRectShape built with fixed corner radii. Those radii are baked
+         * in when the shape is constructed and are never revisited when the
+         * drawable is later resized, so the pill kept whatever radius it was
+         * born with - the toast is created before it has been measured, so
+         * that was a guess based on a zero height, and the result stayed a
+         * rounded box no matter how the capsule was rebuilt afterwards.
+         *
+         * Drawing the round rect directly sidesteps the whole problem: the
+         * radius is read from getBounds() at draw time, so it is correct on
+         * the first frame and stays correct for a two-line toast without
+         * anything having to notice the height changed.
          */
-        private void meeroUpdateCapsule() {
-            if (!meeroIosToast() || hasCustomBackground || background == null) {
-                return;
+        private static class MeeroCapsuleDrawable extends Drawable {
+
+            private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+            private final RectF rect = new RectF();
+
+            MeeroCapsuleDrawable(int color) {
+                paint.setColor(color);
+                // TIER_CARD, not TIER_MENU. The shadow is painted by this same
+                // paint, so it can only spread as far as the host's padding -
+                // 8dp top and bottom. TIER_MENU asks for a 16dp blur offset
+                // 4dp down, which would be cut off and leave a straight line
+                // where the fade should finish. TIER_CARD's 10dp blur at 2dp
+                // fades out fully inside 8dp.
+                tw.nekomimi.nekogram.MeeroShadow.apply(paint,
+                        tw.nekomimi.nekogram.MeeroShadow.TIER_CARD,
+                        tw.nekomimi.nekogram.MeeroShadow.isDark(color));
             }
-            final int h = getMeasuredBackgroundHeight() - getPaddingTop() - getPaddingBottom();
-            if (h > 0 && h != meeroCapsuleHeight) {
-                meeroCapsuleHeight = h;
-                background = meeroMakeCapsule(meeroCapsuleColor, h);
+
+            @Override
+            public void draw(@NonNull Canvas canvas) {
+                final Rect b = getBounds();
+                if (b.width() <= 0 || b.height() <= 0) {
+                    return;
+                }
+                rect.set(b);
+                final float r = Math.min(rect.width(), rect.height()) / 2f;
+                canvas.drawRoundRect(rect, r, r, paint);
+            }
+
+            @Override
+            public void setAlpha(int alpha) {
+                paint.setAlpha(alpha);
+            }
+
+            @Override
+            public void setColorFilter(ColorFilter colorFilter) {
+                paint.setColorFilter(colorFilter);
+            }
+
+            @Override
+            public int getOpacity() {
+                return PixelFormat.TRANSLUCENT;
             }
         }
 
-        private int meeroCapsuleHeight;
+        /**
+         * MeeroX: nothing to do - kept as the single place a future shape
+         * change would hook in.
+         *
+         * MeeroCapsuleDrawable reads its radius from getBounds() every time it
+         * draws, so the capsule follows the height on its own and there is no
+         * cached shape to invalidate. The earlier version rebuilt the drawable
+         * here because RoundRectShape bakes its radii in at construction.
+         */
+        private void meeroUpdateCapsule() {
+        }
 
         private boolean hasCustomBackground;
         public void setCustomBackground(Drawable drawable) {
