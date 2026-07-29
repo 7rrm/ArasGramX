@@ -106,7 +106,7 @@ public class PlayingGameDrawable extends StatusDrawable {
             } else {
                 paint.setAlpha(255);
             }
-            canvas.drawCircle(x, y + size / 2, AndroidUtilities.dp(1.2f), paint);
+            canvas.drawCircle(x, y + size / 2, tw.nekomimi.nekogram.MeeroStatus.dot(AndroidUtilities.dp(1.2f)), paint);
         }
         paint.setAlpha(255);
         canvas.drawArc(rect, rad, 360 - rad * 2, true, paint);
