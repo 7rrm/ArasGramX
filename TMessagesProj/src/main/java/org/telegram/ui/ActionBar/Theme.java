@@ -1718,8 +1718,26 @@ public class Theme {
                         currentColors.put(key_chat_outVenueInfoSelectedText, subTextColor);
 
 
-                        currentColors.put(key_chat_outLoader, textColor);
-                        currentColors.put(key_chat_outLoaderSelected, textColor);
+                        // MeeroX: on a light custom bubble textColor is forced
+                        // to MSG_OUT_COLOR_BLACK, and the play / file / voice
+                        // discs inherit it, so they turn into black circles.
+                        //
+                        // Telegram's own default theme does not do this. Its
+                        // bubble is 0xffefffde and its loader 0xff78c272 - same
+                        // hue family, but saturation x3.19 and value x0.76.
+                        // meeroLoaderFromBubble() applies exactly those two
+                        // ratios to whichever bubble the user picked, so the
+                        // disc stays a deeper shade of their own colour instead
+                        // of going black, which is also how iOS draws it.
+                        //
+                        // Kept behind meeroIosBubbles: with the switch off the
+                        // original textColor is used, so existing themes render
+                        // exactly as before.
+                        final int meeroLoader = meeroIosBubbleTint()
+                                ? meeroLoaderFromBubble(myMessagesAccentColor, textColor)
+                                : textColor;
+                        currentColors.put(key_chat_outLoader, meeroLoader);
+                        currentColors.put(key_chat_outLoaderSelected, meeroLoader);
                         currentColors.put(key_chat_outFileProgress, myMessagesAccentColor);
                         currentColors.put(key_chat_outFileProgressSelected, myMessagesAccentColor);
                         currentColors.put(key_chat_outMediaIcon, myMessagesAccentColor);
@@ -5625,6 +5643,47 @@ public class Theme {
         }
     }
 
+    /**
+     * MeeroX: whether the outgoing bubble's discs follow the bubble's colour.
+     *
+     * Rides on meeroIosBubbles, the switch that already owns how an outgoing
+     * bubble is drawn - a separate toggle for one colour would be a switch the
+     * user has to find before the bubble looks right.
+     */
+    private static boolean meeroIosBubbleTint() {
+        try {
+            return tw.nekomimi.nekogram.NekoConfig.meeroIosBubbles.Bool();
+        } catch (Throwable ignore) {
+            return false;
+        }
+    }
+
+    /**
+     * MeeroX: the play / download disc colour for a custom outgoing bubble.
+     *
+     * Telegram derives this pair itself in the stock theme - bubble 0xffefffde
+     * against loader 0xff78c272 - and the relationship between them is a plain
+     * HSV scale: saturation x3.19, value x0.76, hue carried over. Those two
+     * ratios are what this reproduces for an arbitrary bubble colour.
+     *
+     * A bubble with no colour in it (a white or grey one) has nothing to
+     * saturate, so there the caller's own text colour is returned rather than
+     * inventing a hue that was never picked.
+     */
+    private static int meeroLoaderFromBubble(int bubble, int fallback) {
+        if (bubble == 0) {
+            return fallback;
+        }
+        final float[] hsv = new float[3];
+        Color.colorToHSV(bubble, hsv);
+        if (hsv[1] < 0.04f) {
+            return fallback;
+        }
+        hsv[1] = Math.min(1f, hsv[1] * 3.19f);
+        hsv[2] = Math.min(1f, hsv[2] * 0.76f);
+        return Color.HSVToColor(255, hsv);
+    }
+
     public static InsetDrawable createRoundRectDrawableShadowed(int rad, int defaultColor) {
         ShapeDrawable defaultDrawable = new ShapeDrawable(new RoundRectShape(new float[]{rad, rad, rad, rad, rad, rad, rad, rad}, null, null));
         defaultDrawable.getPaint().setColor(defaultColor);
@@ -9013,18 +9072,33 @@ public class Theme {
             playPauseAnimator.addSvgKeyFrame("M 48 7 C 50.21 7 52 8.79 52 11 C 52 19 52 19 52 19 C 52 21.21 50.21 23 48 23 L 4 23 C 1.79 23 0 21.21 0 19 L 0 11 C 0 8.79 1.79 7 4 7 C 48 7 48 7 48 7 Z", 383);
 
             // MeeroX: the delivery ticks ship as raster .webp assets, so they
-            // cannot simply be restyled - but the iOS icon set we already
-            // bundle has the same two glyphs as vectors. Swapping the source
-            // gives Apple's thinner, slightly smaller tick without touching
-            // any of the positioning below, which stays identical either way.
-            // ios_chat_check converted badly - its pathData is a plain filled
-            // rectangle covering the whole 24dp viewport, so it rendered as a
-            // black block instead of a tick. ios_chat_read survived the
-            // conversion intact, so only the double-tick is swapped; the
-            // single tick keeps Telegram's own asset.
-            final int meeroCheck = R.drawable.msg_check_s;
-            final int meeroHalfCheck = meeroIosTicks() ? R.drawable.ios_chat_read : R.drawable.msg_halfcheck;
-            final int meeroHalfCheckS = meeroIosTicks() ? R.drawable.ios_chat_read : R.drawable.msg_halfcheck_s;
+            // cannot simply be restyled - but iOS draws the same two glyphs as
+            // vectors, so a vector copy gives Apple's thinner tick.
+            //
+            // Two earlier attempts got this wrong, both for the same reason -
+            // the source asset was never measured before being wired in:
+            //
+            //   ios_chat_check   converted to a plain filled rectangle over the
+            //                    whole viewport, so it painted a black block.
+            //   ios_chat_read    is not a half-tick at all. Walking its two
+            //                    subpaths gives bboxes x[1.08..16.66] and
+            //                    x[11.08..22.16] - it is the *double* tick in
+            //                    one file. Using it as the half-tick made the
+            //                    cell draw 2 + 1 = three ticks, and at 24dp
+            //                    against the stock 12dp they came out double
+            //                    size and shifted, since setDrawableBounds
+            //                    positions from getIntrinsicWidth().
+            //
+            // ios_tick_check / ios_tick_halfcheck are that same iOS artwork cut
+            // into its two subpaths and normalised: 12dp to match the stock
+            // asset exactly, each centred on the .webp's own ink centre, so the
+            // positioning arithmetic below is untouched. Measured against the
+            // originals the centres land within 0.02dp and the glyphs come out
+            // 0.6-2.1dp narrower - the thinner look, at the same spot.
+            final boolean meeroTicks = meeroIosTicks();
+            final int meeroCheck = meeroTicks ? R.drawable.ios_tick_check : R.drawable.msg_check_s;
+            final int meeroHalfCheck = meeroTicks ? R.drawable.ios_tick_halfcheck : R.drawable.msg_halfcheck;
+            final int meeroHalfCheckS = meeroTicks ? R.drawable.ios_tick_halfcheck : R.drawable.msg_halfcheck_s;
 
             chat_msgOutCheckDrawable = resources.getDrawable(meeroCheck).mutate();
             chat_msgOutCheckSelectedDrawable = resources.getDrawable(meeroCheck).mutate();
