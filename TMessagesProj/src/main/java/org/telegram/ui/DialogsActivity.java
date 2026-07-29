@@ -533,6 +533,18 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
      * meant to be a subtle disc behind an icon became a slab.
      */
     private static final int MEERO_HEADER_BUTTON = 30;
+
+    /**
+     * MeeroX: height of the glass band shared by the two trailing controls.
+     *
+     * Taller than a single control. The band spans both glyphs, and at exactly
+     * MEERO_HEADER_BUTTON they cleared its edge by 4px - visibly tighter than
+     * the Edit pill beside them, which carries 12dp of padding around its
+     * word. 38 restores a comparable margin. The controls themselves stay at
+     * MEERO_HEADER_BUTTON so all three header items remain the same height as
+     * each other.
+     */
+    private static final int MEERO_HEADER_GROUP = 38;
     private BlurredBackgroundDrawable meeroHeaderGroupGlass;
 
     /**
@@ -3725,6 +3737,17 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                 }
                 // No setIcon for meeroEditItem - it is built in text mode, so
                 // it has no iconView to set and the call is a silent no-op.
+                //
+                // The bundled iOS glyphs each carry android:tint set to
+                // ?attr/colorControlNormal, which the framework resolves when
+                // the vector is inflated and which wins over the item colour
+                // ActionBar hands out. On a dark theme that attribute resolves
+                // near black, so the two icons came out black-on-dark while
+                // the Edit label beside them - a TextView, unaffected by any
+                // of this - was correctly light. Overriding the tint here puts
+                // all three on the same colour, which is what was asked for.
+                meeroTintHeaderIcon(meeroComposeItem);
+                meeroTintHeaderIcon(optionsItem);
                 meeroRoundHeaderButton(meeroComposeItem);
                 meeroRoundHeaderButton(optionsItem);
                 // Not meeroRoundHeaderButton - that pins the view to a square
@@ -10762,9 +10785,8 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
             // (~56dp), so anything used as the menu's background is stretched
             // to that height - which is why every attempt so far came out
             // taller than the reference capsule. Setting a background cannot
-            // win against that, so paint the capsule ourselves, centred at
-            // 48dp, and leave the menu's own size untouched.
-            final int size = dp(MEERO_HEADER_BUTTON);
+            // win against that, so paint the capsule ourselves at the size we
+            // want and leave the menu's own size untouched.
             final ActionBarMenu menu = actionBar.createMenu();
             menu.setGlassMode(true);
             menu.setBackground(null);
@@ -10779,9 +10801,18 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
             menu.setGravity(Gravity.CENTER_VERTICAL);
             // MeeroX: headerButton, not topPanel - a 30dp disc needs more
             // contrast than a full-width bar to read as a surface at all.
+            // The band is taller than a single control so the two glyphs have
+            // room to breathe inside it. Measured on the last build the icons
+            // cleared the glass edge by only 4px horizontally, which read as
+            // cramped next to the Edit pill - that one is sized by its text
+            // and has 12dp of padding either side. MEERO_HEADER_GROUP gives
+            // the pair a comparable margin without changing the controls
+            // themselves, which stay MEERO_HEADER_BUTTON so they still line up
+            // with the Edit button across the bar.
+            final int groupSize = dp(MEERO_HEADER_GROUP);
             final BlurredBackgroundDrawable group = iBlur3FactoryLiquidGlass.create(
                     menu, BlurredBackgroundProviderImpl.headerButton(resourceProvider));
-            group.setRadius(size / 2f);
+            group.setRadius(groupSize / 2f);
             meeroHeaderGroupGlass = group;
             menu.setMeeroBackgroundPainter(canvas -> {
                 if (meeroHeaderGroupGlass == null) {
@@ -10796,8 +10827,8 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                 // down, so it came out far taller than the icons and sat
                 // below them instead of behind them.
                 final int h = menu.getHeight();
-                final int top = Math.max(0, (h - size) / 2);
-                meeroHeaderGroupGlass.setBounds(0, top, menu.getWidth(), top + size);
+                final int top = Math.max(0, (h - groupSize) / 2);
+                meeroHeaderGroupGlass.setBounds(0, top, menu.getWidth(), top + groupSize);
                 meeroHeaderGroupGlass.draw(canvas);
             });
         } catch (Throwable ignore) {
@@ -10919,6 +10950,34 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
         item.setPadding(dp(12), 0, dp(12), 0);
         item.setBackground(Theme.createSimpleSelectorRoundRectDrawable(size / 2, bg,
                 getThemedColor(Theme.key_listSelector)));
+    }
+
+    /**
+     * MeeroX: forces a header glyph onto the action bar's icon colour.
+     *
+     * The bundled iOS vectors declare android:tint="?attr/colorControlNormal".
+     * That attribute is baked in when the drawable is inflated and takes
+     * precedence over the colour ActionBar.setItemsColor applies, so on a dark
+     * theme the glyphs resolved to near-black and disappeared into the glass.
+     * A colour filter on the ImageView sits above the drawable's own tint and
+     * is the one thing that overrides it.
+     *
+     * The colour is the same key the Edit label is built with, so the three
+     * header controls always agree.
+     */
+    private void meeroTintHeaderIcon(ActionBarMenuItem item) {
+        if (item == null) {
+            return;
+        }
+        try {
+            final android.widget.ImageView icon = item.getIconView();
+            if (icon != null) {
+                icon.setColorFilter(new android.graphics.PorterDuffColorFilter(
+                        getThemedColor(Theme.key_actionBarDefaultIcon),
+                        android.graphics.PorterDuff.Mode.SRC_IN));
+            }
+        } catch (Throwable ignore) {
+        }
     }
 
     /** MeeroX: use the official Telegram-iOS glyphs where we have them. */
