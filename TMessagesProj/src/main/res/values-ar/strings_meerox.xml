@@ -739,6 +739,8 @@
     <string name="StyleIos">آي أو إس</string>
     <string name="meeroIosInputPill">حقل الكتابة مدوّر</string>
     <string name="MeeroIosInputPillInfo">يرسم منطقة كتابة الرسالة ككبسولة ممتلئة مثل آيفون، وأزرار الإيموجي والمرفقات تظل خارجها.</string>
+    <string name="meeroIosWaveform">موجة الصوت بنمط iOS</string>
+    <string name="MeeroIosWaveformInfo">أعمدة أعرض ومدوّرة بالكامل بتباعد 4، ومؤشر تسجيل أخف، مثل تلكرام آيفون.</string>
     <string name="MeeroSectionCategories">الأقسام</string>
     <string name="MeeroSectionData">البيانات</string>
     <string name="MeeroSectionInfo">حول</string>
