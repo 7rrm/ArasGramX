@@ -27,7 +27,7 @@ public class ChoosingStickerStatusDrawable extends StatusDrawable {
             strokePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
             fillPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
             strokePaint.setStyle(Paint.Style.STROKE);
-            strokePaint.setStrokeWidth(AndroidUtilities.dpf2(1.2f));
+            strokePaint.setStrokeWidth(tw.nekomimi.nekogram.MeeroStatus.stroke(1.2f));
         }
     }
 
@@ -79,7 +79,7 @@ public class ChoosingStickerStatusDrawable extends StatusDrawable {
         Paint strokePaint = this.strokePaint != null ? this.strokePaint : Theme.chat_statusRecordPaint;
         Paint paint = this.fillPaint != null ? this.fillPaint : Theme.chat_statusPaint;
         if (strokePaint.getStrokeWidth() != AndroidUtilities.dp(0.8f)) {
-            strokePaint.setStrokeWidth(AndroidUtilities.dp(0.8f));
+            strokePaint.setStrokeWidth(tw.nekomimi.nekogram.MeeroStatus.stroke(0.8f));
         }
         for (int i = 0; i < 2; i++) {
             canvas.save();
