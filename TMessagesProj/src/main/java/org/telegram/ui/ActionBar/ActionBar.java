@@ -619,6 +619,14 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
             titleTextView[1].setTextColor(color);
             titleTextView[1].setEmojiColor(color);
         }
+        // MeeroX: the connecting ring takes its colour from the title's paint
+        // at the moment it is attached, so a later recolour would leave it on
+        // the old one. That is not hypothetical: DialogsActivity recolours the
+        // title to the logo colour after the bar is built, and switching
+        // between a light and dark theme recolours every title on screen.
+        if (meeroConnectingDrawable != null) {
+            meeroConnectingDrawable.setColor(color);
+        }
     }
 
     public void setSubtitleColor(int color) {
