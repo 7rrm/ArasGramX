@@ -518,8 +518,21 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
     /** MeeroX: standalone compose button in the iOS dialogs header. */
     private ActionBarMenuItem meeroComposeItem;
     private static final int MEERO_ID_COMPOSE = 9711;
-    /** Telegram-iOS sizes its header controls at 48pt. */
-    private static final int MEERO_HEADER_BUTTON = 48;
+    /**
+     * MeeroX: diameter of the glass header controls.
+     *
+     * 48 was a guess and it is visibly too big. Measured against the reference
+     * screenshot - calibrating on the title text, which is the one element
+     * present in both shots at a known size - the iOS capsule is 2.32x the
+     * text height while this fork's was 3.70x. Scaling 48 by that ratio gives
+     * 30, which is also where Apple's own circular navigation-bar controls
+     * sit.
+     *
+     * The oversized capsule was also what made the glass read as heavy: the
+     * blur covered far more of the bar than it should, so the effect that is
+     * meant to be a subtle disc behind an icon became a slab.
+     */
+    private static final int MEERO_HEADER_BUTTON = 30;
     private BlurredBackgroundDrawable meeroHeaderGroupGlass;
 
     /**
