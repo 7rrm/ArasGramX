@@ -10743,14 +10743,6 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
             // capsule uses. Resizing them here is what made this capsule
             // larger than the reference, so leave the items alone and let
             // ActionBarMenu's glass mode apply its -5dp overlap.
-            // ActionBarMenu is a horizontal LinearLayout that never sets a
-            // gravity, so its children default to top-aligned. Pinning the
-            // items to the capsule height was therefore only half the fix:
-            // they became 30dp tall but stayed stuck to the top of the ~56dp
-            // menu, while the glass band behind them is centred - which is
-            // exactly the 21dp offset the icons were floating above it by.
-            // Centring the menu's children puts the two on the same line.
-            menu.setGravity(Gravity.CENTER_VERTICAL);
             for (ActionBarMenuItem it : new ActionBarMenuItem[]{meeroComposeItem, optionsItem}) {
                 it.setBackground(null);
                 // Pin each item to the capsule's height. The comment below
@@ -10778,6 +10770,13 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
             menu.setBackground(null);
             menu.setClipToOutline(false);
             menu.setWillNotDraw(false);
+            // ActionBarMenu is a horizontal LinearLayout that never sets a
+            // gravity, so its children default to top-aligned. Pinning the
+            // items to the capsule height above was therefore only half the
+            // fix: they became 30dp tall but stayed stuck to the top of the
+            // ~56dp menu, while the glass band behind them is centred - which
+            // is exactly the 21dp offset the icons were floating above it by.
+            menu.setGravity(Gravity.CENTER_VERTICAL);
             // MeeroX: headerButton, not topPanel - a 30dp disc needs more
             // contrast than a full-width bar to read as a surface at all.
             final BlurredBackgroundDrawable group = iBlur3FactoryLiquidGlass.create(
