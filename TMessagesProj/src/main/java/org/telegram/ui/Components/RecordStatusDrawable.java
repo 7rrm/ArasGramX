@@ -72,25 +72,45 @@ public class RecordStatusDrawable extends StatusDrawable {
         started = false;
     }
 
+    /** MeeroX: shares the waveform switch - both describe voice messages. */
+    private static boolean meeroIosStatus() {
+        try {
+            return tw.nekomimi.nekogram.NekoConfig.meeroIosWaveform.Bool();
+        } catch (Throwable ignore) {
+            return false;
+        }
+    }
+
     @Override
     public void draw(Canvas canvas) {
         Paint paint = currentPaint == null ? Theme.chat_statusRecordPaint : currentPaint;
-        if (paint.getStrokeWidth() != AndroidUtilities.dp(2)) {
-            paint.setStrokeWidth(AndroidUtilities.dp(2));
+        // MeeroX: iOS strokes this indicator thinner than Android's flat 2dp,
+        // which at this size is heavy enough that the four arcs blur into one
+        // wedge instead of reading as separate ripples.
+        final float meeroStroke = meeroIosStatus() ? AndroidUtilities.dpf2(1.5f) : AndroidUtilities.dp(2);
+        if (paint.getStrokeWidth() != meeroStroke) {
+            paint.setStrokeWidth(meeroStroke);
         }
         canvas.save();
         canvas.translate(getBounds().left, getIntrinsicHeight() / 2 + AndroidUtilities.dp(isChat ? 1 : 2));
+        final boolean ios = meeroIosStatus();
         for (int a = 0; a < 4; a++) {
             if (a == 0) {
                 paint.setAlpha((int) (alpha * progress));
             } else if (a == 3) {
                 paint.setAlpha((int) (alpha * (1.0f - progress)));
+            } else if (ios) {
+                // iOS fades each ring further out, so the ripple looks like it
+                // is dissipating rather than four arcs at equal weight.
+                paint.setAlpha((int) (alpha * (1f - 0.22f * a)));
             } else {
                 paint.setAlpha(alpha);
             }
             float side = AndroidUtilities.dp(4) * a + AndroidUtilities.dp(4) * progress;
             rect.set(-side, -side, side, side);
-            canvas.drawArc(rect, -15, 30, false, paint);
+            // A slightly wider sweep keeps the thinner stroke from looking
+            // clipped at the same radius.
+            canvas.drawArc(rect, ios ? -18 : -15, ios ? 36 : 30, false, paint);
         }
         canvas.restore();
         if (started) {
