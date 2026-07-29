@@ -50,6 +50,8 @@
     <string name="StyleIos">iOS</string>
     <string name="meeroIosInputPill">Rounded message field</string>
     <string name="MeeroIosInputPillInfo">Draws the composer text area as a filled capsule, the way iOS does, with the emoji and attach buttons left outside it.</string>
+    <string name="meeroIosWaveform">iOS voice waveform</string>
+    <string name="MeeroIosWaveformInfo">Wider, fully rounded waveform bars on a 4pt pitch, and a lighter recording indicator, matching Telegram for iOS.</string>
     <string name="MeeroSectionCategories">Categories</string>
     <string name="MeeroSectionData">Data</string>
     <string name="MeeroSectionInfo">About</string>
