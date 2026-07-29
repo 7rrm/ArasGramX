@@ -811,11 +811,88 @@ public class Bulletin {
             setBackground(color, 16);
         }
 
-        public void setBackground(int color, int rounding) {
-            if (!hasCustomBackground) {
-                background = Theme.createRoundRectDrawable(dp(rounding), color);
+        /**
+         * MeeroX: whether the toast is drawn as an iOS capsule.
+         *
+         * Rides on meeroCards, the switch that already owns whether floating
+         * surfaces are drawn iOS-style - a toast that stayed a rounded box
+         * while every card around it was a capsule would look unfinished.
+         */
+        private static boolean meeroIosToast() {
+            try {
+                return tw.nekomimi.nekogram.MeeroCards.enabled();
+            } catch (Throwable ignore) {
+                return false;
             }
         }
+
+        public void setBackground(int color, int rounding) {
+            if (!hasCustomBackground) {
+                // MeeroX: iOS floats its toast as a full capsule with a wide,
+                // soft shadow under it. Telegram draws a 16dp box with no
+                // shadow, which reads as part of the page rather than as
+                // something resting on top of it.
+                //
+                // The radius is taken from the view's own height instead of a
+                // constant: the toast grows with its text, and a fixed radius
+                // that looked like a capsule on one line would be a box on
+                // three. Height is not known yet when this runs, so the
+                // drawable is rebuilt in onMeasure - see meeroUpdateCapsule.
+                if (meeroIosToast()) {
+                    meeroCapsuleColor = color;
+                    background = meeroMakeCapsule(color, getMeasuredHeight());
+                    tw.nekomimi.nekogram.MeeroShadow.prepare(this);
+                } else {
+                    background = Theme.createRoundRectDrawable(dp(rounding), color);
+                }
+            }
+        }
+
+        /** MeeroX: the colour the capsule was last built with. */
+        private int meeroCapsuleColor;
+
+        /**
+         * MeeroX: builds the capsule, shadowed to match the settings cards.
+         *
+         * A height of zero means the view has not been measured yet; the
+         * minimum height is used so the first frame is still a capsule rather
+         * than a sharp-cornered rectangle.
+         */
+        private android.graphics.drawable.Drawable meeroMakeCapsule(int color, int height) {
+            final int h = height > 0 ? height : dp(48);
+            final android.graphics.drawable.ShapeDrawable d =
+                    Theme.createRoundRectDrawable(h / 2, color);
+            // TIER_CARD, not TIER_MENU. The shadow is painted by the same
+            // drawable as the capsule, so it can only spread as far as this
+            // view's padding - 8dp top and bottom. TIER_MENU asks for a 16dp
+            // blur offset 4dp down, which would be cut off at the edge and
+            // leave a visible straight line where the fade stops. TIER_CARD's
+            // 10dp blur at 2dp fits inside 8dp once the offset is accounted
+            // for, so it fades out completely within the view.
+            tw.nekomimi.nekogram.MeeroShadow.apply(d.getPaint(),
+                    tw.nekomimi.nekogram.MeeroShadow.TIER_CARD,
+                    tw.nekomimi.nekogram.MeeroShadow.isDark(color));
+            return d;
+        }
+
+        /**
+         * MeeroX: keeps the capsule's radius equal to half its height.
+         *
+         * Called from onMeasure, which is the first point the height is known
+         * and the only place it changes.
+         */
+        private void meeroUpdateCapsule() {
+            if (!meeroIosToast() || hasCustomBackground || background == null) {
+                return;
+            }
+            final int h = getMeasuredBackgroundHeight() - getPaddingTop() - getPaddingBottom();
+            if (h > 0 && h != meeroCapsuleHeight) {
+                meeroCapsuleHeight = h;
+                background = meeroMakeCapsule(meeroCapsuleColor, h);
+            }
+        }
+
+        private int meeroCapsuleHeight;
 
         private boolean hasCustomBackground;
         public void setCustomBackground(Drawable drawable) {
@@ -1123,6 +1200,39 @@ public class Bulletin {
             private static final float DAMPING_RATIO = 0.8f;
             private static final float STIFFNESS = 400f;
 
+            // MeeroX: iOS uses one spring for everything that slides into
+            // place, and it is livelier than this one.
+            // ContainedViewLayoutTransition specifies mass 5, stiffness 900,
+            // damping 88, which works out to a damping ratio of
+            // 88 / (2 * sqrt(900 * 5)) = 0.656 - the same pair already used
+            // for the iOS navigation animation, so the toast and the screen it
+            // appears over settle at the same rate instead of each on its own
+            // timing.
+            //
+            // Read through methods rather than held in the static finals
+            // above: those are initialised once when the class is first
+            // loaded, so a constant would freeze whatever the switch happened
+            // to be at that moment and ignore it being turned off afterwards.
+            private static final float MEERO_DAMPING_RATIO = 0.656f;
+            private static final float MEERO_STIFFNESS = 900f;
+
+            /** MeeroX: rides on the iOS animation switch. */
+            private static boolean meeroIosSpring() {
+                try {
+                    return tw.nekomimi.nekogram.NekoConfig.meeroIosAnim.Bool();
+                } catch (Throwable ignore) {
+                    return false;
+                }
+            }
+
+            private static float meeroDamping() {
+                return meeroIosSpring() ? MEERO_DAMPING_RATIO : DAMPING_RATIO;
+            }
+
+            private static float meeroStiffness() {
+                return meeroIosSpring() ? MEERO_STIFFNESS : STIFFNESS;
+            }
+
             @Override
             public void animateEnter(@NonNull Layout layout, @Nullable Runnable startAction, @Nullable Runnable endAction, @Nullable Consumer<Float> onUpdate, int bottomOffset) {
                 layout.setInOutOffset(layout.getMeasuredHeight());
@@ -1130,8 +1240,8 @@ public class Bulletin {
                     onUpdate.accept(layout.getTranslationY());
                 }
                 final SpringAnimation springAnimation = new SpringAnimation(layout, IN_OUT_OFFSET_Y, 0);
-                springAnimation.getSpring().setDampingRatio(DAMPING_RATIO);
-                springAnimation.getSpring().setStiffness(STIFFNESS);
+                springAnimation.getSpring().setDampingRatio(meeroDamping());
+                springAnimation.getSpring().setStiffness(meeroStiffness());
                 if (endAction != null) {
                     springAnimation.addEndListener((animation, canceled, value, velocity) -> {
                         layout.setInOutOffset(0);
@@ -1152,8 +1262,8 @@ public class Bulletin {
             @Override
             public void animateExit(@NonNull Layout layout, @Nullable Runnable startAction, @Nullable Runnable endAction, @Nullable Consumer<Float> onUpdate, int bottomOffset) {
                 final SpringAnimation springAnimation = new SpringAnimation(layout, IN_OUT_OFFSET_Y, layout.getHeight());
-                springAnimation.getSpring().setDampingRatio(DAMPING_RATIO);
-                springAnimation.getSpring().setStiffness(STIFFNESS);
+                springAnimation.getSpring().setDampingRatio(meeroDamping());
+                springAnimation.getSpring().setStiffness(meeroStiffness());
                 if (endAction != null) {
                     springAnimation.addEndListener((animation, canceled, value, velocity) -> {
                         if (!canceled) {
@@ -1301,6 +1411,10 @@ public class Bulletin {
             if (button != null && MeasureSpec.getMode(widthMeasureSpec) == MeasureSpec.AT_MOST) {
                 setMeasuredDimension(childrenMeasuredWidth + button.getMeasuredWidth(), getMeasuredHeight());
             }
+            // MeeroX: the capsule's radius is half its height, so it has to be
+            // rebuilt whenever that height changes - a two-line toast is
+            // taller than a one-line one.
+            meeroUpdateCapsule();
         }
 
         @Override
