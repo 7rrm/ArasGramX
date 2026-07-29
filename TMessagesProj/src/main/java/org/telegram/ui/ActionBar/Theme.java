@@ -9017,7 +9017,12 @@ public class Theme {
             // bundle has the same two glyphs as vectors. Swapping the source
             // gives Apple's thinner, slightly smaller tick without touching
             // any of the positioning below, which stays identical either way.
-            final int meeroCheck = meeroIosTicks() ? R.drawable.ios_chat_check : R.drawable.msg_check_s;
+            // ios_chat_check converted badly - its pathData is a plain filled
+            // rectangle covering the whole 24dp viewport, so it rendered as a
+            // black block instead of a tick. ios_chat_read survived the
+            // conversion intact, so only the double-tick is swapped; the
+            // single tick keeps Telegram's own asset.
+            final int meeroCheck = R.drawable.msg_check_s;
             final int meeroHalfCheck = meeroIosTicks() ? R.drawable.ios_chat_read : R.drawable.msg_halfcheck;
             final int meeroHalfCheckS = meeroIosTicks() ? R.drawable.ios_chat_read : R.drawable.msg_halfcheck_s;
 
