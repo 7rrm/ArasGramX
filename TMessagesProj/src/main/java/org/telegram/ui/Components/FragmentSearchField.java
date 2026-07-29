@@ -91,14 +91,11 @@ public class FragmentSearchField extends FrameLayout implements FactorAnimator.T
                 meeroRefreshIdleGroup();
             }
 
-            // The placeholder is what the group is centred on, so a new hint
-            // means new arithmetic. It is set after construction and changes
-            // when the topics tab slides in.
-            @Override
-            public void setHint(CharSequence hint) {
-                super.setHint(hint);
-                meeroRefreshIdleGroup();
-            }
+            // A hint change also moves the group, since the placeholder is
+            // what it is centred on. There is no hook needed for it:
+            // TextView.setHint is final anyway, and it ends in requestLayout,
+            // which runs this view's parent through onMeasure and onLayout -
+            // the two places the centring is computed.
 
             @Override
             public boolean onKeyDown(int keyCode, KeyEvent event) {
@@ -330,9 +327,9 @@ public class FragmentSearchField extends FrameLayout implements FactorAnimator.T
      */
     private boolean meeroIdleCentered() {
         // Guarded because the EditText subclass above can reach this through
-        // setHint() and onFocusChanged() while the constructor is still
-        // running - editText itself and currentSearchFilters are assigned
-        // further down the class, so both are still null at that point.
+        // onFocusChanged() while the constructor is still running - editText
+        // itself and currentSearchFilters are assigned further down the
+        // class, so both are still null at that point.
         if (!meeroIosSearch() || editText == null || currentSearchFilters == null) {
             return false;
         }
@@ -423,7 +420,7 @@ public class FragmentSearchField extends FrameLayout implements FactorAnimator.T
      */
     private void meeroRefreshIdleGroup() {
         // Same construction-order guard as meeroIdleCentered: this can be
-        // reached from setHint() before the fields these two touch exist.
+        // reached from onFocusChanged() before the fields it touches exist.
         if (!meeroIosSearch() || editText == null || searchIcon == null
                 || additionalIconsLayout == null || currentSearchFilters == null) {
             return;
