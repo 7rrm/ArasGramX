@@ -5611,6 +5611,20 @@ public class Theme {
         defaultDrawable.getPaint().setColor(defaultColor);
         return defaultDrawable;
     }
+    /**
+     * MeeroX: whether the delivery ticks use the bundled iOS glyphs.
+     *
+     * Shares meeroIosIcons, since these are drawn from that same icon set and
+     * having them disagree would leave one Apple glyph among Android ones.
+     */
+    private static boolean meeroIosTicks() {
+        try {
+            return tw.nekomimi.nekogram.NekoConfig.meeroIosIcons.Bool();
+        } catch (Throwable ignore) {
+            return false;
+        }
+    }
+
     public static InsetDrawable createRoundRectDrawableShadowed(int rad, int defaultColor) {
         ShapeDrawable defaultDrawable = new ShapeDrawable(new RoundRectShape(new float[]{rad, rad, rad, rad, rad, rad, rad, rad}, null, null));
         defaultDrawable.getPaint().setColor(defaultColor);
@@ -8998,16 +9012,25 @@ public class Theme {
             playPauseAnimator.addSvgKeyFrame("M 47.641 17.125 C 50.641 18.207 51.09 19.935 51.078 22.653 C 51.07 24.191 51.062 21.23 51.088 23.063 C 51.109 24.886 49.587 27 47.377 27 L 5 27.009 C 2.79 27.009 1 25.219 1 23.009 L 0.983 11.459 C 0.983 8.908 3.414 7.522 5.476 7.838 C 7.138 8.486 47.641 17.125 47.641 17.125 Z", 300);
             playPauseAnimator.addSvgKeyFrame("M 48 7 C 50.21 7 52 8.79 52 11 C 52 19 52 19 52 19 C 52 21.21 50.21 23 48 23 L 4 23 C 1.79 23 0 21.21 0 19 L 0 11 C 0 8.79 1.79 7 4 7 C 48 7 48 7 48 7 Z", 383);
 
-            chat_msgOutCheckDrawable = resources.getDrawable(R.drawable.msg_check_s).mutate();
-            chat_msgOutCheckSelectedDrawable = resources.getDrawable(R.drawable.msg_check_s).mutate();
-            chat_msgOutCheckReadDrawable = resources.getDrawable(R.drawable.msg_check_s).mutate();
-            chat_msgOutCheckReadSelectedDrawable = resources.getDrawable(R.drawable.msg_check_s).mutate();
-            chat_msgMediaCheckDrawable = resources.getDrawable(R.drawable.msg_check_s).mutate();
-            chat_msgStickerCheckDrawable = resources.getDrawable(R.drawable.msg_check_s).mutate();
-            chat_msgOutHalfCheckDrawable = resources.getDrawable(R.drawable.msg_halfcheck).mutate();
-            chat_msgOutHalfCheckSelectedDrawable = resources.getDrawable(R.drawable.msg_halfcheck).mutate();
-            chat_msgMediaHalfCheckDrawable = resources.getDrawable(R.drawable.msg_halfcheck_s).mutate();
-            chat_msgStickerHalfCheckDrawable = resources.getDrawable(R.drawable.msg_halfcheck_s).mutate();
+            // MeeroX: the delivery ticks ship as raster .webp assets, so they
+            // cannot simply be restyled - but the iOS icon set we already
+            // bundle has the same two glyphs as vectors. Swapping the source
+            // gives Apple's thinner, slightly smaller tick without touching
+            // any of the positioning below, which stays identical either way.
+            final int meeroCheck = meeroIosTicks() ? R.drawable.ios_chat_check : R.drawable.msg_check_s;
+            final int meeroHalfCheck = meeroIosTicks() ? R.drawable.ios_chat_read : R.drawable.msg_halfcheck;
+            final int meeroHalfCheckS = meeroIosTicks() ? R.drawable.ios_chat_read : R.drawable.msg_halfcheck_s;
+
+            chat_msgOutCheckDrawable = resources.getDrawable(meeroCheck).mutate();
+            chat_msgOutCheckSelectedDrawable = resources.getDrawable(meeroCheck).mutate();
+            chat_msgOutCheckReadDrawable = resources.getDrawable(meeroCheck).mutate();
+            chat_msgOutCheckReadSelectedDrawable = resources.getDrawable(meeroCheck).mutate();
+            chat_msgMediaCheckDrawable = resources.getDrawable(meeroCheck).mutate();
+            chat_msgStickerCheckDrawable = resources.getDrawable(meeroCheck).mutate();
+            chat_msgOutHalfCheckDrawable = resources.getDrawable(meeroHalfCheck).mutate();
+            chat_msgOutHalfCheckSelectedDrawable = resources.getDrawable(meeroHalfCheck).mutate();
+            chat_msgMediaHalfCheckDrawable = resources.getDrawable(meeroHalfCheckS).mutate();
+            chat_msgStickerHalfCheckDrawable = resources.getDrawable(meeroHalfCheckS).mutate();
             chat_msgClockDrawable = new MsgClockDrawable();
             chat_msgUnlockDrawable = resources.getDrawable(R.drawable.ic_lock_header).mutate();
             chat_msgInViewsDrawable = resources.getDrawable(R.drawable.msg_views).mutate();
