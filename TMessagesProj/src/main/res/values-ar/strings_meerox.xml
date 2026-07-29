@@ -752,4 +752,5 @@
     <string name="MeeroGroupMotion">الحركة والإحساس</string>
     <string name="MeeroGroupSound">الصوت والبداية</string>
     <string name="MeeroSearchHint">بحث</string>
+    <string name="MeeroHeaderEdit">تحرير</string>
 </resources>
