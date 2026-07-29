@@ -59,11 +59,24 @@ public class SeekBarWaveform {
         return AndroidUtilities.dpf2(3);
     }
 
-    /** Bar thickness; iOS draws 2pt against Android's 2dp-with-1dp-inset. */
+    /**
+     * Bar thickness.
+     *
+     * v55 moved the pitch from 3dp to 4dp but left this at 2dp, so all that
+     * changed was the gap between bars - the strokes themselves stayed exactly
+     * as thick as before and the waveform still read as Android's. iOS pairs
+     * its 2pt gap with a 2pt bar, which against Android's thinner default is
+     * the part that actually looks different. Widening it here is what turns
+     * the row from hairlines into the distinct strokes iOS draws.
+     */
     public static float meeroBarWidth() {
         try {
             if (tw.nekomimi.nekogram.NekoConfig.meeroIosWaveform.Bool()) {
-                return AndroidUtilities.dpf2(2);
+                // 2.4 against the 4dp pitch keeps iOS's roughly even
+                // bar-to-gap split while staying a touch heavier, since a
+                // 2dp stroke on a dense Android panel reads thinner than the
+                // same figure does at iOS's point scale.
+                return AndroidUtilities.dpf2(2.4f);
             }
         } catch (Throwable ignore) {
         }
