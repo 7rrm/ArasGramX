@@ -3431,10 +3431,20 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
             // button toggles exactly the same folder-edit mode - long press on
             // a tab still works, nothing about the behaviour changes.
             if (meeroDialogsStyleEnabled()) {
-                meeroEditItem = new ActionBarMenuItem(context, null, getThemedColor(Theme.key_actionBarDefaultSelector), getThemedColor(Theme.key_actionBarDefaultIcon), false);
-                // An icon, not a word - it has to read as a sibling of the
-                // other header buttons rather than a label.
-                meeroEditItem.setIcon(R.drawable.msg_edit);
+                // text = true, so ActionBarMenuItem builds its TextView. With
+                // the false this used to pass, setText below is a silent no-op
+                // - the field it writes to is only created when this flag is
+                // set, and the button would have come out blank.
+                meeroEditItem = new ActionBarMenuItem(context, null, getThemedColor(Theme.key_actionBarDefaultSelector), getThemedColor(Theme.key_actionBarDefaultIcon), true);
+                // A word, not an icon. The earlier note here said the opposite
+                // - that it had to read as a sibling of the other two buttons -
+                // but the reference disagrees: iOS puts "Edit" on the leading
+                // side as plain text on a pill, and keeps icons only for the
+                // two trailing controls. Three identical discs is what made
+                // this header look unlike the reference even once the sizes
+                // matched, because the left one was answering a question the
+                // reference answers with a label.
+                meeroEditItem.setText(LocaleController.getString(R.string.Edit));
                 meeroEditItem.setContentDescription(LocaleController.getString(R.string.Edit));
                 // ActionBar lays its children out from its own top edge, and
                 // that edge sits behind the status bar. Gravity.TOP therefore
@@ -3452,8 +3462,11 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                 // exactly statusBarHeight too high, which is why this button
                 // kept landing on the status bar. Mirror the menu's own
                 // placement: statusBarHeight, then centre inside the bar.
+                // Width wraps the word - a square would clip it. The height
+                // still matches the two icon buttons so all three sit on the
+                // same line.
                 final FrameLayout.LayoutParams meeroEditLp = LayoutHelper.createFrame(
-                        MEERO_HEADER_BUTTON, MEERO_HEADER_BUTTON,
+                        LayoutHelper.WRAP_CONTENT, MEERO_HEADER_BUTTON,
                         Gravity.TOP | Gravity.LEFT, 6, 0, 0, 0);
                 meeroEditLp.topMargin = AndroidUtilities.statusBarHeight
                         + (ActionBar.getCurrentActionBarHeight() - dp(MEERO_HEADER_BUTTON)) / 2;
@@ -3708,7 +3721,11 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                 }
                 meeroRoundHeaderButton(meeroComposeItem);
                 meeroRoundHeaderButton(optionsItem);
-                meeroRoundHeaderButton(meeroEditItem);
+                // Not meeroRoundHeaderButton - that pins the view to a square
+                // and fills it with a circle, which is right for a glyph and
+                // wrong for a word. The edit button gets a pill sized to its
+                // text instead.
+                meeroPillHeaderButton(meeroEditItem);
             }
         }
 
@@ -10729,8 +10746,10 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
             menu.setBackground(null);
             menu.setClipToOutline(false);
             menu.setWillNotDraw(false);
+            // MeeroX: headerButton, not topPanel - a 30dp disc needs more
+            // contrast than a full-width bar to read as a surface at all.
             final BlurredBackgroundDrawable group = iBlur3FactoryLiquidGlass.create(
-                    menu, BlurredBackgroundProviderImpl.topPanel(resourceProvider));
+                    menu, BlurredBackgroundProviderImpl.headerButton(resourceProvider));
             group.setRadius(size / 2f);
             meeroHeaderGroupGlass = group;
             menu.setMeeroBackgroundPainter(canvas -> {
@@ -10760,8 +10779,9 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                 glp.height = size;
                 item.setLayoutParams(glp);
             }
+            // MeeroX: headerButton, as above.
             final BlurredBackgroundDrawable bg = iBlur3FactoryLiquidGlass.create(
-                    item, BlurredBackgroundProviderImpl.topPanel(resourceProvider));
+                    item, BlurredBackgroundProviderImpl.headerButton(resourceProvider));
             bg.setRadius(size / 2f);
             // Wrapped so the disc keeps its 48dp size even though the action
             // bar lays this view out at the full bar height.
@@ -10798,6 +10818,35 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
         }
         item.setMinimumWidth(size);
         item.setBackground(Theme.createSimpleSelectorCircleDrawable(size, bg,
+                getThemedColor(Theme.key_listSelector)));
+    }
+
+    /**
+     * MeeroX: the pill behind a header button that carries a word.
+     *
+     * Same fill and height as the round glyph buttons, so the three read as
+     * one set, but the width follows the text and the corners are half the
+     * height rather than a circle. Sizing a word into a square either clips
+     * it or forces the type down until it stops matching the rest of the bar.
+     */
+    private void meeroPillHeaderButton(ActionBarMenuItem item) {
+        if (item == null) {
+            return;
+        }
+        final int page = getThemedColor(Theme.key_windowBackgroundWhite);
+        final boolean darkPage = tw.nekomimi.nekogram.MeeroShadow.isDark(page);
+        final int bg = androidx.core.graphics.ColorUtils.setAlphaComponent(
+                darkPage ? 0xFFFFFFFF : 0xFF000000, darkPage ? 28 : 20);
+        final int size = dp(MEERO_HEADER_BUTTON);
+        final ViewGroup.LayoutParams lp = item.getLayoutParams();
+        if (lp != null) {
+            lp.width = ViewGroup.LayoutParams.WRAP_CONTENT;
+            lp.height = size;
+            item.setLayoutParams(lp);
+        }
+        // Enough side padding that the word is not touching the pill's edge.
+        item.setPadding(dp(12), 0, dp(12), 0);
+        item.setBackground(Theme.createSimpleSelectorRoundRectDrawable(size / 2, bg,
                 getThemedColor(Theme.key_listSelector)));
     }
 
