@@ -2718,6 +2718,12 @@ public class ChatActivityEnterView extends FrameLayout implements
             }
 
             @Override
+            protected void dispatchDraw(Canvas canvas) {
+                meeroDrawInputPill(canvas, this);
+                super.dispatchDraw(canvas);
+            }
+
+            @Override
             protected boolean drawChild(Canvas canvas, View child, long drawingTime) {
                 if (child != null && child == messageEditText) {
                     return drawMessageEditText(canvas, () -> super.drawChild(canvas, child, drawingTime));
@@ -16531,6 +16537,67 @@ public class ChatActivityEnterView extends FrameLayout implements
     {
         gradientPaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.DST_OUT));
         gradientPaint.setShader(clipGradient);
+    }
+
+    /**
+     * MeeroX: the rounded field iOS draws behind the composer.
+     *
+     * Telegram for Android calls messageEditText.setBackgroundDrawable(null)
+     * and lets the row sit flat on the panel, so the text area has no visible
+     * boundary - only the buttons on either side suggest where it begins.
+     * iOS puts the text in a filled capsule and leaves the buttons outside it,
+     * which is the clearest single difference between the two composers.
+     *
+     * Drawn on the container rather than set as the field's own background:
+     * messageEditText grows as the message wraps, and a background would
+     * follow every intermediate height. The container's animated height is
+     * already smoothed, so the capsule tracks it without jumping.
+     *
+     * The buttons are excluded by insetting to the field's own bounds, so the
+     * emoji and attach glyphs keep sitting on the panel the way they do now.
+     */
+    private android.graphics.Paint meeroPillPaint;
+
+    private static boolean meeroIosInputPill() {
+        try {
+            return tw.nekomimi.nekogram.NekoConfig.meeroIosInputPill.Bool();
+        } catch (Throwable ignore) {
+            return false;
+        }
+    }
+
+    private void meeroDrawInputPill(Canvas canvas, View container) {
+        if (!meeroIosInputPill() || messageEditText == null
+                || messageEditText.getVisibility() != VISIBLE
+                || container.getMeasuredHeight() <= 0) {
+            return;
+        }
+        if (meeroPillPaint == null) {
+            meeroPillPaint = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+        }
+        final int page = getThemedColor(Theme.key_chat_messagePanelBackground);
+        final boolean dark = tw.nekomimi.nekogram.MeeroShadow.isDark(page);
+        meeroPillPaint.setColor(androidx.core.graphics.ColorUtils.setAlphaComponent(
+                dark ? 0xFFFFFFFF : 0xFF000000, dark ? 20 : 14));
+
+        // Span the field itself, stretched a little so the text is not flush
+        // against the curve, and clamped to the container so a tall multi-line
+        // draft cannot push the capsule past the panel.
+        final float left = Math.max(0, messageEditText.getX() - dp(8));
+        final float right = Math.min(container.getMeasuredWidth(),
+                messageEditText.getX() + messageEditText.getMeasuredWidth() + dp(8));
+        final float top = Math.max(0, messageEditText.getY() - dp(4));
+        final float bottom = Math.min(container.getMeasuredHeight(),
+                messageEditText.getY() + messageEditText.getMeasuredHeight() + dp(4));
+        if (right <= left || bottom <= top) {
+            return;
+        }
+        // iOS rounds the composer to 20pt; on a taller multi-line field the
+        // radius is capped at half the height so it stays a capsule instead of
+        // turning into an oval.
+        final float radius = Math.min(dp(20), (bottom - top) / 2f);
+        AndroidUtilities.rectTmp.set(left, top, right, bottom);
+        canvas.drawRoundRect(AndroidUtilities.rectTmp, radius, radius, meeroPillPaint);
     }
 
     public boolean drawMessageEditText(Canvas canvas, Utilities.Callback0Return<Boolean> drawChild) {
