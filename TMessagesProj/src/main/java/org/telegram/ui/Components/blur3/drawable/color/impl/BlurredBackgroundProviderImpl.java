@@ -48,6 +48,45 @@ public class BlurredBackgroundProviderImpl {
             .build();
     }
 
+    /**
+     * MeeroX: the small round controls in the dialogs header.
+     *
+     * These used topPanel, which is tuned for a bar that spans the whole
+     * screen - a wide surface reads as glass at a low contrast because there
+     * is a lot of it. A 30dp disc does not: measured against the reference,
+     * the iOS control stands 36 levels of brightness clear of the bar behind
+     * it while this fork's stood only 19, so the button dissolved into the
+     * header instead of sitting on it.
+     *
+     * Same construction as topPanel, with two figures raised: the fill is
+     * carried further from the page colour towards the target, and the
+     * outline is doubled. Everything else is left as it is so the discs still
+     * belong to the same family as the bar they sit in.
+     *
+     * Kept separate rather than editing topPanel, which eight other surfaces
+     * share - the search field and the folder tabs among them, and those are
+     * wide enough that the original figures are right for them.
+     */
+    public static BlurredBackgroundProvider headerButton(Theme.ResourcesProvider resourcesProvider) {
+        return new BlurredBackgroundProviderBuilder(resourcesProvider)
+            .setBackgroundColor((r, isDark) -> {
+                // topPanel uses 0.85 / 0.76 here. A disc needs to resolve
+                // closer to the target colour to read at this size.
+                final float alpha = LiteMode.isEnabled(LiteMode.FLAG_LIQUID_GLASS) ? 0.94f : 0.88f;
+                final int colorBg = Theme.getColor(Theme.key_windowBackgroundWhite, r);
+                final int colorTarget = Theme.getColor(Theme.key_glass_targetMainTopPanel, r);
+                return solveSrcColor(colorBg, colorTarget, alpha);
+            })
+            // Roughly double topPanel's outline. On a shape this small the
+            // edge is most of what separates it from the bar.
+            .setStrokeColorTop(0x22000000, 0x0DFFFFFF)
+            .setStrokeColorBottom(0x3A000000, 0x22FFFFFF)
+            .setShadowColor(0x20000000, 0x04FFFFFF)
+            .setShadowLayer(dpf2(2.667f), 0, dpf2(0.85f))
+            .setStrokeWidth(dpf2(0.6f), dpf2(0.6f))
+            .build();
+    }
+
     public static BlurredBackgroundProvider emojiViewButton(Theme.ResourcesProvider resourcesProvider) {
         return new BlurredBackgroundProviderBuilder(resourcesProvider)
                 .setBackgroundColor((r, isDark) -> {
