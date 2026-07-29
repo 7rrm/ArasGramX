@@ -3716,9 +3716,8 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                 if (meeroIosIconsEnabled() && optionsItem != null) {
                     optionsItem.setIcon(R.drawable.ios_chat_list_navigationmore);
                 }
-                if (meeroIosIconsEnabled() && meeroEditItem != null) {
-                    meeroEditItem.setIcon(R.drawable.ios_chat_menuediticon);
-                }
+                // No setIcon for meeroEditItem - it is built in text mode, so
+                // it has no iconView to set and the call is a silent no-op.
                 meeroRoundHeaderButton(meeroComposeItem);
                 meeroRoundHeaderButton(optionsItem);
                 // Not meeroRoundHeaderButton - that pins the view to a square
@@ -5526,7 +5525,13 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
         // menu buttons sit side by side, so they share one; the edit button
         // is alone on the far side and keeps a single disc.
         meeroGlassHeaderGroup();
-        meeroGlassHeaderButton(meeroEditItem);
+        // Not meeroGlassHeaderButton for the edit button any more. That method
+        // pins its view to a MEERO_HEADER_BUTTON square and fills it with a
+        // circular glass disc - correct for a glyph, but this button now
+        // carries the word "Edit". Running it here also undid the pill applied
+        // when the button was built, because this runs later, which is why the
+        // word vanished and left a bare disc with the text clipped to a sliver.
+        meeroGlassPillHeaderButton(meeroEditItem);
 
         dialogStoriesCell = new DialogStoriesCell(context, this, currentAccount, isArchive() ? DialogStoriesCell.TYPE_ARCHIVE : DialogStoriesCell.TYPE_DIALOGS) {
             @Override
@@ -10733,6 +10738,18 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
             // ActionBarMenu's glass mode apply its -5dp overlap.
             for (ActionBarMenuItem it : new ActionBarMenuItem[]{meeroComposeItem, optionsItem}) {
                 it.setBackground(null);
+                // Pin each item to the capsule's height. The comment below
+                // used to say the items were already the right size and must
+                // be left alone - that was true while MEERO_HEADER_BUTTON was
+                // 48, close to the menu's own height. At 30 it no longer is:
+                // the items stayed full-height, so their glyphs were centred
+                // against ~56dp while the glass band behind them was 30dp,
+                // and the icons ended up sitting above the capsule.
+                final ViewGroup.LayoutParams ilp = it.getLayoutParams();
+                if (ilp != null) {
+                    ilp.height = dp(MEERO_HEADER_BUTTON);
+                    it.setLayoutParams(ilp);
+                }
             }
             // ActionBar measures its menu at the full action bar height
             // (~56dp), so anything used as the menu's background is stretched
@@ -10756,11 +10773,51 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                 if (meeroHeaderGroupGlass == null) {
                     return;
                 }
+                // Centre a band exactly `size` tall in the menu. The previous
+                // arithmetic clamped with Math.max(0, top) and
+                // Math.max(size, top + size), which only agree while top is
+                // positive: once the buttons shrank to 30dp inside a ~56dp
+                // menu the two clamps stopped describing the same band and
+                // the glass was drawn from the top of the menu all the way
+                // down, so it came out far taller than the icons and sat
+                // below them instead of behind them.
                 final int h = menu.getHeight();
-                final int top = (h - size) / 2;
-                meeroHeaderGroupGlass.setBounds(0, Math.max(0, top), menu.getWidth(), Math.max(size, top + size));
+                final int top = Math.max(0, (h - size) / 2);
+                meeroHeaderGroupGlass.setBounds(0, top, menu.getWidth(), top + size);
                 meeroHeaderGroupGlass.draw(canvas);
             });
+        } catch (Throwable ignore) {
+        }
+    }
+
+    /**
+     * MeeroX: the glass version of the text pill.
+     *
+     * Same surface the round buttons get, but the width is left alone so the
+     * word inside decides it, and the corner radius is half the height rather
+     * than a full circle. MeeroCenteredDrawable is given a width of zero,
+     * which it reads as "use the whole bounds" - the height still has to be
+     * pinned because the action bar lays its children out at the full bar
+     * height and the glass would otherwise stretch to fill it.
+     */
+    private void meeroGlassPillHeaderButton(ActionBarMenuItem item) {
+        if (item == null || !meeroDialogsStyleEnabled() || iBlur3FactoryLiquidGlass == null) {
+            return;
+        }
+        try {
+            final int size = dp(MEERO_HEADER_BUTTON);
+            final ViewGroup.LayoutParams glp = item.getLayoutParams();
+            if (glp != null) {
+                glp.width = ViewGroup.LayoutParams.WRAP_CONTENT;
+                glp.height = size;
+                item.setLayoutParams(glp);
+            }
+            item.setPadding(dp(12), 0, dp(12), 0);
+            final BlurredBackgroundDrawable bg = iBlur3FactoryLiquidGlass.create(
+                    item, BlurredBackgroundProviderImpl.headerButton(resourceProvider));
+            bg.setRadius(size / 2f);
+            item.setBackground(new MeeroCenteredDrawable(bg, 0, size));
+            item.setClipToOutline(false);
         } catch (Throwable ignore) {
         }
     }
