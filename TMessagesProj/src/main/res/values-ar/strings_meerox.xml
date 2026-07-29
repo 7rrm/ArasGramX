@@ -744,4 +744,11 @@
     <string name="MeeroSectionCategories">الأقسام</string>
     <string name="MeeroSectionData">البيانات</string>
     <string name="MeeroSectionInfo">حول</string>
+    <string name="MeeroSettingsTitle">MeeroX</string>
+    <string name="MeeroSettingsInfo">كل مفاتيح MeeroX بمكان واحد، مقسّمة حسب الي تغيّره.</string>
+    <string name="MeeroGroupAppearance">المظهر</string>
+    <string name="MeeroGroupChat">المحادثة</string>
+    <string name="MeeroGroupNavigation">التنقّل</string>
+    <string name="MeeroGroupMotion">الحركة والإحساس</string>
+    <string name="MeeroGroupSound">الصوت والبداية</string>
 </resources>
