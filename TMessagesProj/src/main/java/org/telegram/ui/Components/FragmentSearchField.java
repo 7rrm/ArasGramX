@@ -79,6 +79,27 @@ public class FragmentSearchField extends FrameLayout implements FactorAnimator.T
                 setPivotY(getMeasuredHeight() / 2.0f);
             }
 
+            // MeeroX: the idle centred group has to come apart the moment the
+            // field takes focus, and re-form when it loses it. Overriding the
+            // callback rather than calling setOnFocusChangeListener leaves
+            // that listener free - DialogsActivity installs its own on this
+            // same EditText to open the search, and a second setter would
+            // silently replace it.
+            @Override
+            protected void onFocusChanged(boolean focused, int direction, android.graphics.Rect previouslyFocusedRect) {
+                super.onFocusChanged(focused, direction, previouslyFocusedRect);
+                meeroRefreshIdleGroup();
+            }
+
+            // The placeholder is what the group is centred on, so a new hint
+            // means new arithmetic. It is set after construction and changes
+            // when the topics tab slides in.
+            @Override
+            public void setHint(CharSequence hint) {
+                super.setHint(hint);
+                meeroRefreshIdleGroup();
+            }
+
             @Override
             public boolean onKeyDown(int keyCode, KeyEvent event) {
                 if (keyCode == KeyEvent.KEYCODE_DEL && editText.length() == 0 && hasRemovableFilters()) {
@@ -121,6 +142,9 @@ public class FragmentSearchField extends FrameLayout implements FactorAnimator.T
                     }
                 }
                 checkCloseButtonVisible();
+                // MeeroX: the first character typed ends the idle state, and
+                // clearing the last one restores it.
+                meeroRefreshIdleGroup();
             }
         });
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
@@ -134,6 +158,14 @@ public class FragmentSearchField extends FrameLayout implements FactorAnimator.T
         searchIcon.setScaleType(meeroIosSearch() ? ImageView.ScaleType.FIT_CENTER : ImageView.ScaleType.CENTER);
         searchIcon.setImageResource(R.drawable.outline_search_1_24);
         final int meeroIconSize = meeroIosSearch() ? 17 : 24;
+        // MeeroX: while the field is idle iOS centres the magnifier and the
+        // placeholder together as one group, rather than parking the glyph on
+        // the edge with the text beside it. The icon is therefore laid out
+        // nudged by meeroPositionSearchIcon() in onLayout, which is where the
+        // measured placeholder width is finally known. The gravity below still
+        // has to name a side: once the field is focused the group slides back
+        // to the edge, and CENTER_VERTICAL alone would leave the glyph
+        // horizontally stuck in the middle behind the typed text.
         addView(searchIcon, LayoutHelper.createFrame(meeroIconSize, meeroIconSize, Gravity.CENTER_VERTICAL | (LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT), meeroIosSearch() ? 16 : 12, 0, meeroIosSearch() ? 16 : 12, 0));
 
         additionalIconsLayout = new LinearLayout(context);
@@ -285,13 +317,86 @@ public class FragmentSearchField extends FrameLayout implements FactorAnimator.T
         checkUi_editTextPaddings();
     }
 
+    /** MeeroX: gap between the magnifier and the placeholder, measured off iOS. */
+    private static final float MEERO_ICON_TEXT_GAP = 9f;
+
+    /**
+     * MeeroX: whether the idle centred group applies right now.
+     *
+     * Only while the field is genuinely idle. Once it has focus or any text
+     * the placeholder is gone and the caret belongs at the leading edge, so
+     * the group returns to where upstream puts it. Search filters take the
+     * leading space for themselves, so they opt out too.
+     */
+    private boolean meeroIdleCentered() {
+        // Guarded because the EditText subclass above can reach this through
+        // setHint() and onFocusChanged() while the constructor is still
+        // running - editText itself and currentSearchFilters are assigned
+        // further down the class, so both are still null at that point.
+        if (!meeroIosSearch() || editText == null || currentSearchFilters == null) {
+            return false;
+        }
+        final CharSequence hint = editText.getHint();
+        return editText.length() == 0
+                && !editText.isFocused()
+                && currentSearchFilters.isEmpty()
+                && hint != null
+                && hint.length() > 0;
+    }
+
+    /** MeeroX: width the placeholder will occupy, in pixels. */
+    private float meeroHintWidth() {
+        final CharSequence hint = editText.getHint();
+        if (hint == null || hint.length() == 0) {
+            return 0;
+        }
+        return editText.getPaint().measureText(hint, 0, hint.length());
+    }
+
+    /**
+     * MeeroX: left edge of the centred magnifier + placeholder group.
+     *
+     * Both the icon's offset and the text's padding are derived from this one
+     * figure so the two cannot drift apart - they are computed in different
+     * passes (measure for the padding, layout for the icon) and any second
+     * copy of the arithmetic would eventually disagree.
+     */
+    private int meeroGroupLeft(int iconWidth, float hintWidth) {
+        final int inner = getMeasuredWidth() - getPaddingLeft() - getPaddingRight();
+        final int groupWidth = (int) (iconWidth + dp(MEERO_ICON_TEXT_GAP) + hintWidth);
+        return getPaddingLeft() + Math.max(0, (inner - groupWidth) / 2);
+    }
+
     private void checkUi_editTextPaddings() {
         final int filtersWidth = (int) animatorSearchFiltersWidth.getFactor() + dp(6); //searchFilterLayout.getWidth();
         final int pStart = Math.max(filtersWidth, dp(48));
         final int pEnd = dp(48) + additionalIconsLayout.getMeasuredWidth();
 
-        final int pLeft = LocaleController.isRTL ? pEnd : pStart;
-        final int pRight = LocaleController.isRTL ? pStart : pEnd;
+        int pLeft = LocaleController.isRTL ? pEnd : pStart;
+        int pRight = LocaleController.isRTL ? pStart : pEnd;
+
+        // MeeroX: iOS centres the magnifier and the placeholder as one group
+        // while the bar is idle, instead of pinning the glyph to the edge.
+        // The padding is what positions the hint - editText is gravity LEFT on
+        // LTR and RIGHT on RTL, so setting both sides puts the text in the
+        // same place either way: LEFT draws it at pLeft, RIGHT draws it ending
+        // at width - pRight, and those are the two edges of the same span.
+        if (meeroIdleCentered() && getMeasuredWidth() > 0) {
+            final int iconW = searchIcon.getMeasuredWidth() > 0
+                    ? searchIcon.getMeasuredWidth() : dp(17);
+            final float hintW = meeroHintWidth();
+            final int textLeft = meeroGroupLeft(iconW, hintW) + iconW + (int) dp(MEERO_ICON_TEXT_GAP);
+            final int textRight = (int) (textLeft + hintW);
+            final int candidateLeft = textLeft;
+            final int candidateRight = getMeasuredWidth() - textRight;
+            // Never let the centring squeeze the text against an edge - if the
+            // placeholder is long enough that the group no longer fits, fall
+            // back to the stock padding rather than clipping it.
+            if (candidateLeft >= 0 && candidateRight >= 0) {
+                pLeft = candidateLeft;
+                pRight = candidateRight;
+            }
+        }
 
         AndroidUtilities.rectTmp2.set(
             pLeft, 0,
@@ -300,6 +405,52 @@ public class FragmentSearchField extends FrameLayout implements FactorAnimator.T
         );
         editText.setClipBounds(AndroidUtilities.rectTmp2);
         editText.setPadding(pLeft, 0, pRight, 0);
+    }
+
+    @Override
+    protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
+        super.onLayout(changed, left, top, right, bottom);
+        meeroPositionSearchIcon();
+    }
+
+    /**
+     * MeeroX: re-runs the centring after something it depends on changed.
+     *
+     * Called from focus, text and hint changes. It is safe before the view has
+     * been measured - checkUi_editTextPaddings falls back to the stock padding
+     * while getMeasuredWidth() is still zero, and onLayout runs the icon side
+     * again once real dimensions exist.
+     */
+    private void meeroRefreshIdleGroup() {
+        // Same construction-order guard as meeroIdleCentered: this can be
+        // reached from setHint() before the fields these two touch exist.
+        if (!meeroIosSearch() || editText == null || searchIcon == null
+                || additionalIconsLayout == null || currentSearchFilters == null) {
+            return;
+        }
+        checkUi_editTextPaddings();
+        meeroPositionSearchIcon();
+    }
+
+    /**
+     * MeeroX: slides the magnifier to the head of the centred group.
+     *
+     * Done as a translation after layout rather than a margin, because the
+     * offset depends on the measured placeholder width - a margin would have
+     * to be right before the text is measured, and it changes with the
+     * locale's wording.
+     */
+    private void meeroPositionSearchIcon() {
+        if (!meeroIdleCentered()) {
+            searchIcon.setTranslationX(0);
+            return;
+        }
+        final int iconW = searchIcon.getMeasuredWidth();
+        if (iconW <= 0) {
+            searchIcon.setTranslationX(0);
+            return;
+        }
+        searchIcon.setTranslationX(meeroGroupLeft(iconW, meeroHintWidth()) - searchIcon.getLeft());
     }
 
     public boolean isSectionBackground;
