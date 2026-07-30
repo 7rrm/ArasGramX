@@ -877,7 +877,16 @@ public class DialogStoriesCell extends FrameLayout implements NotificationCenter
                 } else {
                     toX = dp(collapsedDisDp()) + dp(collapsedDisDp()) * cellCollapsedProgress - AndroidUtilities.dpf2(0.5f) + AndroidUtilities.lerp(dp(collapsedDisDp() + collapsedDisDp()), 0f, collapsedProgress);
                 }
-                toX += menuItemsOffset;
+                // MeeroX: the wave above is expressed from the row's parking
+                // spot, and upstream parks at a fixed menuItemsOffset near the
+                // left edge. Once the collapsed row moved to the centre, these
+                // cells still flew to that old spot for the whole animation and
+                // only the finished row appeared centred - which is the sideways
+                // slide, and the jump at the end of it. Aim them where the row
+                // actually parks, easing in with the collapse so the expanded
+                // list is left exactly where upstream puts it.
+                toX += AndroidUtilities.lerp(menuItemsOffset, meeroMiniListX(),
+                        Utilities.clamp(collapsedProgress, 1f, 0f));
                 if (!collapsed) {
                     float dstCellX = 0;
                     if (overscrollProgress > 0) {
@@ -1450,55 +1459,104 @@ public class DialogStoriesCell extends FrameLayout implements NotificationCenter
      * during the first layout pass, or when the bar has no title view at all.
      */
     /**
-     * MeeroX: how much ink the collapsed row puts on screen, in pixels.
+     * MeeroX: how far the mini list's boxes reach, from its own left edge.
      *
-     * The circles, not their containers. Each mini item is laid out at a full
-     * ITEM_WIDTH - 70dp - but only draws a collapsedSizeDp circle inside that
-     * box; the rest is empty. v82 measured the boxes instead and reported
-     * 91.6dp where the visible row is 39.4, so the header reserved 26dp too
-     * much and pushed the title right while the circles were dragged left -
-     * further off centre than before the change.
-     *
-     * One circle, plus one overlap step for each one after it, is what the eye
-     * actually sees.
+     * The circles are drawn inside ITEM_WIDTH boxes that the decoration steps
+     * by one overlap each, so the boxes reach further right than the ink does.
+     * The header text is placed off this box extent, not off the ink, which is
+     * why both numbers are needed and why measuring only one of them - as v82
+     * did - put the two halves of the group in different places.
      */
-    private float meeroRowWidth() {
-        final int count = Math.max(1, miniItems.size());
-        return dp(collapsedSizeDp()) + dp(collapsedDisDp()) * (count - 1);
+    private float meeroRowBoxRight() {
+        float right = 0;
+        for (int i = 0; i < listViewMini.getChildCount(); i++) {
+            final View cell = listViewMini.getChildAt(i);
+            final float r = cell.getLeft() + cell.getMeasuredWidth();
+            if (r > right) {
+                right = r;
+            }
+        }
+        if (right <= 0) {
+            // Before the list has laid out: the decoration parks item n at
+            // n * collapsedDis, each one ITEM_WIDTH wide.
+            final int count = Math.max(1, miniItems.size());
+            right = dp(ITEM_WIDTH) + dp(collapsedDisDp()) * (count - 1);
+        }
+        return right;
     }
 
+    /**
+     * MeeroX: the header word's own width, in pixels.
+     *
+     * Read from the text drawable rather than the view: both title views are
+     * laid out MATCH_PARENT, so their measured width is the whole bar and says
+     * nothing about the word. That is the mistake behind every attempt so far -
+     * the group was centred using a box the width of the screen.
+     *
+     * Which of the two carries the word is decided the same way
+     * checkUi_titleVisibility decides which one to show, but from the text
+     * itself instead of the fading alpha, so the figure does not swing while
+     * the two cross-fade.
+     */
+    private float meeroHeaderTextWidth() {
+        final AnimatedTextView view =
+                (hasOverlayText || !TextUtils.isEmpty(currentTitle)) ? titleView : telegramLogoView;
+        if (view == null || view.getDrawable() == null) {
+            return 0;
+        }
+        return view.getDrawable().getCurrentWidth();
+    }
+
+    /**
+     * MeeroX: width of the circles-plus-word group, in pixels.
+     *
+     * The word is placed at boxRight - 72dp + avatarRight + 12dp from the row's
+     * left edge - the same arithmetic dispatchDraw uses below - so the group
+     * runs from the row's left edge to the end of the word.
+     *
+     * avatarRight is taken at a collapse progress of 1 rather than the live
+     * value: the live one shrinks as the avatars shrink, which would drag the
+     * parking spot sideways for the whole length of the collapse and land it
+     * somewhere different each time.
+     */
+    private float meeroGroupWidth() {
+        final int cellWidth = dp(72);
+        return meeroRowBoxRight() - cellWidth + getAvatarRight(cellWidth, 1f) + dp(12)
+                + meeroHeaderTextWidth();
+    }
+
+    /**
+     * MeeroX: where the collapsed row parks, so the group lands centred.
+     *
+     * Every earlier attempt read the action bar's title view and placed the
+     * circles beside it. That could not work, for two reasons found by reading
+     * the code rather than guessing at the pixels:
+     *
+     * 1. Both title views are added MATCH_PARENT, and nothing in this app calls
+     *    setWidthWrapContent, so getMeasuredWidth() returns the whole bar and
+     *    getLeft() is the bar's edge - not the word's. The circles were being
+     *    lined up against a box as wide as the screen.
+     * 2. The word visible beside the collapsed circles is not the action bar's
+     *    title at all. DialogsActivity fades that one out as the row collapses
+     *    and this cell draws its own titleView/telegramLogoView instead, both
+     *    positioned off the circles a few lines below. So the circles chased a
+     *    hidden view while the visible word chased the circles.
+     *
+     * Everything is therefore measured here, from this cell's own children: the
+     * group spans from the row's left edge to the end of the word, and half of
+     * whatever is left over sits on each side.
+     */
     private float meeroMiniListX() {
-        if (!meeroIosStories() || actionBar == null) {
+        if (!meeroIosStories()) {
             return menuItemsOffset;
         }
         try {
-            // Tell the header how much room this row takes beside the title,
-            // so it can centre the pair rather than the words on their own.
-            //
-            // Scaled by collapsedProgress1 rather than switched at a
-            // threshold. The first version reported the full width past 0.5
-            // and zero below it, so the title jumped half the row's width in a
-            // single frame - the row slid left, then snapped back. Ramping the
-            // figure with the same progress that drives the collapse keeps the
-            // title moving in step with the circles the whole way.
-            actionBar.setMeeroTitleLeading((int) ((meeroRowWidth() + dp(8))
-                    * Utilities.clamp(collapsedProgress1, 1f, 0f)));
-            final org.telegram.ui.ActionBar.SimpleTextView title = actionBar.getTitleTextView();
-            if (title == null || title.getMeasuredWidth() <= 0) {
+            final float x = (getMeasuredWidth() - meeroGroupWidth()) / 2f;
+            if (getMeasuredWidth() <= 0) {
                 return menuItemsOffset;
             }
-            // The title view may be wrapped in a container that carries its own
-            // offset, so both have to be added to land in this cell's space.
-            float titleLeft = title.getLeft() + title.getTranslationX();
-            final android.view.ViewParent parent = title.getParent();
-            if (parent instanceof android.view.View && parent != actionBar) {
-                final android.view.View box = (android.view.View) parent;
-                titleLeft += box.getLeft() + box.getTranslationX();
-            }
-            // Leave a gap before the words - the same 8dp the reference does.
-            final float x = titleLeft - meeroRowWidth() - dp(8);
-            // Never let it slide under the leading control; below that the
-            // stock offset is the safer place for it.
+            // Never slide under the leading control - the Edit pill lives out
+            // there, and v81 hid it by letting the circles run to the edge.
             return Math.max(menuItemsOffset, x);
         } catch (Throwable ignore) {
             return menuItemsOffset;
