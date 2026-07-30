@@ -1450,21 +1450,21 @@ public class DialogStoriesCell extends FrameLayout implements NotificationCenter
      * during the first layout pass, or when the bar has no title view at all.
      */
     /**
-     * MeeroX: how wide the collapsed row actually draws, in pixels.
+     * MeeroX: how much ink the collapsed row puts on screen, in pixels.
      *
-     * Not the circles' own diameters. Each mini item is laid out at a full
-     * ITEM_WIDTH and then pulled back over its neighbour by the decoration
-     * above, so the row's real extent is that first item plus one overlap step
-     * per item after it. Measuring it as
-     * size * n - overlap * (n - 1) gave 31.8dp against the 91.6dp the row
-     * really occupies at three items, and the header was told to reserve the
-     * smaller figure - which is why the group still sat left of centre even
-     * once the arithmetic looked right.
+     * The circles, not their containers. Each mini item is laid out at a full
+     * ITEM_WIDTH - 70dp - but only draws a collapsedSizeDp circle inside that
+     * box; the rest is empty. v82 measured the boxes instead and reported
+     * 91.6dp where the visible row is 39.4, so the header reserved 26dp too
+     * much and pushed the title right while the circles were dragged left -
+     * further off centre than before the change.
+     *
+     * One circle, plus one overlap step for each one after it, is what the eye
+     * actually sees.
      */
     private float meeroRowWidth() {
         final int count = Math.max(1, miniItems.size());
-        final float step = dp(ITEM_WIDTH) + (-dp(85) + dp(29 + collapsedDisDp() - 14));
-        return dp(ITEM_WIDTH) + step * (count - 1);
+        return dp(collapsedSizeDp()) + dp(collapsedDisDp()) * (count - 1);
     }
 
     private float meeroMiniListX() {
