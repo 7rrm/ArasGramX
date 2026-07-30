@@ -8873,6 +8873,34 @@ public class Theme {
         }
     }
 
+    /**
+     * MeeroX: applies the chosen font to a message paint.
+     *
+     * Nearly every text view in the app resolves its face through
+     * AndroidUtilities.getTypeface, which MeeroFonts already intercepts - so
+     * picking a font changed the whole interface. The paints built below are
+     * the exception: they are constructed straight from `new TextPaint(...)`
+     * and, unless something asks for bold, never call setTypeface at all. A
+     * paint with no typeface draws in the platform default, which is why the
+     * chosen font appeared everywhere except in the messages themselves.
+     *
+     * Code stays out of it - a monospaced block that picked up a proportional
+     * face would stop lining up, which is the one place the stock behaviour is
+     * the correct one.
+     */
+    private static void meeroApplyFont(TextPaint paint, boolean bold) {
+        if (paint == null) {
+            return;
+        }
+        try {
+            final Typeface tf = tw.nekomimi.nekogram.MeeroFonts.appTypeface(bold, false);
+            if (tf != null) {
+                paint.setTypeface(tf);
+            }
+        } catch (Throwable ignore) {
+        }
+    }
+
     public static void createCommonMessageResources() {
         synchronized (sync) {
             if (chat_msgTextPaint == null) {
@@ -8932,6 +8960,42 @@ public class Theme {
             chat_msgTextCodePaint.setTextSize(dp(Math.max(Math.min(10, SharedConfig.fontSize - 1), SharedConfig.fontSize - 2)));
             chat_msgTextCode2Paint.setTextSize(dp(Math.max(Math.min(10, SharedConfig.fontSize - 2), SharedConfig.fontSize - 3)));
             chat_msgTextCode3Paint.setTextSize(dp(Math.max(Math.min(10, SharedConfig.fontSize - 2), SharedConfig.fontSize - 5)));
+
+            // MeeroX: hand the chosen font to the message paints.
+            //
+            // Applied here rather than beside each constructor above: that
+            // block only runs the first time, while this one re-runs whenever
+            // the font size or theme changes, which is also when a newly
+            // picked font needs to take hold. clearTypefaceCache() already
+            // triggers a rebuild through this path.
+            //
+            // The three code paints are deliberately absent - they are set to
+            // MONOSPACE above and a proportional face would break the
+            // alignment a code block depends on.
+            meeroApplyFont(chat_msgTextPaint, false);
+            meeroApplyFont(chat_msgGameTextPaint, false);
+            meeroApplyFont(chat_msgTextPaintOneEmoji, false);
+            meeroApplyFont(chat_msgTextPaintTwoEmoji, false);
+            meeroApplyFont(chat_msgTextPaintThreeEmoji, false);
+            if (chat_msgTextPaintEmoji != null) {
+                for (int i = 0; i < chat_msgTextPaintEmoji.length; ++i) {
+                    meeroApplyFont(chat_msgTextPaintEmoji[i], false);
+                }
+            }
+            meeroApplyFont(chat_replyTextPaint, false);
+            meeroApplyFont(chat_quoteTextPaint, false);
+            meeroApplyFont(chat_explanationTextPaint, false);
+            meeroApplyFont(chat_titleLabelTextPaint, false);
+            meeroApplyFont(chat_forwardNamePaint, false);
+            meeroApplyFont(chat_adminPaint, false);
+            meeroApplyFont(chat_timePaint, false);
+            meeroApplyFont(chat_ephemeralPaint, false);
+            // These four ask for bold, so the chosen face is derived bold too
+            // rather than falling back to the platform's.
+            meeroApplyFont(chat_namePaint, true);
+            meeroApplyFont(chat_replyNamePaint, true);
+            meeroApplyFont(chat_topicTextPaint, true);
+            meeroApplyFont(chat_msgBotButtonPaint, true);
         }
     }
 
@@ -9299,6 +9363,25 @@ public class Theme {
         }
 
         if (!fontsOnly && chat_infoPaint != null) {
+            // MeeroX: the rest of the in-bubble paints. Same reasoning as in
+            // createCommonMessageResources - these are built with a plain
+            // `new TextPaint(...)` and never call setTypeface unless they want
+            // bold, so without this they keep drawing in the platform font
+            // while the rest of the app follows the chosen one.
+            meeroApplyFont(chat_infoPaint, false);
+            meeroApplyFont(chat_locationAddressPaint, false);
+            meeroApplyFont(chat_audioTimePaint, false);
+            meeroApplyFont(chat_audioPerformerPaint, false);
+            meeroApplyFont(chat_contactPhonePaint, false);
+            meeroApplyFont(chat_durationPaint, false);
+            meeroApplyFont(chat_livePaint, false);
+            meeroApplyFont(chat_infoBoldPaint, true);
+            meeroApplyFont(chat_stickerCommentCountPaint, true);
+            meeroApplyFont(chat_docNamePaint, true);
+            meeroApplyFont(chat_locationTitlePaint, true);
+            meeroApplyFont(chat_audioTitlePaint, true);
+            meeroApplyFont(chat_botButtonPaint, true);
+            meeroApplyFont(chat_contactNamePaint, true);
             chat_infoPaint.setTextSize(dp(12));
             chat_infoBoldPaint.setTextSize(dp(12));
             chat_stickerCommentCountPaint.setTextSize(dp(11));
