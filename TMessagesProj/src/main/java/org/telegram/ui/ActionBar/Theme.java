@@ -8888,6 +8888,15 @@ public class Theme {
      * face would stop lining up, which is the one place the stock behaviour is
      * the correct one.
      */
+    /** MeeroX: whether the service line uses iOS's flat 13pt. */
+    private static boolean meeroIosServiceText() {
+        try {
+            return tw.nekomimi.nekogram.NekoConfig.meeroIosBubbles.Bool();
+        } catch (Throwable ignore) {
+            return false;
+        }
+    }
+
     private static void meeroApplyFont(TextPaint paint, boolean bold) {
         if (paint == null) {
             return;
@@ -9411,9 +9420,20 @@ public class Theme {
             chat_instantViewPaint.setTextSize(dp(13));
             chat_instantViewRectPaint.setStrokeWidth(dp(1));
             chat_pollTimerPaint.setStrokeWidth(dp(1.1f));
-            chat_actionTextPaint.setTextSize(dp(Math.max(16, SharedConfig.fontSize) - 2));
-            chat_actionTextPaint2.setTextSize(dp(Math.max(16, SharedConfig.fontSize) - 2));
-            chat_actionTextPaint3.setTextSize(dp(Math.max(16, SharedConfig.fontSize) - 3));
+            // MeeroX: iOS sets the service line - "X joined the group", "photo
+            // changed" - at a flat 13pt. ChatMessageActionBubbleContentNode
+            // states it directly: Font.regular(13.0). This fork derives it
+            // from the chat font size instead, which lands on 14 by default
+            // and grows with the message text, so the notice competes with the
+            // messages around it rather than sitting quietly between them.
+            //
+            // The stock expression is kept when the switch is off, and the iOS
+            // figure is a constant because that is what the reference uses -
+            // it does not scale with the chat font there either.
+            final int meeroActionSize = meeroIosServiceText() ? 13 : Math.max(16, SharedConfig.fontSize) - 2;
+            chat_actionTextPaint.setTextSize(dp(meeroActionSize));
+            chat_actionTextPaint2.setTextSize(dp(meeroActionSize));
+            chat_actionTextPaint3.setTextSize(dp(meeroIosServiceText() ? 12 : Math.max(16, SharedConfig.fontSize) - 3));
             chat_unlockExtendedMediaTextPaint.setTextSize(dp(Math.max(16, SharedConfig.fontSize)));
             chat_contextResult_titleTextPaint.setTextSize(dp(15));
             chat_contextResult_descriptionTextPaint.setTextSize(dp(13));
