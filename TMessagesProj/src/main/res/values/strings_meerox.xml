@@ -64,4 +64,8 @@
     <string name="MeeroGroupSound">Sound &amp; launch</string>
     <string name="MeeroSearchHint">Search</string>
     <string name="MeeroHeaderEdit">Edit</string>
+    <string name="meeroIosSelection">iOS selection icons</string>
+    <string name="MeeroIosSelectionInfo">Uses Telegram for iOS\'s own glyphs for the pin, mute, archive and delete controls shown while chats are selected, and for the entries in the overflow menu behind them.</string>
+    <string name="meeroIosRow">iOS chat rows</string>
+    <string name="MeeroIosRowInfo">Lays a chat row out the way iOS does - a 60dp picture 16dp from the edge with the text starting at 84dp - and applies the same sizing to the account switcher, where it also shows each account\'s unread count.</string>
 </resources>
