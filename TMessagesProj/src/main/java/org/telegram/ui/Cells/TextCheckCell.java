@@ -107,7 +107,11 @@ public class TextCheckCell extends FrameLayout {
 
         textView = new TextView(context);
         textView.setTextColor(Theme.getColor(dialog ? Theme.key_dialogTextBlack : Theme.key_windowBackgroundWhiteBlackText, resourcesProvider));
-        textView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 16);
+        // MeeroX: iOS sets a grouped-table row's label at 17pt, one step above
+        // the 16 used here. The subtitle stays at 13 - that already matches
+        // the reference, and the gap between the two sizes is what makes the
+        // pair read as a title with a note under it rather than two labels.
+        textView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, meeroIosCell() ? 17 : 16);
         textView.setGravity((LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT) | Gravity.CENTER_VERTICAL);
         addView(textView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT, (LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT) | Gravity.TOP, LocaleController.isRTL ? 70 : padding, 0, LocaleController.isRTL ? padding : 70, 0));
 
@@ -142,6 +146,20 @@ public class TextCheckCell extends FrameLayout {
 
     public Switch getCheckBox() {
         return checkBox;
+    }
+
+    /**
+     * MeeroX: whether settings rows use the iOS sizing.
+     *
+     * Rides on meeroCards, which already owns how a settings surface looks -
+     * the grouped cards this row sits inside follow the same switch.
+     */
+    private static boolean meeroIosCell() {
+        try {
+            return tw.nekomimi.nekogram.MeeroCards.enabled();
+        } catch (Throwable ignore) {
+            return false;
+        }
     }
 
     @Override
