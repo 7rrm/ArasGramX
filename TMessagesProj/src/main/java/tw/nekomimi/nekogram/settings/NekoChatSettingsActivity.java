@@ -90,31 +90,6 @@ public class NekoChatSettingsActivity extends BaseNekoXSettingsActivity implemen
 
     private final CellGroup cellGroup = new CellGroup(this);
 
-    // MeeroX
-    private final AbstractConfigCell headerMeero = cellGroup.appendCell(new ConfigCellHeader("MeeroX"));
-    private final AbstractConfigCell meeroMenuBlurRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroMenuBlur, getString(R.string.MeeroMenuBlurInfo)));
-    private final AbstractConfigCell meeroIosBubblesRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosBubbles, getString(R.string.MeeroIosBubblesInfo)));
-    private final AbstractConfigCell meeroTapMenuRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroTapMenu, getString(R.string.MeeroTapMenuInfo)));
-    private final AbstractConfigCell meeroIosAnimRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosAnim, getString(R.string.MeeroIosAnimInfo)));
-    private final AbstractConfigCell meeroCardsRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroCards, getString(R.string.MeeroCardsInfo)));
-    private final AbstractConfigCell meeroDialogsStyleRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroDialogsStyle, getString(R.string.MeeroDialogsStyleInfo)));
-    private final AbstractConfigCell meeroIosIconsRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosIcons, getString(R.string.MeeroIosIconsInfo)));
-    private final AbstractConfigCell meeroIosSoundsRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosSounds, getString(R.string.MeeroIosSoundsInfo)));
-    private final AbstractConfigCell meeroGlassBordersRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroGlassBorders, getString(R.string.MeeroGlassBordersInfo)));
-    private final AbstractConfigCell meeroIosLoadingRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosLoading, getString(R.string.MeeroIosLoadingInfo)));
-    private final AbstractConfigCell meeroIosCodeRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosCode, getString(R.string.MeeroIosCodeInfo)));
-    private final AbstractConfigCell meeroIosIntroRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosIntro, getString(R.string.MeeroIosIntroInfo)));
-    private final AbstractConfigCell meeroIosSearchRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosSearch, getString(R.string.MeeroIosSearchInfo)));
-    private final AbstractConfigCell meeroIosFastScrollRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosFastScroll, getString(R.string.MeeroIosFastScrollInfo)));
-    private final AbstractConfigCell meeroIosShadowsRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosShadows, getString(R.string.MeeroIosShadowsInfo)));
-    private final AbstractConfigCell meeroIosHapticsRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosHaptics, getString(R.string.MeeroIosHapticsInfo)));
-    private final AbstractConfigCell meeroIosMenuAnimRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosMenuAnim, getString(R.string.MeeroIosMenuAnimInfo)));
-    private final AbstractConfigCell meeroIosInputPillRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosInputPill, getString(R.string.MeeroIosInputPillInfo)));
-    private final AbstractConfigCell meeroIosWaveformRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosWaveform, getString(R.string.MeeroIosWaveformInfo)));
-    private final AbstractConfigCell meeroIosSelectionRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosSelection, getString(R.string.MeeroIosSelectionInfo)));
-    private final AbstractConfigCell meeroIosRowRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosRow, getString(R.string.MeeroIosRowInfo)));
-    private final AbstractConfigCell dividerMeero = cellGroup.appendCell(new ConfigCellDivider());
-
     // Sticker Size
     private final AbstractConfigCell headerStickerSize = cellGroup.appendCell(new ConfigCellHeader(getString(R.string.StickerSize)));
     private final AbstractConfigCell stickerSizeRow = cellGroup.appendCell(new ConfigCellCustom("StickerSize", ConfigCellCustom.CUSTOM_ITEM_StickerSize, false));
