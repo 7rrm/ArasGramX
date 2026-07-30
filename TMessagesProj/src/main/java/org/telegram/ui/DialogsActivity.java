@@ -7194,7 +7194,11 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
         readItem = otherItem.addSubItem(read, meeroSel ? R.drawable.ios_chat_markasread : R.drawable.msg_markread, LocaleController.getString(R.string.MarkAsRead));
         clearItem = otherItem.addSubItem(clear, meeroSel ? R.drawable.ios_chat_delete : R.drawable.msg_clear, LocaleController.getString(R.string.ClearHistory));
         blockItem = otherItem.addSubItem(block, meeroSel ? R.drawable.ios_item_list_block : R.drawable.msg_block, LocaleController.getString(R.string.BlockUser));
-        otherItem.addSubItem(select_all, meeroSel ? R.drawable.ios_chat_selectall : R.drawable.msg_select_between_solar, LocaleController.getString(R.string.SelectAll));
+        // Held in a local rather than discarded: every other entry here is
+        // assigned to a field and so could be handed to the tinting loop
+        // below, but this one's return value was thrown away - which is why it
+        // was the single glyph still drawing black after v76 fixed the rest.
+        final ActionBarMenuSubItem selectAllItem = otherItem.addSubItem(select_all, meeroSel ? R.drawable.ios_chat_selectall : R.drawable.msg_select_between_solar, LocaleController.getString(R.string.SelectAll));
 
         muteItem.setOnLongClickListener(e -> {
             performSelectedDialogsAction(selectedDialogs, mute, true, true);
@@ -7234,7 +7238,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
             final int meeroSubColor = getThemedColor(Theme.key_actionBarDefaultSubmenuItemIcon);
             for (ActionBarMenuSubItem sub : new ActionBarMenuSubItem[]{
                     archiveItem, pin2Item, addToFolderItem, removeFromFolderItem,
-                    readItem, clearItem, blockItem}) {
+                    readItem, clearItem, blockItem, selectAllItem}) {
                 if (sub != null) {
                     sub.setIconColor(meeroSubColor, PorterDuff.Mode.SRC_IN);
                 }
