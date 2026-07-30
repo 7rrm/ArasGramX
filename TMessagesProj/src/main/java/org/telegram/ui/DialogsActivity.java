@@ -15274,27 +15274,71 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                 super.dispatchDraw(canvas);
             }
         };
-        btn.addView(avatarContainer, LayoutHelper.createLinear(34, 34, Gravity.CENTER_VERTICAL, 12, 0, 0, 0));
+        // MeeroX: iOS lists accounts with a larger picture than this. 40dp
+        // against 34 is what makes the row read as an account rather than as
+        // a menu entry that happens to have an icon.
+        final int meeroAvatarBox = meeroDialogsStyleEnabled() ? 40 : 34;
+        final int meeroAvatarImg = meeroDialogsStyleEnabled() ? 38 : 32;
+        btn.addView(avatarContainer, LayoutHelper.createLinear(meeroAvatarBox, meeroAvatarBox, Gravity.CENTER_VERTICAL, 12, 0, 0, 0));
 
         final BackupImageView avatarView = new BackupImageView(getContext());
         if (selected) {
             avatarView.setScaleX(0.833f);
             avatarView.setScaleY(0.833f);
         }
-        avatarView.setRoundRadius(dp(16));
+        avatarView.setRoundRadius(dp(meeroAvatarImg / 2));
         avatarView.getImageReceiver().setCurrentAccount(account);
         avatarView.setForUserOrChat(user, avatarDrawable);
-        avatarContainer.addView(avatarView, LayoutHelper.createLinear(32, 32, Gravity.CENTER, 1, 1, 1, 1));
+        avatarContainer.addView(avatarView, LayoutHelper.createLinear(meeroAvatarImg, meeroAvatarImg, Gravity.CENTER, 1, 1, 1, 1));
 
         final TextView textView = new TextView(getContext());
-        textView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 16);
+        textView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, meeroDialogsStyleEnabled() ? 17 : 16);
+        if (meeroDialogsStyleEnabled()) {
+            textView.setTypeface(AndroidUtilities.bold());
+        }
         textView.setTextColor(getThemedColor(Theme.key_dialogTextBlack));
         textView.setText(UserObject.getUserName(user));
         textView.setMaxLines(2);
         textView.setEllipsize(TextUtils.TruncateAt.END);
         btn.addView(textView, LayoutHelper.createLinear(0, LayoutHelper.WRAP_CONTENT, 1f, Gravity.CENTER_VERTICAL, 13, 0, 14, 0));
 
+        // MeeroX: iOS puts each account's unread count at the end of its row,
+        // which is the whole reason the switcher is worth opening - it says
+        // which account is waiting for you without switching to it first.
+        // Telegram for Android shows the name alone.
+        if (meeroDialogsStyleEnabled()) {
+            final int unread = meeroAccountUnread(account);
+            if (unread > 0) {
+                final TextView badge = new TextView(getContext());
+                badge.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 13);
+                badge.setTypeface(AndroidUtilities.bold());
+                badge.setTextColor(getThemedColor(Theme.key_chats_unreadCounterText));
+                badge.setText(unread > 999 ? "999+" : String.valueOf(unread));
+                badge.setGravity(Gravity.CENTER);
+                badge.setPadding(dp(7), 0, dp(7), 0);
+                badge.setBackground(Theme.createRoundRectDrawable(dp(10),
+                        getThemedColor(Theme.key_chats_unreadCounter)));
+                btn.addView(badge, LayoutHelper.createLinear(LayoutHelper.WRAP_CONTENT, 20,
+                        Gravity.CENTER_VERTICAL, 0, 0, 14, 0));
+            }
+        }
+
         return btn;
+    }
+
+    /**
+     * MeeroX: unread count for one account, or 0 if it cannot be read.
+     *
+     * MessagesStorage keeps this per account and already has it to hand - the
+     * badge on the app icon is the same number - so nothing is being counted
+     * here, only looked up.
+     */
+    private int meeroAccountUnread(int account) {
+        try {
+            return Math.max(0, MessagesStorage.getInstance(account).getMainUnreadCount());
+        } catch (Throwable ignore) {
+            return 0;
+        }
     }
 
     private boolean openAccountSelector(View view) {
