@@ -235,6 +235,21 @@ public class AlertDialog extends Dialog implements Drawable.Callback, Notificati
         }
     }
 
+    /**
+     * MeeroX: whether alerts follow the iOS layout.
+     *
+     * Rides on meeroCards, which owns how floating surfaces look - an alert is
+     * the largest of those, and having it disagree with the cards and sheets
+     * behind it would be the odd one out.
+     */
+    private static boolean meeroIosAlert() {
+        try {
+            return tw.nekomimi.nekogram.MeeroCards.enabled();
+        } catch (Throwable ignore) {
+            return false;
+        }
+    }
+
     public static class AlertDialogCell extends FrameLayout {
 
         private final Theme.ResourcesProvider resourcesProvider;
@@ -788,10 +803,22 @@ public class AlertDialog extends Dialog implements Drawable.Callback, Notificati
             titleTextView.cacheType = AnimatedEmojiDrawable.CACHE_TYPE_ALERT_PREVIEW;
             titleTextView.setText(title);
             titleTextView.setTextColor(getThemedColor(Theme.key_dialogTextBlack));
-            titleTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 20);
+            // MeeroX: iOS centres an alert's title and sets it at 17pt
+            // semibold. TextAlertController.swift builds it as
+            //     Font.semibold(theme.baseFontSize)   // baseFontSize = 17
+            //     paragraphAlignment: .center
+            // against the 20pt left-aligned heading used here, which reads as
+            // a screen title rather than an alert's.
+            //
+            // The centring is skipped when the dialog carries a list of items:
+            // those rows are left-aligned, and a centred heading over a
+            // left-aligned list looks misplaced rather than deliberate.
+            final boolean meeroCentre = meeroIosAlert() && items == null;
+            titleTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, meeroIosAlert() ? 17 : 20);
             titleTextView.setTypeface(AndroidUtilities.bold());
-            titleTextView.setGravity((topAnimationIsNew ? Gravity.CENTER_HORIZONTAL : LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT) | Gravity.TOP);
-            titleContainer.addView(titleTextView, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, (topAnimationIsNew ? Gravity.CENTER_HORIZONTAL : LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT) | Gravity.TOP, 0, 19, 0, topAnimationIsNew ? 4 : (subtitle != null ? 2 : (items != null ? 14 : 10))));
+            final int meeroTitleGravity = (meeroCentre || topAnimationIsNew) ? Gravity.CENTER_HORIZONTAL : (LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT);
+            titleTextView.setGravity(meeroTitleGravity | Gravity.TOP);
+            titleContainer.addView(titleTextView, LayoutHelper.createFrame(meeroCentre ? LayoutHelper.MATCH_PARENT : LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, meeroTitleGravity | Gravity.TOP, 0, 19, 0, topAnimationIsNew ? 4 : (subtitle != null ? 2 : (items != null ? 14 : 10))));
         }
 
         if (secondTitle != null && title != null) {
@@ -847,14 +874,20 @@ public class AlertDialog extends Dialog implements Drawable.Callback, Notificati
         messageTextView = new EffectsTextView(getContext());
         NotificationCenter.listenEmojiLoading(messageTextView);
         messageTextView.setTextColor(getThemedColor(topAnimationIsNew ? Theme.key_windowBackgroundWhiteGrayText : Theme.key_dialogTextBlack));
-        messageTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 16);
+        // MeeroX: the body under a title is 13pt on iOS - the same file
+        // computes it as floor(baseFontSize * 13.0 / 17.0), which is 13 at the
+        // default size. Without a title it stays at the base size, because
+        // then the body is the alert's only line and is set semibold instead.
+        messageTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, meeroIosAlert() ? (title != null ? 13 : 17) : 16);
         messageTextView.setMovementMethod(new AndroidUtilities.LinkMovementMethodMy());
         messageTextView.setLinkTextColor(getThemedColor(Theme.key_dialogTextLink));
         if (!messageTextViewClickable) {
             messageTextView.setClickable(false);
             messageTextView.setEnabled(false);
         }
-        messageTextView.setGravity((topAnimationIsNew ? Gravity.CENTER_HORIZONTAL : LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT) | Gravity.TOP);
+        // Centred for the same reason as the title, and skipped for the same
+        // one - a dialog with a row list keeps everything left-aligned.
+        messageTextView.setGravity(((meeroIosAlert() && items == null) || topAnimationIsNew ? Gravity.CENTER_HORIZONTAL : LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT) | Gravity.TOP);
         if (progressViewStyle == ALERT_TYPE_LOADING) {
             setCanceledOnTouchOutside(false);
             setCancelable(false);
