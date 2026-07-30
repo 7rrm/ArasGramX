@@ -1596,19 +1596,18 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
                 }
 
                 if (isCentered()) {
-                    // MeeroX: shift the centred title right by half of
-                    // whatever sits to its left, so the two together end up
-                    // centred rather than just the words.
+                    // MeeroX: a plain centred title.
                     //
-                    // The collapsed stories row is drawn beside the title, and
-                    // once it started tracking the title's position the pair
-                    // moved as one block - but that block was centred on the
-                    // words alone, so it hung 42px left of the bar's middle.
-                    // iOS centres the group: in the reference its circles span
-                    // 185..253 and its title 187..401, whose combined midpoint
-                    // is 293 against a 295 screen centre.
-                    final int meeroLeading = meeroTitleLeadingWidth();
-                    final int meeroCx = getMeasuredWidth() / 2 + meeroLeading / 2;
+                    // This used to be nudged right by a width the stories row
+                    // reported, to centre the pair. That was wrong twice over:
+                    // the row is only beside the title once it has collapsed,
+                    // and by then DialogsActivity has faded this view out and
+                    // the stories cell is drawing its own label instead. So the
+                    // nudge only ever moved an invisible view, while costing a
+                    // re-layout on every frame of the collapse. The grouping is
+                    // done inside DialogStoriesCell now, where both halves can
+                    // actually be measured.
+                    final int meeroCx = getMeasuredWidth() / 2;
                     titleTextView[i].layout(meeroCx - titleTextView[i].getMeasuredWidth() / 2, additionalTop + textTop - titleTextView[i].getPaddingTop(), meeroCx + titleTextView[i].getMeasuredWidth() / 2, additionalTop + textTop + titleTextView[i].getTextHeight() - titleTextView[i].getPaddingTop() + titleTextView[i].getPaddingBottom());
                 } else {
                     titleTextView[i].layout(textLeft, additionalTop + textTop - titleTextView[i].getPaddingTop(), textLeft + titleTextView[i].getMeasuredWidth(), additionalTop + textTop + titleTextView[i].getTextHeight() - titleTextView[i].getPaddingTop() + titleTextView[i].getPaddingBottom());
@@ -2710,42 +2709,6 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
     }
 
     /** MeeroX: centre titles when the iOS dialogs style is on. */
-    /**
-     * MeeroX: width reserved to the left of a centred title, in pixels.
-     *
-     * Something drawn beside the title has to be counted when the title is
-     * centred, or the two read as one block that is off to one side. The
-     * collapsed stories row is the only such thing today; it reports its own
-     * width and a zero here means there is nothing to make room for, which is
-     * the ordinary case.
-     */
-    private int meeroTitleLeadingWidth() {
-        try {
-            return meeroTitleLeading;
-        } catch (Throwable ignore) {
-            return 0;
-        }
-    }
-
-    private int meeroTitleLeading;
-
-    /**
-     * MeeroX: called by the stories row with the space it occupies beside the
-     * title, so the header can centre the pair instead of the words alone.
-     */
-    public void setMeeroTitleLeading(int width) {
-        if (meeroTitleLeading == width) {
-            return;
-        }
-        meeroTitleLeading = width;
-        // The caller reports this from its draw pass, and requesting a layout
-        // while a draw is in flight is either dropped or spins the two against
-        // each other. Posting it runs the re-layout on the next frame instead,
-        // which is soon enough - the value only changes when the row finishes
-        // collapsing or expanding.
-        post(this::requestLayout);
-    }
-
     private boolean meeroCenterTitle() {
         try {
             return meeroAllowCenteredTitle
