@@ -7207,6 +7207,40 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
         actionModeViews.add(deleteItem);
         actionModeViews.add(otherItem);
 
+        // MeeroX: force the selection bar's glyphs onto the action-mode icon
+        // colour.
+        //
+        // Two of the five came out black on the first build. The cause is not
+        // the artwork - all five iOS vectors are an identical #FF000000 fill -
+        // but how the colour reaches them. ActionBar.setItemsColor is called
+        // once during createView, well before this method runs, so the items
+        // built here never receive it; whatever they show afterwards comes
+        // from each drawable's own android:tint, which resolves against
+        // colorControlNormal and lands near black on a dark theme.
+        //
+        // ActionBarMenuItem.setIconColor would not fix it either: it applies
+        // the colour with PorterDuff.MULTIPLY, and multiplying a black fill by
+        // any colour leaves it black. SRC_IN replaces the colour outright,
+        // which is what these flat single-colour glyphs need.
+        if (meeroSel) {
+            final int meeroSelColor = getThemedColor(Theme.key_actionBarActionModeDefaultIcon);
+            for (ActionBarMenuItem it : new ActionBarMenuItem[]{pinItem, muteItem, archive2Item, deleteItem, otherItem}) {
+                meeroTintActionModeIcon(it, meeroSelColor);
+            }
+            // The overflow entries need the same treatment for the same
+            // reason - ActionBarMenuSubItem also defaults to MULTIPLY - but it
+            // exposes a mode parameter, so no reflection into the view is
+            // needed here.
+            final int meeroSubColor = getThemedColor(Theme.key_actionBarDefaultSubmenuItemIcon);
+            for (ActionBarMenuSubItem sub : new ActionBarMenuSubItem[]{
+                    archiveItem, pin2Item, addToFolderItem, removeFromFolderItem,
+                    readItem, clearItem, blockItem}) {
+                if (sub != null) {
+                    sub.setIconColor(meeroSubColor, PorterDuff.Mode.SRC_IN);
+                }
+            }
+        }
+
         updateCounters(false);
     }
 
@@ -15351,6 +15385,26 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
             return tw.nekomimi.nekogram.NekoConfig.meeroIosRow.Bool();
         } catch (Throwable ignore) {
             return false;
+        }
+    }
+
+    /**
+     * MeeroX: paints one selection-bar glyph with SRC_IN.
+     *
+     * setIconColor uses MULTIPLY, which cannot lighten a black fill - the iOS
+     * vectors are solid #FF000000, so multiplying leaves them exactly as they
+     * were. Replacing the colour is the only mode that works for them.
+     */
+    private void meeroTintActionModeIcon(ActionBarMenuItem item, int color) {
+        if (item == null) {
+            return;
+        }
+        try {
+            final android.widget.ImageView icon = item.getIconView();
+            if (icon != null) {
+                icon.setColorFilter(new PorterDuffColorFilter(color, PorterDuff.Mode.SRC_IN));
+            }
+        } catch (Throwable ignore) {
         }
     }
 
