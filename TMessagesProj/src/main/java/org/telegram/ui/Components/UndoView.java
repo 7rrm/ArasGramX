@@ -9,12 +9,17 @@ import android.animation.ObjectAnimator;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Canvas;
+import android.graphics.ColorFilter;
 import android.graphics.Paint;
+import android.graphics.PixelFormat;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
+import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
+
+import androidx.annotation.NonNull;
 import android.os.SystemClock;
 import android.text.Layout;
 import android.text.Selection;
@@ -337,15 +342,97 @@ public class UndoView extends FrameLayout {
         textPaint.setColor(getThemedColor(Theme.key_undo_infoColor));
 
         setWillNotDraw(false);
-        backgroundDrawable = Theme.createRoundRectDrawable(AndroidUtilities.dp(10), getThemedColor(Theme.key_undo_background));
+        // MeeroX: iOS draws this bar as a capsule, the same shape the toast
+        // above it uses. A fixed 10dp corner on a bar this tall reads as a
+        // rounded box instead.
+        //
+        // The radius has to be computed at draw time, not here: this drawable
+        // is built before the view is measured, and RoundRectShape - which
+        // Theme.createRoundRectDrawable wraps - bakes its corner radii in at
+        // construction and never revisits them when the drawable is resized.
+        // That is exactly what made the first attempt at the toast capsule
+        // stay a box in v65, so MeeroCapsuleDrawable reads its bounds on every
+        // draw instead.
+        backgroundDrawable = meeroIosUndo()
+                ? new MeeroUndoCapsule(getThemedColor(Theme.key_undo_background))
+                : Theme.createRoundRectDrawable(AndroidUtilities.dp(10), getThemedColor(Theme.key_undo_background));
 
         setOnTouchListener((v, event) -> true);
 
         setVisibility(INVISIBLE);
     }
 
+    /** MeeroX: rides on the iOS card styling switch, like the toast. */
+    private static boolean meeroIosUndo() {
+        try {
+            return tw.nekomimi.nekogram.MeeroCards.enabled();
+        } catch (Throwable ignore) {
+            return false;
+        }
+    }
+
+    /**
+     * MeeroX: a pill whose radius is always half of its own bounds.
+     *
+     * Reads the radius from getBounds() on every draw, so it is a capsule
+     * whatever height the bar ends up - unlike RoundRectShape, which fixes its
+     * corners when it is built and would keep whatever value it was given
+     * before the view was ever measured.
+     *
+     * setColor is offered because Theme.setDrawableColor falls through to a
+     * MULTIPLY colour filter for any drawable it does not recognise, and
+     * multiplying a fill by a colour is not the same as replacing it - the bar
+     * would come out darker every time setColors ran.
+     */
+    private static class MeeroUndoCapsule extends Drawable {
+
+        private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        private final RectF rect = new RectF();
+
+        MeeroUndoCapsule(int color) {
+            paint.setColor(color);
+        }
+
+        void setColor(int color) {
+            paint.setColor(color);
+            invalidateSelf();
+        }
+
+        @Override
+        public void draw(@NonNull Canvas canvas) {
+            final Rect b = getBounds();
+            if (b.width() <= 0 || b.height() <= 0) {
+                return;
+            }
+            rect.set(b);
+            final float r = Math.min(rect.width(), rect.height()) / 2f;
+            canvas.drawRoundRect(rect, r, r, paint);
+        }
+
+        @Override
+        public void setAlpha(int alpha) {
+            paint.setAlpha(alpha);
+        }
+
+        @Override
+        public void setColorFilter(ColorFilter colorFilter) {
+            paint.setColorFilter(colorFilter);
+        }
+
+        @Override
+        public int getOpacity() {
+            return PixelFormat.TRANSLUCENT;
+        }
+    }
+
     public void setColors(int background, int text) {
-        Theme.setDrawableColor(backgroundDrawable, background);
+        // The capsule is not a shape Theme.setDrawableColor knows, so it would
+        // be handed a MULTIPLY filter rather than the colour itself.
+        if (backgroundDrawable instanceof MeeroUndoCapsule) {
+            ((MeeroUndoCapsule) backgroundDrawable).setColor(background);
+        } else {
+            Theme.setDrawableColor(backgroundDrawable, background);
+        }
         infoTextView.setTextColor(text);
         subinfoTextView.setTextColor(text);
         leftImageView.setLayerColor("info1.**", background | 0xff000000);
