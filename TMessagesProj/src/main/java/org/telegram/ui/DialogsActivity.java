@@ -10810,6 +10810,21 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
             // themselves, which stay MEERO_HEADER_BUTTON so they still line up
             // with the Edit button across the bar.
             final int groupSize = dp(MEERO_HEADER_GROUP);
+            // Widen the menu so the band drawn across it clears the glyphs
+            // sideways by as much as it does above and below.
+            //
+            // The figure comes from the reference shot rather than from the
+            // difference between the two constants. Measuring the iOS capsule
+            // there: it stands 132px tall around 62px glyphs and 262px wide
+            // around 191px of them, which is a margin of 35px vertically and
+            // 36px horizontally - the same on all four sides, and 0.27 of the
+            // band's height. The vertical proportion here already matches it
+            // (0.45 against 0.47); only the horizontal was short, at 4px
+            // against the 34px above and below, which is why the pair looked
+            // squeezed from the sides while sitting comfortably top to bottom.
+            final int groupPad = Math.round(MEERO_HEADER_GROUP * 0.27f);
+            menu.setPadding(dp(groupPad), 0, dp(groupPad), 0);
+            menu.setClipToPadding(false);
             final BlurredBackgroundDrawable group = iBlur3FactoryLiquidGlass.create(
                     menu, BlurredBackgroundProviderImpl.headerButton(resourceProvider));
             group.setRadius(groupSize / 2f);
@@ -10818,14 +10833,17 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                 if (meeroHeaderGroupGlass == null) {
                     return;
                 }
-                // Centre a band exactly `size` tall in the menu. The previous
-                // arithmetic clamped with Math.max(0, top) and
-                // Math.max(size, top + size), which only agree while top is
-                // positive: once the buttons shrank to 30dp inside a ~56dp
-                // menu the two clamps stopped describing the same band and
-                // the glass was drawn from the top of the menu all the way
-                // down, so it came out far taller than the icons and sat
-                // below them instead of behind them.
+                // The band spans the menu's full width. That width now
+                // includes the side padding applied below, which is what gives
+                // the glyphs the same margin sideways as they already have
+                // above and below - previously the band was exactly as wide as
+                // the two items, so they cleared its edge by 34px vertically
+                // but only 4px horizontally and the surround looked lopsided.
+                //
+                // Drawing has to stay inside the menu's own bounds: onDraw
+                // clips to them, so widening the band by using negative
+                // coordinates would simply cut the overhang off. Padding the
+                // view is what actually makes room.
                 final int h = menu.getHeight();
                 final int top = Math.max(0, (h - groupSize) / 2);
                 meeroHeaderGroupGlass.setBounds(0, top, menu.getWidth(), top + groupSize);
