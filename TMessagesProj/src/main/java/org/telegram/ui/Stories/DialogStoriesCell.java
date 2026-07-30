@@ -1454,6 +1454,14 @@ public class DialogStoriesCell extends FrameLayout implements NotificationCenter
             return menuItemsOffset;
         }
         try {
+            // Tell the header how much room this row takes beside the title,
+            // so it can centre the pair rather than the words on their own.
+            // Reported as zero while the row is expanded - there is nothing
+            // next to the title then, and reserving space would push it off
+            // centre for no reason.
+            final int count0 = Math.max(1, miniItems.size());
+            final float rowW0 = dp(collapsedSizeDp() * count0 - collapsedDisDp() * Math.max(0, count0 - 1));
+            actionBar.setMeeroTitleLeading(collapsedProgress1 > 0.5f ? (int) (rowW0 + dp(8)) : 0);
             final org.telegram.ui.ActionBar.SimpleTextView title = actionBar.getTitleTextView();
             if (title == null || title.getMeasuredWidth() <= 0) {
                 return menuItemsOffset;
