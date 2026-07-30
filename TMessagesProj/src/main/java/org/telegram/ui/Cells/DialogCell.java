@@ -177,13 +177,15 @@ public class DialogCell extends BaseCell implements StoriesListPlaceProvider.Ava
     /**
      * MeeroX: whether the row uses iOS's chat-list geometry.
      *
-     * Rides on meeroDialogsStyle, the switch that already owns how this list
-     * looks - the header, the tabs and the search field all follow it, and a
-     * row laid out differently from the chrome around it would look accidental.
+     * Its own switch rather than meeroDialogsStyle. That one already governs
+     * the header, the folder tabs and the search field, so folding the row
+     * into it meant the picture size could not be changed back without also
+     * giving up the header - and the row is the part someone is most likely
+     * to want to undo, since it changes how much of the list fits on screen.
      */
     private static boolean meeroIosRow() {
         try {
-            return tw.nekomimi.nekogram.NekoConfig.meeroDialogsStyle.Bool();
+            return tw.nekomimi.nekogram.NekoConfig.meeroIosRow.Bool();
         } catch (Throwable ignore) {
             return false;
         }
