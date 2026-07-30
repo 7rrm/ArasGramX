@@ -753,4 +753,8 @@
     <string name="MeeroGroupSound">الصوت والبداية</string>
     <string name="MeeroSearchHint">بحث</string>
     <string name="MeeroHeaderEdit">تحرير</string>
+    <string name="meeroIosSelection">أيقونات التحديد بنمط iOS</string>
+    <string name="MeeroIosSelectionInfo">يستعمل رموز تلكرام آيفون نفسها لأزرار التثبيت والكتم والأرشفة والحذف الي تظهر عند تحديد محادثات، ولعناصر قائمة المزيد وراها.</string>
+    <string name="meeroIosRow">صفوف المحادثات بنمط iOS</string>
+    <string name="MeeroIosRowInfo">يرتّب صف المحادثة مثل الآيفون — صورة 60 على بعد 16 من الحافة والنص يبدأ عند 84 — ويطبّق نفس القياس على شاشة الحسابات، وهناك يعرض عدد غير المقروء لكل حساب.</string>
 </resources>
