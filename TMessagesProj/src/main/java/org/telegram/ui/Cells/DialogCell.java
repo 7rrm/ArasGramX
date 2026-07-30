@@ -174,10 +174,57 @@ public class DialogCell extends BaseCell implements StoriesListPlaceProvider.Ava
     private boolean drawCommunityAvatar;
     private boolean isShareToStoryCell;
     public ShareDialogCell.RepostStoryDrawable repostStoryDrawable;
-    public int avatarStart = 11;
-    public int messagePaddingStart = 72;
-    public int heightDefault = 70;
-    public int heightThreeLines = 76;
+    /**
+     * MeeroX: whether the row uses iOS's chat-list geometry.
+     *
+     * Rides on meeroDialogsStyle, the switch that already owns how this list
+     * looks - the header, the tabs and the search field all follow it, and a
+     * row laid out differently from the chrome around it would look accidental.
+     */
+    private static boolean meeroIosRow() {
+        try {
+            return tw.nekomimi.nekogram.NekoConfig.meeroDialogsStyle.Bool();
+        } catch (Throwable ignore) {
+            return false;
+        }
+    }
+
+    /**
+     * MeeroX: the three figures that place a row's avatar and text.
+     *
+     * Taken from Telegram-iOS's ChatListItem.swift, which is explicit about
+     * all three:
+     *
+     *   avatarDiameter    = 60.0                    (line 2564)
+     *   avatarLeftEdgeInset = 16.0                  (line 2565)
+     *   avatarLeftInset   = 24.0 + avatarDiameter   (line 2580)
+     *
+     * so the avatar is 60pt starting 16pt in, and the text starts 84pt in -
+     * leaving 8pt between the two. This fork used 52 / 11 / 72, which is a
+     * noticeably smaller picture and 9dp of gap.
+     *
+     * The three have to move together. Growing the avatar alone would leave
+     * 72 - 11 - 60 = 1dp before the text and the two would touch; that is why
+     * the text inset is derived here rather than left at 72.
+     */
+    private static final int MEERO_AVATAR_SIZE = 60;
+    private static final int MEERO_AVATAR_START = 16;
+    private static final int MEERO_TEXT_START = 84;
+
+    /** Avatar diameter for this row, in dp. */
+    private int meeroAvatarSize() {
+        return meeroIosRow() ? MEERO_AVATAR_SIZE : 52;
+    }
+
+    public int avatarStart = meeroIosRow() ? MEERO_AVATAR_START : 11;
+    public int messagePaddingStart = meeroIosRow() ? MEERO_TEXT_START : 72;
+    // The row has to grow with the avatar or the picture runs into the
+    // separator. Both layouts leave a 9dp margin below the avatar today
+    // (70 - 9 - 52 and 76 - 11 - 56), so the new heights keep that same
+    // margin around the larger picture rather than inventing a figure:
+    // 9 + 60 + 9 = 78 for two lines, 11 + 60 + 9 = 80 for three.
+    public int heightDefault = meeroIosRow() ? 78 : 70;
+    public int heightThreeLines = meeroIosRow() ? 80 : 76;
     public int addHeightForTags = 3;
     public int addForumHeightForTags = 11;
     public TLRPC.TL_forumTopic forumTopic;
@@ -705,7 +752,7 @@ public class DialogCell extends BaseCell implements StoriesListPlaceProvider.Ava
         Theme.createDialogsResources(context);
         drawMonoforumAvatar = false;
         drawCommunityAvatar = false;
-        avatarImage.setRoundRadius(dp(26));
+        avatarImage.setRoundRadius(dp(meeroAvatarSize() / 2));
         for (int i = 0; i < thumbImage.length; ++i) {
             thumbImage[i] = new ImageReceiver(this);
             thumbImage[i].ignoreNotifications = true;
@@ -2489,14 +2536,14 @@ public class DialogCell extends BaseCell implements StoriesListPlaceProvider.Ava
 
             if (LocaleController.isRTL) {
                 buttonLeft = typingLeft = messageLeft = messageNameLeft = dp(22);
-                avatarLeft = getMeasuredWidth() - dp(52 + avatarStart);
+                avatarLeft = getMeasuredWidth() - dp(meeroAvatarSize() + avatarStart);
                 thumbLeft = avatarLeft - dp(11 + (thumbsCount * (thumbSize + 2) - 2));
             } else {
                 buttonLeft = typingLeft = messageLeft = messageNameLeft = dp(messagePaddingStart + 4);
                 avatarLeft = dp(avatarStart);
                 thumbLeft = avatarLeft + dp(56 + 11);
             }
-            storyParams.originalAvatarRect.set(avatarLeft, avatarTop, avatarLeft + dp(52), avatarTop + dp(52));
+            storyParams.originalAvatarRect.set(avatarLeft, avatarTop, avatarLeft + dp(meeroAvatarSize()), avatarTop + dp(meeroAvatarSize()));
             for (int i = 0; i < thumbImage.length; ++i) {
                 thumbImage[i].setImageCoords(thumbLeft + (thumbSize + 2) * i, avatarTop + dp(30) + (twoLinesForName ? dp(20) : 0) - (!(useForceThreeLines || SharedConfig.useThreeLinesLayout) && tags != null && !tags.isEmpty() ? dp(9) : 0), dp(thumbSize), dp(thumbSize));
             }
@@ -3256,7 +3303,7 @@ public class DialogCell extends BaseCell implements StoriesListPlaceProvider.Ava
             }
             drawMonoforumAvatar = false;
             drawCommunityAvatar = false;
-            avatarImage.setRoundRadius(dp(26));
+            avatarImage.setRoundRadius(dp(meeroAvatarSize() / 2));
             drawUnmute = false;
         } else {
             int oldUnreadCount = unreadCount;
@@ -4029,7 +4076,7 @@ public class DialogCell extends BaseCell implements StoriesListPlaceProvider.Ava
                 }
             }
             int drawableX = getMeasuredWidth() - dp(43) - translationDrawable.getIntrinsicWidth() / 2;
-            int drawableY = (getMeasuredHeight() - dp(52)) / 2;
+            int drawableY = (getMeasuredHeight() - dp(meeroAvatarSize())) / 2;
             int drawableCx = drawableX + translationDrawable.getIntrinsicWidth() / 2;
             int drawableCy = drawableY + translationDrawable.getIntrinsicHeight() / 2;
 
