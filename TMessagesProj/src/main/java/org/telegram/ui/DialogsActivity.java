@@ -7167,21 +7167,34 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
         actionMode.addView(selectedDialogsCountTextView, LayoutHelper.createLinear(0, LayoutHelper.MATCH_PARENT, 1.0f, hasMainTabs ? 18 : 72, 0, 0, 0));
         selectedDialogsCountTextView.setOnTouchListener((v, event) -> true);
 
-        pinItem = actionMode.addItemWithWidth(pin, R.drawable.msg_pin, dp(48));
-        muteItem = actionMode.addItemWithWidth(mute, R.drawable.msg_mute, dp(48));
-        archive2Item = actionMode.addItemWithWidth(archive2, R.drawable.msg_archive, dp(48));
-        deleteItem = actionMode.addItemWithWidth(delete, R.drawable.msg_delete, dp(48), LocaleController.getString(R.string.Delete));
+        // MeeroX: the selection bar's glyphs, swapped for the bundled
+        // Telegram-iOS ones. Only the artwork changes - every id, width,
+        // handler and menu entry below is untouched, so the bar behaves
+        // exactly as before.
+        //
+        // Two of the obvious candidates could not be used. Both
+        // ios_chat_messageselectiontrash and ios_chat_pin converted to a
+        // single filled rectangle covering their whole viewport - the same
+        // failure that shipped a black block in place of a tick in v57 - so
+        // they would have painted solid squares. ios_chat_delete and
+        // ios_chat_pinnedlist are the working equivalents, and every glyph
+        // named here was rendered and checked before being wired in.
+        final boolean meeroSel = meeroIosSelectionIcons();
+        pinItem = actionMode.addItemWithWidth(pin, meeroSel ? R.drawable.ios_chat_pinnedlist : R.drawable.msg_pin, dp(48));
+        muteItem = actionMode.addItemWithWidth(mute, meeroSel ? R.drawable.ios_chat_mute2d : R.drawable.msg_mute, dp(48));
+        archive2Item = actionMode.addItemWithWidth(archive2, meeroSel ? R.drawable.ios_chat_archive : R.drawable.msg_archive, dp(48));
+        deleteItem = actionMode.addItemWithWidth(delete, meeroSel ? R.drawable.ios_chat_delete : R.drawable.msg_delete, dp(48), LocaleController.getString(R.string.Delete));
 
-        ActionBarMenuItem otherItem = actionMode.addItemWithWidth(0, R.drawable.ic_ab_other, dp(48), LocaleController.getString(R.string.AccDescrMoreOptions));
+        ActionBarMenuItem otherItem = actionMode.addItemWithWidth(0, meeroSel ? R.drawable.ios_chat_list_navigationmore : R.drawable.ic_ab_other, dp(48), LocaleController.getString(R.string.AccDescrMoreOptions));
         actionMode.addView(new View(getContext()), LayoutHelper.createLinear(5, LayoutHelper.MATCH_PARENT));
-        archiveItem = otherItem.addSubItem(archive, R.drawable.msg_archive, LocaleController.getString(R.string.Archive));
-        pin2Item = otherItem.addSubItem(pin2, R.drawable.msg_pin, LocaleController.getString(R.string.DialogPin));
-        addToFolderItem = otherItem.addSubItem(add_to_folder, R.drawable.msg_addfolder, LocaleController.getString(R.string.FilterAddTo));
-        removeFromFolderItem = otherItem.addSubItem(remove_from_folder, R.drawable.msg_removefolder, LocaleController.getString(R.string.FilterRemoveFrom));
-        readItem = otherItem.addSubItem(read, R.drawable.msg_markread, LocaleController.getString(R.string.MarkAsRead));
-        clearItem = otherItem.addSubItem(clear, R.drawable.msg_clear, LocaleController.getString(R.string.ClearHistory));
-        blockItem = otherItem.addSubItem(block, R.drawable.msg_block, LocaleController.getString(R.string.BlockUser));
-        otherItem.addSubItem(select_all, R.drawable.msg_select_between_solar, LocaleController.getString(R.string.SelectAll));
+        archiveItem = otherItem.addSubItem(archive, meeroSel ? R.drawable.ios_chat_archive : R.drawable.msg_archive, LocaleController.getString(R.string.Archive));
+        pin2Item = otherItem.addSubItem(pin2, meeroSel ? R.drawable.ios_chat_pinnedlist : R.drawable.msg_pin, LocaleController.getString(R.string.DialogPin));
+        addToFolderItem = otherItem.addSubItem(add_to_folder, meeroSel ? R.drawable.ios_chat_addtofolder : R.drawable.msg_addfolder, LocaleController.getString(R.string.FilterAddTo));
+        removeFromFolderItem = otherItem.addSubItem(remove_from_folder, meeroSel ? R.drawable.ios_chat_removefromfolderup : R.drawable.msg_removefolder, LocaleController.getString(R.string.FilterRemoveFrom));
+        readItem = otherItem.addSubItem(read, meeroSel ? R.drawable.ios_chat_markasread : R.drawable.msg_markread, LocaleController.getString(R.string.MarkAsRead));
+        clearItem = otherItem.addSubItem(clear, meeroSel ? R.drawable.ios_chat_delete : R.drawable.msg_clear, LocaleController.getString(R.string.ClearHistory));
+        blockItem = otherItem.addSubItem(block, meeroSel ? R.drawable.ios_item_list_block : R.drawable.msg_block, LocaleController.getString(R.string.BlockUser));
+        otherItem.addSubItem(select_all, meeroSel ? R.drawable.ios_chat_selectall : R.drawable.msg_select_between_solar, LocaleController.getString(R.string.SelectAll));
 
         muteItem.setOnLongClickListener(e -> {
             performSelectedDialogsAction(selectedDialogs, mute, true, true);
@@ -15277,8 +15290,8 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
         // MeeroX: iOS lists accounts with a larger picture than this. 40dp
         // against 34 is what makes the row read as an account rather than as
         // a menu entry that happens to have an icon.
-        final int meeroAvatarBox = meeroDialogsStyleEnabled() ? 40 : 34;
-        final int meeroAvatarImg = meeroDialogsStyleEnabled() ? 38 : 32;
+        final int meeroAvatarBox = meeroIosAccountRow() ? 40 : 34;
+        final int meeroAvatarImg = meeroIosAccountRow() ? 38 : 32;
         btn.addView(avatarContainer, LayoutHelper.createLinear(meeroAvatarBox, meeroAvatarBox, Gravity.CENTER_VERTICAL, 12, 0, 0, 0));
 
         final BackupImageView avatarView = new BackupImageView(getContext());
@@ -15292,8 +15305,8 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
         avatarContainer.addView(avatarView, LayoutHelper.createLinear(meeroAvatarImg, meeroAvatarImg, Gravity.CENTER, 1, 1, 1, 1));
 
         final TextView textView = new TextView(getContext());
-        textView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, meeroDialogsStyleEnabled() ? 17 : 16);
-        if (meeroDialogsStyleEnabled()) {
+        textView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, meeroIosAccountRow() ? 17 : 16);
+        if (meeroIosAccountRow()) {
             textView.setTypeface(AndroidUtilities.bold());
         }
         textView.setTextColor(getThemedColor(Theme.key_dialogTextBlack));
@@ -15306,7 +15319,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
         // which is the whole reason the switcher is worth opening - it says
         // which account is waiting for you without switching to it first.
         // Telegram for Android shows the name alone.
-        if (meeroDialogsStyleEnabled()) {
+        if (meeroIosAccountRow()) {
             final int unread = meeroAccountUnread(account);
             if (unread > 0) {
                 final TextView badge = new TextView(getContext());
@@ -15324,6 +15337,30 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
         }
 
         return btn;
+    }
+
+    /**
+     * MeeroX: whether the account rows use the iOS sizing.
+     *
+     * Shares meeroIosRow with the chat rows rather than the header switch:
+     * both are list rows built around an avatar and a name, and someone who
+     * wants the smaller stock row in one place wants it in the other.
+     */
+    private static boolean meeroIosAccountRow() {
+        try {
+            return tw.nekomimi.nekogram.NekoConfig.meeroIosRow.Bool();
+        } catch (Throwable ignore) {
+            return false;
+        }
+    }
+
+    /** MeeroX: whether selection mode uses the bundled iOS glyphs. */
+    private static boolean meeroIosSelectionIcons() {
+        try {
+            return tw.nekomimi.nekogram.NekoConfig.meeroIosSelection.Bool();
+        } catch (Throwable ignore) {
+            return false;
+        }
     }
 
     /**
