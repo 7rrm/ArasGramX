@@ -103,6 +103,8 @@ public class NekoConfig {
     public static ConfigItem meeroIosMenuAnim = addConfig("meeroIosMenuAnim", configTypeBool, true);
     public static ConfigItem meeroIosInputPill = addConfig("meeroIosInputPill", configTypeBool, true);
     public static ConfigItem meeroIosWaveform = addConfig("meeroIosWaveform", configTypeBool, true);
+    public static ConfigItem meeroIosSelection = addConfig("meeroIosSelection", configTypeBool, true);
+    public static ConfigItem meeroIosRow = addConfig("meeroIosRow", configTypeBool, true);
 
     // From NekoConfig
     public static ConfigItem useIPv6 = addConfig("IPv6", configTypeBool, false);
