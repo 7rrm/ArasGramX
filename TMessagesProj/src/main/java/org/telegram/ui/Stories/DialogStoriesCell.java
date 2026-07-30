@@ -1449,6 +1449,24 @@ public class DialogStoriesCell extends FrameLayout implements NotificationCenter
      * Falls back to menuItemsOffset whenever the title cannot be measured yet -
      * during the first layout pass, or when the bar has no title view at all.
      */
+    /**
+     * MeeroX: how wide the collapsed row actually draws, in pixels.
+     *
+     * Not the circles' own diameters. Each mini item is laid out at a full
+     * ITEM_WIDTH and then pulled back over its neighbour by the decoration
+     * above, so the row's real extent is that first item plus one overlap step
+     * per item after it. Measuring it as
+     * size * n - overlap * (n - 1) gave 31.8dp against the 91.6dp the row
+     * really occupies at three items, and the header was told to reserve the
+     * smaller figure - which is why the group still sat left of centre even
+     * once the arithmetic looked right.
+     */
+    private float meeroRowWidth() {
+        final int count = Math.max(1, miniItems.size());
+        final float step = dp(ITEM_WIDTH) + (-dp(85) + dp(29 + collapsedDisDp() - 14));
+        return dp(ITEM_WIDTH) + step * (count - 1);
+    }
+
     private float meeroMiniListX() {
         if (!meeroIosStories() || actionBar == null) {
             return menuItemsOffset;
@@ -1456,12 +1474,15 @@ public class DialogStoriesCell extends FrameLayout implements NotificationCenter
         try {
             // Tell the header how much room this row takes beside the title,
             // so it can centre the pair rather than the words on their own.
-            // Reported as zero while the row is expanded - there is nothing
-            // next to the title then, and reserving space would push it off
-            // centre for no reason.
-            final int count0 = Math.max(1, miniItems.size());
-            final float rowW0 = dp(collapsedSizeDp() * count0 - collapsedDisDp() * Math.max(0, count0 - 1));
-            actionBar.setMeeroTitleLeading(collapsedProgress1 > 0.5f ? (int) (rowW0 + dp(8)) : 0);
+            //
+            // Scaled by collapsedProgress1 rather than switched at a
+            // threshold. The first version reported the full width past 0.5
+            // and zero below it, so the title jumped half the row's width in a
+            // single frame - the row slid left, then snapped back. Ramping the
+            // figure with the same progress that drives the collapse keeps the
+            // title moving in step with the circles the whole way.
+            actionBar.setMeeroTitleLeading((int) ((meeroRowWidth() + dp(8))
+                    * Utilities.clamp(collapsedProgress1, 1f, 0f)));
             final org.telegram.ui.ActionBar.SimpleTextView title = actionBar.getTitleTextView();
             if (title == null || title.getMeasuredWidth() <= 0) {
                 return menuItemsOffset;
@@ -1474,11 +1495,8 @@ public class DialogStoriesCell extends FrameLayout implements NotificationCenter
                 final android.view.View box = (android.view.View) parent;
                 titleLeft += box.getLeft() + box.getTranslationX();
             }
-            // The row is as wide as its circles overlapped, plus a gap before
-            // the words - the same 8dp the reference leaves between them.
-            final int count = Math.max(1, miniItems.size());
-            final float rowWidth = dp(collapsedSizeDp() * count - collapsedDisDp() * Math.max(0, count - 1));
-            final float x = titleLeft - rowWidth - dp(8);
+            // Leave a gap before the words - the same 8dp the reference does.
+            final float x = titleLeft - meeroRowWidth() - dp(8);
             // Never let it slide under the leading control; below that the
             // stock offset is the safer place for it.
             return Math.max(menuItemsOffset, x);
