@@ -79,6 +79,15 @@ public class VoIPToggleButton extends FrameLayout {
     private ValueAnimator pressedScaleAnimator;
     private float pressedScale = 1.0f;
 
+    /** MeeroX: sizes the call controls the way Telegram for iOS does. */
+    private static boolean meeroIosCall() {
+        try {
+            return tw.nekomimi.nekogram.NekoConfig.meeroIosCall.Bool();
+        } catch (Throwable ignore) {
+            return false;
+        }
+    }
+
     public VoIPToggleButton(@NonNull Context context, float diameter) {
         super(context);
         this.diameter = diameter;
@@ -90,10 +99,13 @@ public class VoIPToggleButton extends FrameLayout {
         for (int i = 0; i < 2; i++) {
             TextView textView = new TextView(context);
             textView.setGravity(Gravity.CENTER_HORIZONTAL);
-            textView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 11);
+            // MeeroX: iOS labels these Font.regular(13.0)
+            // (CallControllerButton.swift:10) and sits them 8pt under a large
+            // button (:392), where the fork uses 11 and 6.
+            textView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, meeroIosCall() ? 13 : 11);
             textView.setTextColor(Color.WHITE);
             textView.setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_NO);
-            textLayoutContainer.addView(textView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 0, 0, diameter + 6, 0, 0));
+            textLayoutContainer.addView(textView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 0, 0, diameter + (meeroIosCall() ? 8 : 6), 0, 0));
             this.textView[i] = textView;
         }
         textView[1].setVisibility(View.GONE);
