@@ -15102,8 +15102,15 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
 
     private void checkUi_itemSearchVisibility() {
         // The compact search icon stands in for the field once it scrolls
-        // away, so it is only redundant while the field is actually pinned.
-        final float factor0 = (isSupportSearch() && !meeroPinSearchField()) ? 1 : 0;
+        // away, so it is redundant whenever the iOS header is on.
+        //
+        // This used to test meeroPinSearchField(), which is false while
+        // stories are present - it turns off the pinning there because
+        // onLayout already makes room for the field. But the icon's
+        // redundancy has nothing to do with the pinning: the search field is
+        // on screen either way, so with stories up the icon came back and sat
+        // next to the collapsed row. Test the style switch directly.
+        final float factor0 = (isSupportSearch() && !meeroDialogsStyleEnabled()) ? 1 : 0;
         final float factor1 = animatorSearchButtonVisible.getFloatValue();
         final float factor2 = 1f - getRightSlidingProgress();
         final float factor3 = 1f - animatorDoneButtonVisible.getFloatValue();
