@@ -54,21 +54,21 @@ public class VoIpSwitchLayout extends FrameLayout {
         this.backgroundProvider = backgroundProvider;
         setWillNotDraw(true);
         voIpButtonView = new VoIpButtonView(context, backgroundProvider);
-        addView(voIpButtonView, LayoutHelper.createFrame(VoIpButtonView.ITEM_SIZE + 1.5f, VoIpButtonView.ITEM_SIZE + 1.5f, Gravity.CENTER_HORIZONTAL));
+        addView(voIpButtonView, LayoutHelper.createFrame(meeroItemSize() + 1.5f, meeroItemSize() + 1.5f, Gravity.CENTER_HORIZONTAL));
 
         currentTextView = new TextView(context);
         currentTextView.setGravity(Gravity.CENTER_HORIZONTAL);
         currentTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 11);
         currentTextView.setTextColor(Color.WHITE);
         currentTextView.setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_NO);
-        addView(currentTextView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 0, 0, VoIpButtonView.ITEM_SIZE + 6, 0, 2));
+        addView(currentTextView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 0, 0, meeroItemSize() + 6, 0, 2));
 
         newTextView = new TextView(context);
         newTextView.setGravity(Gravity.CENTER_HORIZONTAL);
         newTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 11);
         newTextView.setTextColor(Color.WHITE);
         newTextView.setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_NO);
-        addView(newTextView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 0, 0, VoIpButtonView.ITEM_SIZE + 6, 0, 2));
+        addView(newTextView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 0, 0, meeroItemSize() + 6, 0, 2));
         currentTextView.setVisibility(GONE);
         newTextView.setVisibility(GONE);
     }
@@ -148,7 +148,7 @@ public class VoIpSwitchLayout extends FrameLayout {
         newVoIpButtonView.setSelectedState(isSelected, false, type);
         newVoIpButtonView.setAlpha(0f);
         newVoIpButtonView.setOnBtnClickedListener(voIpButtonView.onBtnClickedListener);
-        addView(newVoIpButtonView, LayoutHelper.createFrame(VoIpButtonView.ITEM_SIZE + 1.5f, VoIpButtonView.ITEM_SIZE + 1.5f, Gravity.CENTER_HORIZONTAL));
+        addView(newVoIpButtonView, LayoutHelper.createFrame(meeroItemSize() + 1.5f, meeroItemSize() + 1.5f, Gravity.CENTER_HORIZONTAL));
         final VoIpButtonView oldVoIpButton = voIpButtonView;
         voIpButtonView = newVoIpButtonView;
         newVoIpButtonView.animate().alpha(1f).setDuration(250).start();
@@ -174,7 +174,7 @@ public class VoIpSwitchLayout extends FrameLayout {
         if (getVisibility() != View.VISIBLE) {
             setVisibility(View.VISIBLE);
         }
-        int size = AndroidUtilities.dp(VoIpButtonView.ITEM_SIZE + 1.5f);
+        int size = AndroidUtilities.dp(meeroItemSize() + 1.5f);
         boolean ignoreSetState = false;
         switch (newType) {
             case MICRO:
@@ -252,8 +252,31 @@ public class VoIpSwitchLayout extends FrameLayout {
         voIpButtonView.selectedIcon.setColorFilter(new PorterDuffColorFilter(Color.BLACK, PorterDuff.Mode.MULTIPLY));
     }
 
+    /**
+     * MeeroX: the call buttons at iOS's size.
+     *
+     * Telegram for iOS draws the round call controls at 72pt
+     * (CallControllerButtonsNode.swift:162, largeButtonSize), against the 52
+     * this fork inherits - a button 28% smaller than the reference.
+     *
+     * Read through a method rather than left as a constant because the value
+     * has to follow a switch, and a static final int would be folded in at
+     * class-load time and never look at the setting again.
+     */
+    static int meeroItemSize() {
+        try {
+            if (tw.nekomimi.nekogram.NekoConfig.meeroIosCall.Bool()) {
+                return MEERO_IOS_ITEM_SIZE;
+            }
+        } catch (Throwable ignore) {
+        }
+        return STOCK_ITEM_SIZE;
+    }
+
+    private static final int STOCK_ITEM_SIZE = 52;
+    private static final int MEERO_IOS_ITEM_SIZE = 72;
+
     public static class VoIpButtonView extends View {
-        private static final int ITEM_SIZE = 52;
 
         private RLottieDrawable unSelectedIcon;
         private RLottieDrawable selectedIcon;
@@ -262,7 +285,7 @@ public class VoIpSwitchLayout extends FrameLayout {
         private final Paint whiteCirclePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         private final Paint darkPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         private final Path clipPath = new Path();
-        private final int maxRadius = AndroidUtilities.dp(ITEM_SIZE / 2f);
+        private final int maxRadius = AndroidUtilities.dp(meeroItemSize() / 2f);
         private int unselectedRadius = maxRadius;
         private int selectedRadius = 0;
         private boolean isSelectedState = false;
