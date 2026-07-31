@@ -11408,15 +11408,6 @@ public class ChatActivity extends BaseFragment implements
      * passes blur=false from this overload, which is the one the message menu
      * goes through.
      */
-    /**
-     * MeeroX: radius asked for when the toast should be a capsule.
-     *
-     * Larger than any toast can be tall on purpose - the blurred background
-     * clamps anything past half the shorter side, so this resolves to exactly
-     * half the height whatever that turns out to be.
-     */
-    private static final int MEERO_CAPSULE_RADIUS = 200;
-
     /** MeeroX: rides on the iOS card styling switch, like the other toasts. */
     private static boolean meeroIosToastShape() {
         try {
@@ -31246,27 +31237,34 @@ public class ChatActivity extends BaseFragment implements
 
             @Override
             public void onShow(Bulletin bulletin) {
-                // MeeroX: the chat's toast is a glass surface, so it installs
-                // its own background here and never reaches the capsule built
-                // in Bulletin.Layout - setCustomBackground sets the flag that
-                // short-circuits it. The radius therefore has to be asked for
-                // again on this path, or the chat's toast stays a rounded box
-                // while every other toast in the app is a capsule.
+                // MeeroX: the chat's toast is left to Bulletin.Layout rather
+                // than given a glass background here.
                 //
-                // MEERO_CAPSULE_RADIUS is deliberately larger than any toast
-                // can be tall. BlurredBackgroundDrawable clamps a radius that
-                // exceeds half the shorter side (see its radiusMax), so an
-                // oversized value resolves to exactly half the height however
-                // tall the toast ends up - which is the capsule, and it stays
-                // correct for a two-line toast without measuring anything
-                // here, where the height is not known yet.
-                bulletin.getLayout().setCustomBackground(glassBackgroundDrawableFactory
-                    // fake multiwindow flag because bulleting parent is not child of fragment
-                    // todo: fix?
-                    .create(bulletin.getLayout(), true)
-                    .setColorProvider(BlurredBackgroundProviderImpl.bulletin(themeDelegate))
-                    .setRadius(dp(meeroIosToastShape() ? MEERO_CAPSULE_RADIUS : 16))
-                );
+                // Glass samples whatever sits behind it, and a toast passes
+                // over message bubbles - so one end of the pill picked up a
+                // pink bubble while the other stayed dark, a measured 35 levels
+                // apart across a single toast, with the sampled edge visibly
+                // rippling. iOS keeps this surface a flat dark fill precisely
+                // because it is a two-second notice that has to stay readable
+                // over any content.
+                //
+                // Dropping it also fixes the corner. setCustomBackground raises
+                // hasCustomBackground, which skips the capsule Bulletin.Layout
+                // would otherwise build; the glass path then clamped the radius
+                // against boundsWithPadding - the height less 8dp of padding at
+                // each end (BlurredBackgroundDrawable radiusMax) - so a 48dp
+                // toast rounded to 16dp instead of 24 and read as a rounded box.
+                // MeeroCapsuleDrawable takes half of its own bounds every time
+                // it draws, which is the true capsule at any height.
+                if (!meeroIosToastShape()) {
+                    bulletin.getLayout().setCustomBackground(glassBackgroundDrawableFactory
+                        // fake multiwindow flag because bulleting parent is not child of fragment
+                        // todo: fix?
+                        .create(bulletin.getLayout(), true)
+                        .setColorProvider(BlurredBackgroundProviderImpl.bulletin(themeDelegate))
+                        .setRadius(dp(16))
+                    );
+                }
             }
         });
 
