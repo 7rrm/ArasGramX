@@ -1093,11 +1093,15 @@ public class VoIPFragment implements
         frameLayout.addView(rateCallLayout, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, Gravity.LEFT, 0, 380, 0, 0));
 
         buttonsLayout = new VoIPButtonsLayout(context);
-        // MeeroX: the row's cell has to grow with the buttons inside it, or a
-        // 72dp control is measured into a 68dp slot and clipped. iOS allows
-        // 115pt between the large buttons at most
-        // (CallControllerButtonsNode.swift:161) and the layout below spreads
-        // whatever room is left, so only the cell itself needs stating.
+        // MeeroX: the cell has to be wide enough for the widest button in the
+        // row. VoIPButtonsLayout measures every child at exactly childWidth
+        // (VoIPButtonsLayout.java:48), so a 72dp end-call button inside a 68dp
+        // cell would be squeezed - its circle is drawn from getWidth()/2
+        // (VoIPToggleButton.java:161) and would sit off centre.
+        //
+        // 88 covers the 72 the end-call button now uses; the other three are
+        // still 52 and are centred inside the same cell, so the row stays
+        // even. When they grow too this figure already fits them.
         buttonsLayout.setChildSize(meeroIosCall() ? 88 : 68);
         bottomSpeakerBtn = new VoIpSwitchLayout(context, backgroundProvider);
         bottomVideoBtn = new VoIpSwitchLayout(context, backgroundProvider);
