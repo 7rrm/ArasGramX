@@ -85,6 +85,7 @@ public class MeeroSettingsActivity extends BaseNekoXSettingsActivity {
             getString(R.string.StyleIos)
     }, null));
     private final AbstractConfigCell iosRowRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosRow, getString(R.string.MeeroIosRowInfo)));
+    private final AbstractConfigCell iosStoriesRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosStories, getString(R.string.MeeroIosStoriesInfo)));
     private final AbstractConfigCell dividerAppearance = cellGroup.appendCell(new ConfigCellDivider());
 
     // Chat - things that only show up inside a conversation.
