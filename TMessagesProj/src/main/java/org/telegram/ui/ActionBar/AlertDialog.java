@@ -1079,6 +1079,57 @@ public class AlertDialog extends Dialog implements Drawable.Callback, Notificati
                             }
                         }
                     }
+
+                    private final android.graphics.Paint meeroSeparatorPaint = new android.graphics.Paint();
+
+                    /**
+                     * MeeroX: the hairlines iOS rules between its alert
+                     * buttons.
+                     *
+                     * TextAlertController draws two of them - one across the
+                     * top of the action row (actionNodesSeparator, :242) and
+                     * one between each pair of buttons
+                     * (actionVerticalSeparators, :251), both in the theme's
+                     * separator colour. Without them the buttons float in the
+                     * sheet with nothing marking where one ends.
+                     *
+                     * Drawn after the children so the lines are not painted
+                     * over, and inset past the container's own padding so they
+                     * span the sheet rather than the padded box.
+                     */
+                    @Override
+                    protected void dispatchDraw(Canvas canvas) {
+                        super.dispatchDraw(canvas);
+                        if (!meeroIosAlertSeparators()) {
+                            return;
+                        }
+                        meeroSeparatorPaint.setColor(getThemedColor(Theme.key_divider));
+                        final float thickness = Math.max(1f, AndroidUtilities.dpf2(0.5f));
+                        // The row sits inside 8dp of padding; the rule belongs
+                        // at the very edge of the sheet, above that padding.
+                        canvas.drawRect(0, 0, getMeasuredWidth(), thickness, meeroSeparatorPaint);
+
+                        // A vertical rule in each gap between adjacent buttons.
+                        View previous = null;
+                        for (int a = 0; a < getChildCount(); a++) {
+                            final View child = getChildAt(a);
+                            if (child.getVisibility() == GONE || child.getTag() == null) {
+                                continue;
+                            }
+                            if (previous != null) {
+                                final float x;
+                                if (child.getLeft() > previous.getLeft()) {
+                                    x = (previous.getRight() + child.getLeft()) / 2f;
+                                } else {
+                                    x = (child.getRight() + previous.getLeft()) / 2f;
+                                }
+                                canvas.drawRect(x - thickness / 2f, getPaddingTop(),
+                                        x + thickness / 2f, getMeasuredHeight() - getPaddingBottom(),
+                                        meeroSeparatorPaint);
+                            }
+                            previous = child;
+                        }
+                    }
                 };
             }
             if (bottomView != null) {
@@ -1724,6 +1775,15 @@ public class AlertDialog extends Dialog implements Drawable.Callback, Notificati
 
     public void setPositiveButtonListener(final OnButtonClickListener listener) {
         positiveButtonListener = listener;
+    }
+
+    /** MeeroX: rule hairlines between the alert's buttons, as iOS does. */
+    private static boolean meeroIosAlertSeparators() {
+        try {
+            return tw.nekomimi.nekogram.NekoConfig.meeroIosAlerts.Bool();
+        } catch (Throwable ignore) {
+            return false;
+        }
     }
 
     protected int getThemedColor(int key) {
