@@ -761,4 +761,8 @@
     <string name="MeeroIosStoriesInfo">يجمّع دوائر الستوريات المطوية جنب عنوان «المحادثات» ويوسّط الاثنين معاً مثل الآيفون بدل تركها على الحافة اليسرى، ويرسمها بالحجم المرجعي.</string>
     <string name="meeroIosCall">أزرار المكالمة مثل الآيفون</string>
     <string name="MeeroIosCallInfo">يرسم أزرار المكالمة الدائرية بقياس 72 مثل تلكرام آيفون بدل 52، ويباعد بينها بنفس طريقته، ويكتب كل تسمية بقياس 13 على بعد 8 تحت زرها.</string>
+    <string name="meeroIosAlerts">فواصل الحوارات مثل الآيفون</string>
+    <string name="MeeroIosAlertsInfo">يرسم خطاً رفيعاً فوق أزرار الحوار وبين كل زرين، مثل ما يفصل تلكرام آيفون أزرار تنبيهاته.</string>
+    <string name="meeroIosMediaGrid">مدة الفيديو مثل الآيفون</string>
+    <string name="MeeroIosMediaGridInfo">يكتب مدة الفيديو على الصورة مباشرة بظل خفيف مثل تلكرام آيفون، بدل حصرها داخل مستطيل ملوّن.</string>
 </resources>
