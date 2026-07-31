@@ -58,17 +58,17 @@ public class VoIpSwitchLayout extends FrameLayout {
 
         currentTextView = new TextView(context);
         currentTextView.setGravity(Gravity.CENTER_HORIZONTAL);
-        currentTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 11);
+        currentTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, meeroIosCallLabels() ? 13 : 11);
         currentTextView.setTextColor(Color.WHITE);
         currentTextView.setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_NO);
-        addView(currentTextView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 0, 0, meeroItemSize() + 6, 0, 2));
+        addView(currentTextView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 0, 0, meeroItemSize() + (meeroIosCallLabels() ? 8 : 6), 0, 2));
 
         newTextView = new TextView(context);
         newTextView.setGravity(Gravity.CENTER_HORIZONTAL);
-        newTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 11);
+        newTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, meeroIosCallLabels() ? 13 : 11);
         newTextView.setTextColor(Color.WHITE);
         newTextView.setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_NO);
-        addView(newTextView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 0, 0, meeroItemSize() + 6, 0, 2));
+        addView(newTextView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 0, 0, meeroItemSize() + (meeroIosCallLabels() ? 8 : 6), 0, 2));
         currentTextView.setVisibility(GONE);
         newTextView.setVisibility(GONE);
     }
@@ -253,28 +253,40 @@ public class VoIpSwitchLayout extends FrameLayout {
     }
 
     /**
-     * MeeroX: the call buttons at iOS's size.
+     * MeeroX: label sizing for the call controls.
      *
-     * Telegram for iOS draws the round call controls at 72pt
-     * (CallControllerButtonsNode.swift:162, largeButtonSize), against the 52
-     * this fork inherits - a button 28% smaller than the reference.
+     * Separate from meeroItemSize() on purpose. The labels sit under all four
+     * buttons, but the end-call button carries its own copy in
+     * VoIPToggleButton - so both files have to agree or the row would show two
+     * different text sizes side by side.
+     */
+    static boolean meeroIosCallLabels() {
+        try {
+            return tw.nekomimi.nekogram.NekoConfig.meeroIosCall.Bool();
+        } catch (Throwable ignore) {
+            return false;
+        }
+    }
+
+    /**
+     * MeeroX: the size of the three round call controls.
      *
-     * Read through a method rather than left as a constant because the value
-     * has to follow a switch, and a static final int would be folded in at
-     * class-load time and never look at the setting again.
+     * Telegram for iOS draws them at 72pt
+     * (CallControllerButtonsNode.swift:162) against the 52 inherited here.
+     *
+     * A method rather than the constant it replaced: a static final int is
+     * folded in at class-load time, so it could never follow a setting.
      */
     static int meeroItemSize() {
-        try {
-            if (tw.nekomimi.nekogram.NekoConfig.meeroIosCall.Bool()) {
-                return MEERO_IOS_ITEM_SIZE;
-            }
-        } catch (Throwable ignore) {
-        }
+        // Staged: the plumbing is in place and proven to compile, but the
+        // switch is not wired to it yet. The three round controls keep their
+        // stock 52 until the larger end-call button and the labels have been
+        // looked at on a device - changing all four at once would leave no way
+        // to tell which of them was responsible for the result.
         return STOCK_ITEM_SIZE;
     }
 
     private static final int STOCK_ITEM_SIZE = 52;
-    private static final int MEERO_IOS_ITEM_SIZE = 72;
 
     public static class VoIpButtonView extends View {
 
