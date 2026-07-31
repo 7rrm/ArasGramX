@@ -70,4 +70,6 @@
     <string name="MeeroIosRowInfo">Lays a chat row out the way iOS does - a 60dp picture 16dp from the edge with the text starting at 84dp - and applies the same sizing to the account switcher, where it also shows each account\'s unread count.</string>
     <string name="meeroIosStories">iOS stories row</string>
     <string name="MeeroIosStoriesInfo">Groups the collapsed story circles beside the \"Chats\" title and centres the pair the way iOS does, instead of parking them at the left edge, and draws them at the reference size.</string>
+    <string name="meeroIosCall">iOS call buttons</string>
+    <string name="MeeroIosCallInfo">Draws the round controls on the call screen at the size Telegram for iOS uses - 72dp instead of 52 - and labels them at 13dp, 8dp below each button.</string>
 </resources>
