@@ -893,13 +893,42 @@ public class SharedPhotoVideoCell2 extends FrameLayout {
         canvas.translate(dp(5), dp(1) + bounds.height() - dp(17) - dp(4) - (up ? dp(17 + 5) : 0));
         AndroidUtilities.rectTmp.set(0, 0, width, dp(17));
         int oldAlpha = Theme.chat_timeBackgroundPaint.getAlpha();
-        Theme.chat_timeBackgroundPaint.setAlpha((int) (oldAlpha * alpha));
-        canvas.drawRoundRect(AndroidUtilities.rectTmp, dp(4), dp(4), Theme.chat_timeBackgroundPaint);
-        Theme.chat_timeBackgroundPaint.setAlpha(oldAlpha);
+        // MeeroX: iOS puts the duration straight on the thumbnail and keeps
+        // it legible with a soft shadow instead of a filled pill - its
+        // generateImage() draws only the string, under
+        // setShadow(blur: 2.5, black 0.22)
+        // (PeerInfoVisualMediaPaneNode.swift:291). The plate is what makes a
+        // grid read as labelled tiles rather than photographs; the shadow
+        // that replaces it is applied to the glyphs below.
+        //
+        // Only the duration is changed. The views counter a few lines down
+        // draws the same rounded plate and keeps it: that one sits on stories
+        // and iOS gives it a background too.
+        if (!meeroIosDurationBadge()) {
+            Theme.chat_timeBackgroundPaint.setAlpha((int) (oldAlpha * alpha));
+            canvas.drawRoundRect(AndroidUtilities.rectTmp, dp(4), dp(4), Theme.chat_timeBackgroundPaint);
+            Theme.chat_timeBackgroundPaint.setAlpha(oldAlpha);
+        }
         if (drawVideoIcon) {
             canvas.save();
             canvas.translate(videoInfoLayot == null ? dp(5) : dp(4), (dp(17) - sharedResources.playDrawable.getIntrinsicHeight()) / 2f);
             sharedResources.playDrawable.setAlpha((int) (255 * imageAlpha * alpha));
+            // MeeroX: the glyph loses the plate too, so it gets the same
+            // shadow the text does. A drawable cannot carry a shadow layer, so
+            // a soft dark copy is stamped underneath it first.
+            if (meeroIosDurationBadge()) {
+                sharedResources.playDrawable.setColorFilter(MEERO_DURATION_SHADOW_FILTER);
+                for (int i = 0; i < 4; i++) {
+                    canvas.save();
+                    canvas.translate(
+                            i == 0 ? -MEERO_DURATION_SHADOW_RADIUS : i == 1 ? MEERO_DURATION_SHADOW_RADIUS : 0,
+                            i == 2 ? -MEERO_DURATION_SHADOW_RADIUS : i == 3 ? MEERO_DURATION_SHADOW_RADIUS : 0);
+                    sharedResources.playDrawable.draw(canvas);
+                    canvas.restore();
+                }
+                sharedResources.playDrawable.setColorFilter(null);
+                sharedResources.playDrawable.setAlpha((int) (255 * imageAlpha * alpha));
+            }
             sharedResources.playDrawable.draw(canvas);
             canvas.restore();
         }
@@ -907,10 +936,45 @@ public class SharedPhotoVideoCell2 extends FrameLayout {
             canvas.translate(dp(4 + (drawVideoIcon ? 10 : 0)), (dp(17) - videoInfoLayot.getHeight()) / 2f);
             oldAlpha = sharedResources.textPaint.getAlpha();
             sharedResources.textPaint.setAlpha((int) (oldAlpha * alpha));
+            // MeeroX: without the plate behind it the text needs the shadow
+            // iOS gives it, or it disappears against a pale thumbnail. Set and
+            // cleared around the draw because textPaint is shared across every
+            // cell in the grid - leaving it on would tint the rest.
+            final boolean meeroShadow = meeroIosDurationBadge();
+            if (meeroShadow) {
+                sharedResources.textPaint.setShadowLayer(
+                        MEERO_DURATION_SHADOW_RADIUS, 0, 0, MEERO_DURATION_SHADOW_COLOR);
+            }
             videoInfoLayot.draw(canvas);
+            if (meeroShadow) {
+                sharedResources.textPaint.clearShadowLayer();
+            }
             sharedResources.textPaint.setAlpha(oldAlpha);
         }
         canvas.restore();
+    }
+
+    /**
+     * MeeroX: iOS's duration shadow, converted.
+     *
+     * CoreGraphics states a blur where Android's setShadowLayer wants a
+     * Gaussian radius, and the blur is about twice that radius - so the 2.5 at
+     * PeerInfoVisualMediaPaneNode.swift:291 becomes 1.25 here. The colour is
+     * that line's black at 0.22 as an ARGB int.
+     */
+    private static final float MEERO_DURATION_SHADOW_RADIUS = 1.25f;
+    private static final int MEERO_DURATION_SHADOW_COLOR = 0x38000000;
+    private static final android.graphics.PorterDuffColorFilter MEERO_DURATION_SHADOW_FILTER =
+            new android.graphics.PorterDuffColorFilter(
+                    MEERO_DURATION_SHADOW_COLOR, android.graphics.PorterDuff.Mode.SRC_IN);
+
+    /** MeeroX: draw the duration the way iOS does - shadowed text, no plate. */
+    private static boolean meeroIosDurationBadge() {
+        try {
+            return tw.nekomimi.nekogram.NekoConfig.meeroIosMediaGrid.Bool();
+        } catch (Throwable ignore) {
+            return false;
+        }
     }
 
     public void updateViews() {
