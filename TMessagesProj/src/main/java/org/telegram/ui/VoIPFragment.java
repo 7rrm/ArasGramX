@@ -216,6 +216,26 @@ public class VoIPFragment implements
     View bottomShadow;
     View topShadow;
 
+    /**
+     * MeeroX: width of one slot in the call button row, in dp.
+     *
+     * iOS reserves 28pt at each end and divides the remainder between the
+     * buttons, up to 115pt apart (CallControllerButtonsNode.swift:276-278).
+     * VoIPButtonsLayout instead cuts the width into equal cells, so the same
+     * result is reached by folding one button's share of the spacing into the
+     * cell.
+     *
+     * Never more than a quarter of the screen: that layout derives its padding
+     * as (width / childCount - cell) / 2, which turns negative past that point
+     * and slides the buttons over one another.
+     */
+    private static int meeroCallCellSize() {
+        final int screenDp = (int) (AndroidUtilities.displaySize.x / AndroidUtilities.density);
+        final float available = screenDp - 4 * 72f - 2 * 28f;
+        final float spacing = Math.max(0f, Math.min(115f, available / 3f));
+        return (int) Math.min(72f + spacing, screenDp / 4f);
+    }
+
     /** MeeroX: sizes the call controls the way Telegram for iOS does. */
     private static boolean meeroIosCall() {
         try {
@@ -1099,10 +1119,19 @@ public class VoIPFragment implements
         // cell would be squeezed - its circle is drawn from getWidth()/2
         // (VoIPToggleButton.java:161) and would sit off centre.
         //
-        // 88 covers the 72 the end-call button now uses; the other three are
-        // still 52 and are centred inside the same cell, so the row stays
-        // even. When they grow too this figure already fits them.
-        buttonsLayout.setChildSize(meeroIosCall() ? 88 : 68);
+        // Sized the way iOS sizes it rather than by a fixed guess. There the
+        // row keeps a 28pt inset at each end and shares what is left between
+        // the buttons, capped at 115pt
+        // (CallControllerButtonsNode.swift:276-278). This layout has no inset
+        // of its own - it divides the width into equal cells - so the cell has
+        // to carry the button plus its share of that spacing.
+        //
+        // On a 360dp screen the same arithmetic leaves only 5dp between 72dp
+        // buttons, and a cell wider than a quarter of the screen would give
+        // VoIPButtonsLayout a negative padding and overlap them. Clamping to
+        // the quarter keeps the narrowest phones correct while wider ones get
+        // the roomier spacing iOS would use.
+        buttonsLayout.setChildSize(meeroIosCall() ? meeroCallCellSize() : 68);
         bottomSpeakerBtn = new VoIpSwitchLayout(context, backgroundProvider);
         bottomVideoBtn = new VoIpSwitchLayout(context, backgroundProvider);
         bottomMuteBtn = new VoIpSwitchLayout(context, backgroundProvider);
