@@ -71,5 +71,5 @@
     <string name="meeroIosStories">iOS stories row</string>
     <string name="MeeroIosStoriesInfo">Groups the collapsed story circles beside the \"Chats\" title and centres the pair the way iOS does, instead of parking them at the left edge, and draws them at the reference size.</string>
     <string name="meeroIosCall">iOS call buttons</string>
-    <string name="MeeroIosCallInfo">Enlarges the end-call button on the call screen to the 72dp Telegram for iOS uses, and sets every label under the row at 13dp, 8dp below its button.</string>
+    <string name="MeeroIosCallInfo">Draws the round controls on the call screen at the 72dp Telegram for iOS uses instead of 52, spaces them the way it does, and sets each label at 13dp, 8dp below its button.</string>
 </resources>
