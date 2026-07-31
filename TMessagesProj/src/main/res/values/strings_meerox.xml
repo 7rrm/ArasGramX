@@ -72,4 +72,8 @@
     <string name="MeeroIosStoriesInfo">Groups the collapsed story circles beside the \"Chats\" title and centres the pair the way iOS does, instead of parking them at the left edge, and draws them at the reference size.</string>
     <string name="meeroIosCall">iOS call buttons</string>
     <string name="MeeroIosCallInfo">Draws the round controls on the call screen at the 72dp Telegram for iOS uses instead of 52, spaces them the way it does, and sets each label at 13dp, 8dp below its button.</string>
+    <string name="meeroIosAlerts">iOS dialog rules</string>
+    <string name="MeeroIosAlertsInfo">Rules a hairline above the buttons of a dialog and between each pair, the way Telegram for iOS separates its alert actions.</string>
+    <string name="meeroIosMediaGrid">iOS media duration</string>
+    <string name="MeeroIosMediaGridInfo">Prints a video\'s length straight onto its thumbnail under a soft shadow, as Telegram for iOS does, instead of boxing it in a filled tag.</string>
 </resources>
