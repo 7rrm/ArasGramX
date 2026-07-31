@@ -119,8 +119,29 @@ public class DialogStoriesCell extends FrameLayout implements NotificationCenter
      * Scaling both figures by that ratio keeps the overlap looking the same
      * while bringing the whole row down to size.
      */
-    private static final float MEERO_COLLAPSED_SIZE = 17.8f;
-    private static final float MEERO_COLLAPSED_DIS = 10.8f;
+    /*
+     * Sized against the reference photograph rather than a round number.
+     *
+     * What the eye measures is not this constant but the ink: the avatar box
+     * plus the unread ring, which StoriesUtilities draws at an inset of
+     * -dp(4) pulled back by dpf2(1.33) of additionalInset, so 2.67dp beyond
+     * the box on each side.
+     *
+     * In the reference the circles stand 44px against 22px of title text -
+     * exactly twice the cap height. The previous figures drew 80px against
+     * 50px, a ratio of 1.60, which is why the row read as undersized next to
+     * the word even after it was centred correctly. Growing the ink by the
+     * missing 1.25x gives 28.93dp of ink, so the box is 28.93 - 2*2.67.
+     *
+     * The overlap is scaled by the ink rather than by the box. Those are not
+     * the same thing and they disagree by 0.8dp here: measured against the
+     * reference the step is 20.5px per 44px circle, a ratio of 0.4659, and
+     * the old pair already sat at 0.4667. Scaling with the ink holds that;
+     * scaling with the box would have drifted it to 0.4947 and spread the
+     * circles apart while making them bigger.
+     */
+    private static final float MEERO_COLLAPSED_SIZE = 23.6f;
+    private static final float MEERO_COLLAPSED_DIS = 13.5f;
 
     /** Diameter of one collapsed circle, in dp. */
     private static float collapsedSizeDp() {
@@ -1430,10 +1451,22 @@ public class DialogStoriesCell extends FrameLayout implements NotificationCenter
         return true;
     }
 
-    /** MeeroX: whether the collapsed row tracks the title. */
+    /**
+     * MeeroX: whether the collapsed row is grouped with the title.
+     *
+     * Its own switch, like every other piece of the iOS styling. It used to
+     * ride on meeroDialogsStyle, which meant the stories layout could not be
+     * turned off without giving up the whole header.
+     *
+     * Still gated on meeroDialogsStyle as well: the grouping centres the row
+     * against a centred title, and that centring is what meeroDialogsStyle
+     * turns on. With the stock left-aligned header there is nothing to group
+     * against, so the upstream layout is the correct one.
+     */
     private static boolean meeroIosStories() {
         try {
-            return tw.nekomimi.nekogram.NekoConfig.meeroDialogsStyle.Bool();
+            return tw.nekomimi.nekogram.NekoConfig.meeroDialogsStyle.Bool()
+                    && tw.nekomimi.nekogram.NekoConfig.meeroIosStories.Bool();
         } catch (Throwable ignore) {
             return false;
         }
