@@ -278,15 +278,17 @@ public class VoIpSwitchLayout extends FrameLayout {
      * folded in at class-load time, so it could never follow a setting.
      */
     static int meeroItemSize() {
-        // Staged: the plumbing is in place and proven to compile, but the
-        // switch is not wired to it yet. The three round controls keep their
-        // stock 52 until the larger end-call button and the labels have been
-        // looked at on a device - changing all four at once would leave no way
-        // to tell which of them was responsible for the result.
+        try {
+            if (tw.nekomimi.nekogram.NekoConfig.meeroIosCall.Bool()) {
+                return MEERO_IOS_ITEM_SIZE;
+            }
+        } catch (Throwable ignore) {
+        }
         return STOCK_ITEM_SIZE;
     }
 
     private static final int STOCK_ITEM_SIZE = 52;
+    private static final int MEERO_IOS_ITEM_SIZE = 72;
 
     public static class VoIpButtonView extends View {
 
