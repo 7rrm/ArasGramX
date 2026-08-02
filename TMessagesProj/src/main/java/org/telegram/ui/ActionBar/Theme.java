@@ -5635,11 +5635,21 @@ public class Theme {
      * Shares meeroIosIcons, since these are drawn from that same icon set and
      * having them disagree would leave one Apple glyph among Android ones.
      */
-    private static boolean meeroIosTicks() {
+    /**
+     * MeeroX, v92: which delivery-tick shape to draw, or -1 for the official
+     * Telegram artwork (master switch off). Style 0 is the original iOS pair
+     * shipped in v57, kept byte-identical; 1..7 are the v92 shapes. Default
+     * keeps exactly what users already see.
+     */
+    private static int meeroTickStyle() {
         try {
-            return tw.nekomimi.nekogram.NekoConfig.meeroIosIcons.Bool();
+            if (!tw.nekomimi.nekogram.NekoConfig.meeroTicksSwitch.Bool()) {
+                return -1;
+            }
+            int style = tw.nekomimi.nekogram.NekoConfig.meeroTickStyle.Int();
+            return (style < 0 || style > 7) ? 0 : style;
         } catch (Throwable ignore) {
-            return false;
+            return -1;
         }
     }
 
@@ -9168,10 +9178,27 @@ public class Theme {
             // positioning arithmetic below is untouched. Measured against the
             // originals the centres land within 0.02dp and the glyphs come out
             // 0.6-2.1dp narrower - the thinner look, at the same spot.
-            final boolean meeroTicks = meeroIosTicks();
-            final int meeroCheck = meeroTicks ? R.drawable.ios_tick_check : R.drawable.msg_check_s;
-            final int meeroHalfCheck = meeroTicks ? R.drawable.ios_tick_halfcheck : R.drawable.msg_halfcheck;
-            final int meeroHalfCheckS = meeroTicks ? R.drawable.ios_tick_halfcheck : R.drawable.msg_halfcheck_s;
+            final int meeroTickStyle = meeroTickStyle();
+            final int meeroCheck, meeroHalfCheck, meeroHalfCheckS;
+            if (meeroTickStyle < 0) {
+                meeroCheck = R.drawable.msg_check_s;
+                meeroHalfCheck = R.drawable.msg_halfcheck;
+                meeroHalfCheckS = R.drawable.msg_halfcheck_s;
+            } else {
+                final int[] meeroTickSingle = new int[]{
+                        R.drawable.ios_tick_check, R.drawable.meero_tick_heart, R.drawable.meero_tick_star,
+                        R.drawable.meero_tick_dot, R.drawable.meero_tick_sparkle, R.drawable.meero_tick_bolt,
+                        R.drawable.meero_tick_moon, R.drawable.meero_tick_gem,
+                };
+                final int[] meeroTickSecond = new int[]{
+                        R.drawable.ios_tick_halfcheck, R.drawable.meero_tick_heart_half, R.drawable.meero_tick_star_half,
+                        R.drawable.meero_tick_dot_half, R.drawable.meero_tick_sparkle_half, R.drawable.meero_tick_bolt_half,
+                        R.drawable.meero_tick_moon_half, R.drawable.meero_tick_gem_half,
+                };
+                meeroCheck = meeroTickSingle[meeroTickStyle];
+                meeroHalfCheck = meeroTickSecond[meeroTickStyle];
+                meeroHalfCheckS = meeroTickSecond[meeroTickStyle];
+            }
 
             chat_msgOutCheckDrawable = resources.getDrawable(meeroCheck).mutate();
             chat_msgOutCheckSelectedDrawable = resources.getDrawable(meeroCheck).mutate();

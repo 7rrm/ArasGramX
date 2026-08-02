@@ -691,6 +691,27 @@
     <string name="ExportAyuDB">تصدير قاعدة البيانات</string>
     <string name="MeeroVersion">الإصدار</string>
     <string name="MeeroAppEdition">إصدار التطبيق</string>
+    <string name="meeroTicksSwitch">علامات قراءة مخصصة</string>
+    <string name="MeeroTicksSwitchInfo">مفتاح مستقل لعلامات الإرسال والقراءة: عند التشغيل تُعرض العلامة بالشكل المختار من القائمة بالأسفل، وعند الإطفاء تعود علامة تيليجرام أندرويد الرسمية. يُطبَّق التغيير بعد إعادة تشغيل التطبيق.</string>
+    <string name="MeeroTickStyle">شكل العلامة</string>
+    <string name="MeeroTickStyleDialogNote">يُطبَّق الشكل الجديد بعد إعادة تشغيل التطبيق.</string>
+    <string name="meeroTickName0">علامة iOS الحالية</string>
+    <string name="meeroTickDesc0">نفس علامة الصح الرفيعة الحالية تماماً وكما هي — الاختيار الافتراضي.</string>
+    <string name="meeroTickName1">القلوب</string>
+    <string name="meeroTickDesc1">قلب عند الإرسال، وقلبان متجاوران عند قراءة الرسالة.</string>
+    <string name="meeroTickName2">النجوم</string>
+    <string name="meeroTickDesc2">نجمة خماسية عند الإرسال، ونجمتان عند القراءة.</string>
+    <string name="meeroTickName3">النقاط</string>
+    <string name="meeroTickDesc3">نقطة دائرية بسيطة عند الإرسال، ونقطتان عند القراءة.</string>
+    <string name="meeroTickName4">الشرارة</string>
+    <string name="meeroTickDesc4">شرارة رباعية الأطراف عند الإرسال، وشرارتان عند القراءة.</string>
+    <string name="meeroTickName5">البرق</string>
+    <string name="meeroTickDesc5">صاعقة عند الإرسال، وصاعقتان عند القراءة.</string>
+    <string name="meeroTickName6">الهلال</string>
+    <string name="meeroTickDesc6">هلال عند الإرسال، وهلالان متداخلان عند القراءة.</string>
+    <string name="meeroTickName7">الألماس</string>
+    <string name="meeroTickDesc7">ماسة عند الإرسال، وماسَتان عند القراءة.</string>
+
     <string name="MeeroDeveloper">المطوّر</string>
     <string name="MeeroChannel1">القناة الأولى</string>
     <string name="MeeroChannel2">القناة الثانية</string>

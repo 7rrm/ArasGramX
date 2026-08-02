@@ -4,9 +4,18 @@ import static org.telegram.messenger.LocaleController.getString;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.util.TypedValue;
+import android.view.Gravity;
 import android.view.View;
+import android.widget.LinearLayout;
+import android.widget.ScrollView;
+import android.widget.TextView;
 
+import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.R;
+import org.telegram.ui.ActionBar.AlertDialog;
+import org.telegram.ui.ActionBar.Theme;
+import org.telegram.ui.Components.LayoutHelper;
 import org.telegram.ui.Components.RecyclerListView;
 
 import tw.nekomimi.nekogram.NekoConfig;
@@ -99,6 +108,12 @@ public class MeeroSettingsActivity extends BaseNekoXSettingsActivity {
     private final AbstractConfigCell iosWaveformRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosWaveform, getString(R.string.MeeroIosWaveformInfo)));
     private final AbstractConfigCell iosCodeRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosCode, getString(R.string.MeeroIosCodeInfo)));
     private final AbstractConfigCell iosSelectionRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosSelection, getString(R.string.MeeroIosSelectionInfo)));
+    // MeeroX v92: delivery ticks - a dedicated master switch (off returns the
+    // official Android ticks) and, right beneath it, the shape picker, which
+    // opens a two-line dialog (every shape with its own description) instead
+    // of the stock popup list.
+    private final AbstractConfigCell ticksSwitchRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroTicksSwitch, getString(R.string.MeeroTicksSwitchInfo)));
+    private final AbstractConfigCell tickStyleRow = cellGroup.appendCell(new ConfigCellSelectBox("MeeroTickStyle", NekoConfig.meeroTickStyle, tickStyleNames(), () -> showTickStyleDialog()));
     private final AbstractConfigCell dividerChat = cellGroup.appendCell(new ConfigCellDivider());
 
     // Navigation - moving between screens and lists.
@@ -146,6 +161,121 @@ public class MeeroSettingsActivity extends BaseNekoXSettingsActivity {
         setupDefaultListeners();
 
         return superView;
+    }
+
+    private static final int TICK_STYLE_COUNT = 8;
+
+    private static String tickStyleName(int style) {
+        switch (style) {
+            case 1:  return getString(R.string.meeroTickName1);
+            case 2:  return getString(R.string.meeroTickName2);
+            case 3:  return getString(R.string.meeroTickName3);
+            case 4:  return getString(R.string.meeroTickName4);
+            case 5:  return getString(R.string.meeroTickName5);
+            case 6:  return getString(R.string.meeroTickName6);
+            case 7:  return getString(R.string.meeroTickName7);
+            default: return getString(R.string.meeroTickName0);
+        }
+    }
+
+    private static String tickStyleDesc(int style) {
+        switch (style) {
+            case 1:  return getString(R.string.meeroTickDesc1);
+            case 2:  return getString(R.string.meeroTickDesc2);
+            case 3:  return getString(R.string.meeroTickDesc3);
+            case 4:  return getString(R.string.meeroTickDesc4);
+            case 5:  return getString(R.string.meeroTickDesc5);
+            case 6:  return getString(R.string.meeroTickDesc6);
+            case 7:  return getString(R.string.meeroTickDesc7);
+            default: return getString(R.string.meeroTickDesc0);
+        }
+    }
+
+    private static String[] tickStyleNames() {
+        String[] names = new String[TICK_STYLE_COUNT];
+        for (int i = 0; i < TICK_STYLE_COUNT; i++) {
+            names[i] = tickStyleName(i);
+        }
+        return names;
+    }
+
+    /**
+     * MeeroX, v92: the tick-shape picker requested as a tidy list where each
+     * option shows its name with a plain description beneath it and a check
+     * on the active one. The pick only writes meeroTickStyle and refreshes
+     * this screen; the artwork itself is loaded by Theme when chat resources
+     * are (re)created - i.e. after an app restart, the same rule the iOS
+     * dialogs-header switch already documents.
+     */
+    private void showTickStyleDialog() {
+        final Context context = getParentActivity();
+        if (context == null) {
+            return;
+        }
+
+        final AlertDialog.Builder builder = new AlertDialog.Builder(context);
+        builder.setTitle(getString(R.string.MeeroTickStyle));
+
+        final int current = NekoConfig.meeroTickStyle.Int();
+        final AlertDialog[] dialogRef = new AlertDialog[1];
+
+        LinearLayout box = new LinearLayout(context);
+        box.setOrientation(LinearLayout.VERTICAL);
+
+        for (int i = 0; i < TICK_STYLE_COUNT; i++) {
+            final int style = i;
+
+            TextView title = new TextView(context);
+            title.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 16);
+            title.setTextColor(Theme.getColor(Theme.key_dialogTextBlack));
+            title.setText(tickStyleName(style));
+
+            TextView desc = new TextView(context);
+            desc.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 13);
+            desc.setTextColor(Theme.getColor(Theme.key_dialogTextGray3));
+            desc.setText(tickStyleDesc(style));
+
+            TextView check = new TextView(context);
+            check.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 18);
+            check.setTextColor(Theme.getColor(Theme.key_dialogTextBlue));
+            check.setText(style == current ? "✓" : "");
+            check.setMinWidth(AndroidUtilities.dp(32));
+            check.setGravity(Gravity.CENTER);
+
+            LinearLayout texts = new LinearLayout(context);
+            texts.setOrientation(LinearLayout.VERTICAL);
+            texts.addView(title);
+            texts.addView(desc);
+
+            LinearLayout item = new LinearLayout(context);
+            item.setOrientation(LinearLayout.HORIZONTAL);
+            item.setPadding(AndroidUtilities.dp(20), AndroidUtilities.dp(9), AndroidUtilities.dp(20), AndroidUtilities.dp(9));
+            item.addView(texts, LayoutHelper.createLinear(0, LayoutHelper.WRAP_CONTENT, 1f));
+            item.addView(check, LayoutHelper.createLinear(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.CENTER_VERTICAL));
+            item.setOnClickListener(v -> {
+                NekoConfig.meeroTickStyle.setConfigInt(style);
+                if (listAdapter != null) {
+                    listAdapter.notifyDataSetChanged();
+                }
+                if (dialogRef[0] != null) {
+                    dialogRef[0].dismiss();
+                }
+            });
+            box.addView(item);
+        }
+
+        TextView note = new TextView(context);
+        note.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 12.5f);
+        note.setTextColor(Theme.getColor(Theme.key_dialogTextGray3));
+        note.setText(getString(R.string.MeeroTickStyleDialogNote));
+        note.setPadding(AndroidUtilities.dp(20), AndroidUtilities.dp(6), AndroidUtilities.dp(20), AndroidUtilities.dp(14));
+        box.addView(note);
+
+        ScrollView scroll = new ScrollView(context);
+        scroll.addView(box);
+        builder.setView(scroll);
+        builder.setNegativeButton(getString(R.string.Cancel), null);
+        dialogRef[0] = builder.show();
     }
 
     @Override

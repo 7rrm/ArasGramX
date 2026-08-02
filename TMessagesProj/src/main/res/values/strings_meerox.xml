@@ -2,6 +2,27 @@
 <resources>
     <string name="MeeroVersion">Version</string>
     <string name="MeeroAppEdition">App edition</string>
+    <string name="meeroTicksSwitch">Custom read ticks</string>
+    <string name="MeeroTicksSwitchInfo">A dedicated switch for the sent and read ticks: on shows the shape picked in the list below, off brings back the official Android Telegram ticks. Applies after restarting the app.</string>
+    <string name="MeeroTickStyle">Tick shape</string>
+    <string name="MeeroTickStyleDialogNote">The new shape applies after restarting the app.</string>
+    <string name="meeroTickName0">Current iOS tick</string>
+    <string name="meeroTickDesc0">The exact same thin ticks you already have, completely untouched - the default.</string>
+    <string name="meeroTickName1">Hearts</string>
+    <string name="meeroTickDesc1">One heart when sent, a pair of hearts when the message is read.</string>
+    <string name="meeroTickName2">Stars</string>
+    <string name="meeroTickDesc2">A five-point star when sent, two stars when read.</string>
+    <string name="meeroTickName3">Dots</string>
+    <string name="meeroTickDesc3">A simple round dot when sent, two dots when read.</string>
+    <string name="meeroTickName4">Sparkle</string>
+    <string name="meeroTickDesc4">A four-point sparkle when sent, two sparkles when read.</string>
+    <string name="meeroTickName5">Bolt</string>
+    <string name="meeroTickDesc5">A lightning bolt when sent, two bolts when read.</string>
+    <string name="meeroTickName6">Crescent</string>
+    <string name="meeroTickDesc6">A crescent moon when sent, two crescents when read.</string>
+    <string name="meeroTickName7">Gem</string>
+    <string name="meeroTickDesc7">A diamond when sent, two diamonds when read.</string>
+
     <string name="MeeroDeveloper">Developer</string>
     <string name="MeeroChannel1">Channel 1</string>
     <string name="MeeroChannel2">Channel 2</string>
