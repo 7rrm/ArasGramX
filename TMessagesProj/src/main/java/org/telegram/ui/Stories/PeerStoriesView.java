@@ -2229,23 +2229,28 @@ public class PeerStoriesView extends SizeNotifierFrameLayout implements Notifica
                         // the gallery. Download deliberately ignores the owner's
                         // no-save flag - that is the feature. Hidden when the
                         // MeeroX switch is off, keeping the stock behaviour.
-                        if (NekoConfig.meeroStoryDownload.Bool() && currentStory != null && currentStory.messageObject != null && !unsupported) {
+                        if (NekoConfig.meeroStoryDownload.Bool() && currentStory != null && currentStory.storyItem != null && !(currentStory.storyItem instanceof TL_stories.TL_storyItemDeleted) && !(currentStory.storyItem instanceof TL_stories.TL_storyItemSkipped) && !unsupported) {
                             ActionBarMenuItem.addItem(popupLayout, R.drawable.msg_gallery, getString(R.string.MeeroStoryDownload), false, resourcesProvider).setOnClickListener(v -> {
                                 try {
-                                    final org.telegram.messenger.MessageObject storyMsg = currentStory.messageObject;
+                                    final TL_stories.StoryItem storyItemForSave = currentStory.storyItem;
+                                    storyItemForSave.dialogId = dialogId;
+                                    storyItemForSave.messageId = storyItemForSave.id;
+                                    final org.telegram.messenger.MessageObject storyMsg = new org.telegram.messenger.MessageObject(currentAccount, storyItemForSave);
+                                    final boolean storyIsVideo = storyMsg.isVideo();
                                     final String storyPath = tw.nekomimi.nekogram.helpers.MessageHelper.getPathToMessage(storyMsg);
                                     org.telegram.messenger.Utilities.globalQueue.postRunnable(() -> {
-                                        android.util.Pair<Boolean, String> res = org.telegram.messenger.MediaController.saveFile(
-                                                storyPath, getContext(), storyMsg.isVideo() ? 1 : 0, null, null);
-                                        AndroidUtilities.runOnUIThread(() -> {
-                                            if (res != null && res.first) {
-                                                BulletinFactory.of(storyContainer, resourcesProvider)
-                                                        .createSimpleBulletin(R.raw.ic_save_to_gallery, getString(R.string.MeeroStorySaved)).show(true);
-                                            } else {
-                                                BulletinFactory.of(storyContainer, resourcesProvider)
-                                                        .createSimpleBulletin(R.raw.error, getString(R.string.UnknownError), true).show(true);
-                                            }
-                                        });
+                                        org.telegram.messenger.MediaController.saveFile(
+                                                storyPath, getContext(), storyIsVideo ? 1 : 0, null, null, uri -> {
+                                                    AndroidUtilities.runOnUIThread(() -> {
+                                                        if (uri != null) {
+                                                            BulletinFactory.of(storyContainer, resourcesProvider)
+                                                                    .createSimpleBulletin(R.raw.ic_save_to_gallery, getString(R.string.MeeroStorySaved)).show();
+                                                        } else {
+                                                            BulletinFactory.of(storyContainer, resourcesProvider)
+                                                                    .createSimpleBulletin(R.raw.error, getString(R.string.UnknownError)).show();
+                                                        }
+                                                    });
+                                                });
                                     });
                                 } catch (Throwable ignore) {
                                 }
