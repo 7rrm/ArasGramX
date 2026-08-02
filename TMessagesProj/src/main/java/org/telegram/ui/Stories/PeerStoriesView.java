@@ -2225,6 +2225,36 @@ public class PeerStoriesView extends SizeNotifierFrameLayout implements Notifica
                             });
                         }
 
+                        // MeeroX v94: save the story's photo or video straight to
+                        // the gallery. Download deliberately ignores the owner's
+                        // no-save flag - that is the feature. Hidden when the
+                        // MeeroX switch is off, keeping the stock behaviour.
+                        if (NekoConfig.meeroStoryDownload.Bool() && currentStory != null && currentStory.messageObject != null && !unsupported) {
+                            ActionBarMenuItem.addItem(popupLayout, R.drawable.msg_gallery, getString(R.string.MeeroStoryDownload), false, resourcesProvider).setOnClickListener(v -> {
+                                try {
+                                    final org.telegram.messenger.MessageObject storyMsg = currentStory.messageObject;
+                                    final String storyPath = tw.nekomimi.nekogram.helpers.MessageHelper.getPathToMessage(storyMsg);
+                                    org.telegram.messenger.Utilities.globalQueue.postRunnable(() -> {
+                                        android.util.Pair<Boolean, String> res = org.telegram.messenger.MediaController.saveFile(
+                                                storyPath, getContext(), storyMsg.isVideo() ? 1 : 0, null, null);
+                                        AndroidUtilities.runOnUIThread(() -> {
+                                            if (res != null && res.first) {
+                                                BulletinFactory.of(storyContainer, resourcesProvider)
+                                                        .createSimpleBulletin(R.raw.ic_save_to_gallery, getString(R.string.MeeroStorySaved)).show(true);
+                                            } else {
+                                                BulletinFactory.of(storyContainer, resourcesProvider)
+                                                        .createSimpleBulletin(R.raw.error, getString(R.string.UnknownError), true).show(true);
+                                            }
+                                        });
+                                    });
+                                } catch (Throwable ignore) {
+                                }
+                                if (popupMenu != null) {
+                                    popupMenu.dismiss();
+                                }
+                            });
+                        }
+
                         if (!unsupported) {
                             if (!UserObject.isService(dialogId) && !isBotsPreview()) {
                                 ActionBarMenuItem.addItem(popupLayout, R.drawable.msg_report, getString(R.string.ReportChat), false, resourcesProvider).setOnClickListener(v -> {

@@ -119,6 +119,8 @@ public class MeeroSettingsActivity extends BaseNekoXSettingsActivity {
     // of the stock popup list.
     private final AbstractConfigCell ticksSwitchRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroTicksSwitch, getString(R.string.MeeroTicksSwitchInfo)));
     private final AbstractConfigCell tickStyleRow = cellGroup.appendCell(new ConfigCellSelectBox("MeeroTickStyle", NekoConfig.meeroTickStyle, tickStyleNames(), () -> showTickStyleDialog()));
+    private final AbstractConfigCell storyDownloadRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroStoryDownload, getString(R.string.MeeroStoryDownloadInfo)));
+    private final AbstractConfigCell ghostSwipeReadRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroGhostSwipeRead, getString(R.string.MeeroGhostSwipeReadInfo)));
     private final AbstractConfigCell dividerChat = cellGroup.appendCell(new ConfigCellDivider());
 
     // Navigation - moving between screens and lists.

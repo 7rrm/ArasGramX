@@ -2643,6 +2643,19 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                     ArrayList<Long> selectedDialogs = new ArrayList<>();
                     selectedDialogs.add(dialogId);
                     canReadCount = dialog.unread_count > 0 || dialog.unread_mark ? 1 : 0;
+                    // MeeroX v94: ghost selective read by swipe. While read
+                    // marks are suppressed, an explicit swipe is the user
+                    // asking for this one chat's receipt - send it through
+                    // the forced path; every other chat stays hidden.
+                    // A manual unread mark is respected and left alone.
+                    if (NekoConfig.meeroGhostSwipeRead.Bool()
+                            && !NekoConfig.sendReadMessagePackets.Bool()
+                            && dialog.unread_count > 0 && !dialog.unread_mark) {
+                        TLRPC.InputPeer swipePeer = getMessagesController().getInputPeer(dialogId);
+                        if (swipePeer != null) {
+                            com.radolyn.ayugram.utils.AyuGhostUtils.markReadOnServer(dialog.top_message, swipePeer, false);
+                        }
+                    }
                     performSelectedDialogsAction(selectedDialogs, read, true, false);
                     return;
                 }

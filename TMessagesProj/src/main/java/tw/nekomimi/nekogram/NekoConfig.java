@@ -113,6 +113,11 @@ public class NekoConfig {
     // Telegram ticks) and the chosen shape (0 = the original iOS pair).
     public static ConfigItem meeroTicksSwitch = addConfig("meeroTicksSwitch", configTypeBool, true);
     public static ConfigItem meeroTickStyle = addConfig("meeroTickStyle", configTypeInt, 0);
+    // MeeroX v94: save stories to the gallery even when their owner forbids
+    // saving, and ghost-mode selective read by swiping a chat in the list.
+    // Both off = stock fork behaviour, untouched.
+    public static ConfigItem meeroStoryDownload = addConfig("meeroStoryDownload", configTypeBool, true);
+    public static ConfigItem meeroGhostSwipeRead = addConfig("meeroGhostSwipeRead", configTypeBool, true);
 
     // From NekoConfig
     public static ConfigItem useIPv6 = addConfig("IPv6", configTypeBool, false);

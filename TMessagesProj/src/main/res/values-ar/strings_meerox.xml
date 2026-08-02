@@ -727,6 +727,13 @@
     <string name="meeroTickDesc14">شعلة نار عند الإرسال، وشعلتان عند القراءة.</string>
     <string name="meeroTickName15">الطائرة</string>
     <string name="meeroTickDesc15">طائرة ورقية عند الإرسال، وطائرتان عند القراءة.</string>
+    <string name="meeroStoryDownload">تحميل الستوري للمعرض</string>
+    <string name="MeeroStoryDownloadInfo">زر داخل قائمة الستوري (⋮) يحفظ الصورة أو الفيديو مباشرة بالمعرض — حتى لو صاحب الستوري مانع الحفظ. عند الإطفاء يختفي الزر كما في تيليجرام الرسمي.</string>
+    <string name="MeeroStoryDownload">تحميل للمعرض</string>
+    <string name="MeeroStorySaved">تم حفظ الستوري بالمعرض</string>
+    <string name="meeroGhostSwipeRead">قراءة شبحية بالسحب</string>
+    <string name="MeeroGhostSwipeReadInfo">وضع الشبح يمنع إيصالات القراءة، لكن أحياناً تريد إيصالاً لمحادثة واحدة فقط: فعّل هذا الخيار واسحب تلك المحادثة بقائمة الدردشات فيُرسل إيصال قراءتها وحدها والباقي يبقى مخفياً (اضبط إيماءة السحب على قراءة من إعدادات الإيماءات). عند الإطفاء يسلم الشبح بالكامل كما في الفورك الرسمي.</string>
+
 
     <string name="MeeroDeveloper">المطوّر</string>
     <string name="MeeroChannel1">القناة الأولى</string>

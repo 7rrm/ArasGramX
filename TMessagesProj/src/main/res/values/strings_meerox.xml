@@ -38,6 +38,13 @@
     <string name="meeroTickDesc14">A fire flame when sent, two flames when read.</string>
     <string name="meeroTickName15">Paper plane</string>
     <string name="meeroTickDesc15">A paper plane when sent, two planes when read.</string>
+    <string name="meeroStoryDownload">Save stories to gallery</string>
+    <string name="MeeroStoryDownloadInfo">Adds a button inside the story menu (⋮) that saves the photo or video straight to your gallery - even when the owner forbids saving. When off, the button disappears exactly like the official Telegram.</string>
+    <string name="MeeroStoryDownload">Save to gallery</string>
+    <string name="MeeroStorySaved">Story saved to gallery</string>
+    <string name="meeroGhostSwipeRead">Ghost read by swipe</string>
+    <string name="MeeroGhostSwipeReadInfo">Ghost mode suppresses read receipts everywhere, but sometimes you want one chat to know: enable this and swipe that chat in the dialogs list to send its receipt only, while everything else stays hidden (set the swipe gesture to Read in gesture settings first). When off, ghost mode behaves exactly like the stock fork.</string>
+
 
     <string name="MeeroDeveloper">Developer</string>
     <string name="MeeroChannel1">Channel 1</string>
