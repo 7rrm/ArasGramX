@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="MeeroVersion">Version</string>
+    <string name="MeeroAppEdition">App edition</string>
     <string name="MeeroDeveloper">Developer</string>
     <string name="MeeroChannel1">Channel 1</string>
     <string name="MeeroChannel2">Channel 2</string>

@@ -690,6 +690,7 @@
     <string name="DefaultScheduleDelay">التأخير الافتراضي</string>
     <string name="ExportAyuDB">تصدير قاعدة البيانات</string>
     <string name="MeeroVersion">الإصدار</string>
+    <string name="MeeroAppEdition">إصدار التطبيق</string>
     <string name="MeeroDeveloper">المطوّر</string>
     <string name="MeeroChannel1">القناة الأولى</string>
     <string name="MeeroChannel2">القناة الثانية</string>

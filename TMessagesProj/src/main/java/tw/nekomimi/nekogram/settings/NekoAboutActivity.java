@@ -35,6 +35,7 @@ import org.telegram.ui.Components.LayoutHelper;
 public class NekoAboutActivity extends BaseNekoSettingsActivity {
 
     private int versionRow;
+    private int meeroEditionRow;
     private int developerRow;
     private int channel1Row;
     private int channel2Row;
@@ -45,6 +46,7 @@ public class NekoAboutActivity extends BaseNekoSettingsActivity {
         super.updateRows();
 
         versionRow = addRow();
+        meeroEditionRow = addRow();
         developerRow = addRow();
         channel1Row = addRow();
         channel2Row = addRow();
@@ -125,6 +127,8 @@ public class NekoAboutActivity extends BaseNekoSettingsActivity {
                 TextSettingsCell textCell = (TextSettingsCell) holder.itemView;
                 if (position == versionRow) {
                     textCell.setTextAndValue(getString(R.string.MeeroVersion), versionName(), true);
+                } else if (position == meeroEditionRow) {
+                    textCell.setTextAndValue(getString(R.string.MeeroAppEdition), String.valueOf(BuildConfig.MEERO_EDITION), true);
                 } else if (position == developerRow) {
                     textCell.setTextAndValue(getString(R.string.MeeroDeveloper), "@i55544", true);
                 } else if (position == channel1Row) {
@@ -140,8 +144,8 @@ public class NekoAboutActivity extends BaseNekoSettingsActivity {
         @Override
         public boolean isEnabled(@NonNull RecyclerView.ViewHolder holder) {
             int position = holder.getAdapterPosition();
-            // The version row is informational only.
-            return position != versionRow && super.isEnabled(holder);
+            // The version rows are informational only.
+            return position != versionRow && position != meeroEditionRow && super.isEnabled(holder);
         }
 
         @Override

@@ -110,6 +110,7 @@ android {
         }
 
         buildConfigField 'String', 'BUILD_VERSION_STRING', '"' + verName + '"'
+        buildConfigField 'int', 'MEERO_EDITION', "${MEERO_EDITION}".strip()
         buildConfigField 'String', 'OFFICIAL_VERSION', '"' + officialVer + '"'
         buildConfigField 'int', 'OFFICIAL_VERSION_CODE', officialCode + ''
         buildConfigField 'int', 'APP_ID', appId
