@@ -197,7 +197,13 @@ public class GhostModeActivity extends BaseNekoSettingsActivity {
             updateGhostViews();
         } else if (position == ghostSwipeReadRow) {
             NekoConfig.meeroGhostSwipeRead.toggleConfigBool();
-            ((CheckBoxCell) view).setChecked(NekoConfig.meeroGhostSwipeRead.Bool(), true);
+            boolean nowOn = NekoConfig.meeroGhostSwipeRead.Bool();
+            ((CheckBoxCell) view).setChecked(nowOn, true);
+            // MeeroX v97: the feature rides on the "Read" swipe action; warn
+            // right away if the user enables it while swiping does something else.
+            if (nowOn && SharedConfig.getChatSwipeAction(UserConfig.selectedAccount) != SwipeGestureSettingsView.SWIPE_GESTURE_READ) {
+                BulletinFactory.of(getLastFragment()).createSimpleBulletin(R.raw.chats_infotip, getString(R.string.MeeroGhostSwipeReadNeedRead)).show();
+            }
         } else if (position == swipeActionRow) {
             showSwipeActionDialog();
         } else if (position == markReadAfterSendRow) {

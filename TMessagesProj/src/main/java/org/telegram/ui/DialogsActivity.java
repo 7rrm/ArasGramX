@@ -8378,6 +8378,12 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
         if (getParentActivity() == null) {
             return;
         }
+        // MeeroX v97 safety net: if a chat preview ever left the navigation
+        // layer stuck in preview mode, a tap here proves the preview is gone
+        // visually, so close the stale state first - then chats open again.
+        if (parentLayout != null && parentLayout.isInPreviewMode()) {
+            parentLayout.finishPreviewFragment();
+        }
         long dialogId = 0;
         long topicId = 0;
         int message_id = 0;

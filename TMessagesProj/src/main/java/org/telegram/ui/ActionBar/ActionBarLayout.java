@@ -2932,6 +2932,26 @@ public class ActionBarLayout extends FrameLayout implements INavigationLayout, F
                 }
                 onFragmentStackChanged("closeLastFragment");
             } else {
+                // MeeroX v97: mirror the animated-close cleanup. When view
+                // animations are disabled every chat-preview close takes this
+                // non-animated branch, which used to leave the preview flags
+                // stuck forever (inPreviewMode / transitionAnimationPreviewMode
+                // / previewMenu), freezing all future chat opens until an app
+                // restart.
+                if (inPreviewMode || transitionAnimationPreviewMode) {
+                    if (previewMenu != null) {
+                        ViewGroup parent = (ViewGroup) previewMenu.getParent();
+                        if (parent != null) {
+                            parent.removeView(previewMenu);
+                        }
+                        previewMenu = null;
+                    }
+                    containerViewBack.setScaleX(1.0f);
+                    containerViewBack.setScaleY(1.0f);
+                    inPreviewMode = false;
+                    transitionAnimationPreviewMode = false;
+                    previewOpenAnimationInProgress = false;
+                }
                 closeLastFragmentInternalRemoveOld(currentFragment);
                 currentFragment.onTransitionAnimationEnd(false, true);
                 previousFragment.onTransitionAnimationEnd(true, true);
