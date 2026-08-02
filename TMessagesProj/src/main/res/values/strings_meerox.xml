@@ -45,6 +45,24 @@
     <string name="meeroGhostSwipeRead">Ghost read by swipe</string>
     <string name="MeeroSwipeAction">Chat swipe action</string>
     <string name="MeeroGhostSwipeReadNeedRead">For ghost swipe-read to work, the swipe action must be Read - set it in the Chat swipe action row above.</string>
+
+    <string name="MeeroAutoReplyTitle">Auto-reply</string>
+    <string name="MeeroAutoReplyInfo">Automatically sends one reply to incoming messages in private chats while you are busy, with a per-chat cooldown so it never becomes spam. Off by default - and while off, nothing is ever sent, exactly the stock behavior.</string>
+    <string name="MeeroAutoReplyText">Reply text</string>
+    <string name="MeeroAutoReplyTextHint">Write {name} and it becomes the person\'s name</string>
+    <string name="MeeroAutoReplyDefaultText">Hi {name} 👋 I\'m busy right now, I\'ll get back to you as soon as I can ✅</string>
+    <string name="MeeroAutoReplyCooldown">Reply cooldown per chat</string>
+    <string name="MeeroAutoReplyDelay">Delay before sending</string>
+    <string name="MeeroCooldownEveryMessage">Every message</string>
+    <string name="MeeroCooldown5">5 minutes</string>
+    <string name="MeeroCooldown10">10 minutes</string>
+    <string name="MeeroCooldown30">30 minutes</string>
+    <string name="MeeroCooldown60">1 hour</string>
+    <string name="MeeroDelayInstant">Instant</string>
+    <string name="MeeroDelay3">3 seconds</string>
+    <string name="MeeroDelay5">5 seconds</string>
+    <string name="MeeroDelay10">10 seconds</string>
+    <string name="MeeroAutoReplyBounds">Guarantees: private chats only - groups, channels, bots and your Saved Messages are always excluded. Never replies while you are inside that same chat with the screen on. Works while the app is alive and stops when it is fully closed. With Ghost Mode: the reply is sent without any read receipt, so the other side\'s read ticks stay unchanged. The cooldown is kept in memory and resets when the app restarts.</string>
     <string name="MeeroGhostSwipeReadInfo">"Don't read messages" hides read receipts from everyone, but sometimes you want one person to know you read their chat: enable this, swipe that chat in the dialogs list, and its receipt is sent alone while everything else stays hidden. One requirement: the swipe action must be Read - set it in the Chat swipe action row above, or in Settings - Chat Settings - Chat list swipe gesture. When off, ghost mode behaves exactly like the stock fork.</string>
 
 

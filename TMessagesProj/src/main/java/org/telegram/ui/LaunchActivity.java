@@ -780,6 +780,11 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
         BackupAgent.requestBackup();
 
         RestrictedLanguagesSelectActivity.checkRestrictedLanguages(false);
+
+        // MeeroX v98: idempotent - registers the auto-reply observers for
+        // every logged-in account once per process.
+        tw.nekomimi.nekogram.MeeroAutoReply.start();
+
         if (Build.VERSION.SDK_INT >= 34 && NaConfig.INSTANCE.getBackAnimationStyle().Int() == ActionBarLayout.BACK_ANIMATION_PREDICTIVE) {
             if (onBackAnimationCallback == null) {
                 onBackAnimationCallback =  new OnBackAnimationCallback() {

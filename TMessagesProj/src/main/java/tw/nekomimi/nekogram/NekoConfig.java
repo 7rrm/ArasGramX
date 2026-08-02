@@ -118,6 +118,13 @@ public class NekoConfig {
     // Both off = stock fork behaviour, untouched.
     public static ConfigItem meeroStoryDownload = addConfig("meeroStoryDownload", configTypeBool, true);
     public static ConfigItem meeroGhostSwipeRead = addConfig("meeroGhostSwipeRead", configTypeBool, true);
+    // --- MeeroX Auto-reply (v98). Master switch defaults OFF on purpose:
+    // it sends messages under the user's name, so the first activation is
+    // an explicit user action. Text empty = localized default with {name}.
+    public static ConfigItem meeroAutoReply = addConfig("meeroAutoReply", configTypeBool, false);
+    public static ConfigItem meeroAutoReplyText = addConfig("meeroAutoReplyText", configTypeString, "");
+    public static ConfigItem meeroAutoReplyCooldown = addConfig("meeroAutoReplyCooldown", configTypeInt, 30); // minutes per chat
+    public static ConfigItem meeroAutoReplyDelay = addConfig("meeroAutoReplyDelay", configTypeInt, 3); // seconds before send
 
     // From NekoConfig
     public static ConfigItem useIPv6 = addConfig("IPv6", configTypeBool, false);
