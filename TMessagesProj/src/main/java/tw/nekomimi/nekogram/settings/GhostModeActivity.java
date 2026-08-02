@@ -40,6 +40,10 @@ public class GhostModeActivity extends BaseNekoSettingsActivity {
     private int sendUploadProgressRow;
     private int sendOfflinePacketAfterOnlineRow;
     private int ghostModeNoticeRow;
+    // MeeroX v95: ghost swipe-read lives here as an independent circle row,
+    // outside the 5 ghost essentials so the master toggle never flips it.
+    private int ghostSwipeReadRow;
+    private int ghostSwipeReadNoticeRow;
     private int markReadAfterSendRow;
     private int markReadAfterSendNoticeRow;
 
@@ -70,6 +74,8 @@ public class GhostModeActivity extends BaseNekoSettingsActivity {
             sendOfflinePacketAfterOnlineRow = -1;
             ghostModeNoticeRow = -1;
         }
+        ghostSwipeReadRow = addRow();
+        ghostSwipeReadNoticeRow = addRow();
         markReadAfterSendRow = addRow();
         markReadAfterSendNoticeRow = addRow();
         sendWithoutSoundRow = addRow();
@@ -140,6 +146,9 @@ public class GhostModeActivity extends BaseNekoSettingsActivity {
             NekoConfig.sendOfflinePacketAfterOnline.toggleConfigBool();
             ((CheckBoxCell) view).setChecked(NekoConfig.sendOfflinePacketAfterOnline.Bool(), true);
             updateGhostViews();
+        } else if (position == ghostSwipeReadRow) {
+            NekoConfig.meeroGhostSwipeRead.toggleConfigBool();
+            ((CheckBoxCell) view).setChecked(NekoConfig.meeroGhostSwipeRead.Bool(), true);
         } else if (position == markReadAfterSendRow) {
             NekoConfig.markReadAfterSend.toggleConfigBool();
             ((TextCheckCell) view).setChecked(NekoConfig.markReadAfterSend.Bool());
@@ -269,6 +278,8 @@ public class GhostModeActivity extends BaseNekoSettingsActivity {
                     cell.setBackground(Theme.getThemedDrawable(mContext, R.drawable.greydivider, Theme.key_windowBackgroundGrayShadow));
                     if (position == ghostModeNoticeRow) {
                         cell.setText(getString(R.string.GhostModeNotice));
+                    } else if (position == ghostSwipeReadNoticeRow) {
+                        cell.setText(getString(R.string.MeeroGhostSwipeReadInfo));
                     } else if (position == markReadAfterSendNoticeRow) {
                         cell.setText(getString(R.string.MarkReadAfterSendNotice));
                     } else if (position == sendWithoutSoundNoticeRow) {
@@ -295,6 +306,13 @@ public class GhostModeActivity extends BaseNekoSettingsActivity {
                     break;
                 case TYPE_CHECKBOX2:
                     CheckBoxCell checkBoxCell = (CheckBoxCell) holder.itemView;
+                    if (position == ghostSwipeReadRow) {
+                        // MeeroX v95 standalone row: no lock item, always enabled.
+                        checkBoxCell.setText(getString(R.string.meeroGhostSwipeRead), "", NekoConfig.meeroGhostSwipeRead.Bool(), true, true);
+                        checkBoxCell.setEnabled(true);
+                        checkBoxCell.setPad(1);
+                        break;
+                    }
                     ConfigItem item = null;
                     ConfigItem lockedItem = null;
                     boolean checkValue = false;
@@ -341,11 +359,11 @@ public class GhostModeActivity extends BaseNekoSettingsActivity {
         public int getItemViewType(int position) {
             if (position == ghostEssentialsHeaderRow) {
                 return TYPE_HEADER;
-            } else if (position == ghostModeNoticeRow || position == markReadAfterSendNoticeRow || position == sendWithoutSoundNoticeRow) {
+            } else if (position == ghostModeNoticeRow || position == ghostSwipeReadNoticeRow || position == markReadAfterSendNoticeRow || position == sendWithoutSoundNoticeRow) {
                 return TYPE_INFO_PRIVACY;
             } else if (position == ghostModeToggleRow) {
                 return TYPE_CHECK2;
-            } else if (position >= sendReadMessagePacketsRow && position <= sendOfflinePacketAfterOnlineRow) {
+            } else if (position == ghostSwipeReadRow || (position >= sendReadMessagePacketsRow && position <= sendOfflinePacketAfterOnlineRow)) {
                 return TYPE_CHECKBOX2;
             }
             return TYPE_CHECK;
