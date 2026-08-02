@@ -22,6 +22,22 @@
     <string name="meeroTickDesc6">A crescent moon when sent, two crescents when read.</string>
     <string name="meeroTickName7">Gem</string>
     <string name="meeroTickDesc7">A diamond when sent, two diamonds when read.</string>
+    <string name="meeroTickName8">Water drop</string>
+    <string name="meeroTickDesc8">A droplet when sent, two droplets when read.</string>
+    <string name="meeroTickName9">Bell</string>
+    <string name="meeroTickDesc9">A bell when sent, two bells when read.</string>
+    <string name="meeroTickName10">Shield</string>
+    <string name="meeroTickDesc10">A shield when sent, two shields when read.</string>
+    <string name="meeroTickName11">Infinity</string>
+    <string name="meeroTickDesc11">The infinity loop when sent, two loops when read.</string>
+    <string name="meeroTickName12">Paw</string>
+    <string name="meeroTickDesc12">A little paw when sent, two paws when read.</string>
+    <string name="meeroTickName13">Leaf</string>
+    <string name="meeroTickDesc13">A tree leaf when sent, two leaves when read.</string>
+    <string name="meeroTickName14">Flame</string>
+    <string name="meeroTickDesc14">A fire flame when sent, two flames when read.</string>
+    <string name="meeroTickName15">Paper plane</string>
+    <string name="meeroTickDesc15">A paper plane when sent, two planes when read.</string>
 
     <string name="MeeroDeveloper">Developer</string>
     <string name="MeeroChannel1">Channel 1</string>

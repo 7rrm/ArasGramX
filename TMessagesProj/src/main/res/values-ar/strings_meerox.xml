@@ -711,6 +711,22 @@
     <string name="meeroTickDesc6">هلال عند الإرسال، وهلالان متداخلان عند القراءة.</string>
     <string name="meeroTickName7">الألماس</string>
     <string name="meeroTickDesc7">ماسة عند الإرسال، وماسَتان عند القراءة.</string>
+    <string name="meeroTickName8">قطرة الماء</string>
+    <string name="meeroTickDesc8">قطرة عند الإرسال، وقطرتان عند القراءة.</string>
+    <string name="meeroTickName9">الجرس</string>
+    <string name="meeroTickDesc9">جرس عند الإرسال، وجرسان عند القراءة.</string>
+    <string name="meeroTickName10">الدرع</string>
+    <string name="meeroTickDesc10">درع عند الإرسال، ودرعان عند القراءة.</string>
+    <string name="meeroTickName11">اللانهاية</string>
+    <string name="meeroTickDesc11">رمز اللانهاية عند الإرسال، ورمزان عند القراءة.</string>
+    <string name="meeroTickName12">المخلب</string>
+    <string name="meeroTickDesc12">مخلب لطيف عند الإرسال، ومخلبان عند القراءة.</string>
+    <string name="meeroTickName13">الورقة</string>
+    <string name="meeroTickDesc13">ورقة شجر عند الإرسال، وورقتان عند القراءة.</string>
+    <string name="meeroTickName14">اللهب</string>
+    <string name="meeroTickDesc14">شعلة نار عند الإرسال، وشعلتان عند القراءة.</string>
+    <string name="meeroTickName15">الطائرة</string>
+    <string name="meeroTickDesc15">طائرة ورقية عند الإرسال، وطائرتان عند القراءة.</string>
 
     <string name="MeeroDeveloper">المطوّر</string>
     <string name="MeeroChannel1">القناة الأولى</string>

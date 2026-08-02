@@ -5647,7 +5647,7 @@ public class Theme {
                 return -1;
             }
             int style = tw.nekomimi.nekogram.NekoConfig.meeroTickStyle.Int();
-            return (style < 0 || style > 7) ? 0 : style;
+            return (style < 0 || style >= tw.nekomimi.nekogram.MeeroTickStyles.COUNT) ? 0 : style;
         } catch (Throwable ignore) {
             return -1;
         }
@@ -9185,19 +9185,9 @@ public class Theme {
                 meeroHalfCheck = R.drawable.msg_halfcheck;
                 meeroHalfCheckS = R.drawable.msg_halfcheck_s;
             } else {
-                final int[] meeroTickSingle = new int[]{
-                        R.drawable.ios_tick_check, R.drawable.meero_tick_heart, R.drawable.meero_tick_star,
-                        R.drawable.meero_tick_dot, R.drawable.meero_tick_sparkle, R.drawable.meero_tick_bolt,
-                        R.drawable.meero_tick_moon, R.drawable.meero_tick_gem,
-                };
-                final int[] meeroTickSecond = new int[]{
-                        R.drawable.ios_tick_halfcheck, R.drawable.meero_tick_heart_half, R.drawable.meero_tick_star_half,
-                        R.drawable.meero_tick_dot_half, R.drawable.meero_tick_sparkle_half, R.drawable.meero_tick_bolt_half,
-                        R.drawable.meero_tick_moon_half, R.drawable.meero_tick_gem_half,
-                };
-                meeroCheck = meeroTickSingle[meeroTickStyle];
-                meeroHalfCheck = meeroTickSecond[meeroTickStyle];
-                meeroHalfCheckS = meeroTickSecond[meeroTickStyle];
+                meeroCheck = tw.nekomimi.nekogram.MeeroTickStyles.SINGLES[meeroTickStyle];
+                meeroHalfCheck = tw.nekomimi.nekogram.MeeroTickStyles.SECONDS[meeroTickStyle];
+                meeroHalfCheckS = tw.nekomimi.nekogram.MeeroTickStyles.SECONDS[meeroTickStyle];
             }
 
             chat_msgOutCheckDrawable = resources.getDrawable(meeroCheck).mutate();

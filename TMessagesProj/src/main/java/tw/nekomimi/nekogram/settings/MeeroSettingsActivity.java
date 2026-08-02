@@ -4,9 +4,13 @@ import static org.telegram.messenger.LocaleController.getString;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.graphics.PorterDuff;
+import android.graphics.drawable.Drawable;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
+import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
@@ -18,6 +22,7 @@ import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.Components.LayoutHelper;
 import org.telegram.ui.Components.RecyclerListView;
 
+import tw.nekomimi.nekogram.MeeroTickStyles;
 import tw.nekomimi.nekogram.NekoConfig;
 import tw.nekomimi.nekogram.config.CellGroup;
 import tw.nekomimi.nekogram.config.cell.AbstractConfigCell;
@@ -163,7 +168,7 @@ public class MeeroSettingsActivity extends BaseNekoXSettingsActivity {
         return superView;
     }
 
-    private static final int TICK_STYLE_COUNT = 8;
+    private static final int TICK_STYLE_COUNT = MeeroTickStyles.COUNT;
 
     private static String tickStyleName(int style) {
         switch (style) {
@@ -174,6 +179,14 @@ public class MeeroSettingsActivity extends BaseNekoXSettingsActivity {
             case 5:  return getString(R.string.meeroTickName5);
             case 6:  return getString(R.string.meeroTickName6);
             case 7:  return getString(R.string.meeroTickName7);
+            case 8:  return getString(R.string.meeroTickName8);
+            case 9:  return getString(R.string.meeroTickName9);
+            case 10: return getString(R.string.meeroTickName10);
+            case 11: return getString(R.string.meeroTickName11);
+            case 12: return getString(R.string.meeroTickName12);
+            case 13: return getString(R.string.meeroTickName13);
+            case 14: return getString(R.string.meeroTickName14);
+            case 15: return getString(R.string.meeroTickName15);
             default: return getString(R.string.meeroTickName0);
         }
     }
@@ -187,6 +200,14 @@ public class MeeroSettingsActivity extends BaseNekoXSettingsActivity {
             case 5:  return getString(R.string.meeroTickDesc5);
             case 6:  return getString(R.string.meeroTickDesc6);
             case 7:  return getString(R.string.meeroTickDesc7);
+            case 8:  return getString(R.string.meeroTickDesc8);
+            case 9:  return getString(R.string.meeroTickDesc9);
+            case 10: return getString(R.string.meeroTickDesc10);
+            case 11: return getString(R.string.meeroTickDesc11);
+            case 12: return getString(R.string.meeroTickDesc12);
+            case 13: return getString(R.string.meeroTickDesc13);
+            case 14: return getString(R.string.meeroTickDesc14);
+            case 15: return getString(R.string.meeroTickDesc15);
             default: return getString(R.string.meeroTickDesc0);
         }
     }
@@ -197,6 +218,21 @@ public class MeeroSettingsActivity extends BaseNekoXSettingsActivity {
             names[i] = tickStyleName(i);
         }
         return names;
+    }
+
+    /**
+     * Draws one tick mark for the picker dialog, tinted like dialog text so
+     * the preview reads on any theme. "second" picks the mark that joins the
+     * first on a read receipt, exactly as the cell layers them.
+     */
+    private static Drawable tickStyleIcon(Context context, int style, boolean second) {
+        if (style < 0 || style >= MeeroTickStyles.COUNT) {
+            style = 0;
+        }
+        int res = (second ? MeeroTickStyles.SECONDS : MeeroTickStyles.SINGLES)[style];
+        Drawable icon = context.getResources().getDrawable(res).mutate();
+        icon.setColorFilter(Theme.getColor(Theme.key_dialogTextBlack), PorterDuff.Mode.SRC_IN);
+        return icon;
     }
 
     /**
@@ -247,9 +283,26 @@ public class MeeroSettingsActivity extends BaseNekoXSettingsActivity {
             texts.addView(title);
             texts.addView(desc);
 
+            // Live shape preview: the sent mark and the read-receipt second
+            // mark overlapped the way they stack in chat, so the shape is
+            // visible before anything is applied.
+            FrameLayout preview = new FrameLayout(context);
+            ImageView single = new ImageView(context);
+            single.setImageDrawable(tickStyleIcon(context, style, false));
+            ImageView second = new ImageView(context);
+            second.setImageDrawable(tickStyleIcon(context, style, true));
+            FrameLayout.LayoutParams lpSingle = new FrameLayout.LayoutParams(
+                    AndroidUtilities.dp(14), AndroidUtilities.dp(14), Gravity.START | Gravity.CENTER_VERTICAL);
+            FrameLayout.LayoutParams lpSecond = new FrameLayout.LayoutParams(
+                    AndroidUtilities.dp(14), AndroidUtilities.dp(14), Gravity.START | Gravity.CENTER_VERTICAL);
+            lpSecond.setMarginStart(AndroidUtilities.dp(8));
+            preview.addView(single, lpSingle);
+            preview.addView(second, lpSecond);
+
             LinearLayout item = new LinearLayout(context);
             item.setOrientation(LinearLayout.HORIZONTAL);
-            item.setPadding(AndroidUtilities.dp(20), AndroidUtilities.dp(9), AndroidUtilities.dp(20), AndroidUtilities.dp(9));
+            item.setPadding(AndroidUtilities.dp(16), AndroidUtilities.dp(9), AndroidUtilities.dp(16), AndroidUtilities.dp(9));
+            item.addView(preview, LayoutHelper.createLinear(AndroidUtilities.dp(42), LayoutHelper.MATCH_PARENT, Gravity.CENTER_VERTICAL));
             item.addView(texts, LayoutHelper.createLinear(0, LayoutHelper.WRAP_CONTENT, 1f));
             item.addView(check, LayoutHelper.createLinear(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.CENTER_VERTICAL));
             item.setOnClickListener(v -> {
