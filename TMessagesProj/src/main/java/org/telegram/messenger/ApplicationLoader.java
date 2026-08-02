@@ -377,6 +377,10 @@ public class ApplicationLoader extends Application {
 
         LauncherIconController.tryFixLauncherIconIfNeeded();
         ProxyRotationController.init();
+
+        // MeeroX v99: auto-reply observers live in the application process so
+        // a push-wake in the background can still answer; idempotent.
+        tw.nekomimi.nekogram.MeeroAutoReply.start();
     }
 
     // Local Push Service, TFoss implementation

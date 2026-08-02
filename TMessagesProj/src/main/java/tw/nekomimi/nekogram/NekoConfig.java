@@ -123,8 +123,9 @@ public class NekoConfig {
     // an explicit user action. Text empty = localized default with {name}.
     public static ConfigItem meeroAutoReply = addConfig("meeroAutoReply", configTypeBool, false);
     public static ConfigItem meeroAutoReplyText = addConfig("meeroAutoReplyText", configTypeString, "");
-    public static ConfigItem meeroAutoReplyCooldown = addConfig("meeroAutoReplyCooldown", configTypeInt, 30); // minutes per chat
+    public static ConfigItem meeroAutoReplyCooldown = addConfig("meeroAutoReplyCooldown", configTypeInt, 0); // minutes per chat (0 = every message)
     public static ConfigItem meeroAutoReplyDelay = addConfig("meeroAutoReplyDelay", configTypeInt, 3); // seconds before send
+    public static ConfigItem meeroAutoReplyRules = addConfig("meeroAutoReplyRules", configTypeString, ""); // v99: JSON per-chat reply rules
 
     // From NekoConfig
     public static ConfigItem useIPv6 = addConfig("IPv6", configTypeBool, false);

@@ -751,7 +751,20 @@
     <string name="MeeroDelay3">3 ثواني</string>
     <string name="MeeroDelay5">5 ثواني</string>
     <string name="MeeroDelay10">10 ثواني</string>
-    <string name="MeeroAutoReplyBounds">الضمانات: الدردشات الخاصة فقط — القروبات والقنوات والبوتات ورسائلك المحفوظة مستبعدة دائماً. لا يرد وأنت داخل نفس الدردشة والشاشة شغالة. يعمل ما دام التطبيق مشغولاً ويتوقف عند إغلاقه نهائياً. مع وضع الشبح: الرد يُرسل بدون إيصال قراءة، فصحات القراءة عند الطرف الثاني لا تتغير. الفاصل الزمني يُحفظ بالذاكرة ويُصفَّر عند إعادة تشغيل التطبيق.</string>
+    <string name="MeeroAutoReplyBounds">الضمانات: الدردشات الخاصة فقط — القروبات والقنوات والبوتات ورسائلك المحفوظة مستبعدة دائماً. لا يرد وأنت داخل نفس الدردشة والشاشة شغالة. يعمل في الخلفية ولو خرجت من التطبيق («الإيقاف الإجباري» من إعدادات الجهاز يطفي كل شيء — قانون أندرويد). مع وضع الشبح: الرد يُرسل بدون إيصال قراءة، فصحات القراءة عند الطرف الثاني لا تتغير. الفاصل الزمني يُحفظ بالذاكرة ويُصفَّر عند إعادة تشغيل التطبيق.</string>
+    <string name="MeeroAutoReplySampleName">علي</string>
+    <string name="MeeroRulesContentHeader">المحتوى</string>
+    <string name="MeeroRulesTimingHeader">التوقيت</string>
+    <string name="MeeroRulesTitle">قواعد لكل شخص</string>
+    <string name="MeeroRulesNone">بلا قواعد</string>
+    <string name="MeeroRulesWordOne">قاعدة</string>
+    <string name="MeeroRulesWordMany">قواعد</string>
+    <string name="MeeroRulesAdd">إضافة قاعدة</string>
+    <string name="MeeroRulesInfo">القاعدة تستبدل نص الرد العام لتلك الدردشة فقط — باقي الشروط (الفاصل بين الردود وكل البوابات) تبقى شغالة عليها. اضغط أي قاعدة لتعديل نصها أو حذفها.</string>
+    <string name="MeeroRulesEdit">تعديل النص</string>
+    <string name="MeeroRulesDelete">حذف القاعدة</string>
+    <string name="MeeroRulesPickPrivate">اختر دردشة خاصة فقط</string>
+    <string name="MeeroRulesChatFallback">محادثة</string>
     <string name="MeeroGhostSwipeReadInfo">خيار «عدم قراءة الرسائل» يحجب إيصالات القراءة عن الكل، لكن أحياناً تريد أن يعرف شخصٌ واحد أنك قرأت: فعّل هذا الخيار واسحب تلك المحادثة في قائمة الدردشات فيصلها وحدها إيصال قراءة حقيقي، والباقي يبقى مخفياً. شرط واحد: إجراء السحب لازم يكون «مقروءة» — تضبطه من صف «ضبط إجراء السحب» في الأعلى، أو من: الإعدادات ← إعدادات المحادثات ← «إجراءات السحْب لقائمة المحادثات». عند الإطفاء يرجع الشبح لسلوك الفورك الرسمي بالضبط.</string>
 
 

@@ -2,6 +2,8 @@ package tw.nekomimi.nekogram;
 
 import android.text.TextUtils;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ApplicationLoader;
 import org.telegram.messenger.DialogObject;
@@ -39,7 +41,8 @@ public final class MeeroAutoReply {
     private static final ConcurrentHashMap<Long, Long> lastReplyAt = new ConcurrentHashMap<>();
     private static volatile boolean started;
 
-    /** Idempotent. Call once from LaunchActivity.onCreate. */
+    /** Idempotent. Called once from ApplicationLoader.onCreate so the engine
+     *  is alive even when a push wakes the process in the background. */
     public static void start() {
         if (started) return;
         synchronized (MeeroAutoReply.class) {
@@ -104,7 +107,7 @@ public final class MeeroAutoReply {
         // Pass: schedule the reply. Mark the cooldown immediately so a burst
         // of messages schedules exactly one reply.
         lastReplyAt.put(dialogId, now);
-        final String text = resolveText(user, account);
+        final String text = resolveText(user, account, getRuleText(dialogId));
         final int delayMs = Math.max(0, NekoConfig.meeroAutoReplyDelay.Int()) * 1000;
         final long finalDialogId = dialogId;
         final int finalAccount = account;
@@ -117,8 +120,11 @@ public final class MeeroAutoReply {
         }, delayMs);
     }
 
-    private static String resolveText(TLRPC.User user, int account) {
-        String template = NekoConfig.meeroAutoReplyText.String();
+    private static String resolveText(TLRPC.User user, int account, String ruleText) {
+        String template = ruleText;
+        if (TextUtils.isEmpty(template)) {
+            template = NekoConfig.meeroAutoReplyText.String();
+        }
         if (TextUtils.isEmpty(template)) {
             template = LocaleController.getString(R.string.MeeroAutoReplyDefaultText);
         }
@@ -138,5 +144,75 @@ public final class MeeroAutoReply {
         } catch (Throwable ignore) {
             return false;
         }
+    }
+
+    // --- Per-chat rules (MeeroX v99). JSON array: [{"id":123,"text":"..."}].
+    // A rule only swaps the reply text for that chat; every other safety
+    // gate (private-only, freshness, cooldown, not-while-viewing) still applies.
+
+    private static JSONArray readRules() {
+        try {
+            String raw = NekoConfig.meeroAutoReplyRules.String();
+            if (!TextUtils.isEmpty(raw)) return new JSONArray(raw);
+        } catch (Throwable ignore) {}
+        return new JSONArray();
+    }
+
+    private static synchronized void writeRules(JSONArray array) {
+        NekoConfig.meeroAutoReplyRules.setConfigString(array == null ? "" : array.toString());
+    }
+
+    public static synchronized boolean hasRule(long dialogId) {
+        return getRuleText(dialogId) != null;
+    }
+
+    public static synchronized String getRuleText(long dialogId) {
+        JSONArray array = readRules();
+        for (int i = 0; i < array.length(); i++) {
+            JSONObject o = array.optJSONObject(i);
+            if (o != null && o.optLong("id") == dialogId) {
+                String text = o.optString("text", "");
+                return TextUtils.isEmpty(text) ? null : text;
+            }
+        }
+        return null;
+    }
+
+    /** Stable snapshot of rule dialog ids for the management screen. */
+    public static synchronized ArrayList<Long> getRuleDialogIds() {
+        ArrayList<Long> ids = new ArrayList<>();
+        JSONArray array = readRules();
+        for (int i = 0; i < array.length(); i++) {
+            JSONObject o = array.optJSONObject(i);
+            if (o != null) ids.add(o.optLong("id"));
+        }
+        return ids;
+    }
+
+    public static int getRuleCount() {
+        return getRuleDialogIds().size();
+    }
+
+    public static synchronized void upsertRule(long dialogId, String text) {
+        JSONArray array = readRules();
+        JSONArray out = new JSONArray();
+        for (int i = 0; i < array.length(); i++) {
+            JSONObject o = array.optJSONObject(i);
+            if (o == null || o.optLong("id") == dialogId) continue;
+            out.put(o);
+        }
+        if (!TextUtils.isEmpty(text)) {
+            try {
+                JSONObject o = new JSONObject();
+                o.put("id", dialogId);
+                o.put("text", text);
+                out.put(o);
+            } catch (Throwable ignore) {}
+        }
+        writeRules(out);
+    }
+
+    public static synchronized void removeRule(long dialogId) {
+        upsertRule(dialogId, null);
     }
 }

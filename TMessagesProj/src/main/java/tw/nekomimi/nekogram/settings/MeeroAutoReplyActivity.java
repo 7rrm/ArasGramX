@@ -19,22 +19,30 @@ import org.telegram.ui.ActionBar.AlertDialog;
 import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.Cells.TextCell;
 import org.telegram.ui.Cells.TextCheckCell;
+import org.telegram.ui.Cells.TextDetailSettingsCell;
 import org.telegram.ui.Cells.TextInfoPrivacyCell;
 
+import java.util.Locale;
+
+import tw.nekomimi.nekogram.MeeroAutoReply;
 import tw.nekomimi.nekogram.NekoConfig;
+import tw.nekomimi.nekogram.ui.cells.HeaderCell;
 
 /**
- * MeeroX v98: dedicated Auto-reply screen.
+ * MeeroX v99: dedicated Auto-reply screen.
  *
  * Master switch (off by default - replies are sent under the user's name),
- * reply text editor with a {name} placeholder, per-chat cooldown and send
- * delay pickers. The engine itself lives in {@link tw.nekomimi.nekogram.MeeroAutoReply}.
+ * a live reply preview ({name} shown with a sample name), per-chat rules,
+ * cooldown and send-delay pickers. The engine lives in {@link MeeroAutoReply}.
  */
 public class MeeroAutoReplyActivity extends BaseNekoSettingsActivity {
 
     private int autoReplyRow;
     private int autoReplyInfoRow;
+    private int contentHeaderRow;
     private int textRow;
+    private int rulesRow;
+    private int timingHeaderRow;
     private int cooldownRow;
     private int delayRow;
     private int boundsInfoRow;
@@ -47,7 +55,10 @@ public class MeeroAutoReplyActivity extends BaseNekoSettingsActivity {
         super.updateRows();
         autoReplyRow = addRow();
         autoReplyInfoRow = addRow();
+        contentHeaderRow = addRow();
         textRow = addRow();
+        rulesRow = addRow();
+        timingHeaderRow = addRow();
         cooldownRow = addRow();
         delayRow = addRow();
         boundsInfoRow = addRow();
@@ -71,8 +82,16 @@ public class MeeroAutoReplyActivity extends BaseNekoSettingsActivity {
         return value;
     }
 
+    /** Live preview exactly as the other side receives it ({name} resolved). */
     private String replyTextPreview() {
-        return currentReplyText().replace('\n', ' ');
+        return currentReplyText().replace("{name}", getString(R.string.MeeroAutoReplySampleName));
+    }
+
+    private String rulesValue() {
+        int count = MeeroAutoReply.getRuleCount();
+        if (count == 0) return getString(R.string.MeeroRulesNone);
+        String word = count == 1 ? getString(R.string.MeeroRulesWordOne) : getString(R.string.MeeroRulesWordMany);
+        return String.format(Locale.US, "%d %s", count, word);
     }
 
     private String cooldownName(int minutes) {
@@ -112,11 +131,20 @@ public class MeeroAutoReplyActivity extends BaseNekoSettingsActivity {
             ((TextCheckCell) view).setChecked(NekoConfig.meeroAutoReply.Bool());
         } else if (position == textRow) {
             showTextEditor();
+        } else if (position == rulesRow) {
+            presentFragment(new MeeroAutoReplyRulesActivity());
         } else if (position == cooldownRow) {
             showCooldownPicker();
         } else if (position == delayRow) {
             showDelayPicker();
         }
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        // The rules count may change on the management screen.
+        listAdapter.notifyItemChanged(rulesRow);
     }
 
     private void showTextEditor() {
@@ -197,7 +225,7 @@ public class MeeroAutoReplyActivity extends BaseNekoSettingsActivity {
         @Override
         public boolean isEnabled(RecyclerView.ViewHolder holder) {
             int type = holder.getItemViewType();
-            return type == TYPE_CHECK || type == TYPE_TEXT;
+            return type == TYPE_CHECK || type == TYPE_TEXT || type == TYPE_DETAIL_SETTINGS;
         }
 
         @Override
@@ -209,10 +237,25 @@ public class MeeroAutoReplyActivity extends BaseNekoSettingsActivity {
                         checkCell.setTextAndCheck(getString(R.string.MeeroAutoReplyTitle), NekoConfig.meeroAutoReply.Bool(), true);
                     }
                     break;
+                case TYPE_HEADER:
+                    HeaderCell headerCell = (HeaderCell) holder.itemView;
+                    if (position == contentHeaderRow) {
+                        headerCell.setText(getString(R.string.MeeroRulesContentHeader));
+                    } else if (position == timingHeaderRow) {
+                        headerCell.setText(getString(R.string.MeeroRulesTimingHeader));
+                    }
+                    break;
+                case TYPE_DETAIL_SETTINGS:
+                    TextDetailSettingsCell detailCell = (TextDetailSettingsCell) holder.itemView;
+                    if (position == textRow) {
+                        detailCell.setMultilineDetail(true);
+                        detailCell.setTextAndValue(getString(R.string.MeeroAutoReplyText), replyTextPreview(), false);
+                    }
+                    break;
                 case TYPE_TEXT:
                     TextCell textCell = (TextCell) holder.itemView;
-                    if (position == textRow) {
-                        textCell.setTextAndValue(getString(R.string.MeeroAutoReplyText), replyTextPreview(), true);
+                    if (position == rulesRow) {
+                        textCell.setTextAndValue(getString(R.string.MeeroRulesTitle), rulesValue(), true);
                     } else if (position == cooldownRow) {
                         textCell.setTextAndValue(getString(R.string.MeeroAutoReplyCooldown), cooldownName(NekoConfig.meeroAutoReplyCooldown.Int()), true);
                     } else if (position == delayRow) {
@@ -235,7 +278,11 @@ public class MeeroAutoReplyActivity extends BaseNekoSettingsActivity {
         public int getItemViewType(int position) {
             if (position == autoReplyRow) {
                 return TYPE_CHECK;
-            } else if (position == textRow || position == cooldownRow || position == delayRow) {
+            } else if (position == contentHeaderRow || position == timingHeaderRow) {
+                return TYPE_HEADER;
+            } else if (position == textRow) {
+                return TYPE_DETAIL_SETTINGS;
+            } else if (position == rulesRow || position == cooldownRow || position == delayRow) {
                 return TYPE_TEXT;
             }
             return TYPE_INFO_PRIVACY;
