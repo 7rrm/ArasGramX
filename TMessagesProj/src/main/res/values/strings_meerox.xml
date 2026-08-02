@@ -43,7 +43,8 @@
     <string name="MeeroStoryDownload">Save to gallery</string>
     <string name="MeeroStorySaved">Story saved to gallery</string>
     <string name="meeroGhostSwipeRead">Ghost read by swipe</string>
-    <string name="MeeroGhostSwipeReadInfo">"Don't read messages" hides read receipts from everyone, but sometimes you want one person to know you read their chat: enable this, swipe that chat in the dialogs list, and its receipt is sent alone while everything else stays hidden. One requirement: the swipe action must be Read, set it in Settings - Chat Settings - Chat list swipe gesture. When off, ghost mode behaves exactly like the stock fork.</string>
+    <string name="MeeroSwipeAction">Chat swipe action</string>
+    <string name="MeeroGhostSwipeReadInfo">"Don't read messages" hides read receipts from everyone, but sometimes you want one person to know you read their chat: enable this, swipe that chat in the dialogs list, and its receipt is sent alone while everything else stays hidden. One requirement: the swipe action must be Read - set it in the Chat swipe action row above, or in Settings - Chat Settings - Chat list swipe gesture. When off, ghost mode behaves exactly like the stock fork.</string>
 
 
     <string name="MeeroDeveloper">Developer</string>
