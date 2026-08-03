@@ -141,7 +141,7 @@ public class MeeroWatchLogActivity extends BaseNekoSettingsActivity {
         Context context = getParentActivity();
         if (context == null) return;
         BackupImageView imageView = new BackupImageView(context);
-        imageView.setImage(ImageLocation.getForPath(path), null, null, null);
+        imageView.setImage(ImageLocation.getForPath(path), null, (android.graphics.drawable.Drawable) null, (Object) null);
         int size = AndroidUtilities.dp(280);
         FrameLayout container = new FrameLayout(context);
         container.addView(imageView, new FrameLayout.LayoutParams(size, size, android.view.Gravity.CENTER));
