@@ -291,9 +291,29 @@
     <string name="MeeroChatLockEmpty">No locked chats yet. Pick one above.</string>
     <string name="MeeroChatLockInvalid">This chat cannot be locked.</string>
     <string name="MeeroChatLockRowDetail">Locked - fingerprint needed on entry</string>
-    <string name="MeeroChatLockInfo">A locked chat is covered by an opaque gate and asks for your fingerprint or device lock on EVERY entry path (list, search, notification, link). It relocks the moment you leave it (screen rotation relocks too). Locking also mutes the chat server-side so system notifications reveal nothing, and you get a private "new message in a locked chat" notice instead. Unlocking restores notifications only if the lock muted them. Off = everything behaves stock.</string>
+    <string name="MeeroChatLockInfo">A locked chat is covered by an opaque gate and asks for your unlock secret on EVERY entry path (list, search, notification, link) - system biometric/device lock or your 8-digit code, chosen above. The chat also disappears from the main list, folders, archive and every search result, and reappears only inside Hidden chats (long-press the Chats tab on the bottom bar). It relocks the moment you leave it (screen rotation relocks too). Locking also mutes the chat server-side so system notifications reveal nothing, and you get a private "new message in a locked chat" notice instead. Unlocking restores notifications only if the lock muted them. The 8-digit code is stored on this device ONLY as a salted hash - if you forget it there is NO recovery (you would have to clear the app data, which logs you out). Off = everything behaves stock.</string>
     <string name="MeeroChatLockGateTitle">Locked chat</string>
     <string name="MeeroChatLockGateSubtitle">Unlock with your fingerprint or device lock</string>
     <string name="MeeroChatLockGateHint">Unlock to view this conversation</string>
     <string name="MeeroChatLockNewMessage">New message in a locked chat</string>
+    <string name="MeeroChatLockMethod">Unlock method</string>
+    <string name="MeeroChatLockMethodSystem">Device biometric / device lock</string>
+    <string name="MeeroChatLockMethodCode">8-digit code</string>
+    <string name="MeeroChatLockSetCode">Set your code</string>
+    <string name="MeeroChatLockSetCodeHint">Enter an 8-digit code (numbers only)</string>
+    <string name="MeeroChatLockConfirmCode">Confirm the code</string>
+    <string name="MeeroChatLockCodeMismatch">The two codes don\'t match - try again</string>
+    <string name="MeeroChatLockEnterCode">Enter code</string>
+    <string name="MeeroChatLockEnterCodeHint">Enter your 8-digit lock code</string>
+    <string name="MeeroChatLockCodeWrong">Wrong code - try again</string>
+    <string name="MeeroChatLockCodeSaved">Code saved</string>
+    <string name="MeeroChatLockChangeCode">Change code</string>
+    <string name="MeeroGateCodeHint">Enter your lock code to open</string>
+    <string name="MeeroHiddenChats">Hidden chats</string>
+    <string name="MeeroVaultTitle">Hidden chats</string>
+    <string name="MeeroVaultEmpty">No hidden chats.</string>
+    <string name="MeeroVaultUnread">%1$d unread</string>
+    <string name="MeeroVaultInfo">Locked chats hide from the main list, folders, archive and search, and live only here. One unlock (biometric or code) opens this screen until you leave it; opening a chat from here never double-asks, and everything re-locks the moment you go back. Vault access: long-press the Chats tab on the bottom bar and pick "Hidden chats".</string>
+    <string name="MeeroVaultGateHint">Unlock to see your hidden chats</string>
+    <string name="MeeroChatsMenuFogInfo">Blurs the whole screen behind the bottom-bar chats long-press popup so the menu stays in focus. Off = plain dimming, exactly like before.</string>
 </resources>

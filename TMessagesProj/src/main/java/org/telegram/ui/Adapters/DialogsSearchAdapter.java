@@ -644,6 +644,11 @@ public class DialogsSearchAdapter extends RecyclerListView.SelectionAdapter {
                                     continue;
                                 }
                             }
+                            // MeeroX v107: messages of locked chats never leak
+                            // into search results.
+                            if (tw.nekomimi.nekogram.MeeroChatLock.isHiddenDialogId(did)) {
+                                continue;
+                            }
                             searchResultMessages.add(msg);
                             long dialog_id = MessageObject.getDialogId(message);
                             ConcurrentHashMap<Long, Integer> read_max = message.out ? MessagesController.getInstance(currentAccount).dialogs_read_outbox_max : MessagesController.getInstance(currentAccount).dialogs_read_inbox_max;
@@ -994,6 +999,24 @@ public class DialogsSearchAdapter extends RecyclerListView.SelectionAdapter {
             for (int i = 0; i < result.size(); ++i) {
                 if (!filter(result.get(i))) {
                     result.remove(i);
+                    i--;
+                }
+            }
+            // MeeroX v107: locked chats never surface in search results
+            // (names are kept in sync - it mirrors the recent-dupes pass below).
+            for (int i = 0; i < result.size(); ++i) {
+                Object o = result.get(i);
+                long did = 0;
+                if (o instanceof TLRPC.User) {
+                    did = ((TLRPC.User) o).id;
+                } else if (o instanceof TLRPC.Chat) {
+                    did = -((TLRPC.Chat) o).id;
+                }
+                if (did != 0 && tw.nekomimi.nekogram.MeeroChatLock.isHiddenDialogId(did)) {
+                    result.remove(i);
+                    if (i < names.size()) {
+                        names.remove(i);
+                    }
                     i--;
                 }
             }
@@ -2339,7 +2362,8 @@ public class DialogsSearchAdapter extends RecyclerListView.SelectionAdapter {
             filteredRecentSearchObjects.clear();
             final int count = recentSearchObjects.size();
             for (int i = 0; i < count; ++i) {
-                if (delegate != null && delegate.getSearchForumDialogId() == recentSearchObjects.get(i).did || !filter(recentSearchObjects.get(i).object)) {
+                // MeeroX v107: locked chats never show up in recent searches.
+                if (delegate != null && delegate.getSearchForumDialogId() == recentSearchObjects.get(i).did || !filter(recentSearchObjects.get(i).object) || tw.nekomimi.nekogram.MeeroChatLock.isHiddenDialogId(recentSearchObjects.get(i).did)) {
                     continue;
                 }
                 filteredRecentSearchObjects.add(recentSearchObjects.get(i));
@@ -2353,7 +2377,8 @@ public class DialogsSearchAdapter extends RecyclerListView.SelectionAdapter {
             if (obj == null || obj.object == null) {
                 continue;
             }
-            if (delegate != null && delegate.getSearchForumDialogId() == obj.did || !filter(recentSearchObjects.get(i).object)) {
+            // MeeroX v107: locked chats never show up in recent searches.
+            if (delegate != null && delegate.getSearchForumDialogId() == obj.did || !filter(recentSearchObjects.get(i).object) || tw.nekomimi.nekogram.MeeroChatLock.isHiddenDialogId(obj.did)) {
                 continue;
             }
             String title = null, username = null;

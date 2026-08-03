@@ -980,9 +980,29 @@
     <string name="MeeroChatLockEmpty">ماكو دردشات مقفلة بعد. اختار وحدة من فوق.</string>
     <string name="MeeroChatLockInvalid">هاي الدردشة ما ينقفل عليها.</string>
     <string name="MeeroChatLockRowDetail">مقفلة - البصمة مطلوبة عند الدخول</string>
-    <string name="MeeroChatLockInfo">الدردشة المقفلة تنغطى بستارة معتمة وتطلب بصمتك أو رمز جهازك بكل طرق الدخول (القائمة، البحث، الإشعار، الرابط)، وتنقفل من جديد لحظة خروجك منها (تدوير الشاشة ينقفل أيضاً). القفل يكتم إشعارات الدردشة من السيرفر حتى ما ينكشف شي بإشعارات النظام، ويوصلك بدلها إشعار خاص «رسالة جديدة بمحادثة مقفلة». فك القفل يرجّع الإشعارات بس إذا القفل هو اللي كتمها. مطفي = كل شي يرجع أصلي.</string>
+    <string name="MeeroChatLockInfo">الدردشة المقفلة تنغطى بستارة معتمة وتطلب سر الفتح بكل طرق الدخول (القائمة، البحث، الإشعار، الرابط) - بصمة/قفل الجهاز أو رمز الـ8 أرقام حسب ما تختار من فوق. الدردشة أيضاً تختفي من القائمة الرئيسية والمجلدات والأرشيف وكل نتائج البحث، وترجع تظهر بس بشاشة «المحادثات المخفية» (ضغطة مطولة على تبويب المحادثات بالشريط السفلي). تنقفل لحظة خروجك منها (تدوير الشاشة ينقفل أيضاً). القفل يكتم إشعارات الدردشة من السيرفر حتى ما ينكشف شي بإشعارات النظام، ويوصلك بدلها إشعار خاص «رسالة جديدة بمحادثة مقفلة». فك القفل يرجّع الإشعارات بس إذا القفل هو اللي كتمها. رمز الـ8 أرقام ينحفظ بهذا الجهاز فقط كتجزئة مملّحة - إذا تنساه ماكو أي طريقة استرجاع (لازم تمسح بيانات التطبيق ويعني تسجل دخول من جديد). مطفي = كل شي يرجع أصلي.</string>
     <string name="MeeroChatLockGateTitle">محادثة مقفلة</string>
     <string name="MeeroChatLockGateSubtitle">افتحها ببصمتك أو رمز جهازك</string>
     <string name="MeeroChatLockGateHint">افتحها حتى تشوف المحادثة</string>
     <string name="MeeroChatLockNewMessage">وصلتك رسالة جديدة بمحادثة مقفلة</string>
+    <string name="MeeroChatLockMethod">طريقة فتح القفل</string>
+    <string name="MeeroChatLockMethodSystem">بصمة / قفل الجهاز</string>
+    <string name="MeeroChatLockMethodCode">رمز من 8 أرقام</string>
+    <string name="MeeroChatLockSetCode">عيّن الرمز</string>
+    <string name="MeeroChatLockSetCodeHint">اكتب رمز مكوّن من 8 أرقام (أرقام فقط)</string>
+    <string name="MeeroChatLockConfirmCode">أكّد الرمز</string>
+    <string name="MeeroChatLockCodeMismatch">الرمزان مو متطابقين - حاول مرة ثانية</string>
+    <string name="MeeroChatLockEnterCode">أدخل الرمز</string>
+    <string name="MeeroChatLockEnterCodeHint">اكتب رمز القفل المكوّن من 8 أرقام</string>
+    <string name="MeeroChatLockCodeWrong">الرمز غلط - حاول مرة ثانية</string>
+    <string name="MeeroChatLockCodeSaved">انحفظ الرمز</string>
+    <string name="MeeroChatLockChangeCode">تغيير الرمز</string>
+    <string name="MeeroGateCodeHint">اكتب رمز القفل حتى تفتح</string>
+    <string name="MeeroHiddenChats">المحادثات المخفية</string>
+    <string name="MeeroVaultTitle">المحادثات المخفية</string>
+    <string name="MeeroVaultEmpty">ماكو محادثات مخفية.</string>
+    <string name="MeeroVaultUnread">%1$d غير مقروءة</string>
+    <string name="MeeroVaultInfo">المحادثات المقفلة تختفي من القائمة الرئيسية والمجلدات والأرشيف والبحث، وتعيش بس هنا. فتح وحدة (بصمة أو رمز) تفتح هذي الشاشة لحد ما تطلع منها؛ وفتح أي محادثة من هنا ما يعيد الطلب مرة ثانية، والكل ينقفل لحظة رجوعك. الوصول للمخفية: اضغط مطولاً على تبويب «المحادثات» بالشريط السفلي واختار «المحادثات المخفية».</string>
+    <string name="MeeroVaultGateHint">افتح حتى تشوف محادثاتك المخفية</string>
+    <string name="MeeroChatsMenuFogInfo">يضبّب الشاشة كلها خلف قائمة الضغط المطول على زر المحادثات بالشريط السفلي حتى التركيز يبقى على القائمة. مطفي = تعتيم عادي مثل قبل بالضبط.</string>
 </resources>

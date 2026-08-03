@@ -9,9 +9,13 @@ import android.animation.Animator;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffColorFilter;
 import android.graphics.RectF;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ShapeDrawable;
 import android.os.Build;
 import android.os.Bundle;
@@ -23,6 +27,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.accessibility.AccessibilityEvent;
 import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -48,6 +53,7 @@ import org.telegram.messenger.R;
 import org.telegram.messenger.SharedConfig;
 import org.telegram.messenger.UserConfig;
 import org.telegram.messenger.UserObject;
+import org.telegram.messenger.Utilities;
 import org.telegram.tgnet.TLRPC;
 import org.telegram.ui.ActionBar.ActionBarMenuSubItem;
 import org.telegram.ui.ActionBar.BaseFragment;
@@ -88,6 +94,7 @@ import tw.nekomimi.nekogram.helpers.AppRestartHelper;
 import tw.nekomimi.nekogram.helpers.MainTabsHelper;
 import tw.nekomimi.nekogram.helpers.PasscodeHelper;
 import tw.nekomimi.nekogram.settings.GhostModeActivity;
+import tw.nekomimi.nekogram.settings.MeeroLockedVaultActivity;
 import tw.nekomimi.nekogram.settings.NekoSettingsActivity;
 import tw.nekomimi.nekogram.ui.BookmarkManagerActivity;
 import tw.nekomimi.nekogram.utils.BrowserUtils;
@@ -1404,6 +1411,59 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
         if (NaConfig.INSTANCE.getShowAddToBookmark().Bool()) {
             o.add(R.drawable.msg_fave, getString(R.string.BookmarksManager), () -> presentFragment(new BookmarkManagerActivity()));
         }
+        // MeeroX v107: hidden-chats vault entry - appears only while chat lock
+        // is on AND at least one chat is locked (stock popup otherwise).
+        if (tw.nekomimi.nekogram.MeeroChatLock.hasHiddenDialogs()) {
+            o.addGap();
+            o.add(R.drawable.baseline_lock_base_24,
+                    getString(R.string.MeeroHiddenChats) + " (" + tw.nekomimi.nekogram.MeeroChatLock.getLockedIds().size() + ")",
+                    () -> presentFragment(new MeeroLockedVaultActivity()));
+        }
+        // MeeroX v107: frosted fog behind this popup (user request). The
+        // switch in MeeroX settings restores the plain dimming when off.
+        meeroFogBehind(o);
+    }
+
+    /** MeeroX v107: full-screen blurred fog behind the chats-tab long-press
+     *  popup, so the eye lands on the menu alone instead of the chats beneath
+     *  it (the Ellipi-style backdrop the user asked for). A quarter-res
+     *  snapshot of the current screen is stack-blurred, washed with a
+     *  theme-aware tint and removed the moment the popup dismisses. Off
+     *  switch (meeroChatsMenuFog) = exact stock behavior. */
+    private void meeroFogBehind(ItemOptions o) {
+        try {
+            if (!NekoConfig.meeroChatsMenuFog.Bool()) return;
+            if (fragmentView == null || getContext() == null) return;
+            final int w = fragmentView.getWidth(), h = fragmentView.getHeight();
+            if (w <= 0 || h <= 0) return;
+            final ViewGroup host = (ViewGroup) fragmentView;
+            if (host.findViewWithTag("meero_chats_fog") != null) return;
+            final float scale = 0.22f;
+            final Bitmap bmp = Bitmap.createBitmap(
+                    Math.max(1, (int) (w * scale)), Math.max(1, (int) (h * scale)), Bitmap.Config.ARGB_8888);
+            Canvas canvas = new Canvas(bmp);
+            canvas.scale(scale, scale);
+            fragmentView.draw(canvas);
+            Utilities.stackBlurBitmap(bmp, 25);
+            final boolean light = AndroidUtilities.computePerceivedBrightness(
+                    getThemedColor(Theme.key_windowBackgroundWhite)) > .705f;
+            final BitmapDrawable fog = new BitmapDrawable(getContext().getResources(), bmp);
+            fog.setColorFilter(new PorterDuffColorFilter(
+                    light ? 0x3AFFFFFF : 0x59000000, PorterDuff.Mode.SRC_ATOP));
+            final ImageView fogView = new ImageView(getContext());
+            fogView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+            fogView.setImageDrawable(fog);
+            fogView.setTag("meero_chats_fog");
+            host.addView(fogView, new ViewGroup.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+            o.setOnDismiss(() -> {
+                try {
+                    host.removeView(fogView);
+                    fogView.setImageDrawable(null);
+                    bmp.recycle();
+                } catch (Throwable ignore) {}
+            });
+        } catch (Throwable ignore) {}
     }
 
     private void setupPopupMenuStyle(ItemOptions options) {

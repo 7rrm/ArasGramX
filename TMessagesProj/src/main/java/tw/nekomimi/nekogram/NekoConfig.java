@@ -156,6 +156,14 @@ public class NekoConfig {
     public static ConfigItem meeroChatLock = addConfig("meeroChatLock", configTypeBool, false);
     public static ConfigItem meeroChatLockList = addConfig("meeroChatLockList", configTypeString, "");
     public static ConfigItem meeroChatLockMuted = addConfig("meeroChatLockMuted", configTypeString, "");
+    // --- v107: chat lock pro - unlock method (0 = system biometric/device
+    // lock, 1 = in-app 8-digit code). The code is kept as a salted SHA-256
+    // hash ONLY on this device - if it is forgotten there is no recovery.
+    // meeroChatsMenuFog = blurred fog behind the bottom-bar chats popup. ---
+    public static ConfigItem meeroChatLockMethod = addConfig("meeroChatLockMethod", configTypeInt, 0);
+    public static ConfigItem meeroChatLockCodeHash = addConfig("meeroChatLockCodeHash", configTypeString, "");
+    public static ConfigItem meeroChatLockCodeSalt = addConfig("meeroChatLockCodeSalt", configTypeString, "");
+    public static ConfigItem meeroChatsMenuFog = addConfig("meeroChatsMenuFog", configTypeBool, true);
 
     // From NekoConfig
     public static ConfigItem useIPv6 = addConfig("IPv6", configTypeBool, false);

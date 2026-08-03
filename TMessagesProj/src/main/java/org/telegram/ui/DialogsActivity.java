@@ -11855,7 +11855,12 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
         }
         MessagesController messagesController = AccountInstance.getInstance(currentAccount).getMessagesController();
         if (dialogsType == DIALOGS_TYPE_DEFAULT) {
-            return messagesController.getDialogs(folderId);
+            // MeeroX v107: locked chats vanish from the main list, folders and
+            // archive; they reappear only inside the hidden-chats vault.
+            // Share/forward pickers (onlySelect) keep stock behavior - the
+            // user may still forward INTO a locked chat on purpose.
+            ArrayList<TLRPC.Dialog> dialogs = messagesController.getDialogs(folderId);
+            return onlySelect ? dialogs : tw.nekomimi.nekogram.MeeroChatLock.filterLocked(dialogs);
         } else if (dialogsType == DIALOGS_TYPE_WIDGET || dialogsType == DIALOGS_TYPE_IMPORT_HISTORY) {
             return messagesController.dialogsServerOnly;
         } else if (dialogsType == DIALOGS_TYPE_ADD_USERS_TO) {

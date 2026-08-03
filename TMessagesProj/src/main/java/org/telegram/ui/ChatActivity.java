@@ -5036,11 +5036,8 @@ public class ChatActivity extends BaseFragment implements
         }
         removingFromParent = false;
         fragmentView = contentView = new ChatActivityFragmentView(context, parentLayout);
-        // MeeroX v106: locked-chats get an opaque gate cover immediately, so
-        // history can never flash before the biometric prompt appears.
-        if (tw.nekomimi.nekogram.MeeroChatLock.gateNeeded(dialog_id)) {
-            tw.nekomimi.nekogram.MeeroChatLock.attachGateCover(contentView);
-        }
+        // MeeroX v106/v107: the locked-chat gate cover is attached at the END
+        // of createView (see below) - it must stay the top-most child.
         invalidateBlurredSourcesView = new OnPostDrawView(context, true, this::invalidateMergedVisibleBlurredPositionsAndSourcesImpl);
         contentView.addView(invalidateBlurredSourcesView);
 
@@ -9547,6 +9544,17 @@ public class ChatActivity extends BaseFragment implements
 
         onBottomItemsVisibilityChanged();
         ViewCompat.setOnApplyWindowInsetsListener(fragmentView, this::onApplyWindowInsets);
+        // MeeroX v107 (user-reported fix): the locked-chat gate cover is the
+        // LAST view added, so nothing in this method can ever paint chat
+        // content on top of it while the unlock prompt is showing (v106
+        // attached it first, which is why the chat showed through behind the
+        // fingerprint). Tapping the cover re-fires the prompt.
+        if (tw.nekomimi.nekogram.MeeroChatLock.gateNeeded(dialog_id)) {
+            tw.nekomimi.nekogram.MeeroChatLock.attachGateCover(contentView,
+                    tw.nekomimi.nekogram.MeeroChatLock.gateTitle(),
+                    tw.nekomimi.nekogram.MeeroChatLock.gateHint(),
+                    () -> tw.nekomimi.nekogram.MeeroChatLock.maybePromptGate(this));
+        }
         Timer.finish(t);
 
         return fragmentView;
