@@ -742,6 +742,10 @@
     <string name="MeeroAutoReplyDefaultText">أهلاً {name} 👋 مشغول هسة، أرد عليك بأقرب وقت إن شاء الله ✅</string>
     <string name="MeeroAutoReplyCooldown">الفاصل بين الردود لنفس الدردشة</string>
     <string name="MeeroAutoReplyDelay">التأخير قبل الإرسال</string>
+    <string name="MeeroAutoReplyWindowTitle">نافذة زمنية للرد 🌙</string>
+    <string name="MeeroAutoReplyWindowStart">بداية النافذة</string>
+    <string name="MeeroAutoReplyWindowEnd">نهاية النافذة</string>
+    <string name="MeeroAutoReplyWindowInfo">عند التفعيل يُرسل الرد فقط داخل هذه الساعات. إذا كانت البداية بعد النهاية فالنافذة تعبر منتصف الليل (مثال 23:00–08:00). خارج النافذة لا يُرسل أي رد. مطفية = يرد على مدار الساعة مثل السابق تماماً.</string>
     <string name="MeeroCooldownEveryMessage">كل رسالة</string>
     <string name="MeeroCooldown5">5 دقائق</string>
     <string name="MeeroCooldown10">10 دقائق</string>

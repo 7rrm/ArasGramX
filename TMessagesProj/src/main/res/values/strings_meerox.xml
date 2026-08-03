@@ -53,6 +53,10 @@
     <string name="MeeroAutoReplyDefaultText">Hi {name} 👋 I\'m busy right now, I\'ll get back to you as soon as I can ✅</string>
     <string name="MeeroAutoReplyCooldown">Reply cooldown per chat</string>
     <string name="MeeroAutoReplyDelay">Delay before sending</string>
+    <string name="MeeroAutoReplyWindowTitle">Auto-reply time window 🌙</string>
+    <string name="MeeroAutoReplyWindowStart">Window start</string>
+    <string name="MeeroAutoReplyWindowEnd">Window end</string>
+    <string name="MeeroAutoReplyWindowInfo">When enabled, replies are only sent within these hours. If the start is later than the end, the window crosses midnight (e.g. 23:00-08:00). Outside the window nothing is sent. Off = replies around the clock, exactly like before.</string>
     <string name="MeeroCooldownEveryMessage">Every message</string>
     <string name="MeeroCooldown5">5 minutes</string>
     <string name="MeeroCooldown10">10 minutes</string>

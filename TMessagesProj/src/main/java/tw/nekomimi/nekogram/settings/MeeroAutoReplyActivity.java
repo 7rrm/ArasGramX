@@ -9,6 +9,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.FrameLayout;
+import android.widget.TimePicker;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -26,14 +27,18 @@ import java.util.Locale;
 
 import tw.nekomimi.nekogram.MeeroAutoReply;
 import tw.nekomimi.nekogram.NekoConfig;
+import tw.nekomimi.nekogram.config.ConfigItem;
 import tw.nekomimi.nekogram.ui.cells.HeaderCell;
 
 /**
- * MeeroX v99: dedicated Auto-reply screen.
+ * MeeroX v99-v100: dedicated Auto-reply screen.
  *
  * Master switch (off by default - replies are sent under the user's name),
  * a live reply preview ({name} shown with a sample name), per-chat rules,
- * cooldown and send-delay pickers. The engine lives in {@link MeeroAutoReply}.
+ * cooldown and send-delay pickers, and (v100) an optional reply time window
+ * with start/end 24-hour pickers. Every piece is independent; when the
+ * master switch or the window is off the behavior is exactly stock.
+ * The engine lives in {@link MeeroAutoReply}.
  */
 public class MeeroAutoReplyActivity extends BaseNekoSettingsActivity {
 
@@ -45,6 +50,10 @@ public class MeeroAutoReplyActivity extends BaseNekoSettingsActivity {
     private int timingHeaderRow;
     private int cooldownRow;
     private int delayRow;
+    private int windowRow;
+    private int windowStartRow;
+    private int windowEndRow;
+    private int windowInfoRow;
     private int boundsInfoRow;
 
     private static final int[] COOLDOWN_MINUTES = {0, 5, 10, 30, 60};
@@ -61,6 +70,10 @@ public class MeeroAutoReplyActivity extends BaseNekoSettingsActivity {
         timingHeaderRow = addRow();
         cooldownRow = addRow();
         delayRow = addRow();
+        windowRow = addRow();
+        windowStartRow = addRow();
+        windowEndRow = addRow();
+        windowInfoRow = addRow();
         boundsInfoRow = addRow();
     }
 
@@ -124,6 +137,11 @@ public class MeeroAutoReplyActivity extends BaseNekoSettingsActivity {
         }
     }
 
+    /** Minutes-of-day as 24-hour HH:mm (clear and language-neutral). */
+    private String timeValue(int minutes) {
+        return String.format(Locale.US, "%02d:%02d", minutes / 60, minutes % 60);
+    }
+
     @Override
     protected void onItemClick(View view, int position, float x, float y) {
         if (position == autoReplyRow) {
@@ -137,6 +155,13 @@ public class MeeroAutoReplyActivity extends BaseNekoSettingsActivity {
             showCooldownPicker();
         } else if (position == delayRow) {
             showDelayPicker();
+        } else if (position == windowRow) {
+            NekoConfig.meeroAutoReplyWindow.toggleConfigBool();
+            ((TextCheckCell) view).setChecked(NekoConfig.meeroAutoReplyWindow.Bool());
+        } else if (position == windowStartRow) {
+            showTimePicker(NekoConfig.meeroAutoReplyWindowStart, R.string.MeeroAutoReplyWindowStart, windowStartRow);
+        } else if (position == windowEndRow) {
+            showTimePicker(NekoConfig.meeroAutoReplyWindowEnd, R.string.MeeroAutoReplyWindowEnd, windowEndRow);
         }
     }
 
@@ -216,6 +241,30 @@ public class MeeroAutoReplyActivity extends BaseNekoSettingsActivity {
                 .show();
     }
 
+    /** 24-hour time picker; stores minutes-of-day in the given config item. */
+    private void showTimePicker(ConfigItem item, int titleRes, int row) {
+        Context context = getParentActivity();
+        if (context == null) return;
+        int minutes = item.Int();
+        final TimePicker picker = new TimePicker(context);
+        picker.setIs24HourView(true);
+        picker.setHour(minutes / 60);
+        picker.setMinute(minutes % 60);
+        FrameLayout container = new FrameLayout(context);
+        FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        lp.setMargins(AndroidUtilities.dp(8), 0, AndroidUtilities.dp(8), 0);
+        container.addView(picker, lp);
+        new AlertDialog.Builder(context)
+                .setTitle(getString(titleRes))
+                .setView(container)
+                .setPositiveButton(getString(R.string.Save), (dialog, which) -> {
+                    item.setConfigInt(picker.getHour() * 60 + picker.getMinute());
+                    listAdapter.notifyItemChanged(row);
+                })
+                .setNegativeButton(getString(R.string.Cancel), null)
+                .show();
+    }
+
     private class ListAdapter extends BaseListAdapter {
 
         public ListAdapter(Context context) {
@@ -235,6 +284,8 @@ public class MeeroAutoReplyActivity extends BaseNekoSettingsActivity {
                     TextCheckCell checkCell = (TextCheckCell) holder.itemView;
                     if (position == autoReplyRow) {
                         checkCell.setTextAndCheck(getString(R.string.MeeroAutoReplyTitle), NekoConfig.meeroAutoReply.Bool(), true);
+                    } else if (position == windowRow) {
+                        checkCell.setTextAndCheck(getString(R.string.MeeroAutoReplyWindowTitle), NekoConfig.meeroAutoReplyWindow.Bool(), true);
                     }
                     break;
                 case TYPE_HEADER:
@@ -260,6 +311,10 @@ public class MeeroAutoReplyActivity extends BaseNekoSettingsActivity {
                         textCell.setTextAndValue(getString(R.string.MeeroAutoReplyCooldown), cooldownName(NekoConfig.meeroAutoReplyCooldown.Int()), true);
                     } else if (position == delayRow) {
                         textCell.setTextAndValue(getString(R.string.MeeroAutoReplyDelay), delayName(NekoConfig.meeroAutoReplyDelay.Int()), true);
+                    } else if (position == windowStartRow) {
+                        textCell.setTextAndValue(getString(R.string.MeeroAutoReplyWindowStart), timeValue(NekoConfig.meeroAutoReplyWindowStart.Int()), true);
+                    } else if (position == windowEndRow) {
+                        textCell.setTextAndValue(getString(R.string.MeeroAutoReplyWindowEnd), timeValue(NekoConfig.meeroAutoReplyWindowEnd.Int()), true);
                     }
                     break;
                 case TYPE_INFO_PRIVACY:
@@ -267,6 +322,8 @@ public class MeeroAutoReplyActivity extends BaseNekoSettingsActivity {
                     cell.setBackground(Theme.getThemedDrawable(mContext, R.drawable.greydivider, Theme.key_windowBackgroundGrayShadow));
                     if (position == autoReplyInfoRow) {
                         cell.setText(getString(R.string.MeeroAutoReplyInfo));
+                    } else if (position == windowInfoRow) {
+                        cell.setText(getString(R.string.MeeroAutoReplyWindowInfo));
                     } else if (position == boundsInfoRow) {
                         cell.setText(getString(R.string.MeeroAutoReplyBounds));
                     }
@@ -276,13 +333,14 @@ public class MeeroAutoReplyActivity extends BaseNekoSettingsActivity {
 
         @Override
         public int getItemViewType(int position) {
-            if (position == autoReplyRow) {
+            if (position == autoReplyRow || position == windowRow) {
                 return TYPE_CHECK;
             } else if (position == contentHeaderRow || position == timingHeaderRow) {
                 return TYPE_HEADER;
             } else if (position == textRow) {
                 return TYPE_DETAIL_SETTINGS;
-            } else if (position == rulesRow || position == cooldownRow || position == delayRow) {
+            } else if (position == rulesRow || position == cooldownRow || position == delayRow
+                    || position == windowStartRow || position == windowEndRow) {
                 return TYPE_TEXT;
             }
             return TYPE_INFO_PRIVACY;

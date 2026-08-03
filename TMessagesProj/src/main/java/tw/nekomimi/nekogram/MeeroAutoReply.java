@@ -20,16 +20,27 @@ import org.telegram.ui.ChatActivity;
 import org.telegram.ui.LaunchActivity;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * MeeroX v98: Auto-reply engine.
+ * MeeroX v98-v100: Auto-reply engine.
  *
- * Watches NotificationCenter.didReceiveNewMessages for every logged-in account
- * and, when every safety gate passes, sends one automatic reply in a private
- * chat after a small delay. Never marks anything read (ghost-safe), never
- * replies to groups/channels/bots/Saved Messages, and never replies while the
- * user is looking at that chat with the screen on.
+ * Watches NotificationCenter.didReceiveNewMessages for every account slot and,
+ * when every safety gate passes, sends one automatic reply in a private chat
+ * after a small delay. Never marks anything read (ghost-safe), never replies
+ * to groups/channels/bots/Saved Messages, and never replies while the user is
+ * looking at that chat with the screen on.
+ *
+ * v100 fix: observers now attach to every account slot unconditionally.
+ * UserConfig only loads later (postInitApplication, launched by
+ * LaunchActivity), so at Application.onCreate time isClientActivated() is
+ * always false - the v99 registration gate left the engine with zero
+ * observers and no replies whatsoever. An observer on an unused slot simply
+ * never fires, and the account is still re-validated for every event.
+ *
+ * v100 feature: optional reply time window - outside its hours nothing is
+ * sent. Disabled by default, keeping exact previous behavior.
  *
  * Session state (per-chat last reply time) lives in memory only: an app
  * restart resets cooldowns, which is the documented behavior.
@@ -48,8 +59,14 @@ public final class MeeroAutoReply {
         synchronized (MeeroAutoReply.class) {
             if (started) return;
             started = true;
+            // v100: attach to EVERY slot unconditionally. At Application.onCreate
+            // time the configs have not loaded yet (that happens in
+            // postInitApplication from LaunchActivity), so isClientActivated()
+            // is always false here - gating registration on it (v99) left the
+            // engine with zero observers and no replies at all. An observer on
+            // an unused slot simply never fires; the account is re-validated
+            // for every event in onNewMessages.
             for (int account = 0; account < UserConfig.MAX_ACCOUNT_COUNT; account++) {
-                if (!UserConfig.getInstance(account).isClientActivated()) continue;
                 NotificationCenter.getInstance(account).addObserver((id, account1, args) -> {
                     if (id == NotificationCenter.didReceiveNewMessages) {
                         onNewMessages(account1, args);
@@ -62,6 +79,11 @@ public final class MeeroAutoReply {
     private static void onNewMessages(int account, Object[] args) {
         // Gate 1: master switch (default off - explicit user opt-in).
         if (!NekoConfig.meeroAutoReply.Bool()) return;
+        // The signed-in check happens per event, not at registration time:
+        // configs are not loaded yet when start() runs at Application.onCreate.
+        if (!UserConfig.getInstance(account).isClientActivated()) return;
+        // v100: optional reply time window - nothing is sent outside its hours.
+        if (!isWithinWindow()) return;
         if (args == null || args.length < 3) return;
 
         long now = System.currentTimeMillis();
@@ -118,6 +140,22 @@ public final class MeeroAutoReply {
             SendMessagesHelper.getInstance(finalAccount)
                     .sendMessage(SendMessagesHelper.SendMessageParams.of(text, finalDialogId));
         }, delayMs);
+    }
+
+    /** v100: optional reply window. Disabled = reply around the clock (exact
+     *  previous behavior). When enabled, replies are only sent inside
+     *  [start, end) minutes-of-day; start later than end means the window
+     *  crosses midnight (e.g. 23:00-08:00); equal values mean "all day".
+     *  Messages arriving outside the window are skipped, not queued. */
+    public static boolean isWithinWindow() {
+        if (!NekoConfig.meeroAutoReplyWindow.Bool()) return true;
+        int start = NekoConfig.meeroAutoReplyWindowStart.Int();
+        int end = NekoConfig.meeroAutoReplyWindowEnd.Int();
+        if (start == end) return true;
+        Calendar cal = Calendar.getInstance();
+        int now = cal.get(Calendar.HOUR_OF_DAY) * 60 + cal.get(Calendar.MINUTE);
+        if (start < end) return now >= start && now < end;
+        return now >= start || now < end;
     }
 
     private static String resolveText(TLRPC.User user, int account, String ruleText) {
