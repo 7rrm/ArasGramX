@@ -128,13 +128,13 @@ public class MeeroDeleteHunterActivity extends BaseNekoSettingsActivity {
     }
 
     @Override
-    public boolean onBackPressed() {
+    public boolean onBackPressed(boolean invoked) {
         // Gesture / hardware back also leaves selection mode first.
         if (selecting) {
             setSelecting(false);
             return false;
         }
-        return super.onBackPressed();
+        return super.onBackPressed(invoked);
     }
 
     @Override
