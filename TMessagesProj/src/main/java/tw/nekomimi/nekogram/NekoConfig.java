@@ -152,6 +152,10 @@ public class NekoConfig {
     // --- v105: view-once guard (auto-save incoming once media to gallery) ---
     public static ConfigItem meeroOnceGuard = addConfig("meeroOnceGuard", configTypeBool, false);
     public static ConfigItem meeroOnceSavedCount = addConfig("meeroOnceSavedCount", configTypeInt, 0);
+    // --- v106: per-chat lock (JSON [ids] / ids we muted = restore-on-unlock scope) ---
+    public static ConfigItem meeroChatLock = addConfig("meeroChatLock", configTypeBool, false);
+    public static ConfigItem meeroChatLockList = addConfig("meeroChatLockList", configTypeString, "");
+    public static ConfigItem meeroChatLockMuted = addConfig("meeroChatLockMuted", configTypeString, "");
 
     // From NekoConfig
     public static ConfigItem useIPv6 = addConfig("IPv6", configTypeBool, false);

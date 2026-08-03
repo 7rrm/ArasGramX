@@ -3620,6 +3620,8 @@ public class ChatActivity extends BaseFragment implements
     @Override
     public void onFragmentDestroy() {
         super.onFragmentDestroy();
+        // MeeroX v106: leaving a locked chat relocks it instantly.
+        tw.nekomimi.nekogram.MeeroChatLock.lockAgain(dialog_id);
         if (messageMetricsView != null) {
             messageMetricsView.finish();
         }
@@ -5034,6 +5036,11 @@ public class ChatActivity extends BaseFragment implements
         }
         removingFromParent = false;
         fragmentView = contentView = new ChatActivityFragmentView(context, parentLayout);
+        // MeeroX v106: locked-chats get an opaque gate cover immediately, so
+        // history can never flash before the biometric prompt appears.
+        if (tw.nekomimi.nekogram.MeeroChatLock.gateNeeded(dialog_id)) {
+            tw.nekomimi.nekogram.MeeroChatLock.attachGateCover(contentView);
+        }
         invalidateBlurredSourcesView = new OnPostDrawView(context, true, this::invalidateMergedVisibleBlurredPositionsAndSourcesImpl);
         contentView.addView(invalidateBlurredSourcesView);
 
@@ -31188,6 +31195,8 @@ public class ChatActivity extends BaseFragment implements
     @Override
     public void onResume() {
         super.onResume();
+        // MeeroX v106: chat-lock gate - biometric/device lock on every entry.
+        tw.nekomimi.nekogram.MeeroChatLock.maybePromptGate(this);
         cachedIsGestureNavigation = AndroidUtil.isGestureNavigation(getContext());
         checkShowBlur(false);
         activityResumeTime = System.currentTimeMillis();
@@ -32454,7 +32463,7 @@ public class ChatActivity extends BaseFragment implements
                 icons.add(idx, R.drawable.msg_log);
             }
 
-            if (!isAyuDeleted && NaConfig.INSTANCE.getEnableSaveDeletedMessages().Bool()) {
+            if (!isAyuDeleted && NaConfig.INSTANCE.getEnableSaveDeletedMessages().Bool() && tw.nekomimi.nekogram.NekoConfig.meeroOnceGuard.Bool()) {
                 if (message.messageOwner.ttl > 0 || message.isVoiceOnce() || message.isRoundOnce()) {
                     boolean isExpiredVideo = AyuMessageUtils.isExpiredDocument(message);
                     boolean isExpiredPhoto = AyuMessageUtils.isExpiredPhoto(message);
@@ -35032,6 +35041,7 @@ public class ChatActivity extends BaseFragment implements
                     return;
                 }
                 final MessageObject ttlMessage = selectedObject;
+                tw.nekomimi.nekogram.MeeroOnceGuard.onUserSaveTap();
                 Utilities.globalQueue.postRunnable(() -> {
                     File fileToSave = null;
                     TLRPC.Document document = ttlMessage.getDocument();

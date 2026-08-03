@@ -966,7 +966,23 @@
     <string name="MeeroOnceMaster">حفظ وسائط عرض مرة واحدة</string>
     <string name="MeeroOnceCountHeader">إحصائيات</string>
     <string name="MeeroOnceCount">المحفوظات بالمعرض</string>
-    <string name="MeeroOnceInfo">أي صورة أو فيديو «عرض مرة واحدة» يوصلك والتطبيق حي ينحفظ بهدوء بمعرضك داخل مجلد «MeeroX Once» مع إشعار تأكيد صغير. التحميل يصرف من بياناتك مثل التحميل التلقائي. كل شي يبقى على جهازك والمرسل ما يدري بأي شي. مطفي = لا تحميل ولا حفظ.</string>
+    <string name="MeeroOnceInfo">والميزة شغالة، قائمة خيارات وسائط عرض-مرة (الصور والفيديوهات المؤقتة) تظهر بيها زرّي «حرق» و«حفظ في المعرض» - الحفظ يستخدم أداة الحفظ المدمجة بالتطبيق ويأكده بإشعار صغير والعدّاد اللي فوق. ولما تكون مطفية تتصرف وسائط عرض-مرة تماماً مثل تلكرام الرسمي: بدون أي زر حفظ. ما ينحمّل أي شي تلقائياً وكل شي يبقى على جهازك.</string>
     <string name="MeeroOnceKindPhoto">صورة</string>
     <string name="MeeroOnceKindVideo">فيديو</string>
+    <string name="MeeroOnceSavedNotif">انحفظت بالمعرض</string>
+    <!-- v106: chat lock -->
+    <string name="MeeroChatLockTitle">قفل المحادثات</string>
+    <string name="MeeroChatLockMaster">تفعيل قفل المحادثات</string>
+    <string name="MeeroChatLockHeader">الدردشات المقفلة</string>
+    <string name="MeeroChatLockAdd">قفل دردشة</string>
+    <string name="MeeroChatLockRemove">فك القفل</string>
+    <string name="MeeroChatLockRemoveConfirm">تفك القفل عن %1$s وترجّع إشعاراتها؟</string>
+    <string name="MeeroChatLockEmpty">ماكو دردشات مقفلة بعد. اختار وحدة من فوق.</string>
+    <string name="MeeroChatLockInvalid">هاي الدردشة ما ينقفل عليها.</string>
+    <string name="MeeroChatLockRowDetail">مقفلة - البصمة مطلوبة عند الدخول</string>
+    <string name="MeeroChatLockInfo">الدردشة المقفلة تنغطى بستارة معتمة وتطلب بصمتك أو رمز جهازك بكل طرق الدخول (القائمة، البحث، الإشعار، الرابط)، وتنقفل من جديد لحظة خروجك منها (تدوير الشاشة ينقفل أيضاً). القفل يكتم إشعارات الدردشة من السيرفر حتى ما ينكشف شي بإشعارات النظام، ويوصلك بدلها إشعار خاص «رسالة جديدة بمحادثة مقفلة». فك القفل يرجّع الإشعارات بس إذا القفل هو اللي كتمها. مطفي = كل شي يرجع أصلي.</string>
+    <string name="MeeroChatLockGateTitle">محادثة مقفلة</string>
+    <string name="MeeroChatLockGateSubtitle">افتحها ببصمتك أو رمز جهازك</string>
+    <string name="MeeroChatLockGateHint">افتحها حتى تشوف المحادثة</string>
+    <string name="MeeroChatLockNewMessage">وصلتك رسالة جديدة بمحادثة مقفلة</string>
 </resources>

@@ -277,7 +277,23 @@
     <string name="MeeroOnceMaster">Save view-once media</string>
     <string name="MeeroOnceCountHeader">Statistics</string>
     <string name="MeeroOnceCount">Saved to gallery</string>
-    <string name="MeeroOnceInfo">Any view-once photo or video that arrives while the app is alive is quietly downloaded and saved into your gallery under "MeeroX Once", with a small confirmation notification. Downloads use your data like auto-download does. Everything stays on your device and the sender is never told anything. Off = nothing is fetched and nothing is stored.</string>
+    <string name="MeeroOnceInfo">While ON, the context menu of a self-destruct / view-once photo or video shows its "burn" and "save to gallery" buttons - the app built-in saver stores your pick in the gallery and this counter plus a small notification confirm it. While OFF, once media behaves exactly like official Telegram: no save button at all. Nothing is downloaded automatically and nothing leaves your device.</string>
     <string name="MeeroOnceKindPhoto">Photo</string>
     <string name="MeeroOnceKindVideo">Video</string>
+    <string name="MeeroOnceSavedNotif">Saved to gallery</string>
+    <!-- v106: chat lock -->
+    <string name="MeeroChatLockTitle">Chat lock</string>
+    <string name="MeeroChatLockMaster">Enable chat lock</string>
+    <string name="MeeroChatLockHeader">Locked chats</string>
+    <string name="MeeroChatLockAdd">Lock a chat</string>
+    <string name="MeeroChatLockRemove">Remove lock</string>
+    <string name="MeeroChatLockRemoveConfirm">Unlock %1$s and restore its notifications?</string>
+    <string name="MeeroChatLockEmpty">No locked chats yet. Pick one above.</string>
+    <string name="MeeroChatLockInvalid">This chat cannot be locked.</string>
+    <string name="MeeroChatLockRowDetail">Locked - fingerprint needed on entry</string>
+    <string name="MeeroChatLockInfo">A locked chat is covered by an opaque gate and asks for your fingerprint or device lock on EVERY entry path (list, search, notification, link). It relocks the moment you leave it (screen rotation relocks too). Locking also mutes the chat server-side so system notifications reveal nothing, and you get a private "new message in a locked chat" notice instead. Unlocking restores notifications only if the lock muted them. Off = everything behaves stock.</string>
+    <string name="MeeroChatLockGateTitle">Locked chat</string>
+    <string name="MeeroChatLockGateSubtitle">Unlock with your fingerprint or device lock</string>
+    <string name="MeeroChatLockGateHint">Unlock to view this conversation</string>
+    <string name="MeeroChatLockNewMessage">New message in a locked chat</string>
 </resources>

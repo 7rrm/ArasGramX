@@ -95,6 +95,8 @@ public class NekoSettingsActivity extends BaseNekoSettingsActivity {
     /** MeeroX v105: keyword alert + view-once guard entries. */
     private int keywordRow;
     private int onceGuardRow;
+    /** MeeroX v106: chat lock entry. */
+    private int lockRow;
 
     private int generalRow;
     private int translatorRow;
@@ -134,6 +136,7 @@ public class NekoSettingsActivity extends BaseNekoSettingsActivity {
         hunterRow = addRow();
         keywordRow = addRow();
         onceGuardRow = addRow();
+        lockRow = addRow();
         generalRow = addRow();
         translatorRow = addRow();
         chatRow = addRow();
@@ -449,6 +452,8 @@ public class NekoSettingsActivity extends BaseNekoSettingsActivity {
             presentFragment(new MeeroKeywordAlertActivity());
         } else if (position == onceGuardRow) {
             presentFragment(new MeeroOnceGuardActivity());
+        } else if (position == lockRow) {
+            presentFragment(new MeeroChatLockActivity());
         } else if (position == chatRow) {
             presentFragment(new NekoChatSettingsActivity());
         } else if (position == generalRow) {
@@ -538,6 +543,8 @@ public class NekoSettingsActivity extends BaseNekoSettingsActivity {
                         textCell.setTextAndIcon(getString(R.string.MeeroKeywordTitle), R.drawable.msg_search_solar, true);
                     } else if (position == onceGuardRow) {
                         textCell.setTextAndIcon(getString(R.string.MeeroOnceTitle), R.drawable.msg_download_solar, true);
+                    } else if (position == lockRow) {
+                        textCell.setTextAndIcon(getString(R.string.MeeroChatLockTitle), R.drawable.baseline_lock_base_24, true);
                     } else if (position == chatRow) {
                         textCell.setTextAndIcon(getString(R.string.Chat), R.drawable.msg_discussion, true);
                     } else if (position == generalRow) {
@@ -579,7 +586,7 @@ public class NekoSettingsActivity extends BaseNekoSettingsActivity {
                     position == chatRow || position == generalRow || position == passcodeRow || position == experimentRow || position == translatorRow ||
                     position == autoReplyRow ||
                     position == activityStatsRow || position == watchRow || position == hunterRow ||
-                    position == keywordRow || position == onceGuardRow ||
+                    position == keywordRow || position == onceGuardRow || position == lockRow ||
                     position == fontsRow ||
                     position == importSettingsRow || position == exportSettingsRow || position == resetSettingsRow || position == appRestartRow ||
                     position == aboutRow) {

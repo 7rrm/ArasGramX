@@ -386,10 +386,12 @@ public class ApplicationLoader extends Application {
         // (observers on every slot, activation checked per event).
         tw.nekomimi.nekogram.MeeroWatch.start();
 
-        // MeeroX v105: keyword alert + view-once guard engines - same
-        // timing-safe observer pattern as the auto-reply above.
+        // MeeroX v105: keyword alert engine - same timing-safe pattern.
         tw.nekomimi.nekogram.MeeroKeywordAlert.start();
-        tw.nekomimi.nekogram.MeeroOnceGuard.start();
+
+        // MeeroX v106: chat-lock generic-notification watcher (the gate
+        // itself hooks ChatActivity directly).
+        tw.nekomimi.nekogram.MeeroChatLock.start();
     }
 
     // Local Push Service, TFoss implementation
