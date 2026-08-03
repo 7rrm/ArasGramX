@@ -381,6 +381,10 @@ public class ApplicationLoader extends Application {
         // MeeroX v99: auto-reply observers live in the application process so
         // a push-wake in the background can still answer; idempotent.
         tw.nekomimi.nekogram.MeeroAutoReply.start();
+
+        // MeeroX v102: account watching engine - same timing-safe pattern
+        // (observers on every slot, activation checked per event).
+        tw.nekomimi.nekogram.MeeroWatch.start();
     }
 
     // Local Push Service, TFoss implementation

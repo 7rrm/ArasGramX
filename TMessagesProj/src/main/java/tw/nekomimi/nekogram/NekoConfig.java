@@ -127,6 +127,13 @@ public class NekoConfig {
     public static ConfigItem meeroAutoReplyDelay = addConfig("meeroAutoReplyDelay", configTypeInt, 3); // seconds before send
     public static ConfigItem meeroAutoReplyRules = addConfig("meeroAutoReplyRules", configTypeString, ""); // v99: JSON per-chat reply rules
     public static ConfigItem meeroAutoReplyExclusions = addConfig("meeroAutoReplyExclusions", configTypeString, ""); // v101: JSON excluded chat ids
+    public static ConfigItem meeroActivityStats = addConfig("meeroActivityStats", configTypeBool, true); // v102: activity details + open counter
+    public static ConfigItem meeroStatsOpens = addConfig("meeroStatsOpens", configTypeInt, 0); // v102: app opens since v102
+    public static ConfigItem meeroStatsSince = addConfig("meeroStatsSince", configTypeInt, 0); // v102: epoch sec of first tracked open
+    public static ConfigItem meeroWatchEnabled = addConfig("meeroWatchEnabled", configTypeBool, true); // v102: account watching master
+    public static ConfigItem meeroWatchList = addConfig("meeroWatchList", configTypeString, ""); // v102: JSON [{id,on}]
+    public static ConfigItem meeroWatchData = addConfig("meeroWatchData", configTypeString, ""); // v102: JSON snapshots {id:{...}}
+    public static ConfigItem meeroWatchLog = addConfig("meeroWatchLog", configTypeString, ""); // v102: JSON change log (newest first, cap 150)
     public static ConfigItem meeroAutoReplyWindow = addConfig("meeroAutoReplyWindow", configTypeBool, false); // v100: optional reply-hours window
     public static ConfigItem meeroAutoReplyWindowStart = addConfig("meeroAutoReplyWindowStart", configTypeInt, 23 * 60); // minutes of day
     public static ConfigItem meeroAutoReplyWindowEnd = addConfig("meeroAutoReplyWindowEnd", configTypeInt, 8 * 60); // minutes of day

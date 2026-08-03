@@ -88,6 +88,49 @@
     <string name="MeeroExclusionsRowDetail">Never receives the auto-reply</string>
     <string name="MeeroExclusionsRemove">Remove from exclusions</string>
     <string name="MeeroExclusionsInfo">People here never receive your auto-reply at all - even if they have their own text rule. Remove a person and replies work for him again as usual.</string>
+    <string name="MeeroStatsTitle">Activity details</string>
+    <string name="MeeroStatsOverview">Overview</string>
+    <string name="MeeroStatsToday">Messages today</string>
+    <string name="MeeroStatsWeek">Last 7 days</string>
+    <string name="MeeroStatsMonth">Last 30 days</string>
+    <string name="MeeroStatsTotal">Total stored</string>
+    <string name="MeeroStatsOpens">App opens</string>
+    <string name="MeeroStatsFrom">since</string>
+    <string name="MeeroStatsTopHeader">People you chat with most</string>
+    <string name="MeeroStatsHoursHeader">Your busiest hours</string>
+    <string name="MeeroStatsMsgWord">messages</string>
+    <string name="MeeroStatsLoading">Computing…</string>
+    <string name="MeeroStatsInfo">Computed from messages stored locally on your device only - nothing is ever sent anywhere. Chat-most = exchanged message count. The app-open counter starts at v102 install (Telegram stores no historical open times).</string>
+    <string name="MeeroWatchTitle">Account watch</string>
+    <string name="MeeroWatchWatchedHeader">Watched people</string>
+    <string name="MeeroWatchAdd">Watch someone</string>
+    <string name="MeeroWatchAddFromChats">Pick from chats</string>
+    <string name="MeeroWatchAddByHandle">Enter username or ID</string>
+    <string name="MeeroWatchHandleHint">e.g. ali, @ali or 123456789</string>
+    <string name="MeeroWatchNotFound">Account not found (numeric ID works only for accounts already known to you)</string>
+    <string name="MeeroWatchAlready">Already watched</string>
+    <string name="MeeroWatchAdded">Now watched ✅</string>
+    <string name="MeeroWatchRemove">Remove from watch</string>
+    <string name="MeeroWatchNoOne">Nobody watched yet - add above</string>
+    <string name="MeeroWatchLogRow">Change log</string>
+    <string name="MeeroWatchInfo">Watch anyone (a contact or any account by username/ID): name, username, bio, birthday or photo changes reach you as instant notifications with full details and a log. Master switch off = nothing watched. Every person has his own ON/OFF switch. Note: bio and birthday sync about hourly; a hidden phone number can never be revealed - Telegram privacy law.</string>
+    <string name="MeeroWatchChangedName">changed the name</string>
+    <string name="MeeroWatchChangedUsername">changed the username</string>
+    <string name="MeeroWatchChangedBio">changed the bio</string>
+    <string name="MeeroWatchChangedBday">changed the birthday</string>
+    <string name="MeeroWatchChangedPhoto">changed the photo</string>
+    <string name="MeeroWatchLogTitle">Change log</string>
+    <string name="MeeroWatchLogEmpty">No changes logged yet</string>
+    <string name="MeeroWatchLogClear">Clear log</string>
+    <string name="MeeroWatchLogClearConfirm">Delete all logged changes? (cached photos stay on device)</string>
+    <string name="MeeroWatchLogInfo">Newest 150 changes. Photos are cached on your device - tap a photo change to view or download it.</string>
+    <string name="MeeroWatchPhotoViewOld">View old photo</string>
+    <string name="MeeroWatchPhotoViewNew">View new photo</string>
+    <string name="MeeroWatchPhotoMissing">Photos unavailable for this change</string>
+    <string name="MeeroWatchPhotoHint">tap to view photos</string>
+    <string name="MeeroWatchPhotoSave">Save to gallery</string>
+    <string name="MeeroWatchSaved">Saved to gallery ✅</string>
+    <string name="MeeroWatchSaveFailed">Save failed (check storage permission)</string>
     <string name="MeeroGhostSwipeReadInfo">"Don't read messages" hides read receipts from everyone, but sometimes you want one person to know you read their chat: enable this, swipe that chat in the dialogs list, and its receipt is sent alone while everything else stays hidden. One requirement: the swipe action must be Read - set it in the Chat swipe action row above, or in Settings - Chat Settings - Chat list swipe gesture. When off, ghost mode behaves exactly like the stock fork.</string>
 
 

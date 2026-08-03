@@ -437,6 +437,9 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
 
         instance = this;
         ApplicationLoader.postInitApplication();
+        // MeeroX v102: app-open counter (activity details) + watch refresh.
+        tw.nekomimi.nekogram.MeeroActivityStats.onAppOpened();
+        tw.nekomimi.nekogram.MeeroWatch.onAppForeground();
         AndroidUtilities.checkDisplaySize(this, getResources().getConfiguration());
         currentAccount = UserConfig.selectedAccount;
         registerReceiver(batteryReceiver, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
