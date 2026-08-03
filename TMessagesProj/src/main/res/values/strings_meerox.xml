@@ -149,7 +149,7 @@
     <string name="MeeroPoolWordMany">texts</string>
     <string name="MeeroPoolEdit">Edit</string>
     <string name="MeeroPoolDelete">Delete</string>
-    <string name="MeeroPoolInfo">When on, every general auto-reply picks one random text from this list (looks more human). A per-chat rule always wins - the pool is the general reply only. Write {name} and it becomes the person\\'s name.</string>
+    <string name="MeeroPoolInfo">When on, every general auto-reply picks one random text from this list (looks more human). A per-chat rule always wins - the pool is the general reply only. Write {name} and it becomes the person\'s name.</string>
     <string name="MeeroRandomEmoji">Random emoji at the end 🎲</string>
     <string name="MeeroGhostSwipeReadInfo">"Don't read messages" hides read receipts from everyone, but sometimes you want one person to know you read their chat: enable this, swipe that chat in the dialogs list, and its receipt is sent alone while everything else stays hidden. One requirement: the swipe action must be Read - set it in the Chat swipe action row above, or in Settings - Chat Settings - Chat list swipe gesture. When off, ghost mode behaves exactly like the stock fork.</string>
 
