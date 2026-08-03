@@ -126,6 +126,7 @@ public class NekoConfig {
     public static ConfigItem meeroAutoReplyCooldown = addConfig("meeroAutoReplyCooldown", configTypeInt, 0); // minutes per chat (0 = every message)
     public static ConfigItem meeroAutoReplyDelay = addConfig("meeroAutoReplyDelay", configTypeInt, 3); // seconds before send
     public static ConfigItem meeroAutoReplyRules = addConfig("meeroAutoReplyRules", configTypeString, ""); // v99: JSON per-chat reply rules
+    public static ConfigItem meeroAutoReplyExclusions = addConfig("meeroAutoReplyExclusions", configTypeString, ""); // v101: JSON excluded chat ids
     public static ConfigItem meeroAutoReplyWindow = addConfig("meeroAutoReplyWindow", configTypeBool, false); // v100: optional reply-hours window
     public static ConfigItem meeroAutoReplyWindowStart = addConfig("meeroAutoReplyWindowStart", configTypeInt, 23 * 60); // minutes of day
     public static ConfigItem meeroAutoReplyWindowEnd = addConfig("meeroAutoReplyWindowEnd", configTypeInt, 8 * 60); // minutes of day

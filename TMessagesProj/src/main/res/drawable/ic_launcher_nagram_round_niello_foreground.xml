@@ -4,26 +4,22 @@
     android:height="108dp"
     android:viewportWidth="512"
     android:viewportHeight="512">
-  <group android:scaleX="0.7383051"
-      android:scaleY="0.7383051"
-      android:translateX="65.24384"
-      android:translateY="66.9939">
+  <group android:scaleX="0.7383051" android:scaleY="0.7383051" android:translateX="65.24384" android:translateY="66.9939">
     <group>
-      <clip-path
-          android:pathData="M0,0h512v512h-512z"/>
+      <clip-path android:pathData="M0,0h512v512h-512z"/>
       <path
-          android:pathData="M285.75,373.46a36,36 0,0 1,-21.52 -46.14l60.88,-167.26a36,36 0,0 1,46.14 -21.52,36 36,0 0,1 21.52,46.14l-60.88,167.27a36.02,36.02 0,0 1,-33.83 23.7A35.92,35.92 0,0 1,285.75 373.46ZM140.74,373.46a36,36 0,0 1,-21.52 -46.14l60.88,-167.26a36,36 0,0 1,46.14 -21.52,36 36,0 0,1 21.52,46.14l-60.88,167.27a36.02,36.02 0,0 1,-33.83 23.7A35.93,35.93 0,0 1,140.74 373.46ZM232.73,287.09 L265.06,198.26 279.07,227 246.74,315.83Z">
-        <aapt:attr name="android:fillColor">
-          <gradient 
-              android:startX="191.27"
-              android:startY="171.07"
-              android:endX="318.49"
-              android:endY="356.7"
-              android:type="linear">
+          android:pathData="M169.386,169.109L107.086,337.509A36,36 0 0 1,174.614,362.491L236.914,194.091A36,36 0 0 1,169.386,169.109zM312.257,169.464L251.957,337.864A36,36 0 0 1,319.743,362.136L380.043,193.736A36,36 0 0 1,312.257,169.464zM191.67,182.3L201.92,350.7L224.88,349.3L214.63,180.9ZM222.43,357.12L355.18,188.72L337.12,174.48L204.37,342.88Z">
+      <aapt:attr name="android:fillColor">
+        <gradient
+            android:startX="191.27"
+            android:startY="171.07"
+            android:endX="318.49"
+            android:endY="356.7"
+            android:type="linear">
             <item android:offset="0" android:color="#FFFFCC0F"/>
             <item android:offset="1" android:color="#FFFFA51F"/>
-          </gradient>
-        </aapt:attr>
+        </gradient>
+      </aapt:attr>
       </path>
     </group>
   </group>

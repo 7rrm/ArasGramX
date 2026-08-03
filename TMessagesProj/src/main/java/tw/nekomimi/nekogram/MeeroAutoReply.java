@@ -99,6 +99,10 @@ public final class MeeroAutoReply {
         if (dialogId == UserConfig.getInstance(account).getClientUserId()) return; // Saved Messages
         if (dialogId == 777000) return; // Telegram service account
 
+        // Gate 2.5 (v101): excluded people never receive any reply, even if
+        // they also have a custom text rule.
+        if (isExcluded(dialogId)) return;
+
         // Gate 3: at least one genuine, RECENT incoming content message.
         // (Ayu's deleted-history hook re-broadcasts old messages with this
         // same event - the 2-minute freshness gate filters those out.)
@@ -252,5 +256,61 @@ public final class MeeroAutoReply {
 
     public static synchronized void removeRule(long dialogId) {
         upsertRule(dialogId, null);
+    }
+
+    // --- Exclusions (MeeroX v101). JSON array of dialog ids: [123,456].
+    // An excluded chat never receives any auto-reply - even if it has a
+    // custom text rule. Removing the id restores normal behavior instantly.
+
+    private static JSONArray readExclusions() {
+        try {
+            String raw = NekoConfig.meeroAutoReplyExclusions.String();
+            if (!TextUtils.isEmpty(raw)) return new JSONArray(raw);
+        } catch (Throwable ignore) {}
+        return new JSONArray();
+    }
+
+    private static synchronized void writeExclusions(JSONArray array) {
+        NekoConfig.meeroAutoReplyExclusions.setConfigString(array == null ? "" : array.toString());
+    }
+
+    public static synchronized boolean isExcluded(long dialogId) {
+        JSONArray array = readExclusions();
+        for (int i = 0; i < array.length(); i++) {
+            if (array.optLong(i, Long.MIN_VALUE) == dialogId) return true;
+        }
+        return false;
+    }
+
+    /** Stable snapshot of excluded dialog ids for the management screen. */
+    public static synchronized ArrayList<Long> getExclusionIds() {
+        ArrayList<Long> ids = new ArrayList<>();
+        JSONArray array = readExclusions();
+        for (int i = 0; i < array.length(); i++) {
+            long id = array.optLong(i, Long.MIN_VALUE);
+            if (id != Long.MIN_VALUE) ids.add(id);
+        }
+        return ids;
+    }
+
+    public static int getExclusionCount() {
+        return getExclusionIds().size();
+    }
+
+    public static synchronized void addExclusion(long dialogId) {
+        if (isExcluded(dialogId)) return;
+        JSONArray array = readExclusions();
+        array.put(dialogId);
+        writeExclusions(array);
+    }
+
+    public static synchronized void removeExclusion(long dialogId) {
+        JSONArray array = readExclusions();
+        JSONArray out = new JSONArray();
+        for (int i = 0; i < array.length(); i++) {
+            long id = array.optLong(i, Long.MIN_VALUE);
+            if (id != Long.MIN_VALUE && id != dialogId) out.put(id);
+        }
+        writeExclusions(out);
     }
 }

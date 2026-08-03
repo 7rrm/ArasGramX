@@ -80,6 +80,14 @@
     <string name="MeeroRulesDelete">Delete rule</string>
     <string name="MeeroRulesPickPrivate">Pick a private chat only</string>
     <string name="MeeroRulesChatFallback">Chat</string>
+    <string name="MeeroExclusionsTitle">Excluded people</string>
+    <string name="MeeroExclusionsAdd">Add exclusion</string>
+    <string name="MeeroExclusionsNone">No exclusions</string>
+    <string name="MeeroExclusionsWordOne">excluded</string>
+    <string name="MeeroExclusionsWordMany">excluded</string>
+    <string name="MeeroExclusionsRowDetail">Never receives the auto-reply</string>
+    <string name="MeeroExclusionsRemove">Remove from exclusions</string>
+    <string name="MeeroExclusionsInfo">People here never receive your auto-reply at all - even if they have their own text rule. Remove a person and replies work for him again as usual.</string>
     <string name="MeeroGhostSwipeReadInfo">"Don't read messages" hides read receipts from everyone, but sometimes you want one person to know you read their chat: enable this, swipe that chat in the dialogs list, and its receipt is sent alone while everything else stays hidden. One requirement: the swipe action must be Read - set it in the Chat swipe action row above, or in Settings - Chat Settings - Chat list swipe gesture. When off, ghost mode behaves exactly like the stock fork.</string>
 
 

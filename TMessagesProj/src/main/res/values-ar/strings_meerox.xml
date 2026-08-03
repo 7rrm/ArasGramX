@@ -769,6 +769,14 @@
     <string name="MeeroRulesDelete">حذف القاعدة</string>
     <string name="MeeroRulesPickPrivate">اختر دردشة خاصة فقط</string>
     <string name="MeeroRulesChatFallback">محادثة</string>
+    <string name="MeeroExclusionsTitle">استثناء الأشخاص</string>
+    <string name="MeeroExclusionsAdd">إضافة استثناء</string>
+    <string name="MeeroExclusionsNone">بلا استثناءات</string>
+    <string name="MeeroExclusionsWordOne">مستثنى</string>
+    <string name="MeeroExclusionsWordMany">مستثنى</string>
+    <string name="MeeroExclusionsRowDetail">لن يصله أي رد تلقائي</string>
+    <string name="MeeroExclusionsRemove">إزالة من الاستثناءات</string>
+    <string name="MeeroExclusionsInfo">الأشخاص هنا لا يوصلهم ردك التلقائي أبداً — حتى لو إلهم قاعدة نص خاصة. إذا شلت الشخص يرجع الرد يشتغل عليه طبيعي.</string>
     <string name="MeeroGhostSwipeReadInfo">خيار «عدم قراءة الرسائل» يحجب إيصالات القراءة عن الكل، لكن أحياناً تريد أن يعرف شخصٌ واحد أنك قرأت: فعّل هذا الخيار واسحب تلك المحادثة في قائمة الدردشات فيصلها وحدها إيصال قراءة حقيقي، والباقي يبقى مخفياً. شرط واحد: إجراء السحب لازم يكون «مقروءة» — تضبطه من صف «ضبط إجراء السحب» في الأعلى، أو من: الإعدادات ← إعدادات المحادثات ← «إجراءات السحْب لقائمة المحادثات». عند الإطفاء يرجع الشبح لسلوك الفورك الرسمي بالضبط.</string>
 
 

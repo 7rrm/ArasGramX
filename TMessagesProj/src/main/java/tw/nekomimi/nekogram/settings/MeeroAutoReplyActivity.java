@@ -47,6 +47,7 @@ public class MeeroAutoReplyActivity extends BaseNekoSettingsActivity {
     private int contentHeaderRow;
     private int textRow;
     private int rulesRow;
+    private int exclusionsRow;
     private int timingHeaderRow;
     private int cooldownRow;
     private int delayRow;
@@ -67,6 +68,7 @@ public class MeeroAutoReplyActivity extends BaseNekoSettingsActivity {
         contentHeaderRow = addRow();
         textRow = addRow();
         rulesRow = addRow();
+        exclusionsRow = addRow();
         timingHeaderRow = addRow();
         cooldownRow = addRow();
         delayRow = addRow();
@@ -104,6 +106,13 @@ public class MeeroAutoReplyActivity extends BaseNekoSettingsActivity {
         int count = MeeroAutoReply.getRuleCount();
         if (count == 0) return getString(R.string.MeeroRulesNone);
         String word = count == 1 ? getString(R.string.MeeroRulesWordOne) : getString(R.string.MeeroRulesWordMany);
+        return String.format(Locale.US, "%d %s", count, word);
+    }
+
+    private String exclusionsValue() {
+        int count = MeeroAutoReply.getExclusionCount();
+        if (count == 0) return getString(R.string.MeeroExclusionsNone);
+        String word = count == 1 ? getString(R.string.MeeroExclusionsWordOne) : getString(R.string.MeeroExclusionsWordMany);
         return String.format(Locale.US, "%d %s", count, word);
     }
 
@@ -151,6 +160,8 @@ public class MeeroAutoReplyActivity extends BaseNekoSettingsActivity {
             showTextEditor();
         } else if (position == rulesRow) {
             presentFragment(new MeeroAutoReplyRulesActivity());
+        } else if (position == exclusionsRow) {
+            presentFragment(new MeeroAutoReplyExclusionsActivity());
         } else if (position == cooldownRow) {
             showCooldownPicker();
         } else if (position == delayRow) {
@@ -168,8 +179,9 @@ public class MeeroAutoReplyActivity extends BaseNekoSettingsActivity {
     @Override
     public void onResume() {
         super.onResume();
-        // The rules count may change on the management screen.
+        // The rules/exclusions counts may change on the management screens.
         listAdapter.notifyItemChanged(rulesRow);
+        listAdapter.notifyItemChanged(exclusionsRow);
     }
 
     private void showTextEditor() {
@@ -307,6 +319,8 @@ public class MeeroAutoReplyActivity extends BaseNekoSettingsActivity {
                     TextCell textCell = (TextCell) holder.itemView;
                     if (position == rulesRow) {
                         textCell.setTextAndValue(getString(R.string.MeeroRulesTitle), rulesValue(), true);
+                    } else if (position == exclusionsRow) {
+                        textCell.setTextAndValue(getString(R.string.MeeroExclusionsTitle), exclusionsValue(), true);
                     } else if (position == cooldownRow) {
                         textCell.setTextAndValue(getString(R.string.MeeroAutoReplyCooldown), cooldownName(NekoConfig.meeroAutoReplyCooldown.Int()), true);
                     } else if (position == delayRow) {
@@ -339,7 +353,7 @@ public class MeeroAutoReplyActivity extends BaseNekoSettingsActivity {
                 return TYPE_HEADER;
             } else if (position == textRow) {
                 return TYPE_DETAIL_SETTINGS;
-            } else if (position == rulesRow || position == cooldownRow || position == delayRow
+            } else if (position == rulesRow || position == exclusionsRow || position == cooldownRow || position == delayRow
                     || position == windowStartRow || position == windowEndRow) {
                 return TYPE_TEXT;
             }
