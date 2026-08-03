@@ -255,7 +255,6 @@ public final class MeeroAutoReply {
         }
         writePool(out);
     }
-}
 
     /** True only when the visible top fragment is that exact chat and the screen is on. */
     private static boolean isChatVisible(long dialogId) {
