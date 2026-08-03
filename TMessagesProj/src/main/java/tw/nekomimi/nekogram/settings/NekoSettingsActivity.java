@@ -92,6 +92,9 @@ public class NekoSettingsActivity extends BaseNekoSettingsActivity {
     private int watchRow;
     /** MeeroX v103: delete/edit catcher entry. */
     private int hunterRow;
+    /** MeeroX v105: keyword alert + view-once guard entries. */
+    private int keywordRow;
+    private int onceGuardRow;
 
     private int generalRow;
     private int translatorRow;
@@ -129,6 +132,8 @@ public class NekoSettingsActivity extends BaseNekoSettingsActivity {
         activityStatsRow = addRow();
         watchRow = addRow();
         hunterRow = addRow();
+        keywordRow = addRow();
+        onceGuardRow = addRow();
         generalRow = addRow();
         translatorRow = addRow();
         chatRow = addRow();
@@ -440,6 +445,10 @@ public class NekoSettingsActivity extends BaseNekoSettingsActivity {
             presentFragment(new MeeroWatchActivity());
         } else if (position == hunterRow) {
             presentFragment(new MeeroDeleteHunterActivity());
+        } else if (position == keywordRow) {
+            presentFragment(new MeeroKeywordAlertActivity());
+        } else if (position == onceGuardRow) {
+            presentFragment(new MeeroOnceGuardActivity());
         } else if (position == chatRow) {
             presentFragment(new NekoChatSettingsActivity());
         } else if (position == generalRow) {
@@ -525,6 +534,10 @@ public class NekoSettingsActivity extends BaseNekoSettingsActivity {
                         textCell.setTextAndIcon(getString(R.string.MeeroWatchTitle), R.drawable.msg_views_solar, true);
                     } else if (position == hunterRow) {
                         textCell.setTextAndIcon(getString(R.string.MeeroHunterTitle), R.drawable.baseline_delete_forever_24, true);
+                    } else if (position == keywordRow) {
+                        textCell.setTextAndIcon(getString(R.string.MeeroKeywordTitle), R.drawable.msg_search_solar, true);
+                    } else if (position == onceGuardRow) {
+                        textCell.setTextAndIcon(getString(R.string.MeeroOnceTitle), R.drawable.msg_download_solar, true);
                     } else if (position == chatRow) {
                         textCell.setTextAndIcon(getString(R.string.Chat), R.drawable.msg_discussion, true);
                     } else if (position == generalRow) {
@@ -566,6 +579,7 @@ public class NekoSettingsActivity extends BaseNekoSettingsActivity {
                     position == chatRow || position == generalRow || position == passcodeRow || position == experimentRow || position == translatorRow ||
                     position == autoReplyRow ||
                     position == activityStatsRow || position == watchRow || position == hunterRow ||
+                    position == keywordRow || position == onceGuardRow ||
                     position == fontsRow ||
                     position == importSettingsRow || position == exportSettingsRow || position == resetSettingsRow || position == appRestartRow ||
                     position == aboutRow) {

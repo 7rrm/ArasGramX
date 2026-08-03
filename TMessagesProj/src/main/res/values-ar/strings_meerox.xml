@@ -949,4 +949,24 @@
     <string name="MeeroStatsDryDays">%1$d يوم بلا رد</string>
     <string name="MeeroStatsExport">تصدير الإحصائيات كنص</string>
     <string name="MeeroStatsShare">مشاركة</string>
+    <!-- v105: keyword alert -->
+    <string name="MeeroKeywordTitle">منبه الكلمات</string>
+    <string name="MeeroKeywordMaster">تفعيل منبه الكلمات</string>
+    <string name="MeeroKeywordHeader">طقمات الكلمات</string>
+    <string name="MeeroKeywordAdd">إضافة طقم كلمات</string>
+    <string name="MeeroKeywordAddChat">دردشة محددة</string>
+    <string name="MeeroKeywordAddAll">كل المحادثات</string>
+    <string name="MeeroKeywordAll">كل المحادثات</string>
+    <string name="MeeroKeywordWordsHint">كلمات مفصولة بفاصلة، مثال: فلوس, اجتماع</string>
+    <string name="MeeroKeywordEdit">تعديل الكلمات</string>
+    <string name="MeeroKeywordEmpty">ماكو طقمات كلمات بعد. أضف أول وحدة.</string>
+    <string name="MeeroKeywordInfo">يوصلك إشعار فوري لما أي رسالة جديدة واردة تحتوي كلمة من كلماتك، حتى لو القروب مكتوم. يشتغل والتطبيق حي بالخلفية. الكلمة الأقصر من حرفين تُتجاهل، وكل دردشة تنبّه مرة وحدة كل ٣٠ ثانية. كل المطابقة تصير على جهازك وما ينرسل أي شي لأي مكان. مطفي = لا توجد أي مراقبة.</string>
+    <!-- v105: view-once guard -->
+    <string name="MeeroOnceTitle">حارس عرض-مرة</string>
+    <string name="MeeroOnceMaster">حفظ وسائط عرض مرة واحدة</string>
+    <string name="MeeroOnceCountHeader">إحصائيات</string>
+    <string name="MeeroOnceCount">المحفوظات بالمعرض</string>
+    <string name="MeeroOnceInfo">أي صورة أو فيديو «عرض مرة واحدة» يوصلك والتطبيق حي ينحفظ بهدوء بمعرضك داخل مجلد «MeeroX Once» مع إشعار تأكيد صغير. التحميل يصرف من بياناتك مثل التحميل التلقائي. كل شي يبقى على جهازك والمرسل ما يدري بأي شي. مطفي = لا تحميل ولا حفظ.</string>
+    <string name="MeeroOnceKindPhoto">صورة</string>
+    <string name="MeeroOnceKindVideo">فيديو</string>
 </resources>

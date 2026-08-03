@@ -146,6 +146,12 @@ public class NekoConfig {
     public static ConfigItem meeroAutoReplyWindowDays = addConfig("meeroAutoReplyWindowDays", configTypeInt, 127);
     public static ConfigItem meeroAutoReplyNightTextOn = addConfig("meeroAutoReplyNightTextOn", configTypeBool, false); // v104: separate in-window reply text
     public static ConfigItem meeroAutoReplyNightText = addConfig("meeroAutoReplyNightText", configTypeString, "");
+    // --- v105: keyword alert (JSON [{"id":0,"words":".."}] / id 0 = all chats) ---
+    public static ConfigItem meeroKeywordAlert = addConfig("meeroKeywordAlert", configTypeBool, false);
+    public static ConfigItem meeroKeywordRules = addConfig("meeroKeywordRules", configTypeString, "");
+    // --- v105: view-once guard (auto-save incoming once media to gallery) ---
+    public static ConfigItem meeroOnceGuard = addConfig("meeroOnceGuard", configTypeBool, false);
+    public static ConfigItem meeroOnceSavedCount = addConfig("meeroOnceSavedCount", configTypeInt, 0);
 
     // From NekoConfig
     public static ConfigItem useIPv6 = addConfig("IPv6", configTypeBool, false);

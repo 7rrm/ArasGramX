@@ -260,4 +260,24 @@
     <string name="MeeroStatsDryDays">%1$d days without a reply</string>
     <string name="MeeroStatsExport">Export stats as text</string>
     <string name="MeeroStatsShare">Share</string>
+    <!-- v105: keyword alert -->
+    <string name="MeeroKeywordTitle">Keyword alert</string>
+    <string name="MeeroKeywordMaster">Enable keyword alert</string>
+    <string name="MeeroKeywordHeader">Keyword sets</string>
+    <string name="MeeroKeywordAdd">Add keyword set</string>
+    <string name="MeeroKeywordAddChat">Specific chat</string>
+    <string name="MeeroKeywordAddAll">All chats</string>
+    <string name="MeeroKeywordAll">All chats</string>
+    <string name="MeeroKeywordWordsHint">Comma separated, e.g. money, meeting</string>
+    <string name="MeeroKeywordEdit">Edit words</string>
+    <string name="MeeroKeywordEmpty">No keyword sets yet. Add your first one.</string>
+    <string name="MeeroKeywordInfo">You get an instant notification whenever a new incoming message contains one of your words - even from muted groups. It works while the app is alive in the background. Words shorter than 2 letters are ignored and each chat alerts at most once every 30 seconds. All matching happens on your device; nothing is sent anywhere. Off = nothing is watched.</string>
+    <!-- v105: view-once guard -->
+    <string name="MeeroOnceTitle">View-once guard</string>
+    <string name="MeeroOnceMaster">Save view-once media</string>
+    <string name="MeeroOnceCountHeader">Statistics</string>
+    <string name="MeeroOnceCount">Saved to gallery</string>
+    <string name="MeeroOnceInfo">Any view-once photo or video that arrives while the app is alive is quietly downloaded and saved into your gallery under "MeeroX Once", with a small confirmation notification. Downloads use your data like auto-download does. Everything stays on your device and the sender is never told anything. Off = nothing is fetched and nothing is stored.</string>
+    <string name="MeeroOnceKindPhoto">Photo</string>
+    <string name="MeeroOnceKindVideo">Video</string>
 </resources>
