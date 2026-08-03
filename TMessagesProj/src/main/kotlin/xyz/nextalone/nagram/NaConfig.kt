@@ -382,6 +382,30 @@ object NaConfig {
             ConfigItem.configTypeString,
             ""
         )
+    val pushServiceTypeUnifiedSimple =
+        addConfig(
+            "PushServiceTypeUnifiedSimple",
+            ConfigItem.configTypeString,
+            ""
+        )
+    val pushServiceTypeUnifiedWebPushPrivateKey =
+        addConfig(
+            "PushServiceTypeUnifiedWebPushPrivateKey",
+            ConfigItem.configTypeString,
+            ""
+        )
+    val pushServiceTypeUnifiedWebPushPublicKey =
+        addConfig(
+            "PushServiceTypeUnifiedWebPushPublicKey",
+            ConfigItem.configTypeString,
+            ""
+        )
+    val pushServiceTypeUnifiedWebPushAuthSecret =
+        addConfig(
+            "PushServiceTypeUnifiedWebPushAuthSecret",
+            ConfigItem.configTypeString,
+            ""
+        )
     val sendMp4DocumentAsVideo =
         addConfig(
             "SendMp4DocumentAsVideo",
@@ -1174,7 +1198,13 @@ object NaConfig {
         addConfig(
             "AutoUpdateChannel",
             ConfigItem.configTypeInt,
-            1 // 0: off; 1: release; 2: beta
+            // MeeroX: default OFF. The upstream channel serves plain NagramX
+            // builds signed with a different key - they cannot install over
+            // MeeroX and would not carry any MeeroX feature even if they
+            // could. Updates ship through the MeeroX workflow instead. Users
+            // who picked a channel themselves keep their stored choice; the
+            // manual check in Settings -> version menu still works.
+            0 // 0: off; 1: release; 2: beta
         )
     val premiumItemEmojiStatus =
         addConfig(

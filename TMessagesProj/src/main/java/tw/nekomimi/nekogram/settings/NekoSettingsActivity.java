@@ -150,8 +150,8 @@ public class NekoSettingsActivity extends BaseNekoSettingsActivity {
         categoriesEndRow = addRow();
 
         meeroHeaderData = meeroHeadersEnabled() ? addRow() : -1;
-        importSettingsRow = addRow();
         exportSettingsRow = addRow();
+        importSettingsRow = addRow();
         resetSettingsRow = addRow();
         appRestartRow = addRow();
         nSettingsEndRow = addRow();
@@ -562,9 +562,9 @@ public class NekoSettingsActivity extends BaseNekoSettingsActivity {
                     } else if (position == fontsRow) {
                         textCell.setTextAndValueAndIcon(getString(R.string.MeeroFontSection), tw.nekomimi.nekogram.MeeroFonts.titleOf(tw.nekomimi.nekogram.MeeroFonts.getSelected()), R.drawable.msg_photo_text_regular, true);
                     } else if (position == importSettingsRow) {
-                        textCell.setTextAndIcon(getString(R.string.ImportSettings), R.drawable.msg_photo_settings_solar, true);
+                        textCell.setTextAndIcon(getString(R.string.ImportSettings), R.drawable.import_solar, true);
                     } else if (position == exportSettingsRow) {
-                        textCell.setTextAndIcon(getString(R.string.BackupSettings), R.drawable.msg_instant_link_solar, true);
+                        textCell.setTextAndIcon(getString(R.string.BackupSettings), R.drawable.export_solar, true);
                     } else if (position == resetSettingsRow) {
                         textCell.setTextAndIcon(getString(R.string.ResetSettings), R.drawable.msg_reset_solar, true);
                     } else if (position == appRestartRow) {

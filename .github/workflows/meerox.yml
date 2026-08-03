@@ -33,9 +33,13 @@ jobs:
           df -h / | tail -1
 
       - name: Checkout
-        uses: actions/checkout@v4
+        # v7 + recursive submodules, mirroring upstream's own CI: since the
+        # 12.9.2 import the native third_party libs (ffmpeg/libvpx/dav1d)
+        # live in git submodules, and without this the CMake step fails.
+        uses: actions/checkout@v7
         with:
           fetch-depth: 1
+          submodules: recursive
 
       - name: Set up JDK 21
         uses: actions/setup-java@v4

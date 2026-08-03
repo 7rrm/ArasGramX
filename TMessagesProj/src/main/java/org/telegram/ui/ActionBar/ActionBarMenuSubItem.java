@@ -106,7 +106,12 @@ public class ActionBarMenuSubItem extends FrameLayout {
         // cut 24dp glyphs off at the edges. FIT_CENTER scales them down to fit
         // instead, which is what "a 16pt icon" has to mean here.
         imageView.setScaleType(meeroIosRows() ? ImageView.ScaleType.FIT_CENTER : ImageView.ScaleType.CENTER);
-        imageView.setColorFilter(new PorterDuffColorFilter(iconColor, PorterDuff.Mode.MULTIPLY));
+        // Upstream v12.9.2 moved the default tint from MULTIPLY to SRC_IN:
+        // SRC_IN repaints the glyph with the theme colour through its alpha
+        // channel, so even hardcoded black-filled vectors pick the colour up.
+        // That subsumes MeeroX's earlier white-fill workaround and keeps any
+        // future black-filled icon compatible without asset edits.
+        imageView.setColorFilter(new PorterDuffColorFilter(iconColor, PorterDuff.Mode.SRC_IN));
         // ContextActionsContainerNode draws its glyphs at a fixed 16x16;
         // Android lets the drawable size itself, which on the solar icon set
         // comes out around 24 and leaves the row looking heavier than iOS's.
@@ -299,7 +304,7 @@ public class ActionBarMenuSubItem extends FrameLayout {
     }
 
     public void setIconColor(int iconColor) {
-        setIconColor(iconColor, PorterDuff.Mode.MULTIPLY);
+        setIconColor(iconColor, PorterDuff.Mode.SRC_IN);
     }
 
     public void setIconColor(int iconColor, PorterDuff.Mode mode) {
