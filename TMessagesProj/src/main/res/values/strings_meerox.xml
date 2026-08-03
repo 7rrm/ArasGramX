@@ -296,6 +296,4 @@
     <string name="MeeroChatLockGateSubtitle">Unlock with your fingerprint or device lock</string>
     <string name="MeeroChatLockGateHint">Unlock to view this conversation</string>
     <string name="MeeroChatLockNewMessage">New message in a locked chat</string>
-    <!-- v106: TLL "burn" button label for once media context menu (gated by the once-guard switch) -->
-    <string name="BurnTtlMessage">Burn</string>
 </resources>
