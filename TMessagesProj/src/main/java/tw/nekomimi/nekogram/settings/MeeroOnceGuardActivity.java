@@ -54,6 +54,10 @@ public class MeeroOnceGuardActivity extends BaseNekoSettingsActivity {
     @Override
     public void onResume() {
         super.onResume();
+        // MeeroX v109: consent defense - reaching this screen by ANY path
+        // without a granted consent re-shows the sheet; رفض closes the
+        // screen. تحصيل الموافقة ينحفظ مرة وحدة فقط وبضغطة «موافق».
+        tw.nekomimi.nekogram.MeeroOnceGuard.ensureConsentDialog(this, null, true);
         if (listAdapter != null) {
             listAdapter.notifyItemChanged(countRow);
         }

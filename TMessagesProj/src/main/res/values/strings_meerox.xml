@@ -313,7 +313,14 @@
     <string name="MeeroVaultTitle">Hidden chats</string>
     <string name="MeeroVaultEmpty">No hidden chats.</string>
     <string name="MeeroVaultUnread">%1$d unread</string>
-    <string name="MeeroVaultInfo">Locked chats hide from the main list, folders, archive and search, and live only here. One unlock (biometric or code) opens this screen until you leave it; opening a chat from here never double-asks, and everything re-locks the moment you go back. Vault access: long-press the Chats tab on the bottom bar and pick "Hidden chats".</string>
+    <string name="MeeroVaultInfo">One unlock per session, instant relock on exit. Vault access: long-press the Chats tab > "Hidden chats".</string>
     <string name="MeeroVaultGateHint">Unlock to see your hidden chats</string>
     <string name="MeeroChatsMenuFogInfo">Blurs the whole screen behind the bottom-bar chats long-press popup so the menu stays in focus. Off = plain dimming, exactly like before.</string>
+    <string name="MeeroVaultCount">%1$d hidden chats</string>
+    <string name="MeeroVaultBrandSub">Hidden from everywhere - they only live here</string>
+    <string name="MeeroVaultEmptyHint">Lock a chat from the Chat lock section and it shows up here</string>
+    <string name="MeeroOnceConsentTitle">One more thing first</string>
+    <string name="MeeroOnceConsentText">Notice and release of liability (legal and religious): this feature (view-once guard) can save photos and videos others send as view-once, which may violate the sender\'s privacy, the terms of use, or even the law in your country. By pressing "I agree" you affirm before God and His people that you alone are civilly, criminally and religiously responsible for any use of this feature, that MeeroX and its developers carry no liability or claim whatsoever for your usage, and that you will only use it for a legitimate need. Not okay with that? Press "Decline" and leave. Agreement is saved once; every declined visit asks again.</string>
+    <string name="MeeroOnceConsentAccept">I agree</string>
+    <string name="MeeroOnceConsentDecline">Decline</string>
 </resources>

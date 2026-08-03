@@ -152,6 +152,10 @@ public class NekoConfig {
     // --- v105: view-once guard (auto-save incoming once media to gallery) ---
     public static ConfigItem meeroOnceGuard = addConfig("meeroOnceGuard", configTypeBool, false);
     public static ConfigItem meeroOnceSavedCount = addConfig("meeroOnceSavedCount", configTypeInt, 0);
+    // --- v109: once-guard legal/religious consent - granted ONCE and only
+    // ever set by the explicit "موافق/gree" press; any declined entry keeps
+    // it false so the consent sheet shows again on the next visit. ---
+    public static ConfigItem meeroOnceConsent = addConfig("meeroOnceConsent", configTypeBool, false);
     // --- v106: per-chat lock (JSON [ids] / ids we muted = restore-on-unlock scope) ---
     public static ConfigItem meeroChatLock = addConfig("meeroChatLock", configTypeBool, false);
     public static ConfigItem meeroChatLockList = addConfig("meeroChatLockList", configTypeString, "");

@@ -1,5 +1,6 @@
 package tw.nekomimi.nekogram;
 
+import android.app.Activity;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -15,6 +16,8 @@ import org.telegram.messenger.BuildVars;
 import org.telegram.messenger.FileLog;
 import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.R;
+import org.telegram.ui.ActionBar.AlertDialog;
+import org.telegram.ui.ActionBar.BaseFragment;
 import org.telegram.ui.LaunchActivity;
 
 /**
@@ -37,6 +40,60 @@ public final class MeeroOnceGuard {
     private MeeroOnceGuard() {}
 
     private static final String CHANNEL_ID = "meero_once_guard";
+
+    // ---------------- v109: legal/religious consent gate (user-requested) ----------------
+
+    /** True only when the user pressed "موافق/agree" on the consent sheet at
+     *  least once - the ONLY thing that ever turns this on. Any declined or
+     *  interrupted entry leaves it false, so the sheet shows again next time
+     *  (exactly the accepted-once / decline-until-accept rule he approved). */
+    public static boolean consentGiven() {
+        return NekoConfig.meeroOnceConsent.Bool();
+    }
+
+    /** Shows the Iraqi consent sheet whenever consent was never granted.
+     *  موافق -> persist consent + onAccepted; رفض -> optionally closes the
+     *  calling screen (the screen-entry path), so there is no way into the
+     *  feature without pressing agree. The sheet cannot be dismissed
+     *  neutrally (no outside-tap / back dismiss) - a choice is mandatory. */
+    public static void ensureConsentDialog(final BaseFragment fragment, final Runnable onAccepted,
+                                           final boolean finishOnDecline) {
+        try {
+            if (consentGiven()) {
+                if (onAccepted != null) onAccepted.run();
+                return;
+            }
+            final Activity act = fragment.getParentActivity();
+            if (act == null || act.isFinishing()) {
+                if (finishOnDecline) {
+                    try {
+                        fragment.finishFragment();
+                    } catch (Throwable ignore) {}
+                }
+                return;
+            }
+            AlertDialog dlg = new AlertDialog.Builder(act)
+                    .setTitle(LocaleController.getString(R.string.MeeroOnceConsentTitle))
+                    .setMessage(LocaleController.getString(R.string.MeeroOnceConsentText))
+                    .setPositiveButton(LocaleController.getString(R.string.MeeroOnceConsentAccept), (d, w) -> {
+                        NekoConfig.meeroOnceConsent.setConfigBool(true);
+                        if (onAccepted != null) onAccepted.run();
+                    })
+                    .setNegativeButton(LocaleController.getString(R.string.MeeroOnceConsentDecline), (d, w) -> {
+                        if (finishOnDecline) {
+                            try {
+                                fragment.finishFragment();
+                            } catch (Throwable ignore) {}
+                        }
+                    })
+                    .create();
+            dlg.setCancelable(false);
+            dlg.setCanceledOnTouchOutside(false);
+            dlg.show();
+        } catch (Throwable t) {
+            if (BuildVars.LOGS_ENABLED) FileLog.e(t);
+        }
+    }
 
     /** Called from ChatActivity's OPTION_TTL_SAVE handler (the Ayu saver):
      *  bumps the on-screen counter and confirms with a small notification. */

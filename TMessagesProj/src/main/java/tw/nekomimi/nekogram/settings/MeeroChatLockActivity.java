@@ -90,10 +90,31 @@ public class MeeroChatLockActivity extends BaseNekoSettingsActivity {
     }
 
     @Override
+    public View createView(Context context) {
+        View view = super.createView(context);
+        // MeeroX v109 (user-requested): the section itself is behind the same
+        // secret it manages - a snooper on an unlocked phone cannot reach the
+        // unlock-code change or the locked list. The gates attach only when a
+        // secret actually exists (first-time setup stays reachable).
+        if (MeeroChatLock.needsLockSettingsGate(context instanceof android.app.Activity ? (android.app.Activity) context : null)) {
+            MeeroChatLock.attachLockSettingsGate(this);
+        }
+        return view;
+    }
+
+    @Override
     public void onResume() {
         super.onResume();
         updateRows();
         listAdapter.notifyDataSetChanged();
+        MeeroChatLock.maybePromptLockSettings(this);
+    }
+
+    @Override
+    public void onFragmentDestroy() {
+        super.onFragmentDestroy();
+        // v109: leaving the section relocks it - the next visit asks again.
+        MeeroChatLock.lockLockSettings();
     }
 
     private String titleOf(long dialogId) {

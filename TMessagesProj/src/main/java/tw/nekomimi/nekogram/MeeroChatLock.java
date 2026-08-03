@@ -304,6 +304,129 @@ public final class MeeroChatLock {
         promptingVault = false; // never let a stale flag pin the gate shut
     }
 
+    // ---------------- v109: lock-the-lock-settings gate (user-requested) ----------------
+    // Opening the chat-lock SECTION itself now asks for the same secret
+    // (always-on per his decision), so a snooper on an unlocked phone cannot
+    // change the code or remove locks. Unlocked per screen session, exactly
+    // like the vault; leaving the section relocks it.
+    private static volatile boolean lockSettingsUnlocked;
+    private static volatile boolean promptingLockSettings;
+
+    /** Should the section gate show at all? Only when the feature actually
+     *  holds a secret to verify against: master ON, and (code method with a
+     *  stored code) or (system method with a usable device credential). When
+     *  nothing is configured yet the section must stay reachable - the gate
+     *  is not a trap for first-time setup. */
+    public static boolean needsLockSettingsGate(Activity act) {
+        if (!NekoConfig.meeroChatLock.Bool()) return false;
+        if (getMethod() == METHOD_CODE8) return hasCode();
+        return canAskSystem(act);
+    }
+
+    public static void attachLockSettingsGate(final BaseFragment fragment) {
+        try {
+            View fv = fragment.fragmentView;
+            if (lockSettingsUnlocked || !(fv instanceof ViewGroup)) return;
+            final ViewGroup content = (ViewGroup) fv;
+            if (getMethod() == METHOD_CODE8 && hasCode()) {
+                attachCodeLockCover(content,
+                        LocaleController.getString(R.string.MeeroChatLockTitle),
+                        LocaleController.getString(R.string.MeeroGateCodeHint),
+                        LocaleController.getString(R.string.MeeroChatLockCodeWrong),
+                        () -> {
+                            try {
+                                fragment.finishFragment();
+                            } catch (Throwable ignore) {}
+                        },
+                        canAskSystem(fragment.getParentActivity())
+                                ? () -> promptSystemForLockSettings(fragment) : null,
+                        new CodeCallback() {
+                            @Override
+                            public boolean onCode(String code) {
+                                if (!verifyCode(code)) return false;
+                                lockSettingsUnlocked = true;
+                                return true;
+                            }
+
+                            @Override
+                            public void onCancelled() {}
+                        });
+            } else {
+                attachGateCover(content,
+                        LocaleController.getString(R.string.MeeroChatLockTitle),
+                        LocaleController.getString(R.string.MeeroChatLockGateSubtitle),
+                        () -> maybePromptLockSettings(fragment));
+            }
+        } catch (Throwable t) {
+            if (BuildVars.LOGS_ENABLED) FileLog.e(t);
+        }
+    }
+
+    private static void promptSystemForLockSettings(final BaseFragment fragment) {
+        if (promptingLockSettings) return;
+        promptingLockSettings = true;
+        authenticateSystem(fragment.getParentActivity(),
+                LocaleController.getString(R.string.MeeroChatLockTitle),
+                LocaleController.getString(R.string.MeeroChatLockGateSubtitle),
+                () -> {
+                    promptingLockSettings = false;
+                    lockSettingsUnlocked = true;
+                    View fv = fragment.fragmentView;
+                    if (fv instanceof ViewGroup) {
+                        removeGateCover((ViewGroup) fv);
+                    }
+                },
+                () -> promptingLockSettings = false); // cancelled: code screen stays
+    }
+
+    public static void maybePromptLockSettings(final BaseFragment fragment) {
+        try {
+            if (lockSettingsUnlocked) return;
+            attachLockSettingsGate(fragment); // defensive no-op when covered
+            if (getMethod() == METHOD_CODE8 && hasCode()) {
+                return; // the cover itself is the prompt
+            }
+            final Activity act = fragment.getParentActivity();
+            if (act == null || !canAskSystem(act)) {
+                // configured code vanished / no system secret: never trap the
+                // owner out of his own settings
+                lockSettingsUnlocked = true;
+                View fv = fragment.fragmentView;
+                if (fv instanceof ViewGroup) {
+                    removeGateCover((ViewGroup) fv);
+                }
+                return;
+            }
+            promptingLockSettings = true;
+            authenticateSystem(act,
+                    LocaleController.getString(R.string.MeeroChatLockTitle),
+                    LocaleController.getString(R.string.MeeroChatLockGateSubtitle),
+                    () -> {
+                        promptingLockSettings = false;
+                        lockSettingsUnlocked = true;
+                        View fv = fragment.fragmentView;
+                        if (fv instanceof ViewGroup) {
+                            removeGateCover((ViewGroup) fv);
+                        }
+                    },
+                    () -> {
+                        promptingLockSettings = false;
+                        try {
+                            fragment.finishFragment();
+                        } catch (Throwable ignore) {}
+                    });
+        } catch (Throwable t) {
+            promptingLockSettings = false;
+            if (BuildVars.LOGS_ENABLED) FileLog.e(t);
+        }
+    }
+
+    /** Called when the lock-settings section is destroyed - relocks it. */
+    public static void lockLockSettings() {
+        lockSettingsUnlocked = false;
+        promptingLockSettings = false;
+    }
+
     // ---------------- gate state ----------------
 
     /** The master switch AND the per-chat listing both have to agree. */

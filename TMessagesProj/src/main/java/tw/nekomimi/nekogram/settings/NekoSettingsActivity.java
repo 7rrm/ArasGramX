@@ -451,7 +451,11 @@ public class NekoSettingsActivity extends BaseNekoSettingsActivity {
         } else if (position == keywordRow) {
             presentFragment(new MeeroKeywordAlertActivity());
         } else if (position == onceGuardRow) {
-            presentFragment(new MeeroOnceGuardActivity());
+            // MeeroX v109: legal/religious consent first (user-requested) -
+            // "موافق" opens the screen and is remembered; any declined entry
+            // re-shows the sheet on the next visit.
+            tw.nekomimi.nekogram.MeeroOnceGuard.ensureConsentDialog(this,
+                    () -> presentFragment(new MeeroOnceGuardActivity()), false);
         } else if (position == lockRow) {
             presentFragment(new MeeroChatLockActivity());
         } else if (position == chatRow) {
