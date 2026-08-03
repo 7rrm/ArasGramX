@@ -745,7 +745,7 @@
     <string name="MeeroAutoReplyWindowTitle">نافذة زمنية للرد 🌙</string>
     <string name="MeeroAutoReplyWindowStart">بداية النافذة</string>
     <string name="MeeroAutoReplyWindowEnd">نهاية النافذة</string>
-    <string name="MeeroAutoReplyWindowInfo">عند التفعيل يُرسل الرد فقط داخل هذه الساعات. إذا كانت البداية بعد النهاية فالنافذة تعبر منتصف الليل (مثال 23:00–08:00). خارج النافذة لا يُرسل أي رد. مطفية = يرد على مدار الساعة مثل السابق تماماً.</string>
+    <string name="MeeroAutoReplyWindowInfo">عند التفعيل يُرسل الرد فقط داخل هذه الساعات وفي الأيام المختارة. إذا كانت البداية بعد النهاية فالنافذة تعبر منتصف الليل (مثال 23:00–08:00). خارج النافذة (أو بيوم غير محدد) لا يُرسل أي رد. مطفية = يرد على مدار الساعة مثل السابق تماماً. «النص الليلي» الاختياري يستبدل نص الرد العادي داخل النافذة فقط.</string>
     <string name="MeeroCooldownEveryMessage">كل رسالة</string>
     <string name="MeeroCooldown5">5 دقائق</string>
     <string name="MeeroCooldown10">10 دقائق</string>
@@ -829,7 +829,7 @@
     <string name="MeeroHunterSomeone">شخص ما</string>
     <string name="MeeroHunterEmpty">لا شيء ملتقط بعد</string>
     <string name="MeeroHunterClearConfirm">تمسح السجل كله؟</string>
-    <string name="MeeroHunterInfo">لما الطرف الثاني يحذف أو يعدّل رسالة يوصلك إشعار فوري وينسجل هنا النص الأصلي (قديم ← جديد بالتعديل) مع الوقت بالدقيقة. رسائلك أنت والرسائل الخدمية لا تُلتقط أبداً. كل شيء يبقى على جهازك. المفتاح مطفي = لا التقاط ولا إشعارات. ملاحظة: التقاط التعديل يتبع مفتاح «حفظ تاريخ التعديلات» المدمج (فعّال افتراضياً).</string>
+    <string name="MeeroHunterInfo">لما الطرف الثاني يحذف أو يعدّل رسالة يوصلك إشعار فوري وينسجل هنا النص الأصلي (قديم ← جديد بالتعديل) مع الوقت بالدقيقة. رسائلك أنت والرسائل الخدمية لا تُلتقط أبداً. كل شيء يبقى على جهازك. المفتاح مطفي = لا التقاط ولا إشعارات. ملاحظة: التقاط التعديل يتبع مفتاح «حفظ تاريخ التعديلات» المدمج (فعّال افتراضياً). اضغط مطولاً على أي عنصر لتحديد عنصر أو أكثر وحذفه.</string>
     <string name="MeeroPoolTitle">نصوص عشوائية ⚡</string>
     <string name="MeeroPoolMaster">تفعيل النصوص العشوائية</string>
     <string name="MeeroPoolAdd">إضافة نص</string>
@@ -918,4 +918,35 @@
     <string name="MeeroIosAlertsInfo">يرسم خطاً رفيعاً فوق أزرار الحوار وبين كل زرين، مثل ما يفصل تلكرام آيفون أزرار تنبيهاته.</string>
     <string name="meeroIosMediaGrid">مدة الفيديو مثل الآيفون</string>
     <string name="MeeroIosMediaGridInfo">يكتب مدة الفيديو على الصورة مباشرة بظل خفيف مثل تلكرام آيفون، بدل حصرها داخل مستطيل ملوّن.</string>
+    <!-- v104: delete catcher multi-select -->
+    <string name="MeeroHunterSelectedCount">المحدد: %1$d</string>
+    <string name="MeeroHunterSelectAll">تحديد الكل</string>
+    <string name="MeeroHunterNothingSelected">ماكو عناصر محددة. اضغط مطولاً على عنصر، حدد اللي تريده، بعدين احذف.</string>
+    <string name="MeeroHunterDeleteConfirm">راح ينحذف %1$d عنصر محدد من سجل الصائد على جهازك فقط. محادثاتك ما تتأثر.</string>
+    <!-- v104: auto-reply window pro (weekdays + night text) -->
+    <string name="MeeroAutoReplyWindowDays">أيام النافذة</string>
+    <string name="MeeroAutoReplyWindowDaysAll">كل الأيام</string>
+    <string name="MeeroAutoReplyWindowDaysNone">بدون أيام (النافذة لا تعمل)</string>
+    <string name="MeeroDaySun">الأحد</string>
+    <string name="MeeroDayMon">الاثنين</string>
+    <string name="MeeroDayTue">الثلاثاء</string>
+    <string name="MeeroDayWed">الأربعاء</string>
+    <string name="MeeroDayThu">الخميس</string>
+    <string name="MeeroDayFri">الجمعة</string>
+    <string name="MeeroDaySat">السبت</string>
+    <string name="MeeroNightTextOn">نص الرد الليلي</string>
+    <string name="MeeroNightText">النص الليلي</string>
+    <string name="MeeroNightTextHint">مثال: نايم هسه، أرد عليك باجر</string>
+    <string name="MeeroNightTextEmpty">غير مضبوط (ينرسل النص العادي)</string>
+    <!-- v104: activity pro (hour chart + quiet chats + export) -->
+    <string name="MeeroStatsProHeader">نشاط برو</string>
+    <string name="MeeroStatsChartInfo">الأعمدة تعرض رسائلك الصادرة موزعة على ساعات اليوم (بتوقيت جهازك)، وأعلى عمود مكتوبة قيمته فوقه.</string>
+    <string name="MeeroStatsDryHeader">المحادثات الجافة</string>
+    <string name="MeeroStatsDryWord">محادثة</string>
+    <string name="MeeroStatsDryInfo">محادثات خاصة آخر رسالة بيها من طرفهم وأنت بعدك ما رديت عليها.</string>
+    <string name="MeeroStatsDryToday">اليوم</string>
+    <string name="MeeroStatsDryYesterday">أمس</string>
+    <string name="MeeroStatsDryDays">%1$d يوم بلا رد</string>
+    <string name="MeeroStatsExport">تصدير الإحصائيات كنص</string>
+    <string name="MeeroStatsShare">مشاركة</string>
 </resources>

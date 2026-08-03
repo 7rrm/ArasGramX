@@ -88,6 +88,35 @@ public final class MeeroDeleteHunter {
         writeLog(new JSONArray());
     }
 
+    // v104: multi-select removal. Keys are stable across sessions: a deleted
+    // entry is identified by its time + sender + kind + original-text hash,
+    // NOT by its position (new events may arrive while the user is picking).
+    public static String keyOf(LogItem li) {
+        if (li == null) return "";
+        return li.t + "_" + li.id + "_" + li.kind + "_" + li.oldValue.hashCode();
+    }
+
+    /** Removes every log entry whose key is in the set. Returns the count. */
+    public static synchronized int removeFromLog(java.util.HashSet<String> keys) {
+        if (keys == null || keys.isEmpty()) return 0;
+        JSONArray array = readLog();
+        JSONArray out = new JSONArray();
+        int removed = 0;
+        for (int i = 0; i < array.length(); i++) {
+            JSONObject o = array.optJSONObject(i);
+            if (o == null) continue;
+            String key = o.optLong("t") + "_" + o.optLong("id") + "_"
+                    + o.optString("kind", "") + "_" + o.optString("old", "").hashCode();
+            if (keys.contains(key)) {
+                removed++;
+                continue;
+            }
+            out.put(o);
+        }
+        writeLog(out);
+        return removed;
+    }
+
     // ---------------- hooks (called from AyuMessagesController) ----------------
 
     public static void onMessageDeleted(com.radolyn.ayugram.messages.AyuSavePreferences prefs) {

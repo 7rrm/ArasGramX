@@ -56,7 +56,7 @@
     <string name="MeeroAutoReplyWindowTitle">Auto-reply time window 🌙</string>
     <string name="MeeroAutoReplyWindowStart">Window start</string>
     <string name="MeeroAutoReplyWindowEnd">Window end</string>
-    <string name="MeeroAutoReplyWindowInfo">When enabled, replies are only sent within these hours. If the start is later than the end, the window crosses midnight (e.g. 23:00-08:00). Outside the window nothing is sent. Off = replies around the clock, exactly like before.</string>
+    <string name="MeeroAutoReplyWindowInfo">When enabled, replies are only sent within these hours on the chosen days. If the start is later than the end, the window crosses midnight (e.g. 23:00-08:00). Outside the window (or on unchecked days) nothing is sent. Off = replies around the clock, exactly like before. The optional night text replaces the general reply text while the window is active.</string>
     <string name="MeeroCooldownEveryMessage">Every message</string>
     <string name="MeeroCooldown5">5 minutes</string>
     <string name="MeeroCooldown10">10 minutes</string>
@@ -140,7 +140,7 @@
     <string name="MeeroHunterSomeone">Someone</string>
     <string name="MeeroHunterEmpty">Nothing caught yet</string>
     <string name="MeeroHunterClearConfirm">Delete the whole log?</string>
-    <string name="MeeroHunterInfo">When the other side deletes or edits a message you get an instant notification and the event lands here with the original text (old ← new for edits) and the time. Own messages and service messages are never captured. Everything stays on your device. Switch off = nothing is caught and nothing is notified. Note: edit catching follows the built-in "save edit history" toggle (on by default).</string>
+    <string name="MeeroHunterInfo">When the other side deletes or edits a message you get an instant notification and the event lands here with the original text (old ← new for edits) and the time. Own messages and service messages are never captured. Everything stays on your device. Switch off = nothing is caught and nothing is notified. Note: edit catching follows the built-in "save edit history" toggle (on by default). Long-press any entry to select one or more items and delete them.</string>
     <string name="MeeroPoolTitle">Random replies ⚡</string>
     <string name="MeeroPoolMaster">Random reply texts</string>
     <string name="MeeroPoolAdd">Add a text</string>
@@ -229,4 +229,35 @@
     <string name="MeeroIosAlertsInfo">Rules a hairline above the buttons of a dialog and between each pair, the way Telegram for iOS separates its alert actions.</string>
     <string name="meeroIosMediaGrid">iOS media duration</string>
     <string name="MeeroIosMediaGridInfo">Prints a video\'s length straight onto its thumbnail under a soft shadow, as Telegram for iOS does, instead of boxing it in a filled tag.</string>
+    <!-- v104: delete catcher multi-select -->
+    <string name="MeeroHunterSelectedCount">Selected: %1$d</string>
+    <string name="MeeroHunterSelectAll">Select all</string>
+    <string name="MeeroHunterNothingSelected">Nothing selected. Long-press an entry, tap the ones you want, then delete.</string>
+    <string name="MeeroHunterDeleteConfirm">Deletes %1$d selected items from the catcher log on this device only. Your chats are not affected.</string>
+    <!-- v104: auto-reply window pro (weekdays + night text) -->
+    <string name="MeeroAutoReplyWindowDays">Window days</string>
+    <string name="MeeroAutoReplyWindowDaysAll">Every day</string>
+    <string name="MeeroAutoReplyWindowDaysNone">No days - window never runs</string>
+    <string name="MeeroDaySun">Sunday</string>
+    <string name="MeeroDayMon">Monday</string>
+    <string name="MeeroDayTue">Tuesday</string>
+    <string name="MeeroDayWed">Wednesday</string>
+    <string name="MeeroDayThu">Thursday</string>
+    <string name="MeeroDayFri">Friday</string>
+    <string name="MeeroDaySat">Saturday</string>
+    <string name="MeeroNightTextOn">Night reply text</string>
+    <string name="MeeroNightText">Night text</string>
+    <string name="MeeroNightTextHint">e.g. Sleeping now, will reply in the morning</string>
+    <string name="MeeroNightTextEmpty">Not set - the general text is sent</string>
+    <!-- v104: activity pro (hour chart + quiet chats + export) -->
+    <string name="MeeroStatsProHeader">Activity pro</string>
+    <string name="MeeroStatsChartInfo">Bars show your outgoing messages by hour of day (device local time). The tallest bar carries its value on top.</string>
+    <string name="MeeroStatsDryHeader">Quiet chats</string>
+    <string name="MeeroStatsDryWord">chats</string>
+    <string name="MeeroStatsDryInfo">Private chats whose last message came from their side - you have not replied yet.</string>
+    <string name="MeeroStatsDryToday">Today</string>
+    <string name="MeeroStatsDryYesterday">Yesterday</string>
+    <string name="MeeroStatsDryDays">%1$d days without a reply</string>
+    <string name="MeeroStatsExport">Export stats as text</string>
+    <string name="MeeroStatsShare">Share</string>
 </resources>

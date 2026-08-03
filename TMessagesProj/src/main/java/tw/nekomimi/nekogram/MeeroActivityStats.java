@@ -8,6 +8,7 @@ import org.telegram.messenger.Utilities;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashSet;
 
 /**
  * MeeroX v102: activity details engine.
@@ -37,6 +38,14 @@ public final class MeeroActivityStats {
         public final ArrayList<TopChat> top = new ArrayList<>();
         public final int[] hourly = new int[24];
         public boolean hasHourly;
+        // v104: quiet chats - private dialogs whose LAST message is incoming
+        public int dryCount;
+        public final ArrayList<DryChat> dryTop = new ArrayList<>(); // max 5, freshest wait first
+    }
+
+    public static final class DryChat {
+        public long dialogId;
+        public long lastIncomingSec;
     }
 
     /** Called from LaunchActivity once per cold open. */
@@ -63,6 +72,7 @@ public final class MeeroActivityStats {
                     s.month = countSince(db, nowSec - 30L * 86400L);
                     fillTop(db, s);
                     fillHourly(db, s);
+                    fillDry(db, s, org.telegram.messenger.UserConfig.getInstance(account).getClientUserId());
                     s.ready = true;
                 }
             } catch (Throwable ignore) {}
@@ -123,6 +133,35 @@ public final class MeeroActivityStats {
                     }
                 } catch (Throwable ignore) {}
             }
+        } catch (Throwable ignore) {} finally {
+            if (c != null) c.dispose();
+        }
+    }
+
+    /** v104: quiet ("dry") chats - private dialogs whose LAST stored message
+     *  came from the other side, i.e. you still owe them a reply. Saved
+     *  Messages, the service account, groups and channels never count. */
+    private static void fillDry(SQLiteDatabase db, Summary s, long selfId) {
+        SQLiteCursor c = null;
+        try {
+            c = db.queryFinalized(
+                    "SELECT m.uid, m.date, m.out FROM messages_v2 m INNER JOIN " +
+                    "(SELECT uid AS u, MAX(date) AS md FROM messages_v2 WHERE uid > 0 AND uid <> 777000 AND uid <> " + selfId + " GROUP BY uid) t " +
+                    "ON m.uid = t.u AND m.date = t.md");
+            HashSet<Long> seen = new HashSet<>();
+            ArrayList<DryChat> all = new ArrayList<>();
+            while (c.next()) {
+                long uid = c.longValue(0);
+                if (!seen.add(uid)) continue;
+                if (c.intValue(2) != 0) continue; // last message here was yours
+                DryChat d = new DryChat();
+                d.dialogId = uid;
+                d.lastIncomingSec = c.longValue(1);
+                all.add(d);
+            }
+            s.dryCount = all.size();
+            all.sort((a, b) -> Long.compare(b.lastIncomingSec, a.lastIncomingSec));
+            for (int i = 0; i < all.size() && i < 5; i++) s.dryTop.add(all.get(i));
         } catch (Throwable ignore) {} finally {
             if (c != null) c.dispose();
         }

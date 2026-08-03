@@ -153,13 +153,28 @@ public final class MeeroAutoReply {
      *  Messages arriving outside the window are skipped, not queued. */
     public static boolean isWithinWindow() {
         if (!NekoConfig.meeroAutoReplyWindow.Bool()) return true;
+        Calendar cal = Calendar.getInstance();
+        // v104: window weekdays bitmask - Sunday is bit 0 ... Saturday bit 6.
+        // A day whose bit is off means the window simply does not run that day.
+        int dayBit = 1 << (cal.get(Calendar.DAY_OF_WEEK) - 1);
+        if ((NekoConfig.meeroAutoReplyWindowDays.Int() & dayBit) == 0) return false;
         int start = NekoConfig.meeroAutoReplyWindowStart.Int();
         int end = NekoConfig.meeroAutoReplyWindowEnd.Int();
         if (start == end) return true;
-        Calendar cal = Calendar.getInstance();
         int now = cal.get(Calendar.HOUR_OF_DAY) * 60 + cal.get(Calendar.MINUTE);
         if (start < end) return now >= start && now < end;
         return now >= start || now < end;
+    }
+
+    /** v104: optional night reply text - replaces the general text only while
+     *  the reply window actively gates (its switch + days + hours all pass).
+     *  A per-chat rule and the random pool still take precedence. */
+    private static String nightTextIfActive() {
+        if (!NekoConfig.meeroAutoReplyWindow.Bool()) return null;
+        if (!NekoConfig.meeroAutoReplyNightTextOn.Bool()) return null;
+        if (!isWithinWindow()) return null;
+        String night = NekoConfig.meeroAutoReplyNightText.String();
+        return TextUtils.isEmpty(night) ? null : night;
     }
 
     private static String resolveText(TLRPC.User user, int account, String ruleText) {
@@ -170,7 +185,13 @@ public final class MeeroAutoReply {
             if (!TextUtils.isEmpty(pooled)) template = pooled;
         }
         if (TextUtils.isEmpty(template)) {
-            template = NekoConfig.meeroAutoReplyText.String();
+            String mainText = NekoConfig.meeroAutoReplyText.String();
+            // v104: the night text swaps in for the general text inside the
+            // active window; outside it (or unset) the general text stands.
+            template = nightTextIfActive();
+            if (TextUtils.isEmpty(template)) {
+                template = mainText;
+            }
         }
         if (TextUtils.isEmpty(template)) {
             template = LocaleController.getString(R.string.MeeroAutoReplyDefaultText);

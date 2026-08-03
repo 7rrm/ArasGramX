@@ -142,6 +142,10 @@ public class NekoConfig {
     public static ConfigItem meeroAutoReplyWindow = addConfig("meeroAutoReplyWindow", configTypeBool, false); // v100: optional reply-hours window
     public static ConfigItem meeroAutoReplyWindowStart = addConfig("meeroAutoReplyWindowStart", configTypeInt, 23 * 60); // minutes of day
     public static ConfigItem meeroAutoReplyWindowEnd = addConfig("meeroAutoReplyWindowEnd", configTypeInt, 8 * 60); // minutes of day
+    // --- v104: window pro - weekday bitmask (Sunday = bit 0 ... Saturday = bit 6, 127 = every day) ---
+    public static ConfigItem meeroAutoReplyWindowDays = addConfig("meeroAutoReplyWindowDays", configTypeInt, 127);
+    public static ConfigItem meeroAutoReplyNightTextOn = addConfig("meeroAutoReplyNightTextOn", configTypeBool, false); // v104: separate in-window reply text
+    public static ConfigItem meeroAutoReplyNightText = addConfig("meeroAutoReplyNightText", configTypeString, "");
 
     // From NekoConfig
     public static ConfigItem useIPv6 = addConfig("IPv6", configTypeBool, false);

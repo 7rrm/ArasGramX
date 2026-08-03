@@ -36,9 +36,11 @@ import tw.nekomimi.nekogram.ui.cells.HeaderCell;
  * Master switch (off by default - replies are sent under the user's name),
  * a live reply preview ({name} shown with a sample name), per-chat rules,
  * cooldown and send-delay pickers, and (v100) an optional reply time window
- * with start/end 24-hour pickers. Every piece is independent; when the
- * master switch or the window is off the behavior is exactly stock.
- * The engine lives in {@link MeeroAutoReply}.
+ * with start/end 24-hour pickers. v104 extends the window into "window pro":
+ * a weekday multi-picker (unchecked days never reply) and an optional night
+ * reply text that swaps in for the general text while the window gates pass.
+ * Every piece is independent; when the master switch or the window is off
+ * the behavior is exactly stock. The engine lives in {@link MeeroAutoReply}.
  */
 public class MeeroAutoReplyActivity extends BaseNekoSettingsActivity {
 
@@ -56,6 +58,9 @@ public class MeeroAutoReplyActivity extends BaseNekoSettingsActivity {
     private int windowRow;
     private int windowStartRow;
     private int windowEndRow;
+    private int windowDaysRow;
+    private int nightTextOnRow;
+    private int nightTextRow;
     private int windowInfoRow;
     private int boundsInfoRow;
 
@@ -79,6 +84,9 @@ public class MeeroAutoReplyActivity extends BaseNekoSettingsActivity {
         windowRow = addRow();
         windowStartRow = addRow();
         windowEndRow = addRow();
+        windowDaysRow = addRow();
+        nightTextOnRow = addRow();
+        nightTextRow = addRow();
         windowInfoRow = addRow();
         boundsInfoRow = addRow();
     }
@@ -189,7 +197,122 @@ public class MeeroAutoReplyActivity extends BaseNekoSettingsActivity {
             showTimePicker(NekoConfig.meeroAutoReplyWindowStart, R.string.MeeroAutoReplyWindowStart, windowStartRow);
         } else if (position == windowEndRow) {
             showTimePicker(NekoConfig.meeroAutoReplyWindowEnd, R.string.MeeroAutoReplyWindowEnd, windowEndRow);
+        } else if (position == windowDaysRow) {
+            showDaysPicker();
+        } else if (position == nightTextOnRow) {
+            NekoConfig.meeroAutoReplyNightTextOn.toggleConfigBool();
+            ((TextCheckCell) view).setChecked(NekoConfig.meeroAutoReplyNightTextOn.Bool());
+        } else if (position == nightTextRow) {
+            showNightTextEditor();
         }
+    }
+
+    /** Day name by engine bitmask index: 0 = Sunday ... 6 = Saturday. */
+    private String dayName(int i) {
+        switch (i) {
+            case 0:
+                return getString(R.string.MeeroDaySun);
+            case 1:
+                return getString(R.string.MeeroDayMon);
+            case 2:
+                return getString(R.string.MeeroDayTue);
+            case 3:
+                return getString(R.string.MeeroDayWed);
+            case 4:
+                return getString(R.string.MeeroDayThu);
+            case 5:
+                return getString(R.string.MeeroDayFri);
+            default:
+                return getString(R.string.MeeroDaySat);
+        }
+    }
+
+    private String daysValue() {
+        int mask = NekoConfig.meeroAutoReplyWindowDays.Int();
+        if (mask == 127) return getString(R.string.MeeroAutoReplyWindowDaysAll);
+        if (mask == 0) return getString(R.string.MeeroAutoReplyWindowDaysNone);
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < 7; i++) {
+            if ((mask & (1 << i)) != 0) {
+                if (sb.length() > 0) sb.append(" - ");
+                sb.append(dayName(i));
+            }
+        }
+        return sb.toString();
+    }
+
+    /** Weekday multi-picker built from TextCheckCells for the native look. */
+    private void showDaysPicker() {
+        Context context = getParentActivity();
+        if (context == null) return;
+        int mask = NekoConfig.meeroAutoReplyWindowDays.Int();
+        final boolean[] tmp = new boolean[7];
+        for (int i = 0; i < 7; i++) tmp[i] = (mask & (1 << i)) != 0;
+        android.widget.LinearLayout layout = new android.widget.LinearLayout(context);
+        layout.setOrientation(android.widget.LinearLayout.VERTICAL);
+        for (int i = 0; i < 7; i++) {
+            TextCheckCell cell = new TextCheckCell(context);
+            cell.setBackgroundColor(getThemedColor(Theme.key_dialogBackground));
+            cell.setTextAndCheck(dayName(i), tmp[i], i < 6);
+            final int day = i;
+            cell.setOnClickListener(v -> {
+                tmp[day] = !tmp[day];
+                cell.setChecked(tmp[day]);
+            });
+            layout.addView(cell);
+        }
+        new AlertDialog.Builder(context)
+                .setTitle(getString(R.string.MeeroAutoReplyWindowDays))
+                .setView(layout)
+                .setPositiveButton(getString(R.string.Save), (dialog, which) -> {
+                    int newMask = 0;
+                    for (int i = 0; i < 7; i++) {
+                        if (tmp[i]) newMask |= 1 << i;
+                    }
+                    NekoConfig.meeroAutoReplyWindowDays.setConfigInt(newMask);
+                    listAdapter.notifyItemChanged(windowDaysRow);
+                })
+                .setNegativeButton(getString(R.string.Cancel), null)
+                .show();
+    }
+
+    private String nightTextPreview() {
+        String value = NekoConfig.meeroAutoReplyNightText.String();
+        if (TextUtils.isEmpty(value)) {
+            return getString(R.string.MeeroNightTextEmpty);
+        }
+        return value.replace("{name}", getString(R.string.MeeroAutoReplySampleName));
+    }
+
+    /** Same editor widget as the general reply text, for the night variant. */
+    private void showNightTextEditor() {
+        Context context = getParentActivity();
+        if (context == null) return;
+        final EditText editText = new EditText(context);
+        editText.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 16);
+        editText.setTextColor(getThemedColor(Theme.key_dialogTextBlack));
+        editText.setHintTextColor(getThemedColor(Theme.key_windowBackgroundWhiteHintText));
+        editText.setText(NekoConfig.meeroAutoReplyNightText.String());
+        editText.setSelection(editText.getText().length());
+        editText.setHint(getString(R.string.MeeroNightTextHint));
+        FrameLayout container = new FrameLayout(context);
+        FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        lp.setMargins(AndroidUtilities.dp(24), AndroidUtilities.dp(4), AndroidUtilities.dp(24), 0);
+        container.addView(editText, lp);
+        new AlertDialog.Builder(context)
+                .setTitle(getString(R.string.MeeroNightText))
+                .setView(container)
+                .setPositiveButton(getString(R.string.Save), (dialog, which) -> {
+                    NekoConfig.meeroAutoReplyNightText.setConfigString(editText.getText().toString().trim());
+                    listAdapter.notifyItemChanged(nightTextRow);
+                })
+                .setNegativeButton(getString(R.string.Cancel), null)
+                .create()
+                .show();
+        editText.post(() -> {
+            editText.requestFocus();
+            AndroidUtilities.showKeyboard(editText);
+        });
     }
 
     @Override
@@ -317,6 +440,8 @@ public class MeeroAutoReplyActivity extends BaseNekoSettingsActivity {
                         checkCell.setTextAndCheck(getString(R.string.MeeroRandomEmoji), NekoConfig.meeroAutoReplyRandomEmoji.Bool(), true);
                     } else if (position == windowRow) {
                         checkCell.setTextAndCheck(getString(R.string.MeeroAutoReplyWindowTitle), NekoConfig.meeroAutoReplyWindow.Bool(), true);
+                    } else if (position == nightTextOnRow) {
+                        checkCell.setTextAndCheck(getString(R.string.MeeroNightTextOn), NekoConfig.meeroAutoReplyNightTextOn.Bool(), true);
                     }
                     break;
                 case TYPE_HEADER:
@@ -332,6 +457,9 @@ public class MeeroAutoReplyActivity extends BaseNekoSettingsActivity {
                     if (position == textRow) {
                         detailCell.setMultilineDetail(true);
                         detailCell.setTextAndValue(getString(R.string.MeeroAutoReplyText), replyTextPreview(), false);
+                    } else if (position == nightTextRow) {
+                        detailCell.setMultilineDetail(true);
+                        detailCell.setTextAndValue(getString(R.string.MeeroNightText), nightTextPreview(), false);
                     }
                     break;
                 case TYPE_TEXT:
@@ -350,6 +478,8 @@ public class MeeroAutoReplyActivity extends BaseNekoSettingsActivity {
                         textCell.setTextAndValue(getString(R.string.MeeroAutoReplyWindowStart), timeValue(NekoConfig.meeroAutoReplyWindowStart.Int()), true);
                     } else if (position == windowEndRow) {
                         textCell.setTextAndValue(getString(R.string.MeeroAutoReplyWindowEnd), timeValue(NekoConfig.meeroAutoReplyWindowEnd.Int()), true);
+                    } else if (position == windowDaysRow) {
+                        textCell.setTextAndValue(getString(R.string.MeeroAutoReplyWindowDays), daysValue(), true);
                     }
                     break;
                 case TYPE_INFO_PRIVACY:
@@ -368,14 +498,14 @@ public class MeeroAutoReplyActivity extends BaseNekoSettingsActivity {
 
         @Override
         public int getItemViewType(int position) {
-            if (position == autoReplyRow || position == windowRow || position == emojiRow) {
+            if (position == autoReplyRow || position == windowRow || position == emojiRow || position == nightTextOnRow) {
                 return TYPE_CHECK;
             } else if (position == contentHeaderRow || position == timingHeaderRow) {
                 return TYPE_HEADER;
-            } else if (position == textRow) {
+            } else if (position == textRow || position == nightTextRow) {
                 return TYPE_DETAIL_SETTINGS;
             } else if (position == rulesRow || position == exclusionsRow || position == poolRow || position == cooldownRow || position == delayRow
-                    || position == windowStartRow || position == windowEndRow) {
+                    || position == windowStartRow || position == windowEndRow || position == windowDaysRow) {
                 return TYPE_TEXT;
             }
             return TYPE_INFO_PRIVACY;
