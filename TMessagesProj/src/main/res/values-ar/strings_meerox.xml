@@ -1012,4 +1012,23 @@
     <string name="MeeroOnceConsentText">تنبيه وإبراء ذمة (قانونيًا ودينيًا): هاي الميزة (حارس مرة واحدة) تنحفظ منها الصور والفيديوهات اللي يرسلها غيرك بصيغة «عرض مرة واحدة»، وهاي الفعلة ممكن تخالف خصوصية المرسل وشروط الاستخدام وحتى قانون بلدك. بضغطك على «موافق» أنت تؤكد وتتعهد قدام الله وعباده: إنك المسؤول الوحيد مدنيًا وجنائيًا وشرعًا عن أي استخدام لهاي الميزة، وإن MeeroX ومطوريها ما يتحملون أي تبعة أو مطالبة أو مساءلة ناتجة عن استخدامك لها، وإنك رح تستخدمها بس للحاجة المشروعة. إذا ما موافق اضغط «رفض» وطلع. الموافقة تنحفظ مرة وحدة، وأي دخول بدونها يعيد الشاشة.</string>
     <string name="MeeroOnceConsentAccept">موافق</string>
     <string name="MeeroOnceConsentDecline">رفض</string>
+    <!-- v110: القفل التلقائي + سجل محاولات الفتح + قراءة جميع الدردشات -->
+    <string name="MeeroAutoRelock">القفل التلقائي عند الخروج من التطبيق</string>
+    <string name="MeeroRelockDelay">تأخير إعادة القفل</string>
+    <string name="MeeroRelockNow">فوري</string>
+    <string name="MeeroRelockAfterMin">بعد دقيقة</string>
+    <string name="MeeroRelockAfter5Min">بعد ٥ دقايق</string>
+    <string name="MeeroLockAudit">سجل محاولات الفتح</string>
+    <string name="MeeroLockAuditEmpty">لا توجد محاولات مسجلة بعد</string>
+    <string name="MeeroLockAuditClear">مسح السجل</string>
+    <string name="MeeroLockAuditClearConfirm">راح تنحذف كل المحاولات المسجلة، وما تكدر ترجعها بعد.</string>
+    <string name="MeeroLockAuditCleared">انمسح السجل</string>
+    <string name="MeeroLockAuditInfo">يسجّل محاولات الفتح الناجحة والرموز الخاطئة للمحادثات المقفلة والقبو المخفي وهاي الإعدادات. فتح البصمة يسجّل بس عند النجاح. كل شي يبقى بجهازك، الأحدث أول، آخر ٤٠ محاولة.</string>
+    <string name="MeeroAuditChat">محادثة مقفلة</string>
+    <string name="MeeroAuditVault">القبو المخفي</string>
+    <string name="MeeroAuditSettings">إعدادات القفل</string>
+    <string name="MeeroAuditSuccess">ناجحة</string>
+    <string name="MeeroAuditFailed">رمز خطأ</string>
+    <string name="MeeroReadAllChats">قراءة جميع الدردشات</string>
+    <string name="MeeroReadAllConfirm">راح تنعلّم كل الدردشات (وياها الأرشيف) كمقروءة، وعدادات غير المقروء تصفّر وما تكدر ترجعها بعد.</string>
 </resources>

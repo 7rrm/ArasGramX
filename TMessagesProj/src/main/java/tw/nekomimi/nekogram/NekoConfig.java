@@ -168,6 +168,11 @@ public class NekoConfig {
     public static ConfigItem meeroChatLockCodeHash = addConfig("meeroChatLockCodeHash", configTypeString, "");
     public static ConfigItem meeroChatLockCodeSalt = addConfig("meeroChatLockCodeSalt", configTypeString, "");
     public static ConfigItem meeroChatsMenuFog = addConfig("meeroChatsMenuFog", configTypeBool, true);
+    // --- MeeroX v110: auto-relock on app background (with grace choice) and
+    // the local unlock-attempt audit log (JSON, newest first, capped). ---
+    public static ConfigItem meeroChatLockAutoRelock = addConfig("meeroChatLockAutoRelock", configTypeBool, true);
+    public static ConfigItem meeroChatLockRelockGrace = addConfig("meeroChatLockRelockGrace", configTypeInt, 0);
+    public static ConfigItem meeroLockAuditLog = addConfig("meeroLockAuditLog", configTypeString, "");
 
     // From NekoConfig
     public static ConfigItem useIPv6 = addConfig("IPv6", configTypeBool, false);

@@ -1,12 +1,14 @@
 package tw.nekomimi.nekogram;
 
 import android.app.Activity;
+import android.app.Application;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
+import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Base64;
 import android.util.TypedValue;
@@ -27,6 +29,7 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentActivity;
 
 import org.json.JSONArray;
+import org.json.JSONObject;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.BuildVars;
 import org.telegram.messenger.ApplicationLoader;
@@ -82,6 +85,11 @@ import java.util.concurrent.Executor;
  * Master switch is OFF by default; while off, gateNeeded()/isHiddenDialogId()
  * are always false and behavior is exactly stock. Unlocked ids and the vault
  * session flag live in memory only.
+ *
+ * v110 additions (user-picked): auto-relock snaps every lock shut after the
+ * app leaves the foreground (grace: now / 1 min / 5 min), and a local audit
+ * log records unlock attempts (place + time + result, newest first, capped)
+ * for the "سجل محاولات الفتح" screen inside this gated section.
  */
 public final class MeeroChatLock {
 
@@ -89,6 +97,17 @@ public final class MeeroChatLock {
 
     public static final int METHOD_SYSTEM = 0;
     public static final int METHOD_CODE8 = 1;
+
+    // v110: auto-relock grace choices (meeroChatLockRelockGrace config).
+    public static final int GRACE_NOW = 0;
+    public static final int GRACE_MIN1 = 1;
+    public static final int GRACE_MIN5 = 2;
+
+    // v110: audit log place codes.
+    public static final int AUDIT_CHAT = 0;
+    public static final int AUDIT_VAULT = 1;
+    public static final int AUDIT_SETTINGS = 2;
+    private static final int AUDIT_LIMIT = 40;
 
     private static final String CHANNEL_ID = "meero_chat_lock";
     private static final String GATE_TAG = "meero_gate_cover";
@@ -100,6 +119,10 @@ public final class MeeroChatLock {
     private static volatile boolean vaultUnlocked;
     private static volatile boolean promptingVault;
     private static volatile boolean started;
+
+    // v110: app-background watcher state for the auto-relock feature.
+    private static int runningActivities;
+    private static Runnable pendingRelock;
 
     // ---------------- lock list ----------------
 
@@ -343,8 +366,12 @@ public final class MeeroChatLock {
                         new CodeCallback() {
                             @Override
                             public boolean onCode(String code) {
-                                if (!verifyCode(code)) return false;
+                                if (!verifyCode(code)) {
+                                    recordAudit(AUDIT_SETTINGS, false);
+                                    return false;
+                                }
                                 lockSettingsUnlocked = true;
+                                recordAudit(AUDIT_SETTINGS, true);
                                 return true;
                             }
 
@@ -371,6 +398,7 @@ public final class MeeroChatLock {
                 () -> {
                     promptingLockSettings = false;
                     lockSettingsUnlocked = true;
+                    recordAudit(AUDIT_SETTINGS, true);
                     View fv = fragment.fragmentView;
                     if (fv instanceof ViewGroup) {
                         removeGateCover((ViewGroup) fv);
@@ -404,6 +432,7 @@ public final class MeeroChatLock {
                     () -> {
                         promptingLockSettings = false;
                         lockSettingsUnlocked = true;
+                        recordAudit(AUDIT_SETTINGS, true);
                         View fv = fragment.fragmentView;
                         if (fv instanceof ViewGroup) {
                             removeGateCover((ViewGroup) fv);
@@ -425,6 +454,82 @@ public final class MeeroChatLock {
     public static void lockLockSettings() {
         lockSettingsUnlocked = false;
         promptingLockSettings = false;
+    }
+
+    // ---------------- v110: auto-relock on app background ----------------
+
+    /** How long after the last activity stops we wait before snapping every
+     *  Meero lock shut. "Instant" still waits a blink so the stop -> start
+     *  gap of a screen rotation does not count as leaving the app. */
+    private static long autoRelockDelay() {
+        int g = NekoConfig.meeroChatLockRelockGrace.Int();
+        if (g == GRACE_MIN1) return 60_000L;
+        if (g == GRACE_MIN5) return 300_000L;
+        return 800L;
+    }
+
+    private static void scheduleAutoRelock() {
+        if (!NekoConfig.meeroChatLock.Bool()) return;
+        if (!NekoConfig.meeroChatLockAutoRelock.Bool()) return;
+        cancelPendingRelock();
+        pendingRelock = () -> {
+            pendingRelock = null;
+            lockEverything();
+        };
+        AndroidUtilities.runOnUIThread(pendingRelock, autoRelockDelay());
+    }
+
+    private static void cancelPendingRelock() {
+        if (pendingRelock != null) {
+            AndroidUtilities.cancelRunOnUIThread(pendingRelock);
+            pendingRelock = null;
+        }
+    }
+
+    /** Locks chats + vault + lock settings at once. The gate covers re-attach
+     *  by themselves on each fragment's onResume, so no UI work is needed
+     *  here from the background. */
+    public static void lockEverything() {
+        unlocked.clear();
+        vaultUnlocked = false;
+        promptingVault = false;
+        lockSettingsUnlocked = false;
+        promptingLockSettings = false;
+        promptingDialogId = Long.MIN_VALUE;
+    }
+
+    // ---------------- v110: unlock-attempt audit log ----------------
+
+    /** Records one unlock attempt, newest first, capped at AUDIT_LIMIT.
+     *  Code attempts log success AND wrong codes; the system/biometric path
+     *  logs successes only - a cancelled prompt is not an intrusion attempt.
+     *  Stored locally on this device only, never shared. */
+    public static synchronized void recordAudit(int place, boolean success) {
+        if (!NekoConfig.meeroChatLock.Bool()) return;
+        try {
+            JSONArray old = readIds(NekoConfig.meeroLockAuditLog.String()); // generic safe JSON-array parse
+            JSONObject o = new JSONObject();
+            o.put("t", System.currentTimeMillis());
+            o.put("p", place);
+            o.put("ok", success);
+            JSONArray out = new JSONArray();
+            out.put(o);
+            for (int i = 0; i < old.length() && out.length() < AUDIT_LIMIT; i++) {
+                JSONObject e = old.optJSONObject(i);
+                if (e != null) out.put(e);
+            }
+            NekoConfig.meeroLockAuditLog.setConfigString(out.toString());
+        } catch (Throwable t) {
+            if (BuildVars.LOGS_ENABLED) FileLog.e(t);
+        }
+    }
+
+    public static JSONArray auditEntries() {
+        return readIds(NekoConfig.meeroLockAuditLog.String());
+    }
+
+    public static synchronized void clearAudit() {
+        NekoConfig.meeroLockAuditLog.setConfigString("");
     }
 
     // ---------------- gate state ----------------
@@ -654,8 +759,12 @@ public final class MeeroChatLock {
                         new CodeCallback() {
                             @Override
                             public boolean onCode(String code) {
-                                if (!verifyCode(code)) return false;
+                                if (!verifyCode(code)) {
+                                    recordAudit(AUDIT_CHAT, false);
+                                    return false;
+                                }
                                 markUnlocked(dialogId);
+                                recordAudit(AUDIT_CHAT, true);
                                 return true; // attachCodeLockCover removes the cover
                             }
 
@@ -693,8 +802,12 @@ public final class MeeroChatLock {
                         new CodeCallback() {
                             @Override
                             public boolean onCode(String code) {
-                                if (!verifyCode(code)) return false;
+                                if (!verifyCode(code)) {
+                                    recordAudit(AUDIT_VAULT, false);
+                                    return false;
+                                }
                                 markVaultUnlocked();
+                                recordAudit(AUDIT_VAULT, true);
                                 return true;
                             }
 
@@ -749,6 +862,7 @@ public final class MeeroChatLock {
                 () -> {
                     promptingDialogId = Long.MIN_VALUE;
                     markUnlocked(dialogId);
+                    recordAudit(AUDIT_CHAT, true);
                     View fv = chat.fragmentView;
                     if (fv instanceof ViewGroup) {
                         removeGateCover((ViewGroup) fv);
@@ -766,6 +880,7 @@ public final class MeeroChatLock {
                 () -> {
                     promptingVault = false;
                     markVaultUnlocked();
+                    recordAudit(AUDIT_VAULT, true);
                     View fv = fragment.fragmentView;
                     if (fv instanceof ViewGroup) {
                         removeGateCover((ViewGroup) fv);
@@ -889,6 +1004,32 @@ public final class MeeroChatLock {
                         onNewMessages(account1, args);
                     }
                 }, NotificationCenter.didReceiveNewMessages);
+            }
+            // v110: auto-relock watcher. Counts started activities; when the
+            // last one stops (app to background / screen off) the grace timer
+            // arms and every Meero lock snaps shut unless the user is back in
+            // time. Switch + delay choice live in the lock settings screen.
+            try {
+                ApplicationLoader.applicationContext.registerActivityLifecycleCallbacks(
+                        new Application.ActivityLifecycleCallbacks() {
+                    @Override public void onActivityCreated(Activity activity, Bundle bundle) {}
+                    @Override public void onActivityStarted(Activity activity) {
+                        runningActivities++;
+                        cancelPendingRelock();
+                    }
+                    @Override public void onActivityResumed(Activity activity) {}
+                    @Override public void onActivityPaused(Activity activity) {}
+                    @Override public void onActivityStopped(Activity activity) {
+                        runningActivities = Math.max(0, runningActivities - 1);
+                        if (runningActivities == 0) {
+                            scheduleAutoRelock();
+                        }
+                    }
+                    @Override public void onActivitySaveInstanceState(Activity activity, Bundle bundle) {}
+                    @Override public void onActivityDestroyed(Activity activity) {}
+                });
+            } catch (Throwable t) {
+                if (BuildVars.LOGS_ENABLED) FileLog.e(t);
             }
         }
     }

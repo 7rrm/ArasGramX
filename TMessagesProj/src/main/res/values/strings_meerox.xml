@@ -323,4 +323,23 @@
     <string name="MeeroOnceConsentText">Notice and release of liability (legal and religious): this feature (view-once guard) can save photos and videos others send as view-once, which may violate the sender\'s privacy, the terms of use, or even the law in your country. By pressing "I agree" you affirm before God and His people that you alone are civilly, criminally and religiously responsible for any use of this feature, that MeeroX and its developers carry no liability or claim whatsoever for your usage, and that you will only use it for a legitimate need. Not okay with that? Press "Decline" and leave. Agreement is saved once; every declined visit asks again.</string>
     <string name="MeeroOnceConsentAccept">I agree</string>
     <string name="MeeroOnceConsentDecline">Decline</string>
+    <!-- v110: user-picked features 2/4/6 - auto relock, unlock audit log, read all -->
+    <string name="MeeroAutoRelock">Auto relock when leaving the app</string>
+    <string name="MeeroRelockDelay">Relock delay</string>
+    <string name="MeeroRelockNow">Instantly</string>
+    <string name="MeeroRelockAfterMin">After 1 minute</string>
+    <string name="MeeroRelockAfter5Min">After 5 minutes</string>
+    <string name="MeeroLockAudit">Unlock attempt log</string>
+    <string name="MeeroLockAuditEmpty">No attempts recorded yet</string>
+    <string name="MeeroLockAuditClear">Clear the log</string>
+    <string name="MeeroLockAuditClearConfirm">Every recorded unlock attempt will be deleted. This cannot be undone.</string>
+    <string name="MeeroLockAuditCleared">Log cleared</string>
+    <string name="MeeroLockAuditInfo">Successful unlocks and wrong-code attempts are recorded for locked chats, the hidden vault and this section. Biometric unlocks are logged on success only. Everything stays on this device, newest first, last 40 entries.</string>
+    <string name="MeeroAuditChat">Locked chat</string>
+    <string name="MeeroAuditVault">Hidden vault</string>
+    <string name="MeeroAuditSettings">Lock settings</string>
+    <string name="MeeroAuditSuccess">Succeeded</string>
+    <string name="MeeroAuditFailed">Wrong code</string>
+    <string name="MeeroReadAllChats">Read all chats</string>
+    <string name="MeeroReadAllConfirm">Every chat (including the archive) will be marked as read. Unread counters will be zeroed and cannot be restored.</string>
 </resources>

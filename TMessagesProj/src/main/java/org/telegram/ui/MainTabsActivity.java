@@ -56,6 +56,7 @@ import org.telegram.messenger.UserObject;
 import org.telegram.messenger.Utilities;
 import org.telegram.tgnet.TLRPC;
 import org.telegram.ui.ActionBar.ActionBarMenuSubItem;
+import org.telegram.ui.ActionBar.AlertDialog;
 import org.telegram.ui.ActionBar.BaseFragment;
 import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.ActionBar.ThemeDescription;
@@ -1411,6 +1412,21 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
         if (NaConfig.INSTANCE.getShowAddToBookmark().Bool()) {
             o.add(R.drawable.msg_fave, getString(R.string.BookmarksManager), () -> presentFragment(new BookmarkManagerActivity()));
         }
+        // MeeroX v110 (user-picked feature 6): "read all chats" one-tap entry.
+        // Marks every dialog (main list AND archive) as read through the stock
+        // MessagesStorage.readAllDialogs path - behind a confirmation, because
+        // zeroed unread badges cannot be restored.
+        o.addGap();
+        o.add(R.drawable.ios_chat_readall, getString(R.string.MeeroReadAllChats), () -> {
+            o.dismiss();
+            new AlertDialog.Builder(getParentActivity())
+                    .setTitle(getString(R.string.MeeroReadAllChats))
+                    .setMessage(getString(R.string.MeeroReadAllConfirm))
+                    .setPositiveButton(getString(R.string.OK), (dialog, which) ->
+                            getMessagesStorage().readAllDialogs(-1))
+                    .setNegativeButton(getString(R.string.Cancel), null)
+                    .show();
+        });
         // MeeroX v107: hidden-chats vault entry - appears only while chat lock
         // is on AND at least one chat is locked (stock popup otherwise).
         if (tw.nekomimi.nekogram.MeeroChatLock.hasHiddenDialogs()) {

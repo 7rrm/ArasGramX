@@ -48,6 +48,9 @@ public class MeeroChatLockActivity extends BaseNekoSettingsActivity {
     private int masterRow;
     private int methodRow;
     private int changeCodeRow;
+    private int autoRelockRow;
+    private int relockGraceRow;
+    private int auditRow;
     private int headerRow;
     private int addRow;
     private int listStartRow;
@@ -65,6 +68,10 @@ public class MeeroChatLockActivity extends BaseNekoSettingsActivity {
         methodRow = addRow();
         // v107: "change code" only makes sense while the code method is on.
         changeCodeRow = MeeroChatLock.getMethod() == MeeroChatLock.METHOD_CODE8 ? addRow() : -1;
+        // v110: auto-relock switch; its delay row only exists while it is on.
+        autoRelockRow = addRow();
+        relockGraceRow = NekoConfig.meeroChatLockAutoRelock.Bool() ? addRow() : -1;
+        auditRow = addRow();
         headerRow = addRow();
         addRow = addRow();
         listStartRow = rowCount;
@@ -139,6 +146,14 @@ public class MeeroChatLockActivity extends BaseNekoSettingsActivity {
             chooseMethod();
         } else if (position == changeCodeRow) {
             verifyThenChangeCode();
+        } else if (position == autoRelockRow) {
+            NekoConfig.meeroChatLockAutoRelock.toggleConfigBool();
+            ((TextCheckCell) view).setChecked(NekoConfig.meeroChatLockAutoRelock.Bool());
+            refreshRows(); // shows/hides the delay row
+        } else if (position == relockGraceRow) {
+            pickRelockGrace();
+        } else if (position == auditRow) {
+            presentFragment(new MeeroLockAuditActivity());
         } else if (position == addRow) {
             pickChat();
         } else if (position >= listStartRow && position < listEndRow) {
@@ -173,6 +188,26 @@ public class MeeroChatLockActivity extends BaseNekoSettingsActivity {
                             startSetCodeFlow();
                         }
                     }
+                })
+                .setNegativeButton(getString(R.string.Cancel), null)
+                .show();
+    }
+
+    /** v110: how long after leaving the app every Meero lock snaps shut again
+     *  (instant / 1 minute / 5 minutes - matches GRACE_NOW/MIN1/MIN5). */
+    private void pickRelockGrace() {
+        Context context = getParentActivity();
+        if (context == null) return;
+        CharSequence[] items = {
+                getString(R.string.MeeroRelockNow),
+                getString(R.string.MeeroRelockAfterMin),
+                getString(R.string.MeeroRelockAfter5Min)
+        };
+        new AlertDialog.Builder(context)
+                .setTitle(getString(R.string.MeeroRelockDelay))
+                .setItems(items, (dialog, which) -> {
+                    NekoConfig.meeroChatLockRelockGrace.setConfigInt(which);
+                    refreshRows();
                 })
                 .setNegativeButton(getString(R.string.Cancel), null)
                 .show();
@@ -311,6 +346,8 @@ public class MeeroChatLockActivity extends BaseNekoSettingsActivity {
                     TextCheckCell checkCell = (TextCheckCell) holder.itemView;
                     if (position == masterRow) {
                         checkCell.setTextAndCheck(getString(R.string.MeeroChatLockMaster), NekoConfig.meeroChatLock.Bool(), true);
+                    } else if (position == autoRelockRow) {
+                        checkCell.setTextAndCheck(getString(R.string.MeeroAutoRelock), NekoConfig.meeroChatLockAutoRelock.Bool(), true);
                     }
                     break;
                 case TYPE_HEADER:
@@ -328,6 +365,15 @@ public class MeeroChatLockActivity extends BaseNekoSettingsActivity {
                                         ? R.string.MeeroChatLockMethodCode : R.string.MeeroChatLockMethodSystem), true);
                     } else if (position == changeCodeRow) {
                         textCell.setTextAndValue(getString(R.string.MeeroChatLockChangeCode), "", true);
+                    } else if (position == relockGraceRow) {
+                        int g = NekoConfig.meeroChatLockRelockGrace.Int();
+                        textCell.setTextAndValue(getString(R.string.MeeroRelockDelay),
+                                getString(g == MeeroChatLock.GRACE_MIN1 ? R.string.MeeroRelockAfterMin
+                                        : g == MeeroChatLock.GRACE_MIN5 ? R.string.MeeroRelockAfter5Min
+                                        : R.string.MeeroRelockNow), true);
+                    } else if (position == auditRow) {
+                        textCell.setTextAndValue(getString(R.string.MeeroLockAudit),
+                                String.valueOf(MeeroChatLock.auditEntries().length()), true);
                     } else if (position == addRow) {
                         textCell.setTextAndValue(getString(R.string.MeeroChatLockAdd), "", true);
                     } else if (position == emptyRow) {
@@ -353,11 +399,12 @@ public class MeeroChatLockActivity extends BaseNekoSettingsActivity {
 
         @Override
         public int getItemViewType(int position) {
-            if (position == masterRow) {
+            if (position == masterRow || position == autoRelockRow) {
                 return TYPE_CHECK;
             } else if (position == headerRow) {
                 return TYPE_HEADER;
-            } else if (position == methodRow || position == changeCodeRow || position == addRow || position == emptyRow) {
+            } else if (position == methodRow || position == changeCodeRow || position == relockGraceRow
+                    || position == auditRow || position == addRow || position == emptyRow) {
                 return TYPE_TEXT;
             } else if (position >= listStartRow && position < listEndRow) {
                 return TYPE_DETAIL_SETTINGS;
