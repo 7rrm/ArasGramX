@@ -307,6 +307,25 @@ public class DialogsSearchAdapter extends RecyclerListView.SelectionAdapter {
         return false;
     }
 
+    /** MeeroX v108: locked chats must obey hiding in the global and server
+     *  result lists too (v107 covered local results, messages and recents;
+     *  the user reported the account still showing up while searching - these
+     *  two lists were the leak, and shared getters stay stock for the admin
+     *  screens that legitimately need every dialog). Returns the same list
+     *  when nothing must hide, otherwise a filtered copy. */
+    private ArrayList<TLObject> meeroVisible(ArrayList<TLObject> src) {
+        if (src == null || src.isEmpty() || !tw.nekomimi.nekogram.MeeroChatLock.hasHiddenDialogs()) {
+            return src;
+        }
+        ArrayList<TLObject> out = new ArrayList<>(src.size());
+        for (TLObject o : src) {
+            if (!tw.nekomimi.nekogram.MeeroChatLock.isHiddenObject(o)) {
+                out.add(o);
+            }
+        }
+        return out;
+    }
+
     public DialogsSearchAdapter(Context context, DialogsActivity dialogsActivity, int messagesSearch, int type, DefaultItemAnimator itemAnimator, boolean allowGlobalSearch, Theme.ResourcesProvider resourcesProvider) {
         this.itemAnimator = itemAnimator;
         this.dialogsActivity = dialogsActivity;
@@ -1391,9 +1410,9 @@ public class DialogsSearchAdapter extends RecyclerListView.SelectionAdapter {
 
         int resultsCount = searchResult.size();
         count += resultsCount;
-        int localServerCount = searchAdapterHelper.getLocalServerSearch().size();
+        int localServerCount = meeroVisible(searchAdapterHelper.getLocalServerSearch()).size();
         count += localServerCount;
-        int globalSearchCount = searchAdapterHelper.getGlobalSearch().size();
+        int globalSearchCount = meeroVisible(searchAdapterHelper.getGlobalSearch()).size();
         if (globalSearchCount > 3 && globalSearchCollapsed) {
             globalSearchCount = 3;
         }
@@ -1481,8 +1500,8 @@ public class DialogsSearchAdapter extends RecyclerListView.SelectionAdapter {
             }
             i -= 1 + searchContacts.size();
         }
-        ArrayList<TLObject> globalSearch = searchAdapterHelper.getGlobalSearch();
-        ArrayList<TLObject> localServerSearch = searchAdapterHelper.getLocalServerSearch();
+        ArrayList<TLObject> globalSearch = meeroVisible(searchAdapterHelper.getGlobalSearch());
+        ArrayList<TLObject> localServerSearch = meeroVisible(searchAdapterHelper.getLocalServerSearch());
         ArrayList<Object> phoneSearch = searchAdapterHelper.getPhoneSearch();
         int localCount = searchResult.size();
         int localServerCount = localServerSearch.size();
@@ -1557,8 +1576,8 @@ public class DialogsSearchAdapter extends RecyclerListView.SelectionAdapter {
                 i -= getRecentItemsCount();
             }
         }
-        ArrayList<TLObject> globalSearch = searchAdapterHelper.getGlobalSearch();
-        ArrayList<TLObject> localServerSearch = searchAdapterHelper.getLocalServerSearch();
+        ArrayList<TLObject> globalSearch = meeroVisible(searchAdapterHelper.getGlobalSearch());
+        ArrayList<TLObject> localServerSearch = meeroVisible(searchAdapterHelper.getLocalServerSearch());
         int localCount = searchResult.size();
         int localServerCount = localServerSearch.size();
         int phoneCount = searchAdapterHelper.getPhoneSearch().size();
@@ -1800,10 +1819,10 @@ public class DialogsSearchAdapter extends RecyclerListView.SelectionAdapter {
                 if (!searchTopics.isEmpty()) {
                     position -= 1 + searchTopics.size();
                 }
-                ArrayList<TLObject> globalSearch = searchAdapterHelper.getGlobalSearch();
+                ArrayList<TLObject> globalSearch = meeroVisible(searchAdapterHelper.getGlobalSearch());
                 ArrayList<Object> phoneSearch = searchAdapterHelper.getPhoneSearch();
                 int localCount = searchResult.size();
-                int localServerCount = searchAdapterHelper.getLocalServerSearch().size();
+                int localServerCount = meeroVisible(searchAdapterHelper.getLocalServerSearch()).size();
                 if (localCount + localServerCount > 0 && (getRecentItemsCount() > 0 || !searchTopics.isEmpty() || !publicPosts.isEmpty())) {
                     position--;
                 }
@@ -1970,7 +1989,7 @@ public class DialogsSearchAdapter extends RecyclerListView.SelectionAdapter {
                         }
                         position -= 1 + publicPosts.size();
                     }
-                    ArrayList<TLObject> globalSearch = searchAdapterHelper.getGlobalSearch();
+                    ArrayList<TLObject> globalSearch = meeroVisible(searchAdapterHelper.getGlobalSearch());
                     if (isRecentSearchDisplayed() || !searchTopics.isEmpty() || !searchContacts.isEmpty() || !publicPosts.isEmpty()) {
                         int offset = hasHints() ? 1 : 0;
                         if (position < offset) {
@@ -1999,7 +2018,7 @@ public class DialogsSearchAdapter extends RecyclerListView.SelectionAdapter {
                         }
                     }
                     int localCount = searchResult.size();
-                    int localServerCount = searchAdapterHelper.getLocalServerSearch().size();
+                    int localServerCount = meeroVisible(searchAdapterHelper.getLocalServerSearch()).size();
                     int phoneCount = searchAdapterHelper.getPhoneSearch().size();
                     if (phoneCount > 3 && phoneCollapsed) {
                         phoneCount = 3;
@@ -2046,7 +2065,7 @@ public class DialogsSearchAdapter extends RecyclerListView.SelectionAdapter {
                             position -= phoneCount;
                             if (position >= 0 && position < globalCount) {
                                 title = LocaleController.getString(R.string.GlobalSearch);
-                                if (searchAdapterHelper.getGlobalSearch().size() > 3) {
+                                if (meeroVisible(searchAdapterHelper.getGlobalSearch()).size() > 3) {
                                     showMore = globalSearchCollapsed;
                                     onClick = () -> {
                                         final long now = SystemClock.elapsedRealtime();
@@ -2262,9 +2281,9 @@ public class DialogsSearchAdapter extends RecyclerListView.SelectionAdapter {
             }
             i -= 1 + searchContacts.size();
         }
-        ArrayList<TLObject> globalSearch = searchAdapterHelper.getGlobalSearch();
+        ArrayList<TLObject> globalSearch = meeroVisible(searchAdapterHelper.getGlobalSearch());
         int localCount = searchResult.size();
-        int localServerCount = searchAdapterHelper.getLocalServerSearch().size();
+        int localServerCount = meeroVisible(searchAdapterHelper.getLocalServerSearch()).size();
         if (localCount + localServerCount > 0 && (getRecentItemsCount() > 0 || !searchTopics.isEmpty() || !publicPosts.isEmpty())) {
             if (i == 0) {
                 return VIEW_TYPE_GRAY_SECTION;
@@ -2512,7 +2531,7 @@ public class DialogsSearchAdapter extends RecyclerListView.SelectionAdapter {
 
         int resultsCount = searchResult.size();
         count += resultsCount;
-        int localServerCount = searchAdapterHelper.getLocalServerSearch().size();
+        int localServerCount = meeroVisible(searchAdapterHelper.getLocalServerSearch()).size();
         count += localServerCount;
         if (resultsCount + localServerCount > 0 && (getRecentItemsCount() > 0 || !searchTopics.isEmpty() || !publicPosts.isEmpty())) {
             count++;
@@ -2531,7 +2550,7 @@ public class DialogsSearchAdapter extends RecyclerListView.SelectionAdapter {
         sponsoredPeers.remove(index);
         notifyItemRemoved(globalSearchPosition + 1 + index);
 
-        int globalSearchSize = searchAdapterHelper.getGlobalSearch().size();
+        int globalSearchSize = meeroVisible(searchAdapterHelper.getGlobalSearch()).size();
         int visibleAfter = sponsoredPeers.size() + (globalSearchCollapsed ? Math.min(3, globalSearchSize) : globalSearchSize);
         if (visibleAfter <= 0) {
             notifyItemRemoved(globalSearchPosition);
@@ -2548,7 +2567,7 @@ public class DialogsSearchAdapter extends RecyclerListView.SelectionAdapter {
         sponsoredPeers.clear();
         notifyItemRangeRemoved(globalSearchPosition + 1, sponsoredCount);
 
-        int globalSearchSize = searchAdapterHelper.getGlobalSearch().size();
+        int globalSearchSize = meeroVisible(searchAdapterHelper.getGlobalSearch()).size();
         int visibleAfter = globalSearchCollapsed ? Math.min(3, globalSearchSize) : globalSearchSize;
         if (visibleAfter <= 0) {
             notifyItemRemoved(globalSearchPosition);

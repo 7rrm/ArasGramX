@@ -157,20 +157,20 @@ public class MeeroChatLockActivity extends BaseNekoSettingsActivity {
                 .show();
     }
 
-    /** Enter 8 digits -> confirm the same 8 digits -> save + switch method. */
+    /** Enter 8 digits -> confirm the same 8 digits -> save + switch method.
+     *  v108: runs on the new full-screen code lock (boxes + keypad) attached
+     *  right over this settings screen, not a dialog. */
     private void startSetCodeFlow() {
-        android.app.Activity act = getParentActivity();
-        if (act == null) return;
-        MeeroChatLock.promptCodeDialog(act,
+        MeeroChatLock.showCodeLockOver(this,
                 getString(R.string.MeeroChatLockSetCode),
                 getString(R.string.MeeroChatLockSetCodeHint),
                 getString(R.string.MeeroChatLockCodeMismatch),
                 new MeeroChatLock.CodeCallback() {
                     @Override
                     public boolean onCode(final String first) {
-                        // dialog dismisses itself on true - chain the confirm
-                        // prompt right behind it.
-                        org.telegram.messenger.AndroidUtilities.runOnUIThread(() -> promptConfirmCode(first), 120);
+                        // cover removes itself on true - chain the confirm
+                        // screen right behind it.
+                        org.telegram.messenger.AndroidUtilities.runOnUIThread(() -> promptConfirmCode(first), 220);
                         return true;
                     }
 
@@ -180,9 +180,7 @@ public class MeeroChatLockActivity extends BaseNekoSettingsActivity {
     }
 
     private void promptConfirmCode(final String first) {
-        android.app.Activity act = getParentActivity();
-        if (act == null) return;
-        MeeroChatLock.promptCodeDialog(act,
+        MeeroChatLock.showCodeLockOver(this,
                 getString(R.string.MeeroChatLockConfirmCode),
                 getString(R.string.MeeroChatLockSetCodeHint),
                 getString(R.string.MeeroChatLockCodeMismatch),
@@ -190,7 +188,7 @@ public class MeeroChatLockActivity extends BaseNekoSettingsActivity {
                     @Override
                     public boolean onCode(String second) {
                         if (!first.equals(second)) {
-                            return false; // stays open with the mismatch error
+                            return false; // red flash + shake, stays open
                         }
                         MeeroChatLock.setCode(second);
                         MeeroChatLock.setMethod(MeeroChatLock.METHOD_CODE8);
@@ -208,9 +206,7 @@ public class MeeroChatLockActivity extends BaseNekoSettingsActivity {
 
     /** Change code = prove the current one first, then the set flow again. */
     private void verifyThenChangeCode() {
-        android.app.Activity act = getParentActivity();
-        if (act == null) return;
-        MeeroChatLock.promptCodeDialog(act,
+        MeeroChatLock.showCodeLockOver(this,
                 getString(R.string.MeeroChatLockChangeCode),
                 getString(R.string.MeeroChatLockEnterCodeHint),
                 getString(R.string.MeeroChatLockCodeWrong),
@@ -218,9 +214,9 @@ public class MeeroChatLockActivity extends BaseNekoSettingsActivity {
                     @Override
                     public boolean onCode(String code) {
                         if (!MeeroChatLock.verifyCode(code)) {
-                            return false; // stays open with the wrong-code error
+                            return false; // red flash + shake, stays open
                         }
-                        org.telegram.messenger.AndroidUtilities.runOnUIThread(() -> startSetCodeFlow(), 120);
+                        org.telegram.messenger.AndroidUtilities.runOnUIThread(() -> startSetCodeFlow(), 220);
                         return true;
                     }
 

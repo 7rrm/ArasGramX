@@ -7,12 +7,7 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
-import android.text.Editable;
-import android.text.InputFilter;
-import android.text.InputType;
 import android.text.TextUtils;
-import android.text.TextWatcher;
-import android.text.method.PasswordTransformationMethod;
 import android.util.Base64;
 import android.util.TypedValue;
 import android.view.Gravity;
@@ -33,8 +28,8 @@ import androidx.fragment.app.FragmentActivity;
 
 import org.json.JSONArray;
 import org.telegram.messenger.AndroidUtilities;
-import org.telegram.messenger.ApplicationLoader;
 import org.telegram.messenger.BuildVars;
+import org.telegram.messenger.ApplicationLoader;
 import org.telegram.messenger.FileLog;
 import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.MessageObject;
@@ -43,11 +38,8 @@ import org.telegram.messenger.NotificationsController;
 import org.telegram.messenger.R;
 import org.telegram.messenger.UserConfig;
 import org.telegram.tgnet.TLRPC;
-import org.telegram.ui.ActionBar.AlertDialog;
 import org.telegram.ui.ActionBar.BaseFragment;
 import org.telegram.ui.ActionBar.Theme;
-import org.telegram.ui.Components.EditTextBoldCursor;
-import org.telegram.ui.Components.LayoutHelper;
 import org.telegram.ui.LaunchActivity;
 
 import java.nio.charset.StandardCharsets;
@@ -252,6 +244,21 @@ public final class MeeroChatLock {
         return NekoConfig.meeroChatLock.Bool() && isListed(dialogId);
     }
 
+    /** v108: same check for User/Chat TLObjects coming from the global and
+     *  server search lists (the last search surface the user reported). */
+    public static boolean isHiddenObject(Object o) {
+        try {
+            if (!NekoConfig.meeroChatLock.Bool()) return false;
+            if (o instanceof TLRPC.User) {
+                return isListed(((TLRPC.User) o).id);
+            }
+            if (o instanceof TLRPC.Chat) {
+                return isListed(-((TLRPC.Chat) o).id);
+            }
+        } catch (Throwable ignore) {}
+        return false;
+    }
+
     private static HashSet<Long> lockedIdSet() {
         HashSet<Long> set = new HashSet<>();
         JSONArray array = readIds(NekoConfig.meeroChatLockList.String());
@@ -454,87 +461,194 @@ public final class MeeroChatLock {
         }
     }
 
-    /** Callback for {@link #promptCodeDialog}. onCode returns true when the
-     *  entered code is accepted (dialog closes) or false to show the
-     *  wrong-code error and keep the dialog open. */
+    /** Callback for the code covers. onCode returns true when the entered
+     *  code is accepted (cover is removed) or false to flash the wrong-code
+     *  error and keep the cover in place. */
     public interface CodeCallback {
         boolean onCode(String code);
         void onCancelled();
     }
 
-    /** 8-digit numeric code dialog with LIVE validation: the moment the 8th
-     *  digit lands the code is checked; a rejection clears the field and shows
-     *  an inline error while the dialog - and the gate behind it - stay put.
-     *  Only Cancel/back dismiss without success. (The fork's AlertDialog
-     *  buttons always dismiss, so the positive-button route can't veto a
-     *  wrong code - typing IS the submit.) */
-    public static void promptCodeDialog(final Activity act, CharSequence titleText, CharSequence messageText,
-                                        final CharSequence wrongText, final CodeCallback cb) {
+    // ---------------- v108: interactive code-lock covers ----------------
+
+    /** Full-screen opaque cover that hosts a {@link MeeroCodeLockView} (the
+     *  Turboteil-style screen the user asked for: lock badge, title, detail
+     *  text, eight boxes, own keypad - the system keyboard never appears, so
+     *  nothing behind can peek out). Correct code -> cover removed; wrong ->
+     *  red flash + shake, cover stays; back arrow -> onCancel; fingerprint
+     *  key (shown only when onBiometric != null) -> system prompt path. */
+    public static void attachCodeLockCover(final ViewGroup content, CharSequence title, CharSequence hint,
+                                           CharSequence wrongText,
+                                           final Runnable onCancel, final Runnable onBiometric,
+                                           final CodeCallback cb) {
         try {
-            if (act == null || act.isFinishing()) {
+            if (content == null || content.findViewWithTag(GATE_TAG) != null) return;
+            Context ctx = content.getContext();
+            final FrameLayout cover = new FrameLayout(ctx);
+            cover.setTag(GATE_TAG);
+            cover.setBackgroundColor(Theme.getColor(Theme.key_windowBackgroundWhite));
+            cover.setClickable(true); // swallows every touch to the content below
+            final MeeroCodeLockView lockView = new MeeroCodeLockView(ctx);
+            lockView.setup(title, hint, wrongText,
+                    onCancel, onBiometric, code -> {
+                        boolean ok = cb == null || cb.onCode(code);
+                        if (ok) {
+                            removeGateCover(content);
+                        } else {
+                            lockView.signalWrongCode();
+                        }
+                        return ok;
+                    });
+            cover.addView(lockView, new FrameLayout.LayoutParams(
+                    FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
+            content.addView(cover, new FrameLayout.LayoutParams(
+                    FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
+        } catch (Throwable t) {
+            if (BuildVars.LOGS_ENABLED) FileLog.e(t);
+        }
+    }
+
+    /** Attaches the right gate cover for a locked chat - the interactive code
+     *  lock for the 8-digit method, the simple opaque cover (prompt fired
+     *  from onResume) for the system method. No-op when already attached. */
+    public static void attachChatGate(final org.telegram.ui.ChatActivity chat) {
+        try {
+            final long dialogId = chat.getDialogId();
+            View fv = chat.fragmentView;
+            if (!gateNeeded(dialogId) || !(fv instanceof ViewGroup)) return;
+            final ViewGroup content = (ViewGroup) fv;
+            if (getMethod() == METHOD_CODE8 && hasCode()) {
+                attachCodeLockCover(content, gateTitle(),
+                        LocaleController.getString(R.string.MeeroChatLockEnterCodeHint),
+                        LocaleController.getString(R.string.MeeroChatLockCodeWrong),
+                        () -> {
+                            try {
+                                chat.finishFragment();
+                            } catch (Throwable ignore) {}
+                        },
+                        canAskSystem(chat.getParentActivity())
+                                ? () -> promptSystemForChat(chat, dialogId) : null,
+                        new CodeCallback() {
+                            @Override
+                            public boolean onCode(String code) {
+                                if (!verifyCode(code)) return false;
+                                markUnlocked(dialogId);
+                                return true; // attachCodeLockCover removes the cover
+                            }
+
+                            @Override
+                            public void onCancelled() {}
+                        });
+            } else {
+                attachGateCover(content, gateTitle(), gateHint(), () -> maybePromptGate(chat));
+            }
+        } catch (Throwable t) {
+            if (BuildVars.LOGS_ENABLED) FileLog.e(t);
+        }
+    }
+
+    /** The vault gate: same two faces as the chat gate, but success opens the
+     *  vault for the session and cancel closes the vault screen. */
+    public static void attachVaultGate(final BaseFragment fragment) {
+        try {
+            if (!hasHiddenDialogs() || vaultUnlocked) return;
+            View fv = fragment.fragmentView;
+            if (!(fv instanceof ViewGroup)) return;
+            final ViewGroup content = (ViewGroup) fv;
+            if (getMethod() == METHOD_CODE8 && hasCode()) {
+                attachCodeLockCover(content,
+                        LocaleController.getString(R.string.MeeroVaultTitle),
+                        LocaleController.getString(R.string.MeeroVaultGateHint),
+                        LocaleController.getString(R.string.MeeroChatLockCodeWrong),
+                        () -> {
+                            try {
+                                fragment.finishFragment();
+                            } catch (Throwable ignore) {}
+                        },
+                        canAskSystem(fragment.getParentActivity())
+                                ? () -> promptSystemForVault(fragment) : null,
+                        new CodeCallback() {
+                            @Override
+                            public boolean onCode(String code) {
+                                if (!verifyCode(code)) return false;
+                                markVaultUnlocked();
+                                return true;
+                            }
+
+                            @Override
+                            public void onCancelled() {}
+                        });
+            } else {
+                attachGateCover(content,
+                        LocaleController.getString(R.string.MeeroVaultTitle),
+                        LocaleController.getString(R.string.MeeroVaultGateHint),
+                        () -> maybePromptVault(fragment));
+            }
+        } catch (Throwable t) {
+            if (BuildVars.LOGS_ENABLED) FileLog.e(t);
+        }
+    }
+
+    /** Settings flows (set / confirm / change code): the same code lock is
+     *  attached over the settings screen itself - no dialog window, one
+     *  consistent look. Non-interactive (no fingerprint key); the back arrow
+     *  cancels the flow. */
+    public static void showCodeLockOver(final BaseFragment fragment, CharSequence title, CharSequence hint,
+                                        CharSequence wrongText, final CodeCallback cb) {
+        try {
+            View fv = fragment.fragmentView;
+            if (!(fv instanceof ViewGroup)) {
                 if (cb != null) cb.onCancelled();
                 return;
             }
-            Context ctx = act;
-            FrameLayout container = new FrameLayout(ctx);
-            final EditTextBoldCursor edit = new EditTextBoldCursor(ctx);
-            edit.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_VARIATION_PASSWORD);
-            edit.setFilters(new InputFilter[]{new InputFilter.LengthFilter(8)});
-            edit.setTransformationMethod(PasswordTransformationMethod.getInstance());
-            edit.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 20);
-            edit.setGravity(Gravity.CENTER);
-            edit.setTextColor(Theme.getColor(Theme.key_dialogTextBlack));
-            edit.setHintTextColor(Theme.getColor(Theme.key_dialogTextHint));
-            edit.setHint("••••••••");
-            container.addView(edit, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, 48, Gravity.CENTER, 20, 4, 20, 4));
-            final boolean[] done = {false};
-            final AlertDialog dlg = new AlertDialog.Builder(ctx)
-                    .setTitle(titleText)
-                    .setMessage(messageText)
-                    .setView(container)
-                    .setNegativeButton(LocaleController.getString(R.string.Cancel), (d, w) -> {
-                        AndroidUtilities.hideKeyboard(edit);
-                        if (!done[0] && cb != null) {
-                            done[0] = true;
-                            cb.onCancelled();
-                        }
-                    })
-                    .create();
-            dlg.setOnCancelListener(d -> {
-                AndroidUtilities.hideKeyboard(edit);
-                if (!done[0] && cb != null) {
-                    done[0] = true;
-                    cb.onCancelled();
-                }
-            });
-            edit.addTextChangedListener(new TextWatcher() {
-                @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-                @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
-                @Override public void afterTextChanged(Editable s) {
-                    try {
-                        if (done[0] || s == null || s.length() != 8) return;
-                        boolean accepted = cb == null || cb.onCode(s.toString());
-                        if (accepted) {
-                            done[0] = true;
-                            AndroidUtilities.hideKeyboard(edit);
-                            dlg.dismiss();
-                        } else {
-                            // dialog stays open; field resets for the next try
-                            edit.setText("");
-                            edit.setError(wrongText);
-                        }
-                    } catch (Throwable t) {
-                        if (BuildVars.LOGS_ENABLED) FileLog.e(t);
-                    }
-                }
-            });
-            dlg.show();
-            edit.requestFocus();
-            AndroidUtilities.runOnUIThread(() -> AndroidUtilities.showKeyboard(edit), 120);
+            final ViewGroup content = (ViewGroup) fv;
+            attachCodeLockCover(content, title, hint, wrongText,
+                    () -> {
+                        removeGateCover(content);
+                        if (cb != null) cb.onCancelled();
+                    },
+                    null, cb);
         } catch (Throwable t) {
             if (BuildVars.LOGS_ENABLED) FileLog.e(t);
             if (cb != null) cb.onCancelled();
         }
+    }
+
+    /** Fires the system biometric/device-lock prompt for a locked chat.
+     *  Shared by the system-method gate and the fingerprint key on the
+     *  code screen. */
+    private static void promptSystemForChat(final org.telegram.ui.ChatActivity chat, final long dialogId) {
+        if (promptingDialogId == dialogId) return;
+        promptingDialogId = dialogId;
+        authenticateSystem(chat.getParentActivity(),
+                LocaleController.getString(R.string.MeeroChatLockGateTitle),
+                LocaleController.getString(R.string.MeeroChatLockGateSubtitle),
+                () -> {
+                    promptingDialogId = Long.MIN_VALUE;
+                    markUnlocked(dialogId);
+                    View fv = chat.fragmentView;
+                    if (fv instanceof ViewGroup) {
+                        removeGateCover((ViewGroup) fv);
+                    }
+                },
+                () -> promptingDialogId = Long.MIN_VALUE); // user cancelled: code screen stays
+    }
+
+    private static void promptSystemForVault(final BaseFragment fragment) {
+        if (promptingVault) return;
+        promptingVault = true;
+        authenticateSystem(fragment.getParentActivity(),
+                LocaleController.getString(R.string.MeeroVaultTitle),
+                LocaleController.getString(R.string.MeeroVaultGateHint),
+                () -> {
+                    promptingVault = false;
+                    markVaultUnlocked();
+                    View fv = fragment.fragmentView;
+                    if (fv instanceof ViewGroup) {
+                        removeGateCover((ViewGroup) fv);
+                    }
+                },
+                () -> promptingVault = false); // user cancelled: code screen stays
     }
 
     /** Called from ChatActivity.onResume; no-op unless the chat is locked
@@ -543,49 +657,16 @@ public final class MeeroChatLock {
         try {
             final long dialogId = chat.getDialogId();
             if (!gateNeeded(dialogId)) return;
-            // v107 defense (user-reported): the cover must be the top-most
-            // layer no matter when onResume fires. This is a no-op when it is
-            // already attached, but re-pins it if anything removed/reordered
-            // it, so chat content can never show through behind the prompt.
-            View fv0 = chat.fragmentView;
-            if (fv0 instanceof ViewGroup) {
-                attachGateCover((ViewGroup) fv0, gateTitle(), gateHint(), () -> maybePromptGate(chat));
+            // v108: pin/restore the right cover (simple for the system method,
+            // interactive code screen for the code method) - defensive no-op
+            // when already attached.
+            attachChatGate(chat);
+            if (getMethod() == METHOD_CODE8 && hasCode()) {
+                return; // the cover itself is the prompt - no dialog needed
             }
             if (promptingDialogId == dialogId) return;
             final Activity act = chat.getParentActivity();
             if (act == null) return;
-
-            if (getMethod() == METHOD_CODE8 && hasCode()) {
-                promptingDialogId = dialogId;
-                promptCodeDialog(act, gateTitle(),
-                        LocaleController.getString(R.string.MeeroChatLockEnterCodeHint),
-                        LocaleController.getString(R.string.MeeroChatLockCodeWrong),
-                        new CodeCallback() {
-                            @Override
-                            public boolean onCode(String code) {
-                                if (!verifyCode(code)) {
-                                    return false; // dialog stays open with the error
-                                }
-                                promptingDialogId = Long.MIN_VALUE;
-                                markUnlocked(dialogId);
-                                View fv = chat.fragmentView;
-                                if (fv instanceof ViewGroup) {
-                                    removeGateCover((ViewGroup) fv);
-                                }
-                                return true;
-                            }
-
-                            @Override
-                            public void onCancelled() {
-                                promptingDialogId = Long.MIN_VALUE;
-                                try {
-                                    chat.finishFragment();
-                                } catch (Throwable ignore) {}
-                            }
-                        });
-                return;
-            }
-
             // default: system biometric / device lock
             if (!canAskSystem(act)) {
                 allowWithoutHardware(chat, dialogId);
@@ -615,76 +696,52 @@ public final class MeeroChatLock {
         }
     }
 
-    /** v107: gate for the hidden-chats vault screen. One successful unlock
-     *  keeps the vault open until it is left; cancel closes the screen. */
+    /** v107/v108: gate for the hidden-chats vault screen. One successful
+     *  unlock keeps the vault open until it is left; cancel closes the
+     *  screen. */
     public static void maybePromptVault(final BaseFragment fragment) {
         try {
             if (!hasHiddenDialogs() || vaultUnlocked) return;
-            if (promptingVault) return;
-            View fv = fragment.fragmentView;
-            if (fv instanceof ViewGroup) {
-                attachGateCover((ViewGroup) fv,
-                        LocaleController.getString(R.string.MeeroVaultTitle),
-                        vaultGateHint(), () -> maybePromptVault(fragment));
+            attachVaultGate(fragment); // defensive no-op when already covered
+            if (getMethod() == METHOD_CODE8 && hasCode()) {
+                return; // the cover itself is the prompt
             }
+            if (promptingVault) return;
             final Activity act = fragment.getParentActivity();
             if (act == null) return;
-
-            final Runnable onOk = () -> {
-                promptingVault = false;
-                markVaultUnlocked();
-                View fv1 = fragment.fragmentView;
-                if (fv1 instanceof ViewGroup) {
-                    removeGateCover((ViewGroup) fv1);
-                }
-            };
-            final Runnable onCancel = () -> {
-                promptingVault = false;
-                try {
-                    fragment.finishFragment();
-                } catch (Throwable ignore) {}
-            };
-
-            promptingVault = true;
-            if (getMethod() == METHOD_CODE8 && hasCode()) {
-                promptCodeDialog(act,
-                        LocaleController.getString(R.string.MeeroVaultTitle),
-                        LocaleController.getString(R.string.MeeroChatLockEnterCodeHint),
-                        LocaleController.getString(R.string.MeeroChatLockCodeWrong),
-                        new CodeCallback() {
-                            @Override
-                            public boolean onCode(String code) {
-                                if (!verifyCode(code)) {
-                                    return false;
-                                }
-                                onOk.run();
-                                return true;
-                            }
-
-                            @Override
-                            public void onCancelled() {
-                                onCancel.run();
-                            }
-                        });
-            } else if (canAskSystem(act)) {
-                authenticateSystem(act,
-                        LocaleController.getString(R.string.MeeroVaultTitle),
-                        vaultGateHint(), onOk, onCancel);
-            } else {
+            if (!canAskSystem(act)) {
                 // no system secret on the device at all - same fail-open
                 // policy as the chat gate, otherwise the vault would be a
                 // trap with no way in.
-                onOk.run();
+                markVaultUnlocked();
+                View fv = fragment.fragmentView;
+                if (fv instanceof ViewGroup) {
+                    removeGateCover((ViewGroup) fv);
+                }
+                return;
             }
+            promptingVault = true;
+            authenticateSystem(act,
+                    LocaleController.getString(R.string.MeeroVaultTitle),
+                    LocaleController.getString(R.string.MeeroVaultGateHint),
+                    () -> {
+                        promptingVault = false;
+                        markVaultUnlocked();
+                        View fv = fragment.fragmentView;
+                        if (fv instanceof ViewGroup) {
+                            removeGateCover((ViewGroup) fv);
+                        }
+                    },
+                    () -> {
+                        promptingVault = false;
+                        try {
+                            fragment.finishFragment();
+                        } catch (Throwable ignore) {}
+                    });
         } catch (Throwable t) {
             promptingVault = false;
             if (BuildVars.LOGS_ENABLED) FileLog.e(t);
         }
-    }
-
-    private static CharSequence vaultGateHint() {
-        return LocaleController.getString(getMethod() == METHOD_CODE8
-                ? R.string.MeeroGateCodeHint : R.string.MeeroVaultGateHint);
     }
 
     private static void allowWithoutHardware(org.telegram.ui.ChatActivity chat, long dialogId) {

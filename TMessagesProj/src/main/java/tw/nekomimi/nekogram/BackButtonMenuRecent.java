@@ -62,6 +62,18 @@ public class BackButtonMenuRecent {
             return;
         }
         LinkedList<Long> dialogs = getRecentDialogs(fragment.getCurrentAccount());
+        // MeeroX v108: locked chats obey the same hiding here as in the main
+        // list and search - the "المحادثات الأخيرة / Recent" popup is a list
+        // surface too (user-reported).
+        if (tw.nekomimi.nekogram.MeeroChatLock.hasHiddenDialogs()) {
+            LinkedList<Long> visible = new LinkedList<>();
+            for (Long id : dialogs) {
+                if (!tw.nekomimi.nekogram.MeeroChatLock.isHiddenDialogId(id)) {
+                    visible.add(id);
+                }
+            }
+            dialogs = visible;
+        }
         if (dialogs.isEmpty()) {
             return;
         }

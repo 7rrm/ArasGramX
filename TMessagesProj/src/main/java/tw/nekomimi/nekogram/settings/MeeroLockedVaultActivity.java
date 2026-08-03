@@ -6,7 +6,6 @@ import android.content.Context;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.View;
-import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -20,9 +19,10 @@ import org.telegram.messenger.UserObject;
 import org.telegram.tgnet.TLRPC;
 import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.Cells.TextCell;
-import org.telegram.ui.Cells.TextDetailSettingsCell;
 import org.telegram.ui.Cells.TextInfoPrivacyCell;
+import org.telegram.ui.Cells.UserCell;
 import org.telegram.ui.ChatActivity;
+import org.telegram.ui.Components.RecyclerListView;
 import org.telegram.ui.TopicsFragment;
 
 import java.util.ArrayList;
@@ -57,13 +57,9 @@ public class MeeroLockedVaultActivity extends BaseNekoSettingsActivity {
     public View createView(Context context) {
         View view = super.createView(context);
         // Cover the vault before the prompt pops - the list behind must never
-        // be readable while the gate is pending.
-        if (MeeroChatLock.hasHiddenDialogs() && !MeeroChatLock.isVaultUnlocked() && view instanceof ViewGroup) {
-            MeeroChatLock.attachGateCover((ViewGroup) view,
-                    getString(R.string.MeeroVaultTitle),
-                    getString(R.string.MeeroVaultGateHint),
-                    () -> MeeroChatLock.maybePromptVault(this));
-        }
+        // be readable while the gate is pending. v108: attachVaultGate picks
+        // the interactive code screen for the 8-digit method automatically.
+        MeeroChatLock.attachVaultGate(this);
         return view;
     }
 
@@ -157,23 +153,44 @@ public class MeeroLockedVaultActivity extends BaseNekoSettingsActivity {
 
     private class ListAdapter extends BaseListAdapter {
 
+        // v108: avatar row type (user request - "وفيه صور حساب") - built from
+        // the stock UserCell so hidden chats show with their real pictures.
+        private static final int TYPE_VAULT_USER = 100;
+
         public ListAdapter(Context context) {
             super(context);
         }
 
         @Override
         public boolean isEnabled(RecyclerView.ViewHolder holder) {
-            return holder.getItemViewType() == TYPE_DETAIL_SETTINGS;
+            return holder.getItemViewType() == TYPE_VAULT_USER;
+        }
+
+        @NonNull
+        @Override
+        public RecyclerView.ViewHolder onCreateViewHolder(@NonNull android.view.ViewGroup parent, int viewType) {
+            if (viewType == TYPE_VAULT_USER) {
+                UserCell cell = new UserCell(mContext, 4, 0, false);
+                cell.setBackgroundColor(getThemedColor(Theme.key_windowBackgroundWhite));
+                cell.setLayoutParams(new RecyclerView.LayoutParams(
+                        RecyclerView.LayoutParams.MATCH_PARENT, RecyclerView.LayoutParams.WRAP_CONTENT));
+                return new RecyclerListView.Holder(cell);
+            }
+            return super.onCreateViewHolder(parent, viewType);
         }
 
         @Override
         public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position, boolean payload) {
             switch (holder.getItemViewType()) {
-                case TYPE_DETAIL_SETTINGS:
-                    TextDetailSettingsCell detailCell = (TextDetailSettingsCell) holder.itemView;
+                case TYPE_VAULT_USER:
+                    UserCell userCell = (UserCell) holder.itemView;
                     if (position >= listStartRow && position < listEndRow) {
                         long dialogId = locked.get(position - listStartRow);
-                        detailCell.setTextAndValue(titleOf(dialogId), subtitleOf(dialogId), position + 1 < listEndRow);
+                        MessagesController mc2 = MessagesController.getInstance(UserConfig.selectedAccount);
+                        Object obj = DialogObject.isUserDialog(dialogId)
+                                ? mc2.getUser(dialogId) : mc2.getChat(-dialogId);
+                        userCell.setData(obj, titleOf(dialogId), subtitleOf(dialogId),
+                                0, position + 1 < listEndRow);
                     }
                     break;
                 case TYPE_TEXT:
@@ -195,7 +212,7 @@ public class MeeroLockedVaultActivity extends BaseNekoSettingsActivity {
         @Override
         public int getItemViewType(int position) {
             if (position >= listStartRow && position < listEndRow) {
-                return TYPE_DETAIL_SETTINGS;
+                return TYPE_VAULT_USER;
             } else if (position == emptyRow) {
                 return TYPE_TEXT;
             }

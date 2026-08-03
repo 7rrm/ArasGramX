@@ -9544,16 +9544,12 @@ public class ChatActivity extends BaseFragment implements
 
         onBottomItemsVisibilityChanged();
         ViewCompat.setOnApplyWindowInsetsListener(fragmentView, this::onApplyWindowInsets);
-        // MeeroX v107 (user-reported fix): the locked-chat gate cover is the
-        // LAST view added, so nothing in this method can ever paint chat
-        // content on top of it while the unlock prompt is showing (v106
-        // attached it first, which is why the chat showed through behind the
-        // fingerprint). Tapping the cover re-fires the prompt.
+        // MeeroX v107/v108 (user-reported fix): the locked-chat gate cover is
+        // the LAST view added, so nothing in this method can ever paint chat
+        // content on top of it. v108: for the 8-digit method this attaches
+        // the interactive code lock screen instead of the simple cover.
         if (tw.nekomimi.nekogram.MeeroChatLock.gateNeeded(dialog_id)) {
-            tw.nekomimi.nekogram.MeeroChatLock.attachGateCover(contentView,
-                    tw.nekomimi.nekogram.MeeroChatLock.gateTitle(),
-                    tw.nekomimi.nekogram.MeeroChatLock.gateHint(),
-                    () -> tw.nekomimi.nekogram.MeeroChatLock.maybePromptGate(this));
+            tw.nekomimi.nekogram.MeeroChatLock.attachChatGate(this);
         }
         Timer.finish(t);
 
