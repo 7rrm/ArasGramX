@@ -1010,7 +1010,9 @@ public final class MeeroChatLock {
             // arms and every Meero lock snaps shut unless the user is back in
             // time. Switch + delay choice live in the lock settings screen.
             try {
-                ApplicationLoader.applicationContext.registerActivityLifecycleCallbacks(
+                // applicationContext is typed as Context in this fork - the
+                // real object IS the Application, so the cast is safe.
+                ((Application) ApplicationLoader.applicationContext).registerActivityLifecycleCallbacks(
                         new Application.ActivityLifecycleCallbacks() {
                     @Override public void onActivityCreated(Activity activity, Bundle bundle) {}
                     @Override public void onActivityStarted(Activity activity) {
