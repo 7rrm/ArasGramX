@@ -154,6 +154,9 @@ public class MeeroChatLockActivity extends BaseNekoSettingsActivity {
             pickRelockGrace();
         } else if (position == auditRow) {
             presentFragment(new MeeroLockAuditActivity());
+        } else if (position == infoRow) {
+            // v111: the full no-recovery/behavior guide lives in this popup.
+            tw.nekomimi.nekogram.MeeroUsageGuide.show(this, R.string.MeeroChatLockInfo);
         } else if (position == addRow) {
             pickChat();
         } else if (position >= listStartRow && position < listEndRow) {
@@ -378,6 +381,9 @@ public class MeeroChatLockActivity extends BaseNekoSettingsActivity {
                         textCell.setTextAndValue(getString(R.string.MeeroChatLockAdd), "", true);
                     } else if (position == emptyRow) {
                         textCell.setTextAndValue(getString(R.string.MeeroChatLockEmpty), "", true);
+                    } else if (position == infoRow) {
+                        // v111: usage-guide button instead of the long footer.
+                        textCell.setTextAndValue(getString(R.string.MeeroUsageGuide), "", false);
                     }
                     break;
                 case TYPE_DETAIL_SETTINGS:
@@ -385,13 +391,6 @@ public class MeeroChatLockActivity extends BaseNekoSettingsActivity {
                     if (position >= listStartRow && position < listEndRow) {
                         long dialogId = locked.get(position - listStartRow);
                         detailCell.setTextAndValue(titleOf(dialogId), getString(R.string.MeeroChatLockRowDetail), position + 1 < listEndRow);
-                    }
-                    break;
-                case TYPE_INFO_PRIVACY:
-                    TextInfoPrivacyCell cell = (TextInfoPrivacyCell) holder.itemView;
-                    cell.setBackground(Theme.getThemedDrawable(mContext, R.drawable.greydivider, Theme.key_windowBackgroundGrayShadow));
-                    if (position == infoRow) {
-                        cell.setText(getString(R.string.MeeroChatLockInfo));
                     }
                     break;
             }
@@ -404,7 +403,7 @@ public class MeeroChatLockActivity extends BaseNekoSettingsActivity {
             } else if (position == headerRow) {
                 return TYPE_HEADER;
             } else if (position == methodRow || position == changeCodeRow || position == relockGraceRow
-                    || position == auditRow || position == addRow || position == emptyRow) {
+                    || position == auditRow || position == addRow || position == emptyRow || position == infoRow) {
                 return TYPE_TEXT;
             } else if (position >= listStartRow && position < listEndRow) {
                 return TYPE_DETAIL_SETTINGS;

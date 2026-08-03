@@ -46,6 +46,8 @@ import tw.nekomimi.nekogram.ui.cells.HeaderCell;
 public class MeeroWatchActivity extends BaseNekoSettingsActivity {
 
     private int masterRow;
+    private int msgTrackRow;
+    private int msgNotifyRow;
     private int watchHeaderRow;
     private int addRow;
     private int watchStartRow;
@@ -61,6 +63,10 @@ public class MeeroWatchActivity extends BaseNekoSettingsActivity {
         super.updateRows();
         reload();
         masterRow = addRow();
+        // v111: full person watch - tracking switch; its alert row only
+        // exists while tracking is on.
+        msgTrackRow = addRow();
+        msgNotifyRow = NekoConfig.meeroWatchMsgTrack.Bool() ? addRow() : -1;
         watchHeaderRow = addRow();
         addRow = addRow();
         watchStartRow = rowCount;
@@ -119,6 +125,17 @@ public class MeeroWatchActivity extends BaseNekoSettingsActivity {
         if (position == masterRow) {
             NekoConfig.meeroWatchEnabled.toggleConfigBool();
             ((TextCheckCell) view).setChecked(NekoConfig.meeroWatchEnabled.Bool());
+        } else if (position == msgTrackRow) {
+            NekoConfig.meeroWatchMsgTrack.toggleConfigBool();
+            ((TextCheckCell) view).setChecked(NekoConfig.meeroWatchMsgTrack.Bool());
+            updateRows(); // shows/hides the alert row
+            if (listAdapter != null) listAdapter.notifyDataSetChanged();
+        } else if (position == msgNotifyRow) {
+            NekoConfig.meeroWatchMsgNotify.toggleConfigBool();
+            ((TextCheckCell) view).setChecked(NekoConfig.meeroWatchMsgNotify.Bool());
+        } else if (position == infoRow) {
+            // v111: the long explanation moved into a popup (user-requested).
+            tw.nekomimi.nekogram.MeeroUsageGuide.show(this, R.string.MeeroWatchInfo);
         } else if (position == addRow) {
             showAddChooser();
         } else if (position >= watchStartRow && position < watchEndRow && position >= 0) {
@@ -259,6 +276,10 @@ public class MeeroWatchActivity extends BaseNekoSettingsActivity {
                     TextCheckCell checkCell = (TextCheckCell) holder.itemView;
                     if (position == masterRow) {
                         checkCell.setTextAndCheck(getString(R.string.MeeroWatchTitle), NekoConfig.meeroWatchEnabled.Bool(), true);
+                    } else if (position == msgTrackRow) {
+                        checkCell.setTextAndCheck(getString(R.string.MeeroWatchMsgTrack), NekoConfig.meeroWatchMsgTrack.Bool(), true);
+                    } else if (position == msgNotifyRow) {
+                        checkCell.setTextAndCheck(getString(R.string.MeeroWatchMsgNotify), NekoConfig.meeroWatchMsgNotify.Bool(), true);
                     } else if (position >= watchStartRow && position < watchEndRow) {
                         MeeroWatch.Entry e = entries.get(position - watchStartRow);
                         checkCell.setTextAndValueAndCheck(nameOf(e.id), handleOf(e.id), e.on, true, true);
@@ -278,13 +299,9 @@ public class MeeroWatchActivity extends BaseNekoSettingsActivity {
                         textCell.setTextAndValue(getString(R.string.MeeroWatchNoOne), "", true);
                     } else if (position == logRow) {
                         textCell.setTextAndValue(getString(R.string.MeeroWatchLogRow), "", true);
-                    }
-                    break;
-                case TYPE_INFO_PRIVACY:
-                    TextInfoPrivacyCell cell = (TextInfoPrivacyCell) holder.itemView;
-                    cell.setBackground(Theme.getThemedDrawable(mContext, R.drawable.greydivider, Theme.key_windowBackgroundGrayShadow));
-                    if (position == infoRow) {
-                        cell.setText(getString(R.string.MeeroWatchInfo));
+                    } else if (position == infoRow) {
+                        // v111: usage-guide button replaces the long footer.
+                        textCell.setTextAndValue(getString(R.string.MeeroUsageGuide), "", true);
                     }
                     break;
             }
@@ -292,11 +309,12 @@ public class MeeroWatchActivity extends BaseNekoSettingsActivity {
 
         @Override
         public int getItemViewType(int position) {
-            if (position == masterRow || (position >= watchStartRow && position < watchEndRow && watchEndRow > watchStartRow)) {
+            if (position == masterRow || position == msgTrackRow || position == msgNotifyRow
+                    || (position >= watchStartRow && position < watchEndRow && watchEndRow > watchStartRow)) {
                 return TYPE_CHECK;
             } else if (position == watchHeaderRow) {
                 return TYPE_HEADER;
-            } else if (position == addRow || position == emptyRow || position == logRow) {
+            } else if (position == addRow || position == emptyRow || position == logRow || position == infoRow) {
                 return TYPE_TEXT;
             }
             return TYPE_INFO_PRIVACY;

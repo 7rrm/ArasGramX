@@ -173,6 +173,10 @@ public class NekoConfig {
     public static ConfigItem meeroChatLockAutoRelock = addConfig("meeroChatLockAutoRelock", configTypeBool, true);
     public static ConfigItem meeroChatLockRelockGrace = addConfig("meeroChatLockRelockGrace", configTypeInt, 0);
     public static ConfigItem meeroLockAuditLog = addConfig("meeroLockAuditLog", configTypeString, "");
+    // --- MeeroX v111: watch message tracking (full person watch in shared
+    // groups) + its optional instant alert. Tracking defaults OFF. ---
+    public static ConfigItem meeroWatchMsgTrack = addConfig("meeroWatchMsgTrack", configTypeBool, false);
+    public static ConfigItem meeroWatchMsgNotify = addConfig("meeroWatchMsgNotify", configTypeBool, true);
 
     // From NekoConfig
     public static ConfigItem useIPv6 = addConfig("IPv6", configTypeBool, false);

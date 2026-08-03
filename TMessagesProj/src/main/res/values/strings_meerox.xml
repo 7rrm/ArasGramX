@@ -113,7 +113,7 @@
     <string name="MeeroWatchRemove">Remove from watch</string>
     <string name="MeeroWatchNoOne">Nobody watched yet - add above</string>
     <string name="MeeroWatchLogRow">Change log</string>
-    <string name="MeeroWatchInfo">Watch anyone (a contact or any account by username/ID): name, username, bio, birthday or photo changes reach you as instant notifications with full details and a log. Master switch off = nothing watched. Every person has his own ON/OFF switch. Note: bio and birthday sync about hourly; a hidden phone number can never be revealed - Telegram privacy law.</string>
+    <string name="MeeroWatchInfo">Watch anyone (a contact or any account by username/ID): name, username, bio, birthday or photo changes reach you as instant notifications with full details and a log. Master switch off = nothing watched. Every person has his own ON/OFF switch. Note: bio and birthday sync about hourly; a hidden phone number can never be revealed - Telegram privacy law. Message tracking (its switch above): logs what watched people write in groups you both share - their messages, who they reply to and who replies to them, with second-precision timestamps, newest 150 events, all stored locally on your device only. Responsibility: tracking a person\'s activity can be sensitive in your circle and under your country\'s law - use it at your own full responsibility.</string>
     <string name="MeeroWatchChangedName">changed the name</string>
     <string name="MeeroWatchChangedUsername">changed the username</string>
     <string name="MeeroWatchChangedBio">changed the bio</string>
@@ -342,4 +342,17 @@
     <string name="MeeroAuditFailed">Wrong code</string>
     <string name="MeeroReadAllChats">Read all chats</string>
     <string name="MeeroReadAllConfirm">Every chat (including the archive) will be marked as read. Unread counters will be zeroed and cannot be restored.</string>
+    <!-- v111: usage-guide dialogs + watch message tracking -->
+    <string name="MeeroUsageGuide">How to use</string>
+    <string name="MeeroUsageGuideGotIt">Got it</string>
+    <string name="MeeroWatchMsgTrack">Track messages in shared groups</string>
+    <string name="MeeroWatchMsgNotify">Instant alert on tracked messages</string>
+    <string name="MeeroWatchWhatMsg">sent a message</string>
+    <string name="MeeroWatchWhatMsgReply">replied to a message</string>
+    <string name="MeeroWatchWhatReplyTo">got a reply</string>
+    <string name="MeeroWatchMsgIn">in</string>
+    <string name="MeeroWatchMsgReplyingTo">replying to</string>
+    <string name="MeeroWatchMsgTheirMsg">their message</string>
+    <string name="MeeroWatchMsgMedia">media</string>
+    <string name="MeeroAutoReplyUsage">How it works: automatically sends one reply to incoming messages in private chats while you are busy, with a per-chat cooldown so it never becomes spam. Off by default - and while off, nothing is ever sent, exactly the stock behavior.\n\n⏰ Time window: when enabled, replies are only sent within these hours on the chosen days. If the start is later than the end, the window crosses midnight (e.g. 23:00-08:00). Outside the window (or on unchecked days) nothing is sent. Off = replies around the clock, exactly like before. The optional night text replaces the general reply text while the window is active.\n\n✅ Guarantees: private chats only - groups, channels, bots and your Saved Messages are always excluded. Never replies while you are inside that same chat with the screen on. Works in the background after you leave the app (a device \"Force stop\" kills everything - that is Android law). With Ghost Mode: the reply is sent without any read receipt, so the other side\'s read ticks stay unchanged. The cooldown is kept in memory and resets when the app restarts.</string>
 </resources>

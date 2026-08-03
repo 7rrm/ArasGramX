@@ -15,10 +15,12 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.telegram.messenger.ApplicationLoader;
 import org.telegram.messenger.BuildVars;
+import org.telegram.messenger.DialogObject;
 import org.telegram.messenger.FileLoader;
 import org.telegram.messenger.FileLog;
 import org.telegram.messenger.ImageLocation;
 import org.telegram.messenger.LocaleController;
+import org.telegram.messenger.MessageObject;
 import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.NotificationCenter;
 import org.telegram.messenger.R;
@@ -30,6 +32,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.util.ArrayList;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * MeeroX v102: account watching ("مراقبة الحسابات").
@@ -50,6 +53,11 @@ public final class MeeroWatch {
     private MeeroWatch() {}
 
     private static final String CHANNEL_ID = "meero_watch";
+
+    // v111: message tracking - one notification per person per 5 seconds at
+    // most; the LOG still records every single message.
+    private static final long MSG_NOTIFY_THROTTLE_MS = 5_000L;
+    private static final ConcurrentHashMap<Long, Long> lastMsgNotifyAt = new ConcurrentHashMap<>();
 
     public static final class Entry {
         public long id;
@@ -225,6 +233,12 @@ public final class MeeroWatch {
                         onUserInfoLoaded(account1, args);
                     }
                 }, NotificationCenter.userInfoDidLoad);
+                // v111: full person watch - messages in groups you both share.
+                NotificationCenter.getInstance(account).addObserver((id, account1, args) -> {
+                    if (id == NotificationCenter.didReceiveNewMessages) {
+                        onNewMessages(account1, args);
+                    }
+                }, NotificationCenter.didReceiveNewMessages);
             }
             org.telegram.messenger.AndroidUtilities.runOnUIThread(periodic, 60_000);
         }
@@ -270,6 +284,135 @@ public final class MeeroWatch {
             TLRPC.UserFull userFull = (TLRPC.UserFull) args[1];
             diffFull(account, uid, userFull);
         } catch (Throwable ignore) {}
+    }
+
+    // ---------------- v111: message tracking in shared groups ----------------
+
+    /** Full person watch (user-requested, default OFF): every message a
+     *  watched person writes in a group the owner also belongs to is logged
+     *  with second precision - his messages, his replies (and to whom, with
+     *  a snippet), and other people replying TO him. Media is recorded as a
+     *  type plus caption; files themselves are never saved. Only messages
+     *  that legitimately reach this device are visible - nothing elsewhere
+     *  can be seen (documented in the usage dialog). */
+    private static void onNewMessages(int account, Object[] args) {
+        if (!NekoConfig.meeroWatchEnabled.Bool()) return;
+        if (!NekoConfig.meeroWatchMsgTrack.Bool()) return;
+        if (!UserConfig.getInstance(account).isClientActivated()) return;
+        if (args == null || args.length < 3) return;
+        try {
+            final long dialogId = (Long) args[0];
+            if (!DialogObject.isChatDialog(dialogId)) return; // groups/supergroups only
+            @SuppressWarnings("unchecked")
+            ArrayList<MessageObject> messages = (ArrayList<MessageObject>) args[1];
+            boolean scheduled = (Boolean) args[2];
+            if (scheduled || messages == null) return;
+            final long now = System.currentTimeMillis();
+            MessagesController controller = MessagesController.getInstance(account);
+            for (MessageObject msg : messages) {
+                try {
+                    if (msg == null || msg.messageOwner == null || msg.isOut()) continue;
+                    if (msg.messageOwner.action != null) continue; // service events
+                    if (now - msg.messageOwner.date * 1000L > 120_000L) continue; // offline bulk-sync flood guard
+                    if (msg.messageOwner.from_id == null || msg.messageOwner.from_id.user_id == 0) continue;
+                    final long authorId = msg.messageOwner.from_id.user_id;
+
+                    final MessageObject reply = msg.replyMessageObject;
+                    long replyAuthorId = 0;
+                    String replyAuthorName = "";
+                    if (reply != null && reply.messageOwner != null && reply.messageOwner.from_id != null) {
+                        replyAuthorId = reply.messageOwner.from_id.user_id;
+                        if (replyAuthorId != 0) replyAuthorName = userName(controller, replyAuthorId);
+                    }
+
+                    if (isOn(authorId)) {
+                        String detail = buildMsgDetail(controller, dialogId, msg,
+                                replyAuthorId != 0 ? replyAuthorName : null, snippetOf(reply));
+                        addLog(account, authorId, userName(controller, authorId),
+                                replyAuthorId != 0 ? "msg_reply" : "msg",
+                                "", detail, null, null, msgNotifyAllowed(authorId));
+                        continue; // never double-log the same message as a reply-to-him
+                    }
+                    if (replyAuthorId != 0 && isOn(replyAuthorId)) {
+                        String detail = buildReplyToHimDetail(controller, dialogId,
+                                msg, userName(controller, authorId));
+                        addLog(account, replyAuthorId, userName(controller, replyAuthorId),
+                                "reply_to_him", "", detail, null, null, msgNotifyAllowed(replyAuthorId));
+                    }
+                } catch (Throwable ignore) {}
+            }
+        } catch (Throwable t) {
+            if (BuildVars.LOGS_ENABLED) FileLog.e(t);
+        }
+    }
+
+    /** Name from the local user cache; falls back to the bare id. */
+    private static String userName(MessagesController controller, long userId) {
+        try {
+            TLRPC.User user = controller.getUser(userId);
+            if (user != null) {
+                String name = buildName(user);
+                if (!TextUtils.isEmpty(name)) return name;
+            }
+        } catch (Throwable ignore) {}
+        return String.valueOf(userId);
+    }
+
+    private static String chatTitle(MessagesController controller, long dialogId) {
+        try {
+            TLRPC.Chat chat = controller.getChat(-dialogId);
+            if (chat != null && !TextUtils.isEmpty(chat.title)) return chat.title;
+        } catch (Throwable ignore) {}
+        return "?";
+    }
+
+    private static String snippetOf(MessageObject msg) {
+        if (msg == null) return "";
+        CharSequence text = msg.messageText;
+        String s = text == null ? "" : text.toString().replace('\n', ' ').trim();
+        if (s.isEmpty() && msg.messageOwner != null && msg.messageOwner.media != null) {
+            s = "[" + LocaleController.getString(R.string.MeeroWatchMsgMedia) + "]";
+        }
+        return s.length() > 140 ? s.substring(0, 140) + "…" : s;
+    }
+
+    private static String mediaLabel(MessageObject msg) {
+        String text = snippetOf(msg);
+        if (!text.isEmpty()) return text;
+        return "[" + LocaleController.getString(R.string.MeeroWatchMsgMedia) + "]";
+    }
+
+    private static String buildMsgDetail(MessagesController controller, long dialogId,
+                                         MessageObject msg, String replyAuthorName, String replySnippet) {
+        String in = LocaleController.getString(R.string.MeeroWatchMsgIn);
+        StringBuilder sb = new StringBuilder();
+        sb.append(in).append(" ").append(chatTitle(controller, dialogId));
+        if (replyAuthorName != null) {
+            sb.append(" · ").append(LocaleController.getString(R.string.MeeroWatchMsgReplyingTo))
+                    .append(" ").append(replyAuthorName);
+            if (!TextUtils.isEmpty(replySnippet)) {
+                sb.append(": ").append(replySnippet);
+            }
+        }
+        sb.append(" ⇒ ").append(mediaLabel(msg));
+        return sb.toString();
+    }
+
+    private static String buildReplyToHimDetail(MessagesController controller, long dialogId,
+                                                MessageObject msg, String actorName) {
+        return LocaleController.getString(R.string.MeeroWatchMsgIn) + " " + chatTitle(controller, dialogId)
+                + " · " + actorName + " ⇒ " + mediaLabel(msg);
+    }
+
+    /** Instant alert switch + per-person 5s throttle; the log itself is
+     *  never throttled. */
+    private static boolean msgNotifyAllowed(long userId) {
+        if (!NekoConfig.meeroWatchMsgNotify.Bool()) return false;
+        long now = System.currentTimeMillis();
+        Long last = lastMsgNotifyAt.get(userId);
+        if (last != null && now - last < MSG_NOTIFY_THROTTLE_MS) return false;
+        lastMsgNotifyAt.put(userId, now);
+        return true;
     }
 
     public static void refresh(int account, boolean withFullInfo) {
@@ -374,6 +517,14 @@ public final class MeeroWatch {
 
     private static synchronized void addLog(int account, long id, String who, String what,
                                            String oldValue, String newValue, String oldPath, String newPath) {
+        addLog(account, id, who, what, oldValue, newValue, oldPath, newPath, true);
+    }
+
+    /** v111: notify flag - message entries honor the instant-alert switch and
+     *  its throttle; profile changes always notify (their old behavior). */
+    private static synchronized void addLog(int account, long id, String who, String what,
+                                           String oldValue, String newValue, String oldPath, String newPath,
+                                           boolean notify) {
         try {
             JSONObject o = new JSONObject();
             o.put("t", System.currentTimeMillis() / 1000L);
@@ -393,7 +544,9 @@ public final class MeeroWatch {
             }
             writeLog(out);
         } catch (Throwable ignore) {}
-        notifyChange(who, what);
+        if (notify) {
+            notifyChange(who, what);
+        }
     }
 
     // ---------------- photos ----------------
@@ -449,6 +602,9 @@ public final class MeeroWatch {
             case "bio": return LocaleController.getString(R.string.MeeroWatchChangedBio);
             case "bday": return LocaleController.getString(R.string.MeeroWatchChangedBday);
             case "photo": return LocaleController.getString(R.string.MeeroWatchChangedPhoto);
+            case "msg": return LocaleController.getString(R.string.MeeroWatchWhatMsg);
+            case "msg_reply": return LocaleController.getString(R.string.MeeroWatchWhatMsgReply);
+            case "reply_to_him": return LocaleController.getString(R.string.MeeroWatchWhatReplyTo);
             default: return what == null ? "" : what;
         }
     }

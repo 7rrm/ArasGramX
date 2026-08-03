@@ -91,7 +91,8 @@ public class MeeroWatchLogActivity extends BaseNekoSettingsActivity {
     }
 
     private String timeOf(long sec) {
-        return new SimpleDateFormat("dd/MM HH:mm", Locale.US).format(new Date(sec * 1000L));
+        // v111: seconds matter for message tracking ("بتواريخه وبثوانيه").
+        return new SimpleDateFormat("dd/MM HH:mm:ss", Locale.US).format(new Date(sec * 1000L));
     }
 
     @Override
@@ -207,10 +208,13 @@ public class MeeroWatchLogActivity extends BaseNekoSettingsActivity {
                         String detail;
                         if ("photo".equals(item.what)) {
                             detail = timeOf(item.t) + "  •  " + getString(R.string.MeeroWatchPhotoHint);
+                        } else if (TextUtils.isEmpty(item.oldValue)) {
+                            // v111: message entries carry a single detail
+                            // string (no old -> new arrow).
+                            detail = item.newValue + "  •  " + timeOf(item.t);
                         } else {
-                            String oldV = TextUtils.isEmpty(item.oldValue) ? "—" : item.oldValue;
                             String newV = TextUtils.isEmpty(item.newValue) ? "—" : item.newValue;
-                            detail = oldV + "  ←  " + newV + "  •  " + timeOf(item.t);
+                            detail = item.oldValue + "  ←  " + newV + "  •  " + timeOf(item.t);
                         }
                         detailCell.setMultilineDetail(true);
                         detailCell.setTextAndValue(title, detail, position + 1 < logEndRow);

@@ -71,7 +71,10 @@ public class MeeroAutoReplyActivity extends BaseNekoSettingsActivity {
     protected void updateRows() {
         super.updateRows();
         autoReplyRow = addRow();
-        autoReplyInfoRow = addRow();
+        // v111: the three long footers merged into one "طريقة الاستخدام"
+        // popup (user-requested) - the rows stay allocated as -1 so nothing
+        // else shifts, the last one becomes the button.
+        autoReplyInfoRow = -1;
         contentHeaderRow = addRow();
         textRow = addRow();
         rulesRow = addRow();
@@ -87,8 +90,8 @@ public class MeeroAutoReplyActivity extends BaseNekoSettingsActivity {
         windowDaysRow = addRow();
         nightTextOnRow = addRow();
         nightTextRow = addRow();
-        windowInfoRow = addRow();
-        boundsInfoRow = addRow();
+        windowInfoRow = -1;
+        boundsInfoRow = addRow(); // v111: this is now the usage-guide button
     }
 
     @Override
@@ -199,6 +202,9 @@ public class MeeroAutoReplyActivity extends BaseNekoSettingsActivity {
             showTimePicker(NekoConfig.meeroAutoReplyWindowEnd, R.string.MeeroAutoReplyWindowEnd, windowEndRow);
         } else if (position == windowDaysRow) {
             showDaysPicker();
+        } else if (position == boundsInfoRow) {
+            // v111: one popup holds everything this section used to spell out.
+            tw.nekomimi.nekogram.MeeroUsageGuide.show(this, R.string.MeeroAutoReplyUsage);
         } else if (position == nightTextOnRow) {
             NekoConfig.meeroAutoReplyNightTextOn.toggleConfigBool();
             ((TextCheckCell) view).setChecked(NekoConfig.meeroAutoReplyNightTextOn.Bool());
@@ -480,6 +486,9 @@ public class MeeroAutoReplyActivity extends BaseNekoSettingsActivity {
                         textCell.setTextAndValue(getString(R.string.MeeroAutoReplyWindowEnd), timeValue(NekoConfig.meeroAutoReplyWindowEnd.Int()), true);
                     } else if (position == windowDaysRow) {
                         textCell.setTextAndValue(getString(R.string.MeeroAutoReplyWindowDays), daysValue(), true);
+                    } else if (position == boundsInfoRow) {
+                        // v111: usage-guide button instead of the long footers.
+                        textCell.setTextAndValue(getString(R.string.MeeroUsageGuide), "", true);
                     }
                     break;
                 case TYPE_INFO_PRIVACY:
@@ -489,8 +498,6 @@ public class MeeroAutoReplyActivity extends BaseNekoSettingsActivity {
                         cell.setText(getString(R.string.MeeroAutoReplyInfo));
                     } else if (position == windowInfoRow) {
                         cell.setText(getString(R.string.MeeroAutoReplyWindowInfo));
-                    } else if (position == boundsInfoRow) {
-                        cell.setText(getString(R.string.MeeroAutoReplyBounds));
                     }
                     break;
             }
@@ -505,7 +512,7 @@ public class MeeroAutoReplyActivity extends BaseNekoSettingsActivity {
             } else if (position == textRow || position == nightTextRow) {
                 return TYPE_DETAIL_SETTINGS;
             } else if (position == rulesRow || position == exclusionsRow || position == poolRow || position == cooldownRow || position == delayRow
-                    || position == windowStartRow || position == windowEndRow || position == windowDaysRow) {
+                    || position == windowStartRow || position == windowEndRow || position == windowDaysRow || position == boundsInfoRow) {
                 return TYPE_TEXT;
             }
             return TYPE_INFO_PRIVACY;

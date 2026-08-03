@@ -68,6 +68,9 @@ public class MeeroOnceGuardActivity extends BaseNekoSettingsActivity {
         if (position == masterRow) {
             NekoConfig.meeroOnceGuard.toggleConfigBool();
             ((TextCheckCell) view).setChecked(NekoConfig.meeroOnceGuard.Bool());
+        } else if (position == infoRow) {
+            // v111: usage-guide popup instead of the long footer.
+            tw.nekomimi.nekogram.MeeroUsageGuide.show(this, R.string.MeeroOnceInfo);
         }
     }
 
@@ -79,7 +82,8 @@ public class MeeroOnceGuardActivity extends BaseNekoSettingsActivity {
 
         @Override
         public boolean isEnabled(RecyclerView.ViewHolder holder) {
-            return holder.getItemViewType() == TYPE_CHECK;
+            // v111: the usage-guide row (TYPE_TEXT) is clickable too.
+            return holder.getItemViewType() == TYPE_CHECK || holder.getItemViewType() == TYPE_TEXT;
         }
 
         @Override
@@ -101,13 +105,9 @@ public class MeeroOnceGuardActivity extends BaseNekoSettingsActivity {
                     TextCell textCell = (TextCell) holder.itemView;
                     if (position == countRow) {
                         textCell.setTextAndValue(getString(R.string.MeeroOnceCount), String.valueOf(NekoConfig.meeroOnceSavedCount.Int()), true);
-                    }
-                    break;
-                case TYPE_INFO_PRIVACY:
-                    TextInfoPrivacyCell cell = (TextInfoPrivacyCell) holder.itemView;
-                    cell.setBackground(Theme.getThemedDrawable(mContext, R.drawable.greydivider, Theme.key_windowBackgroundGrayShadow));
-                    if (position == infoRow) {
-                        cell.setText(getString(R.string.MeeroOnceInfo));
+                    } else if (position == infoRow) {
+                        // v111: usage-guide button instead of the long footer.
+                        textCell.setTextAndValue(getString(R.string.MeeroUsageGuide), "", true);
                     }
                     break;
             }
@@ -119,7 +119,7 @@ public class MeeroOnceGuardActivity extends BaseNekoSettingsActivity {
                 return TYPE_CHECK;
             } else if (position == countHeaderRow) {
                 return TYPE_HEADER;
-            } else if (position == countRow) {
+            } else if (position == countRow || position == infoRow) {
                 return TYPE_TEXT;
             }
             return TYPE_INFO_PRIVACY;

@@ -206,6 +206,9 @@ public class GhostModeActivity extends BaseNekoSettingsActivity {
             }
         } else if (position == swipeActionRow) {
             showSwipeActionDialog();
+        } else if (position == ghostSwipeReadNoticeRow) {
+            // v111: the full swipe-read explanation now lives in this popup.
+            tw.nekomimi.nekogram.MeeroUsageGuide.show(this, R.string.MeeroGhostSwipeReadInfo);
         } else if (position == markReadAfterSendRow) {
             NekoConfig.markReadAfterSend.toggleConfigBool();
             ((TextCheckCell) view).setChecked(NekoConfig.markReadAfterSend.Bool());
@@ -335,8 +338,6 @@ public class GhostModeActivity extends BaseNekoSettingsActivity {
                     cell.setBackground(Theme.getThemedDrawable(mContext, R.drawable.greydivider, Theme.key_windowBackgroundGrayShadow));
                     if (position == ghostModeNoticeRow) {
                         cell.setText(getString(R.string.GhostModeNotice));
-                    } else if (position == ghostSwipeReadNoticeRow) {
-                        cell.setText(getString(R.string.MeeroGhostSwipeReadInfo));
                     } else if (position == markReadAfterSendNoticeRow) {
                         cell.setText(getString(R.string.MarkReadAfterSendNotice));
                     } else if (position == sendWithoutSoundNoticeRow) {
@@ -365,6 +366,9 @@ public class GhostModeActivity extends BaseNekoSettingsActivity {
                     TextCell textCell = (TextCell) holder.itemView;
                     if (position == swipeActionRow) {
                         textCell.setTextAndValue(getString(R.string.MeeroSwipeAction), getSwipeActionName(SharedConfig.getChatSwipeAction(UserConfig.selectedAccount)), true);
+                    } else if (position == ghostSwipeReadNoticeRow) {
+                        // v111: usage-guide button instead of the long footer.
+                        textCell.setTextAndValue(getString(R.string.MeeroUsageGuide), "", true);
                     }
                     break;
                 case TYPE_CHECKBOX2:
@@ -422,11 +426,11 @@ public class GhostModeActivity extends BaseNekoSettingsActivity {
         public int getItemViewType(int position) {
             if (position == ghostEssentialsHeaderRow) {
                 return TYPE_HEADER;
-            } else if (position == ghostModeNoticeRow || position == ghostSwipeReadNoticeRow || position == markReadAfterSendNoticeRow || position == sendWithoutSoundNoticeRow) {
+            } else if (position == ghostModeNoticeRow || position == markReadAfterSendNoticeRow || position == sendWithoutSoundNoticeRow) {
                 return TYPE_INFO_PRIVACY;
             } else if (position == ghostModeToggleRow) {
                 return TYPE_CHECK2;
-            } else if (position == swipeActionRow) {
+            } else if (position == swipeActionRow || position == ghostSwipeReadNoticeRow) {
                 return TYPE_TEXT;
             } else if (position == ghostSwipeReadRow || (position >= sendReadMessagePacketsRow && position <= sendOfflinePacketAfterOnlineRow)) {
                 return TYPE_CHECKBOX2;

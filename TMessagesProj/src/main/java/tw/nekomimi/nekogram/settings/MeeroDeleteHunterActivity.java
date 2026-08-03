@@ -243,6 +243,9 @@ public class MeeroDeleteHunterActivity extends BaseNekoSettingsActivity {
         if (position == masterRow) {
             NekoConfig.meeroDeleteHunter.toggleConfigBool();
             ((TextCheckCell) view).setChecked(NekoConfig.meeroDeleteHunter.Bool());
+        } else if (position == infoRow) {
+            // v111: usage-guide popup instead of the long footer.
+            tw.nekomimi.nekogram.MeeroUsageGuide.show(this, R.string.MeeroHunterInfo);
         } else if (position == clearRow && clearRow >= 0) {
             new AlertDialog.Builder(getParentActivity())
                     .setTitle(getString(R.string.MeeroWatchLogClear))
@@ -317,13 +320,9 @@ public class MeeroDeleteHunterActivity extends BaseNekoSettingsActivity {
                         textCell.setTextAndValue(getString(R.string.MeeroHunterEmpty), "", true);
                     } else if (position == clearRow && clearRow >= 0) {
                         textCell.setTextAndValue(getString(R.string.MeeroWatchLogClear), "", true);
-                    }
-                    break;
-                case TYPE_INFO_PRIVACY:
-                    TextInfoPrivacyCell cell = (TextInfoPrivacyCell) holder.itemView;
-                    cell.setBackground(Theme.getThemedDrawable(mContext, R.drawable.greydivider, Theme.key_windowBackgroundGrayShadow));
-                    if (position == infoRow) {
-                        cell.setText(getString(R.string.MeeroHunterInfo));
+                    } else if (position == infoRow) {
+                        // v111: usage-guide button instead of the long footer.
+                        textCell.setTextAndValue(getString(R.string.MeeroUsageGuide), "", true);
                     }
                     break;
             }
@@ -339,7 +338,7 @@ public class MeeroDeleteHunterActivity extends BaseNekoSettingsActivity {
                 // the same rows flip between the detail cell and a checkbox
                 // cell when selection mode turns on/off
                 return selecting ? TYPE_CHECK : TYPE_DETAIL_SETTINGS;
-            } else if (position == emptyRow || position == clearRow && clearRow >= 0) {
+            } else if (position == emptyRow || position == clearRow && clearRow >= 0 || position == infoRow) {
                 return TYPE_TEXT;
             }
             return TYPE_INFO_PRIVACY;

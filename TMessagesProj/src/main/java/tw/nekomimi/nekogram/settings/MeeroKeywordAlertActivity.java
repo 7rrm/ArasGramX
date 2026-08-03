@@ -110,6 +110,9 @@ public class MeeroKeywordAlertActivity extends BaseNekoSettingsActivity {
         if (position == masterRow) {
             NekoConfig.meeroKeywordAlert.toggleConfigBool();
             ((TextCheckCell) view).setChecked(NekoConfig.meeroKeywordAlert.Bool());
+        } else if (position == infoRow) {
+            // v111: usage-guide popup instead of the long footer.
+            tw.nekomimi.nekogram.MeeroUsageGuide.show(this, R.string.MeeroKeywordInfo);
         } else if (position == addRow) {
             showAddKindDialog();
         } else if (position >= entryStartRow && position < entryEndRow) {
@@ -240,6 +243,9 @@ public class MeeroKeywordAlertActivity extends BaseNekoSettingsActivity {
                         textCell.setTextAndValue(getString(R.string.MeeroKeywordAdd), "", true);
                     } else if (position == emptyRow) {
                         textCell.setTextAndValue(getString(R.string.MeeroKeywordEmpty), "", true);
+                    } else if (position == infoRow) {
+                        // v111: usage-guide button instead of the long footer.
+                        textCell.setTextAndValue(getString(R.string.MeeroUsageGuide), "", true);
                     }
                     break;
                 case TYPE_DETAIL_SETTINGS:
@@ -250,13 +256,7 @@ public class MeeroKeywordAlertActivity extends BaseNekoSettingsActivity {
                         detailCell.setTextAndValue(titleOf(entry.dialogId), entry.words, position + 1 < entryEndRow);
                     }
                     break;
-                case TYPE_INFO_PRIVACY:
-                    TextInfoPrivacyCell cell = (TextInfoPrivacyCell) holder.itemView;
-                    cell.setBackground(Theme.getThemedDrawable(mContext, R.drawable.greydivider, Theme.key_windowBackgroundGrayShadow));
-                    if (position == infoRow) {
-                        cell.setText(getString(R.string.MeeroKeywordInfo));
-                    }
-                    break;
+
             }
         }
 
@@ -266,7 +266,7 @@ public class MeeroKeywordAlertActivity extends BaseNekoSettingsActivity {
                 return TYPE_CHECK;
             } else if (position == headerRow) {
                 return TYPE_HEADER;
-            } else if (position == addRow || position == emptyRow) {
+            } else if (position == addRow || position == emptyRow || position == infoRow) {
                 return TYPE_TEXT;
             } else if (position >= entryStartRow && position < entryEndRow) {
                 return TYPE_DETAIL_SETTINGS;

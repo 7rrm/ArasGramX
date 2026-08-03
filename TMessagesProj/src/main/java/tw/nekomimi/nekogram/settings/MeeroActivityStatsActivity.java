@@ -195,6 +195,9 @@ public class MeeroActivityStatsActivity extends BaseNekoSettingsActivity {
     protected void onItemClick(View view, int position, float x, float y) {
         if (position == exportRow) {
             showExportDialog();
+        } else if (position == infoRow) {
+            // v111: the long methodology text moved into this popup.
+            tw.nekomimi.nekogram.MeeroUsageGuide.show(this, R.string.MeeroStatsInfo);
         }
     }
 
@@ -330,8 +333,8 @@ public class MeeroActivityStatsActivity extends BaseNekoSettingsActivity {
 
         @Override
         public boolean isEnabled(RecyclerView.ViewHolder holder) {
-            // the screen stays read-only except the export row
-            return holder.getAdapterPosition() == exportRow;
+            // read-only except export and the v111 usage-guide row
+            return holder.getAdapterPosition() == exportRow || holder.getAdapterPosition() == infoRow;
         }
 
         @NonNull
@@ -402,6 +405,9 @@ public class MeeroActivityStatsActivity extends BaseNekoSettingsActivity {
                         textCell.setTextAndValue(hourRange(h), countValue(summary.hourly[h]), position + 1 < hourEndRow);
                     } else if (position == exportRow) {
                         textCell.setTextAndValue(getString(R.string.MeeroStatsExport), "\uD83D\uDCE4", false);
+                    } else if (position == infoRow) {
+                        // v111: usage-guide button instead of the long footer.
+                        textCell.setTextAndValue(getString(R.string.MeeroUsageGuide), "", true);
                     }
                     break;
                 case TYPE_INFO_PRIVACY:
@@ -413,8 +419,6 @@ public class MeeroActivityStatsActivity extends BaseNekoSettingsActivity {
                         cell.setText(getString(R.string.MeeroStatsDryInfo));
                     } else if (position == statusRow) {
                         cell.setText(getString(R.string.MeeroStatsLoading));
-                    } else if (position == infoRow) {
-                        cell.setText(getString(R.string.MeeroStatsInfo));
                     }
                     break;
             }
@@ -427,7 +431,7 @@ public class MeeroActivityStatsActivity extends BaseNekoSettingsActivity {
             } else if (position == overviewHeaderRow || position == proHeaderRow || position == dryHeaderRow
                     || position == topHeaderRow || position == hoursHeaderRow) {
                 return TYPE_HEADER;
-            } else if (position == chartInfoRow || position == dryInfoRow || position == statusRow || position == infoRow) {
+            } else if (position == chartInfoRow || position == dryInfoRow || position == statusRow) {
                 return TYPE_INFO_PRIVACY;
             }
             return TYPE_TEXT;
