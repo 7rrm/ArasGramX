@@ -48,6 +48,8 @@ public class MeeroAutoReplyActivity extends BaseNekoSettingsActivity {
     private int textRow;
     private int rulesRow;
     private int exclusionsRow;
+    private int poolRow;
+    private int emojiRow;
     private int timingHeaderRow;
     private int cooldownRow;
     private int delayRow;
@@ -69,6 +71,8 @@ public class MeeroAutoReplyActivity extends BaseNekoSettingsActivity {
         textRow = addRow();
         rulesRow = addRow();
         exclusionsRow = addRow();
+        poolRow = addRow();
+        emojiRow = addRow();
         timingHeaderRow = addRow();
         cooldownRow = addRow();
         delayRow = addRow();
@@ -113,6 +117,13 @@ public class MeeroAutoReplyActivity extends BaseNekoSettingsActivity {
         int count = MeeroAutoReply.getExclusionCount();
         if (count == 0) return getString(R.string.MeeroExclusionsNone);
         String word = count == 1 ? getString(R.string.MeeroExclusionsWordOne) : getString(R.string.MeeroExclusionsWordMany);
+        return String.format(Locale.US, "%d %s", count, word);
+    }
+
+    private String poolValue() {
+        int count = MeeroAutoReply.getPoolCount();
+        if (count == 0) return getString(R.string.MeeroPoolNone);
+        String word = count == 1 ? getString(R.string.MeeroPoolWordOne) : getString(R.string.MeeroPoolWordMany);
         return String.format(Locale.US, "%d %s", count, word);
     }
 
@@ -162,6 +173,11 @@ public class MeeroAutoReplyActivity extends BaseNekoSettingsActivity {
             presentFragment(new MeeroAutoReplyRulesActivity());
         } else if (position == exclusionsRow) {
             presentFragment(new MeeroAutoReplyExclusionsActivity());
+        } else if (position == poolRow) {
+            presentFragment(new MeeroAutoReplyPoolActivity());
+        } else if (position == emojiRow) {
+            NekoConfig.meeroAutoReplyRandomEmoji.toggleConfigBool();
+            ((TextCheckCell) view).setChecked(NekoConfig.meeroAutoReplyRandomEmoji.Bool());
         } else if (position == cooldownRow) {
             showCooldownPicker();
         } else if (position == delayRow) {
@@ -179,9 +195,10 @@ public class MeeroAutoReplyActivity extends BaseNekoSettingsActivity {
     @Override
     public void onResume() {
         super.onResume();
-        // The rules/exclusions counts may change on the management screens.
+        // The rules/exclusions/pool counts may change on the management screens.
         listAdapter.notifyItemChanged(rulesRow);
         listAdapter.notifyItemChanged(exclusionsRow);
+        listAdapter.notifyItemChanged(poolRow);
     }
 
     private void showTextEditor() {
@@ -296,6 +313,8 @@ public class MeeroAutoReplyActivity extends BaseNekoSettingsActivity {
                     TextCheckCell checkCell = (TextCheckCell) holder.itemView;
                     if (position == autoReplyRow) {
                         checkCell.setTextAndCheck(getString(R.string.MeeroAutoReplyTitle), NekoConfig.meeroAutoReply.Bool(), true);
+                    } else if (position == emojiRow) {
+                        checkCell.setTextAndCheck(getString(R.string.MeeroRandomEmoji), NekoConfig.meeroAutoReplyRandomEmoji.Bool(), true);
                     } else if (position == windowRow) {
                         checkCell.setTextAndCheck(getString(R.string.MeeroAutoReplyWindowTitle), NekoConfig.meeroAutoReplyWindow.Bool(), true);
                     }
@@ -321,6 +340,8 @@ public class MeeroAutoReplyActivity extends BaseNekoSettingsActivity {
                         textCell.setTextAndValue(getString(R.string.MeeroRulesTitle), rulesValue(), true);
                     } else if (position == exclusionsRow) {
                         textCell.setTextAndValue(getString(R.string.MeeroExclusionsTitle), exclusionsValue(), true);
+                    } else if (position == poolRow) {
+                        textCell.setTextAndValue(getString(R.string.MeeroPoolTitle), poolValue(), true);
                     } else if (position == cooldownRow) {
                         textCell.setTextAndValue(getString(R.string.MeeroAutoReplyCooldown), cooldownName(NekoConfig.meeroAutoReplyCooldown.Int()), true);
                     } else if (position == delayRow) {
@@ -347,13 +368,13 @@ public class MeeroAutoReplyActivity extends BaseNekoSettingsActivity {
 
         @Override
         public int getItemViewType(int position) {
-            if (position == autoReplyRow || position == windowRow) {
+            if (position == autoReplyRow || position == windowRow || position == emojiRow) {
                 return TYPE_CHECK;
             } else if (position == contentHeaderRow || position == timingHeaderRow) {
                 return TYPE_HEADER;
             } else if (position == textRow) {
                 return TYPE_DETAIL_SETTINGS;
-            } else if (position == rulesRow || position == exclusionsRow || position == cooldownRow || position == delayRow
+            } else if (position == rulesRow || position == exclusionsRow || position == poolRow || position == cooldownRow || position == delayRow
                     || position == windowStartRow || position == windowEndRow) {
                 return TYPE_TEXT;
             }

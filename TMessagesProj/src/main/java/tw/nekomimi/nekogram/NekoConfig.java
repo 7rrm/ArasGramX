@@ -134,6 +134,11 @@ public class NekoConfig {
     public static ConfigItem meeroWatchList = addConfig("meeroWatchList", configTypeString, ""); // v102: JSON [{id,on}]
     public static ConfigItem meeroWatchData = addConfig("meeroWatchData", configTypeString, ""); // v102: JSON snapshots {id:{...}}
     public static ConfigItem meeroWatchLog = addConfig("meeroWatchLog", configTypeString, ""); // v102: JSON change log (newest first, cap 150)
+    public static ConfigItem meeroDeleteHunter = addConfig("meeroDeleteHunter", configTypeBool, true); // v103: notify+log on delete/edit by others
+    public static ConfigItem meeroDeleteLog = addConfig("meeroDeleteLog", configTypeString, ""); // v103: JSON hunter log (newest first, cap 150)
+    public static ConfigItem meeroAutoReplyPoolOn = addConfig("meeroAutoReplyPoolOn", configTypeBool, false); // v103: random reply texts
+    public static ConfigItem meeroAutoReplyPool = addConfig("meeroAutoReplyPool", configTypeString, ""); // v103: JSON array of reply texts
+    public static ConfigItem meeroAutoReplyRandomEmoji = addConfig("meeroAutoReplyRandomEmoji", configTypeBool, false); // v103: random emoji suffix
     public static ConfigItem meeroAutoReplyWindow = addConfig("meeroAutoReplyWindow", configTypeBool, false); // v100: optional reply-hours window
     public static ConfigItem meeroAutoReplyWindowStart = addConfig("meeroAutoReplyWindowStart", configTypeInt, 23 * 60); // minutes of day
     public static ConfigItem meeroAutoReplyWindowEnd = addConfig("meeroAutoReplyWindowEnd", configTypeInt, 8 * 60); // minutes of day

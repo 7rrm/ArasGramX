@@ -90,6 +90,8 @@ public class NekoSettingsActivity extends BaseNekoSettingsActivity {
     /** MeeroX v102: activity details + account watching entries (v102 requests). */
     private int activityStatsRow;
     private int watchRow;
+    /** MeeroX v103: delete/edit catcher entry. */
+    private int hunterRow;
 
     private int generalRow;
     private int translatorRow;
@@ -126,6 +128,7 @@ public class NekoSettingsActivity extends BaseNekoSettingsActivity {
         autoReplyRow = addRow();
         activityStatsRow = addRow();
         watchRow = addRow();
+        hunterRow = addRow();
         generalRow = addRow();
         translatorRow = addRow();
         chatRow = addRow();
@@ -435,6 +438,8 @@ public class NekoSettingsActivity extends BaseNekoSettingsActivity {
             presentFragment(new MeeroActivityStatsActivity());
         } else if (position == watchRow) {
             presentFragment(new MeeroWatchActivity());
+        } else if (position == hunterRow) {
+            presentFragment(new MeeroDeleteHunterActivity());
         } else if (position == chatRow) {
             presentFragment(new NekoChatSettingsActivity());
         } else if (position == generalRow) {
@@ -518,6 +523,8 @@ public class NekoSettingsActivity extends BaseNekoSettingsActivity {
                         textCell.setTextAndIcon(getString(R.string.MeeroStatsTitle), R.drawable.msg_stats_solar, true);
                     } else if (position == watchRow) {
                         textCell.setTextAndIcon(getString(R.string.MeeroWatchTitle), R.drawable.msg_views_solar, true);
+                    } else if (position == hunterRow) {
+                        textCell.setTextAndIcon(getString(R.string.MeeroHunterTitle), R.drawable.baseline_delete_forever_24, true);
                     } else if (position == chatRow) {
                         textCell.setTextAndIcon(getString(R.string.Chat), R.drawable.msg_discussion, true);
                     } else if (position == generalRow) {
@@ -558,7 +565,7 @@ public class NekoSettingsActivity extends BaseNekoSettingsActivity {
             } else if (position == meeroRow ||
                     position == chatRow || position == generalRow || position == passcodeRow || position == experimentRow || position == translatorRow ||
                     position == autoReplyRow ||
-                    position == activityStatsRow || position == watchRow ||
+                    position == activityStatsRow || position == watchRow || position == hunterRow ||
                     position == fontsRow ||
                     position == importSettingsRow || position == exportSettingsRow || position == resetSettingsRow || position == appRestartRow ||
                     position == aboutRow) {

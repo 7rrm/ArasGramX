@@ -820,6 +820,26 @@
     <string name="MeeroWatchPhotoSave">تنزيل للمعرض</string>
     <string name="MeeroWatchSaved">انحفظت بالمعرض ✅</string>
     <string name="MeeroWatchSaveFailed">فشل الحفظ (تأكد من إذن التخزين)</string>
+    <string name="MeeroHunterTitle">صائد الحاذف</string>
+    <string name="MeeroHunterMaster">التقاط الحذف والتعديل</string>
+    <string name="MeeroHunterLogHeader">سجل الحذف والتعديل</string>
+    <string name="MeeroHunterDeletedMsg">حذف رسالة</string>
+    <string name="MeeroHunterEditedMsg">عدّل رسالة</string>
+    <string name="MeeroHunterMedia">وسائط 📎</string>
+    <string name="MeeroHunterSomeone">شخص ما</string>
+    <string name="MeeroHunterEmpty">لا شيء ملتقط بعد</string>
+    <string name="MeeroHunterClearConfirm">تمسح السجل كله؟</string>
+    <string name="MeeroHunterInfo">لما الطرف الثاني يحذف أو يعدّل رسالة يوصلك إشعار فوري وينسجل هنا النص الأصلي (قديم ← جديد بالتعديل) مع الوقت بالدقيقة. رسائلك أنت والرسائل الخدمية لا تُلتقط أبداً. كل شيء يبقى على جهازك. المفتاح مطفي = لا التقاط ولا إشعارات. ملاحظة: التقاط التعديل يتبع مفتاح «حفظ تاريخ التعديلات» المدمج (فعّال افتراضياً).</string>
+    <string name="MeeroPoolTitle">نصوص عشوائية ⚡</string>
+    <string name="MeeroPoolMaster">تفعيل النصوص العشوائية</string>
+    <string name="MeeroPoolAdd">إضافة نص</string>
+    <string name="MeeroPoolNone">بلا نصوص</string>
+    <string name="MeeroPoolWordOne">نص</string>
+    <string name="MeeroPoolWordMany">نصوص</string>
+    <string name="MeeroPoolEdit">تعديل</string>
+    <string name="MeeroPoolDelete">حذف</string>
+    <string name="MeeroPoolInfo">عند التفعيل، كل رد تلقائي عام يختار نصاً عشوائياً من القائمة (يبدو طبيعي أكثر). قاعدة الشخص الخاصة تتغلب دائماً — العشوائي للرد العام فقط. اكتب {name} وتنحط اسم الشخص مكانها.</string>
+    <string name="MeeroRandomEmoji">إيموجي عشوائي بالنهاية 🎲</string>
     <string name="MeeroGhostSwipeReadInfo">خيار «عدم قراءة الرسائل» يحجب إيصالات القراءة عن الكل، لكن أحياناً تريد أن يعرف شخصٌ واحد أنك قرأت: فعّل هذا الخيار واسحب تلك المحادثة في قائمة الدردشات فيصلها وحدها إيصال قراءة حقيقي، والباقي يبقى مخفياً. شرط واحد: إجراء السحب لازم يكون «مقروءة» — تضبطه من صف «ضبط إجراء السحب» في الأعلى، أو من: الإعدادات ← إعدادات المحادثات ← «إجراءات السحْب لقائمة المحادثات». عند الإطفاء يرجع الشبح لسلوك الفورك الرسمي بالضبط.</string>
 
 

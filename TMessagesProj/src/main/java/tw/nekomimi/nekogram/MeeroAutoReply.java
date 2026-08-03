@@ -164,6 +164,11 @@ public final class MeeroAutoReply {
 
     private static String resolveText(TLRPC.User user, int account, String ruleText) {
         String template = ruleText;
+        // v103: random pool (general reply only - a per-chat rule always wins).
+        if (TextUtils.isEmpty(template) && NekoConfig.meeroAutoReplyPoolOn.Bool()) {
+            String pooled = randomPoolText();
+            if (!TextUtils.isEmpty(pooled)) template = pooled;
+        }
         if (TextUtils.isEmpty(template)) {
             template = NekoConfig.meeroAutoReplyText.String();
         }
@@ -174,8 +179,83 @@ public final class MeeroAutoReply {
         if (user != null && !TextUtils.isEmpty(user.first_name)) {
             firstName = user.first_name;
         }
-        return template.replace("{name}", firstName);
+        String out = template.replace("{name}", firstName);
+        // v103: optional random emoji suffix.
+        if (NekoConfig.meeroAutoReplyRandomEmoji.Bool()) {
+            out += " " + RANDOM_EMOJI[POOL_RANDOM.nextInt(RANDOM_EMOJI.length)];
+        }
+        return out;
     }
+
+    // --- Random reply pool (MeeroX v103). JSON array of strings.
+    // A per-chat rule text always beats the pool; the pool is only the
+    // general reply. Random emoji suffix applies to every reply.
+
+    private static final java.util.Random POOL_RANDOM = new java.util.Random();
+    private static final String[] RANDOM_EMOJI = {"✅", "👌", "🌙", "⚡", "🙏", "💫", "☕", "🌟"};
+
+    private static JSONArray readPool() {
+        try {
+            String raw = NekoConfig.meeroAutoReplyPool.String();
+            if (!TextUtils.isEmpty(raw)) return new JSONArray(raw);
+        } catch (Throwable ignore) {}
+        return new JSONArray();
+    }
+
+    private static synchronized void writePool(JSONArray array) {
+        NekoConfig.meeroAutoReplyPool.setConfigString(array == null ? "" : array.toString());
+    }
+
+    private static String randomPoolText() {
+        JSONArray pool = readPool();
+        if (pool.length() == 0) return null;
+        return pool.optString(POOL_RANDOM.nextInt(pool.length()), null);
+    }
+
+    public static synchronized ArrayList<String> getPoolTexts() {
+        ArrayList<String> out = new ArrayList<>();
+        JSONArray pool = readPool();
+        for (int i = 0; i < pool.length(); i++) {
+            String s = pool.optString(i, "");
+            if (!TextUtils.isEmpty(s)) out.add(s);
+        }
+        return out;
+    }
+
+    public static int getPoolCount() {
+        return readPool().length();
+    }
+
+    public static synchronized void addPoolText(String text) {
+        if (TextUtils.isEmpty(text)) return;
+        JSONArray pool = readPool();
+        pool.put(text);
+        writePool(pool);
+    }
+
+    /** Replaces the text at index (screen keeps indexes stable within a session view). */
+    public static synchronized void setPoolText(int index, String text) {
+        JSONArray pool = readPool();
+        if (index < 0 || index >= pool.length()) return;
+        try {
+            pool.put(index, text);
+        } catch (Throwable ignore) {}
+        writePool(pool);
+    }
+
+    public static synchronized void removePoolText(int index) {
+        JSONArray pool = readPool();
+        if (index < 0 || index >= pool.length()) return;
+        JSONArray out = new JSONArray();
+        for (int i = 0; i < pool.length(); i++) {
+            if (i != index) {
+                String s = pool.optString(i, null);
+                if (s != null) out.put(s);
+            }
+        }
+        writePool(out);
+    }
+}
 
     /** True only when the visible top fragment is that exact chat and the screen is on. */
     private static boolean isChatVisible(long dialogId) {

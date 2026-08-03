@@ -131,6 +131,26 @@
     <string name="MeeroWatchPhotoSave">Save to gallery</string>
     <string name="MeeroWatchSaved">Saved to gallery ✅</string>
     <string name="MeeroWatchSaveFailed">Save failed (check storage permission)</string>
+    <string name="MeeroHunterTitle">Delete catcher</string>
+    <string name="MeeroHunterMaster">Catch deletes &amp; edits</string>
+    <string name="MeeroHunterLogHeader">Delete &amp; edit log</string>
+    <string name="MeeroHunterDeletedMsg">deleted a message</string>
+    <string name="MeeroHunterEditedMsg">edited a message</string>
+    <string name="MeeroHunterMedia">Media 📎</string>
+    <string name="MeeroHunterSomeone">Someone</string>
+    <string name="MeeroHunterEmpty">Nothing caught yet</string>
+    <string name="MeeroHunterClearConfirm">Delete the whole log?</string>
+    <string name="MeeroHunterInfo">When the other side deletes or edits a message you get an instant notification and the event lands here with the original text (old ← new for edits) and the time. Own messages and service messages are never captured. Everything stays on your device. Switch off = nothing is caught and nothing is notified. Note: edit catching follows the built-in "save edit history" toggle (on by default).</string>
+    <string name="MeeroPoolTitle">Random replies ⚡</string>
+    <string name="MeeroPoolMaster">Random reply texts</string>
+    <string name="MeeroPoolAdd">Add a text</string>
+    <string name="MeeroPoolNone">No texts</string>
+    <string name="MeeroPoolWordOne">text</string>
+    <string name="MeeroPoolWordMany">texts</string>
+    <string name="MeeroPoolEdit">Edit</string>
+    <string name="MeeroPoolDelete">Delete</string>
+    <string name="MeeroPoolInfo">When on, every general auto-reply picks one random text from this list (looks more human). A per-chat rule always wins - the pool is the general reply only. Write {name} and it becomes the person\\'s name.</string>
+    <string name="MeeroRandomEmoji">Random emoji at the end 🎲</string>
     <string name="MeeroGhostSwipeReadInfo">"Don't read messages" hides read receipts from everyone, but sometimes you want one person to know you read their chat: enable this, swipe that chat in the dialogs list, and its receipt is sent alone while everything else stays hidden. One requirement: the swipe action must be Read - set it in the Chat swipe action row above, or in Settings - Chat Settings - Chat list swipe gesture. When off, ghost mode behaves exactly like the stock fork.</string>
 
 

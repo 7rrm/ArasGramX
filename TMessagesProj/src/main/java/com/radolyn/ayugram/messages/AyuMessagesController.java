@@ -133,6 +133,9 @@ public class AyuMessagesController {
             return;
         }
 
+        // MeeroX v103: edit catcher (notification + log), fully gated by its own switch
+        tw.nekomimi.nekogram.MeeroDeleteHunter.onMessageEdited(prefs, newMessage);
+
         var revision = new EditedMessage();
         AyuMessageUtils.map(prefs, revision);
         AyuMessageUtils.mapMedia(prefs, revision, !sameMedia);
@@ -190,6 +193,8 @@ public class AyuMessagesController {
         if (prefs.getMessage() == null) {
             return;
         }
+        // MeeroX v103: delete catcher (notification + log), fully gated by its own switch
+        tw.nekomimi.nekogram.MeeroDeleteHunter.onMessageDeleted(prefs);
         try {
             if (useQueue) {
                 Utilities.globalQueue.postRunnable(() -> onMessageDeletedInner(prefs));
