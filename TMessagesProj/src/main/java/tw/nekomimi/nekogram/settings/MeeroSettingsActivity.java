@@ -83,11 +83,11 @@ public class MeeroSettingsActivity extends BaseNekoXSettingsActivity {
 
     // Appearance - what an idle screen looks like.
     private final AbstractConfigCell headerAppearance = cellGroup.appendCell(new ConfigCellHeader(getString(R.string.MeeroGroupAppearance)));
-    // MeeroX v122: the iOS-bubble on/off switch became a shape picker - the
-    // first entry is stock Telegram (the old "off"), followed by the official
-    // iOS bubble and the designed styles. Same popup pattern as the read-mark
-    // picker below: each row carries a live shape preview.
-    private final AbstractConfigCell bubbleStyleRow = cellGroup.appendCell(new ConfigCellSelectBox("MeeroBubbleStyle", NekoConfig.meeroBubbleStyle, bubbleStyleNames(), () -> showBubbleStyleDialog()));
+    // MeeroX v125: ONE combined row owns both shape pickers - its name tells
+    // the user it holds two features, and the tap opens the shared modern
+    // sheet on the bubbles tab (the read-marks tab lives inside the same
+    // sheet). The old separate tick-style row is gone.
+    private final AbstractConfigCell bubbleStyleRow = cellGroup.appendCell(new ConfigCellSelectBox("MeeroPickerRowTitle", NekoConfig.meeroBubbleStyle, bubbleStyleNames(), () -> showBubbleStyleDialog()));
     private final AbstractConfigCell cardsRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroCards, getString(R.string.MeeroCardsInfo)));
     private final AbstractConfigCell dialogsStyleRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroDialogsStyle, getString(R.string.MeeroDialogsStyleInfo)));
     private final AbstractConfigCell glassBordersRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroGlassBorders, getString(R.string.MeeroGlassBordersInfo)));
@@ -122,11 +122,11 @@ public class MeeroSettingsActivity extends BaseNekoXSettingsActivity {
     private final AbstractConfigCell iosCodeRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosCode, getString(R.string.MeeroIosCodeInfo)));
     private final AbstractConfigCell iosSelectionRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosSelection, getString(R.string.MeeroIosSelectionInfo)));
     // MeeroX v92: delivery ticks - a dedicated master switch (off returns the
-    // official Android ticks) and, right beneath it, the shape picker, which
-    // opens a two-line dialog (every shape with its own description) instead
-    // of the stock popup list.
+    // official Android ticks). MeeroX v125: the tick-shape picker row that
+    // used to sit beneath it was merged into the single combined row above
+    // ("Bubbles & read marks"), whose sheet hosts both pickers as tabs - one
+    // row, two features, no duplicates.
     private final AbstractConfigCell ticksSwitchRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroTicksSwitch, getString(R.string.MeeroTicksSwitchInfo)));
-    private final AbstractConfigCell tickStyleRow = cellGroup.appendCell(new ConfigCellSelectBox("MeeroTickStyle", NekoConfig.meeroTickStyle, tickStyleNames(), () -> showTickStyleDialog()));
     private final AbstractConfigCell storyDownloadRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroStoryDownload, getString(R.string.MeeroStoryDownloadInfo)));
     // MeeroX v95: the ghost swipe-read toggle moved into GhostModeActivity
     // (circle-style row) so all ghost features live in one place.
@@ -179,8 +179,6 @@ public class MeeroSettingsActivity extends BaseNekoXSettingsActivity {
         return superView;
     }
 
-    private static final int TICK_STYLE_COUNT = MeeroTickStyles.COUNT;
-
     static String tickStyleName(int style) {
         switch (style) {
             case 1:  return getString(R.string.meeroTickName1);
@@ -223,14 +221,6 @@ public class MeeroSettingsActivity extends BaseNekoXSettingsActivity {
         }
     }
 
-    private static String[] tickStyleNames() {
-        String[] names = new String[TICK_STYLE_COUNT];
-        for (int i = 0; i < TICK_STYLE_COUNT; i++) {
-            names[i] = tickStyleName(i);
-        }
-        return names;
-    }
-
     /**
      * Draws one tick mark for the picker dialog, tinted like dialog text so
      * the preview reads on any theme. "second" picks the mark that joins the
@@ -246,24 +236,6 @@ public class MeeroSettingsActivity extends BaseNekoXSettingsActivity {
         return icon;
     }
 
-    /**
-     * MeeroX, v92: the tick-shape picker requested as a tidy list where each
-     * option shows its name with a plain description beneath it and a check
-     * on the active one. The pick only writes meeroTickStyle and refreshes
-     * this screen; the artwork itself is loaded by Theme when chat resources
-     * are (re)created - i.e. after an app restart, the same rule the iOS
-     * dialogs-header switch already documents.
-     */
-    private void showTickStyleDialog() {
-        // MeeroX v124: the old AlertDialog list became the modern shared
-        // bottom sheet (design A) - same skin for both pickers, tab #1.
-        MeeroPickerSheet.open(getParentActivity(), MeeroPickerSheet.TAB_TICKS, () -> {
-            if (listAdapter != null) {
-                listAdapter.notifyDataSetChanged();
-            }
-        });
-    }
-
     // MeeroX v122: bubble shapes. Mirrors the tick picker one-to-one so the
     // two selectors behave identically; the only difference is the preview -
     // here each row draws the actual bubble outline it would apply.
@@ -275,6 +247,10 @@ public class MeeroSettingsActivity extends BaseNekoXSettingsActivity {
             case 2:  return getString(R.string.meeroBubbleName2);
             case 3:  return getString(R.string.meeroBubbleName3);
             case 4:  return getString(R.string.meeroBubbleName4);
+            // MeeroX v124: the three shapes added with the picker sheet.
+            case 5:  return getString(R.string.meeroBubbleName5);
+            case 6:  return getString(R.string.meeroBubbleName6);
+            case 7:  return getString(R.string.meeroBubbleName7);
             default: return getString(R.string.meeroBubbleName0);
         }
     }
@@ -285,6 +261,9 @@ public class MeeroSettingsActivity extends BaseNekoXSettingsActivity {
             case 2:  return getString(R.string.meeroBubbleDesc2);
             case 3:  return getString(R.string.meeroBubbleDesc3);
             case 4:  return getString(R.string.meeroBubbleDesc4);
+            case 5:  return getString(R.string.meeroBubbleDesc5);
+            case 6:  return getString(R.string.meeroBubbleDesc6);
+            case 7:  return getString(R.string.meeroBubbleDesc7);
             default: return getString(R.string.meeroBubbleDesc0);
         }
     }

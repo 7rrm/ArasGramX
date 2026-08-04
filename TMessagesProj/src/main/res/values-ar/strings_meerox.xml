@@ -873,6 +873,7 @@
     <string name="meeroBubbleDesc6">استدارة مفرطة 22 بدون ذيل، مثل رسائل إنستا.</string>
     <string name="meeroBubbleName7">واتساب</string>
     <string name="meeroBubbleDesc7">زوايا ناعمة 8 مع طرف منحني صغير مثل واتساب.</string>
+    <string name="MeeroPickerRowTitle">الفقاعات وعلامات القراءة</string>
     <string name="MeeroPickerTabBubbles">الفقاعات</string>
     <string name="MeeroPickerTabTicks">علامات القراءة</string>
     <string name="MeeroPickerLiveHint">معاينة حية — لمسة على البطاقة تُطبَّق فوراً</string>

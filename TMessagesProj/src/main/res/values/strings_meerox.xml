@@ -184,6 +184,7 @@
     <string name="meeroBubbleDesc6">Extra-rounded 22dp, no tail. Instagram DM vibe.</string>
     <string name="meeroBubbleName7">WhatsApp</string>
     <string name="meeroBubbleDesc7">Soft 8dp corners with a tiny curved nub.</string>
+    <string name="MeeroPickerRowTitle">Bubbles &amp; read marks</string>
     <string name="MeeroPickerTabBubbles">Bubbles</string>
     <string name="MeeroPickerTabTicks">Read marks</string>
     <string name="MeeroPickerLiveHint">Live preview - your tap applies instantly</string>

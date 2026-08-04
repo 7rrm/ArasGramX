@@ -143,6 +143,13 @@ public final class MeeroPickerSheet {
         cards.setOrientation(LinearLayout.HORIZONTAL);
         final HorizontalScrollView scroller = new HorizontalScrollView(context);
         scroller.setHorizontalScrollBarEnabled(false);
+        // v125: force a plain left-to-right order so the styles read exactly
+        // like the agreed mock (newest at the far right, always reachable),
+        // and a fade edge advertises that more cards exist.
+        scroller.setLayoutDirection(View.LAYOUT_DIRECTION_LTR);
+        cards.setLayoutDirection(View.LAYOUT_DIRECTION_LTR);
+        scroller.setHorizontalFadingEdgeEnabled(true);
+        scroller.setFadingEdgeLength(dp(24));
         scroller.addView(cards);
         root.addView(scroller, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
 
@@ -225,7 +232,7 @@ public final class MeeroPickerSheet {
         if (bubbles) {
             final ImageView iv = new ImageView(context);
             iv.setImageDrawable(MeeroBubbleStyles.previewDrawable(style, colOut));
-            LinearLayout.LayoutParams ip = new LinearLayout.LayoutParams(dp(80), dp(38));
+            LinearLayout.LayoutParams ip = new LinearLayout.LayoutParams(dp(74), dp(36));
             ip.bottomMargin = dp(4);
             inner.addView(iv, ip);
         } else {
@@ -239,7 +246,7 @@ public final class MeeroPickerSheet {
             l2.setMarginStart(dp(9));
             icons.addView(single, l1);
             icons.addView(second, l2);
-            LinearLayout.LayoutParams ip = new LinearLayout.LayoutParams(dp(80), dp(38));
+            LinearLayout.LayoutParams ip = new LinearLayout.LayoutParams(dp(74), dp(36));
             ip.bottomMargin = dp(4);
             inner.addView(icons, ip);
         }
@@ -251,7 +258,7 @@ public final class MeeroPickerSheet {
         name.setEllipsize(android.text.TextUtils.TruncateAt.END);
         name.setGravity(Gravity.CENTER);
         name.setText(bubbles ? MeeroSettingsActivity.bubbleStyleName(style) : MeeroSettingsActivity.tickStyleName(style));
-        inner.addView(name, new LinearLayout.LayoutParams(dp(80), LinearLayout.LayoutParams.WRAP_CONTENT));
+        inner.addView(name, new LinearLayout.LayoutParams(dp(76), LinearLayout.LayoutParams.WRAP_CONTENT));
 
         if (bubbles) {
             final TextView desc = new TextView(context);
@@ -260,7 +267,7 @@ public final class MeeroPickerSheet {
             desc.setGravity(Gravity.CENTER);
             desc.setMaxLines(2);
             desc.setText(MeeroSettingsActivity.bubbleStyleDesc(style));
-            inner.addView(desc, new LinearLayout.LayoutParams(dp(80), LinearLayout.LayoutParams.WRAP_CONTENT));
+            inner.addView(desc, new LinearLayout.LayoutParams(dp(76), LinearLayout.LayoutParams.WRAP_CONTENT));
         }
 
         final TextView badge = new TextView(context);
@@ -274,7 +281,7 @@ public final class MeeroPickerSheet {
         badge.setBackground(bd);
         badge.setVisibility(selected ? View.VISIBLE : View.INVISIBLE);
 
-        FrameLayout.LayoutParams ip2 = new FrameLayout.LayoutParams(dp(104), FrameLayout.LayoutParams.WRAP_CONTENT);
+        FrameLayout.LayoutParams ip2 = new FrameLayout.LayoutParams(dp(98), FrameLayout.LayoutParams.WRAP_CONTENT);
         ip2.setMargins(0, dp(7), 0, 0);
         wrap.addView(inner, ip2);
 
@@ -313,7 +320,7 @@ public final class MeeroPickerSheet {
             this.colOut = colOut;
             this.colIn = colIn;
             this.colInk = colInk;
-            panel.setColor(blend(colSheet, colAccent, 0.08f));
+            panel.setColor(blend(colSheet, colAccent, 0.13f));
             panel.setStyle(Paint.Style.FILL);
             stripe.setStyle(Paint.Style.FILL);
         }
@@ -336,25 +343,29 @@ public final class MeeroPickerSheet {
             rf.set(0, 0, w, h);
             canvas.drawRoundRect(rf, dp(18), dp(18), panel);
 
-            final float bw = dp(104), bh = dp(46);
-            final float inL = dp(14), inT = (h - bh) / 2f;
+            // v125: more real - the pair is offset and sized like a live
+            // conversation instead of two identical stadiums.
+            final float bh = dp(50);
+            final float inL = dp(14), inT = (h - bh) / 2f - dp(4);
             final float outR = w - dp(14);
 
             // incoming message
             final int bubbleStyle = mode == TAB_BUBBLES ? style : NekoConfig.meeroBubbleStyle.Int();
-            MeeroBubbleStyles.drawPreview(canvas, bubbleStyle, true, inL, inT, inL + bw, inT + bh, colIn);
-            stripes(canvas, inL + (mode == TAB_BUBBLES ? dp(8) : dp(16)), inT, colIn);
+            final float inW = dp(92);
+            MeeroBubbleStyles.drawPreview(canvas, bubbleStyle, true, inL, inT, inL + inW, inT + bh, colIn);
+            stripes(canvas, inL + dp(15), inT, colIn);
 
             // outgoing message
-            final float outL = outR - bw;
-            MeeroBubbleStyles.drawPreview(canvas, bubbleStyle, false, outL, inT, outR, inT + bh, colOut);
-            stripes(canvas, outL + dp(14), inT, colOut);
+            final float outW = dp(116);
+            final float outL = outR - outW;
+            MeeroBubbleStyles.drawPreview(canvas, bubbleStyle, false, outL, inT + dp(8), outR, inT + dp(8) + bh, colOut);
+            stripes(canvas, outL + dp(14), inT + dp(8), colOut);
 
             if (mode == TAB_TICKS && tick1 != null && tick2 != null) {
                 // the candidate tick pair, worn at the bubble's inner bottom
                 final int s = dp(14);
                 final int left = (int) (outR - dp(34));
-                final int top = (int) (inT + bh - dp(20));
+                final int top = (int) (inT + dp(8) + bh - dp(20));
                 tick2.setBounds(left, top, left + s, top + s);
                 tick2.draw(canvas);
                 tick1.setBounds(left + dp(8), top, left + dp(8) + s, top + s);
@@ -363,11 +374,11 @@ public final class MeeroPickerSheet {
         }
 
         private void stripes(Canvas canvas, float l, float top, int fill) {
-            stripe.setColor(darken(fill, 0.86f));
-            rf.set(l, top + dp(10), l + dp(52), top + dp(16));
-            canvas.drawRoundRect(rf, dp(3), dp(3), stripe);
-            rf.set(l, top + dp(21), l + dp(34), top + dp(27));
-            canvas.drawRoundRect(rf, dp(3), dp(3), stripe);
+            stripe.setColor(darken(fill, 0.88f));
+            rf.set(l, top + dp(11), l + dp(50), top + dp(15.5f));
+            canvas.drawRoundRect(rf, dp(2.5f), dp(2.5f), stripe);
+            rf.set(l, top + dp(21), l + dp(33), top + dp(25.5f));
+            canvas.drawRoundRect(rf, dp(2.5f), dp(2.5f), stripe);
         }
     }
 }

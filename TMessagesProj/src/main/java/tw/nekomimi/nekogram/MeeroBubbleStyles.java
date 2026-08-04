@@ -196,7 +196,12 @@ public final class MeeroBubbleStyles {
         rad = Math.min(rad, (b - t - 2f * dpu) / 2f);
 
         final Path path = new Path();
-        path.addRoundRect(new RectF(bodyL, t + dpu, bodyR, b - dpu), rad, rad, Path.Direction.CW);
+        // v125: the body MUST wind the way the tail contours expect for each
+        // side (outgoing CW, incoming CCW) - in generatePath the incoming
+        // body happens to be CCW, which is why real bubbles were fine while
+        // the CW incoming preview cancelled the overlap and spat the tail
+        // out as a detached chunk.
+        path.addRoundRect(new RectF(bodyL, t + dpu, bodyR, b - dpu), rad, rad, incoming ? Path.Direction.CCW : Path.Direction.CW);
         final float baseY = b - dpu;
         if (style == IOS_OFFICIAL) {
             appendOfficialTail(path, incoming ? bodyL : bodyR, baseY, incoming, dpu);
