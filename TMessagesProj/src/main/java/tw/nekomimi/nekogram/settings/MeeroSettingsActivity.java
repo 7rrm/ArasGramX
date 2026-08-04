@@ -26,9 +26,12 @@ import org.telegram.ui.ActionBar.AlertDialog;
 import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.ActionBar.ThemeDescription;
 import org.telegram.ui.ActionBar.Theme.ResourcesProvider;
+import org.telegram.ui.Cells.CollapseTextCell;
+import org.telegram.ui.Cells.GraySectionCell;
 import org.telegram.ui.Cells.ShadowSectionCell;
 import org.telegram.ui.Cells.TextCell;
 import org.telegram.ui.Cells.TextCheckCell;
+import org.telegram.ui.Cells.TextInfoPrivacyCell;
 import org.telegram.ui.Cells.TextSettingsCell;
 import org.telegram.ui.Components.AnimatedTextView;
 import org.telegram.ui.Components.LayoutHelper;
@@ -196,8 +199,43 @@ public class MeeroSettingsActivity extends BaseNekoXSettingsActivity {
 
         setupDefaultListeners();
         applyMeeroGlassChrome();
+        applySectionsSkin();
 
         return superView;
+    }
+
+    /**
+     * MeeroX v128 FIX: the base fragment called listView.setSections(true),
+     * which attaches a decoration that paints THEMED section cards
+     * (key_windowBackgroundWhite - a blue-gray in many dark themes) behind
+     * the rows. Live that looks fine at rest, but while scrolling the
+     * sections drawer repaints and the themed wash bleeds through our
+     * translucent cards: the whole list flashed to image #2 in the user's
+     * report. The same call also re-arms the themed row selector
+     * (key_settings_listSelector).
+     *
+     * While the glass switch is on we re-install the SAME geometry
+     * (12dp/16dp/topPadding) but with a painter that paints NOTHING - our
+     * v127 cards are the only cards in town - and pin the row selector to
+     * our fixed press tint. OFF restores the exact stock call.
+     */
+    private void applySectionsSkin() {
+        if (listView == null) {
+            return;
+        }
+        if (glassOn()) {
+            listView.setSections(
+                    view -> !(view instanceof TextInfoPrivacyCell
+                            || view instanceof ShadowSectionCell
+                            || view instanceof GraySectionCell
+                            || view instanceof CollapseTextCell),
+                    AndroidUtilities.dp(12), AndroidUtilities.dp(16),
+                    (canvas, rect, rx, ry, alpha) -> { /* glass: no themed section paint */ },
+                    true);
+            listView.setSelectorDrawableColor(MeeroGlassTheme.press());
+        } else {
+            listView.setSections(true);
+        }
     }
 
     // ------------------------------------------------------------------
@@ -264,7 +302,9 @@ public class MeeroSettingsActivity extends BaseNekoXSettingsActivity {
                 actionBar.setBackgroundColor(MeeroGlassTheme.actionBarBg());
                 actionBar.setTitleColor(MeeroGlassTheme.ink());
                 actionBar.setItemsColor(MeeroGlassTheme.ink(), false);
-            } else {
+            }
+            applySectionsSkin();
+            if (!glassOn()) {
                 // exact stock, mirroring the base fragment's theme keys
                 fragmentView.setBackgroundColor(Theme.getColor(Theme.key_windowBackgroundGray));
                 actionBar.setBackgroundColor(Theme.getColor(Theme.key_avatar_backgroundActionBarBlue));

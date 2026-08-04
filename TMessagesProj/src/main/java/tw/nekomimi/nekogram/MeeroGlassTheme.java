@@ -116,6 +116,16 @@ public final class MeeroGlassTheme {
         return 0x40FF4E8A; // rose 25%
     }
 
+    /** v128: bottom-sheet surface (picker sheet) - lifted, but of the family. */
+    public static int sheetBg() {
+        return isNight() ? 0xFF12121A : 0xFFFBFBFE;
+    }
+
+    /** v128: segmented-control track inside the picker sheet. */
+    public static int segTrack() {
+        return isNight() ? 0xFF1C1C26 : 0xFFE9E9F0;
+    }
+
     /**
      * Rounded section-card background; corners rounded only on the outer
      * edges of the card so stacked rows read as one glass panel.

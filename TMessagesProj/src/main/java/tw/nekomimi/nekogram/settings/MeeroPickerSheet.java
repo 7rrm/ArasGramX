@@ -24,6 +24,7 @@ import org.telegram.ui.ActionBar.BottomSheet;
 import org.telegram.ui.ActionBar.Theme;
 
 import tw.nekomimi.nekogram.MeeroBubbleStyles;
+import tw.nekomimi.nekogram.MeeroGlassTheme;
 import tw.nekomimi.nekogram.MeeroTickStyles;
 import tw.nekomimi.nekogram.NekoConfig;
 
@@ -73,11 +74,16 @@ public final class MeeroPickerSheet {
         final BottomSheet sheet = new BottomSheet(context, false);
         final int[] tab = {firstTab};
 
-        final int colSheet = Theme.getColor(Theme.key_dialogBackground);
-        final int colInk = Theme.getColor(Theme.key_dialogTextBlack);
-        final int colSub = Theme.getColor(Theme.key_dialogTextGray3);
-        final int colAccent = Theme.getColor(Theme.key_dialogTextBlue);
-        final int colSegTrack = Theme.getColor(Theme.key_windowBackgroundGray);
+        // v128: with the glass skin on, the sheet wears the fixed MeeroX
+        // palette like the settings screen (theme-proof, day/night only).
+        // The hero bubbles stay on chat colors on purpose - they preview
+        // what the chat itself looks like.
+        final boolean glass = MeeroGlassTheme.enabled();
+        final int colSheet = glass ? MeeroGlassTheme.sheetBg() : Theme.getColor(Theme.key_dialogBackground);
+        final int colInk = glass ? MeeroGlassTheme.ink() : Theme.getColor(Theme.key_dialogTextBlack);
+        final int colSub = glass ? MeeroGlassTheme.sub() : Theme.getColor(Theme.key_dialogTextGray3);
+        final int colAccent = glass ? MeeroGlassTheme.ACC1 : Theme.getColor(Theme.key_dialogTextBlue);
+        final int colSegTrack = glass ? MeeroGlassTheme.segTrack() : Theme.getColor(Theme.key_windowBackgroundGray);
         final int colOut = Theme.getColor(Theme.key_chat_outBubble);
         final int colIn = Theme.getColor(Theme.key_chat_inBubble);
 
