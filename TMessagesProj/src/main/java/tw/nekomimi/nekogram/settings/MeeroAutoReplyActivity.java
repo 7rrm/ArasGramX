@@ -456,6 +456,7 @@ public class MeeroAutoReplyActivity extends BaseNekoSettingsActivity {
                         headerCell.setText(getString(R.string.MeeroRulesContentHeader));
                     } else if (position == timingHeaderRow) {
                         headerCell.setText(getString(R.string.MeeroRulesTimingHeader));
+                    }
                     break;
                 case TYPE_DETAIL_SETTINGS:
                     TextDetailSettingsCell detailCell = (TextDetailSettingsCell) holder.itemView;
@@ -488,6 +489,7 @@ public class MeeroAutoReplyActivity extends BaseNekoSettingsActivity {
                     } else if (position == boundsInfoRow) {
                         // v111: usage-guide button instead of the long footers.
                         textCell.setTextAndValue(getString(R.string.MeeroUsageGuide), "", true);
+                    }
                     break;
                 case TYPE_INFO_PRIVACY:
                     TextInfoPrivacyCell cell = (TextInfoPrivacyCell) holder.itemView;
