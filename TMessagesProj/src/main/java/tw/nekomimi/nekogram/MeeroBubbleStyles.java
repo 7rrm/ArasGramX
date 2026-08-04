@@ -84,18 +84,31 @@ public final class MeeroBubbleStyles {
     }
 
     /**
-     * Appends the official iOS crescent tail as ITS OWN closed contour, so
+     * Appends the official iOS crescent tail as ITS OWN closed contour(s), so
      * the corner of the body keeps its full radius and the crescent curls out
      * from behind it - exactly how ChatMessageBubbleImages.swift layers the
      * two ellipses. `dpu` is pixels-per-dp (callers pass
      * AndroidUtilities.density).
      *
-     * The outgoing contour winds clockwise and the incoming one
+     * The v122 build drew only the droplet and left a wedge of background
+     * between the corner arc and the tail (the visible "break"). The missing
+     * piece is the CONNECTOR the official file fills between the corner and
+     * the tail chord:
+     *
+     *     fill(CGRect(x: 16.5, y: 16.5, w: 16.5, h: ~8))   // in the 33pt tile
+     *
+     * i.e. the body's edge keeps running down to the chord and the crescent
+     * flows out of it with no gap. That column is drawn here first, mirrored
+     * per side. The outgoing contour winds clockwise and the incoming one
      * counter-clockwise, matching generatePath's per-branch traversal so the
-     * contour UNIONS with the body instead of cutting a hole in it.
+     * contours UNION with the body instead of cutting a hole in it.
      */
     public static void appendOfficialTail(Path path, float edgeX, float baseY, boolean outgoing, float dpu) {
         if (outgoing) {
+            // Connector column: keeps the edge straight down to the chord,
+            // exactly like the official fill between the corner and the tail.
+            path.addRect(edgeX - 16.5f * dpu, baseY - 16.5f * dpu, edgeX, baseY - 8.5f * dpu, Path.Direction.CW);
+            // Crescent: ellipse-half (13.5 x 8.5) minus ellipse (11.5 x 10.5).
             path.moveTo(edgeX - 9f * dpu, baseY - 8.5f * dpu);
             path.lineTo(edgeX, baseY - 8.5f * dpu);
             path.quadTo(edgeX + 0.13f * dpu, baseY - 3.21f * dpu, edgeX + 4.74f * dpu, baseY);
@@ -103,6 +116,7 @@ public final class MeeroBubbleStyles {
             path.quadTo(edgeX - 9f * dpu, baseY, edgeX - 9f * dpu, baseY - 8.5f * dpu);
             path.close();
         } else {
+            path.addRect(edgeX, baseY - 16.5f * dpu, edgeX + 16.5f * dpu, baseY - 8.5f * dpu, Path.Direction.CCW);
             path.moveTo(edgeX + 9f * dpu, baseY - 8.5f * dpu);
             path.lineTo(edgeX, baseY - 8.5f * dpu);
             path.quadTo(edgeX - 0.13f * dpu, baseY - 3.21f * dpu, edgeX - 4.74f * dpu, baseY);
