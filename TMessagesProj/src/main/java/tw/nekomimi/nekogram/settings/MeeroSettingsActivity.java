@@ -22,6 +22,7 @@ import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.Components.LayoutHelper;
 import org.telegram.ui.Components.RecyclerListView;
 
+import tw.nekomimi.nekogram.MeeroBubbleStyles;
 import tw.nekomimi.nekogram.MeeroTickStyles;
 import tw.nekomimi.nekogram.NekoConfig;
 import tw.nekomimi.nekogram.config.CellGroup;
@@ -82,7 +83,11 @@ public class MeeroSettingsActivity extends BaseNekoXSettingsActivity {
 
     // Appearance - what an idle screen looks like.
     private final AbstractConfigCell headerAppearance = cellGroup.appendCell(new ConfigCellHeader(getString(R.string.MeeroGroupAppearance)));
-    private final AbstractConfigCell iosBubblesRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosBubbles, getString(R.string.MeeroIosBubblesInfo)));
+    // MeeroX v122: the iOS-bubble on/off switch became a shape picker - the
+    // first entry is stock Telegram (the old "off"), followed by the official
+    // iOS bubble and the designed styles. Same popup pattern as the read-mark
+    // picker below: each row carries a live shape preview.
+    private final AbstractConfigCell bubbleStyleRow = cellGroup.appendCell(new ConfigCellSelectBox("MeeroBubbleStyle", NekoConfig.meeroBubbleStyle, bubbleStyleNames(), () -> showBubbleStyleDialog()));
     private final AbstractConfigCell cardsRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroCards, getString(R.string.MeeroCardsInfo)));
     private final AbstractConfigCell dialogsStyleRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroDialogsStyle, getString(R.string.MeeroDialogsStyleInfo)));
     private final AbstractConfigCell glassBordersRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroGlassBorders, getString(R.string.MeeroGlassBordersInfo)));
@@ -327,6 +332,116 @@ public class MeeroSettingsActivity extends BaseNekoXSettingsActivity {
         note.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 12.5f);
         note.setTextColor(Theme.getColor(Theme.key_dialogTextGray3));
         note.setText(getString(R.string.MeeroTickStyleDialogNote));
+        note.setPadding(AndroidUtilities.dp(20), AndroidUtilities.dp(6), AndroidUtilities.dp(20), AndroidUtilities.dp(14));
+        box.addView(note);
+
+        ScrollView scroll = new ScrollView(context);
+        scroll.addView(box);
+        builder.setView(scroll);
+        builder.setNegativeButton(getString(R.string.Cancel), null);
+        dialogRef[0] = builder.show();
+    }
+
+    // MeeroX v122: bubble shapes. Mirrors the tick picker one-to-one so the
+    // two selectors behave identically; the only difference is the preview -
+    // here each row draws the actual bubble outline it would apply.
+    private static final int BUBBLE_STYLE_COUNT = MeeroBubbleStyles.COUNT;
+
+    private static String bubbleStyleName(int style) {
+        switch (style) {
+            case 1:  return getString(R.string.meeroBubbleName1);
+            case 2:  return getString(R.string.meeroBubbleName2);
+            case 3:  return getString(R.string.meeroBubbleName3);
+            case 4:  return getString(R.string.meeroBubbleName4);
+            default: return getString(R.string.meeroBubbleName0);
+        }
+    }
+
+    private static String bubbleStyleDesc(int style) {
+        switch (style) {
+            case 1:  return getString(R.string.meeroBubbleDesc1);
+            case 2:  return getString(R.string.meeroBubbleDesc2);
+            case 3:  return getString(R.string.meeroBubbleDesc3);
+            case 4:  return getString(R.string.meeroBubbleDesc4);
+            default: return getString(R.string.meeroBubbleDesc0);
+        }
+    }
+
+    private static String[] bubbleStyleNames() {
+        String[] names = new String[BUBBLE_STYLE_COUNT];
+        for (int i = 0; i < BUBBLE_STYLE_COUNT; i++) {
+            names[i] = bubbleStyleName(i);
+        }
+        return names;
+    }
+
+    private void showBubbleStyleDialog() {
+        final Context context = getParentActivity();
+        if (context == null) {
+            return;
+        }
+
+        final AlertDialog.Builder builder = new AlertDialog.Builder(context);
+        builder.setTitle(getString(R.string.MeeroBubbleStyle));
+
+        final int current = NekoConfig.meeroBubbleStyle.Int();
+        final AlertDialog[] dialogRef = new AlertDialog[1];
+
+        LinearLayout box = new LinearLayout(context);
+        box.setOrientation(LinearLayout.VERTICAL);
+
+        for (int i = 0; i < BUBBLE_STYLE_COUNT; i++) {
+            final int style = i;
+
+            TextView title = new TextView(context);
+            title.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 16);
+            title.setTextColor(Theme.getColor(Theme.key_dialogTextBlack));
+            title.setText(bubbleStyleName(style));
+
+            TextView desc = new TextView(context);
+            desc.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 13);
+            desc.setTextColor(Theme.getColor(Theme.key_dialogTextGray3));
+            desc.setText(bubbleStyleDesc(style));
+
+            TextView check = new TextView(context);
+            check.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 18);
+            check.setTextColor(Theme.getColor(Theme.key_dialogTextBlue));
+            check.setText(style == current ? "✓" : "");
+            check.setMinWidth(AndroidUtilities.dp(32));
+            check.setGravity(Gravity.CENTER);
+
+            LinearLayout texts = new LinearLayout(context);
+            texts.setOrientation(LinearLayout.VERTICAL);
+            texts.addView(title);
+            texts.addView(desc);
+
+            // Live shape preview: the exact outline this row would apply,
+            // drawn through the same contours the chat renderer uses.
+            ImageView preview = new ImageView(context);
+            preview.setImageDrawable(MeeroBubbleStyles.previewDrawable(style));
+
+            LinearLayout item = new LinearLayout(context);
+            item.setOrientation(LinearLayout.HORIZONTAL);
+            item.setPadding(AndroidUtilities.dp(16), AndroidUtilities.dp(9), AndroidUtilities.dp(16), AndroidUtilities.dp(9));
+            item.addView(preview, LayoutHelper.createLinear(AndroidUtilities.dp(58), AndroidUtilities.dp(32), Gravity.CENTER_VERTICAL));
+            item.addView(texts, LayoutHelper.createLinear(0, LayoutHelper.WRAP_CONTENT, 1f));
+            item.addView(check, LayoutHelper.createLinear(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.CENTER_VERTICAL));
+            item.setOnClickListener(v -> {
+                NekoConfig.meeroBubbleStyle.setConfigInt(style);
+                if (listAdapter != null) {
+                    listAdapter.notifyDataSetChanged();
+                }
+                if (dialogRef[0] != null) {
+                    dialogRef[0].dismiss();
+                }
+            });
+            box.addView(item);
+        }
+
+        TextView note = new TextView(context);
+        note.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 12.5f);
+        note.setTextColor(Theme.getColor(Theme.key_dialogTextGray3));
+        note.setText(getString(R.string.MeeroBubbleStyleDialogNote));
         note.setPadding(AndroidUtilities.dp(20), AndroidUtilities.dp(6), AndroidUtilities.dp(20), AndroidUtilities.dp(14));
         box.addView(note);
 

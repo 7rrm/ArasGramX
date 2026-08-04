@@ -212,88 +212,46 @@ public class Theme {
          */
         public static int meeroBubbleRadius() {
             try {
-                if (tw.nekomimi.nekogram.NekoConfig.meeroIosBubbles.Bool()) {
-                    // MeeroX v121 (researched via Telegram-iOS sources):
-                    // Telegram for iOS draws bubbles with a mainRadius of
-                    // ~17pt and Android dp tracks pt closely, so 18
-                    // reproduces the official iPhone curve - the caller
-                    // clamps to heightHalf, keeping short bubbles correct.
-                    return 18;
-                }
+                // MeeroX v122: radius now follows the bubble-shape picker.
+                // generatePath clamps the value to heightHalf, which is what
+                // lets CAPSULE ask for a huge radius safely, and style 0 gets
+                // SharedConfig.bubbleRadius back - byte-for-byte stock.
+                return tw.nekomimi.nekogram.MeeroBubbleStyles.radiusDp(
+                        tw.nekomimi.nekogram.MeeroBubbleStyles.current(), SharedConfig.bubbleRadius);
             } catch (Throwable ignore) {}
             return SharedConfig.bubbleRadius;
         }
 
-        /** Bigger tail so it stays visible against the rounder corners. */
+        /**
+         * MeeroX v122: only the stock mini-tail arc (style 0) still sizes
+         * itself from this; the custom styles draw with official dp values
+         * via MeeroBubbleStyles instead. Kept at the upstream dp(6) so style
+         * 0 is byte-for-byte stock.
+         */
         private static int meeroTailRadius() {
-            try {
-                if (tw.nekomimi.nekogram.NekoConfig.meeroIosBubbles.Bool()) {
-                    // The reference tail protrudes ~13px on a 190px bubble.
-                    return AndroidUtilities.dp(8);
-                }
-            } catch (Throwable ignore) {}
             return AndroidUtilities.dp(6);
         }
 
         /**
-         * MeeroX: the tail Telegram for iOS actually draws.
+         * MeeroX v122: the tail contours (the official iOS crescent, decoded
+         * point-for-point from Telegram-iOS's
+         * submodules/TelegramPresentationData/Sources/ChatMessageBubbleImages.swift,
+         * and the classic wedge) now live in
+         * tw.nekomimi.nekogram.MeeroBubbleStyles so the chat and the settings
+         * picker previews draw the identical outline. generatePath below only
+         * routes on the selected style:
          *
-         * Android sweeps a single elliptical arc for the tail
-         * (arcTo(rect, 180, -83)), which curls back on itself and reads as a
-         * hook. iOS builds the same corner out of two quadratic curves and
-         * then subtracts an ellipse from the top, in
-         * ChatMessageBubbleImages.swift:
-         *
-         *   bottomEllipse = CGRect(x: 24, y: 16, w: 27, h: 17)
-         *   topEllipse    = CGRect(x: 33, y: 14, w: 23, h: 21)
-         *   move(to:    (bottomEllipse.minX, bottomEllipse.midY))
-         *   addQuadCurve(to: (midX, maxY), control: (minX, maxY))
-         *   addQuadCurve(to: (maxX, midY), control: (maxX, maxY))
-         *
-         * Solving that pair against the subtracted top ellipse - whose centre
-         * lands at (44.5, 24.5) with radii 11.5 x 10.5 - gives the visible
-         * outline: it leaves the body 8.5pt above the baseline and reaches
-         * 4.5pt past the body's edge, meeting the baseline exactly at the tip.
-         * Against the bubble's own 33pt diameter that is 25.8% tall and 13.6%
-         * wide, and those two ratios are what get reproduced here.
-         *
-         * Everything is expressed relative to the body edge and the baseline,
-         * so the shape follows whatever tail size the caller passes and no
-         * layout metric has to move.
+         *   0 = stock Telegram (mini-tail arc, untouched)
+         *   1 = official iOS  - full corner radius + crescent from behind it
+         *   2/3 = tail-less   - clean full-radius corner
+         *   4 = classic       - full corner radius + small wedge
          */
-        private static final float MEERO_TAIL_HEIGHT_PT = 8.5f;
-        private static final float MEERO_TAIL_EXTENT_PT = 4.5f;
-
-        private static boolean meeroIosTail() {
+        private static int meeroBubbleStyle() {
             try {
-                return tw.nekomimi.nekogram.NekoConfig.meeroIosBubbles.Bool();
+                return tw.nekomimi.nekogram.MeeroBubbleStyles.current();
             } catch (Throwable ignore) {
-                return false;
+                return 0;
             }
-        }
-
-        /**
-         * Appends iOS's tail to a path that is already sitting on the body's
-         * trailing edge, just above the baseline.
-         *
-         * @param edgeX    x of the body's edge the tail grows out of
-         * @param baseY    y of the bubble's baseline
-         * @param tailSize the tail's height; the width follows iOS's ratio
-         * @param outgoing true for an outgoing bubble, whose tail points right
-         */
-        private void meeroAppendIosTail(Path path, float edgeX, float baseY, float tailSize, boolean outgoing) {
-            final float dir = outgoing ? 1f : -1f;
-            final float extent = tailSize * (MEERO_TAIL_EXTENT_PT / MEERO_TAIL_HEIGHT_PT);
-            final float tipX = edgeX + dir * extent;
-
-            // First curve: leave the body and fall to the baseline. iOS pins
-            // the control point straight below the start, which is what keeps
-            // the tail's inner side almost vertical instead of bowing inwards.
-            path.quadTo(edgeX, baseY, tipX, baseY);
-            // Second curve: the tip's outer side, curving back up into the
-            // body's corner rather than ending in a point.
-            path.quadTo(tipX - dir * extent * 0.28f, baseY - tailSize * 0.30f,
-                    edgeX - dir * tailSize * 0.16f, baseY - tailSize * 0.30f);
         }
 
 
@@ -990,11 +948,24 @@ public class Theme {
                     }
                 } else {
                     if (drawFullBubble || currentType == TYPE_PREVIEW || customPaint || drawFullBottom) {
-                        if (meeroIosTail()) {
-                            // iOS leaves the body one tail-height above the
-                            // baseline, then curls out and back in.
-                            path.lineTo(bounds.right - dp(8), bounds.bottom - padding - smallRad);
-                            meeroAppendIosTail(path, bounds.right - dp(8), bounds.bottom - padding, smallRad, true);
+                        final int meeroBs = meeroBubbleStyle();
+                        if (meeroBs == 1 || meeroBs == 4) {
+                            // Official iOS / classic: the corner keeps the
+                            // FULL radius (exactly what Telegram for iOS
+                            // does - the tail curls out from behind it).
+                            path.lineTo(bounds.right - dp(8), bounds.bottom - padding - rad);
+                            rect.set(bounds.right - dp(8) - rad * 2, bounds.bottom - padding - rad * 2, bounds.right - dp(8), bounds.bottom - padding);
+                            path.arcTo(rect, 0, 90, false);
+                            if (meeroBs == 1) {
+                                tw.nekomimi.nekogram.MeeroBubbleStyles.appendOfficialTail(path, bounds.right - dp(8), bounds.bottom - padding, true, AndroidUtilities.density);
+                            } else {
+                                tw.nekomimi.nekogram.MeeroBubbleStyles.appendClassicTail(path, bounds.right - dp(8), bounds.bottom - padding, true, AndroidUtilities.density);
+                            }
+                        } else if (meeroBs == 2 || meeroBs == 3) {
+                            // Tail-less modern corner: full radius, clean edge.
+                            path.lineTo(bounds.right - dp(8), bounds.bottom - padding - rad);
+                            rect.set(bounds.right - dp(8) - rad * 2, bounds.bottom - padding - rad * 2, bounds.right - dp(8), bounds.bottom - padding);
+                            path.arcTo(rect, 0, 90, false);
                         } else {
                             path.lineTo(bounds.right - dp(8), bounds.bottom - padding - smallRad - dp(3));
                             rect.set(bounds.right - dp(8), bounds.bottom - padding - smallRad * 2 - dp(9), bounds.right - dp(7) + smallRad * 2, bounds.bottom - padding - dp(1));
@@ -1054,10 +1025,22 @@ public class Theme {
                     }
                 } else {
                     if (drawFullBubble || currentType == TYPE_PREVIEW || customPaint || drawFullBottom) {
-                        if (meeroIosTail()) {
-                            // Mirrored: the incoming tail grows to the left.
-                            path.lineTo(bounds.left + dp(8), bounds.bottom - padding - smallRad);
-                            meeroAppendIosTail(path, bounds.left + dp(8), bounds.bottom - padding, smallRad, false);
+                        final int meeroBs = meeroBubbleStyle();
+                        if (meeroBs == 1 || meeroBs == 4) {
+                            // Mirrored: full-radius corner, tail grows left.
+                            path.lineTo(bounds.left + dp(8), bounds.bottom - padding - rad);
+                            rect.set(bounds.left + dp(8), bounds.bottom - padding - rad * 2, bounds.left + dp(8) + rad * 2, bounds.bottom - padding);
+                            path.arcTo(rect, 180, -90, false);
+                            if (meeroBs == 1) {
+                                tw.nekomimi.nekogram.MeeroBubbleStyles.appendOfficialTail(path, bounds.left + dp(8), bounds.bottom - padding, false, AndroidUtilities.density);
+                            } else {
+                                tw.nekomimi.nekogram.MeeroBubbleStyles.appendClassicTail(path, bounds.left + dp(8), bounds.bottom - padding, false, AndroidUtilities.density);
+                            }
+                        } else if (meeroBs == 2 || meeroBs == 3) {
+                            // Tail-less modern corner, mirrored.
+                            path.lineTo(bounds.left + dp(8), bounds.bottom - padding - rad);
+                            rect.set(bounds.left + dp(8), bounds.bottom - padding - rad * 2, bounds.left + dp(8) + rad * 2, bounds.bottom - padding);
+                            path.arcTo(rect, 180, -90, false);
                         } else {
                             path.lineTo(bounds.left + dp(8), bounds.bottom - padding - smallRad - dp(3));
                             rect.set(bounds.left + dp(7) - smallRad * 2, bounds.bottom - padding - smallRad * 2 - dp(9), bounds.left + dp(8), bounds.bottom - padding - dp(1));
@@ -5654,13 +5637,13 @@ public class Theme {
     /**
      * MeeroX: whether the outgoing bubble's discs follow the bubble's colour.
      *
-     * Rides on meeroIosBubbles, the switch that already owns how an outgoing
-     * bubble is drawn - a separate toggle for one colour would be a switch the
-     * user has to find before the bubble looks right.
+     * Rides on the bubble-shape picker: active for every custom bubble style,
+     * off when stock is selected. A separate toggle for one colour would be a
+     * switch the user has to find before the bubble looks right.
      */
     private static boolean meeroIosBubbleTint() {
         try {
-            return tw.nekomimi.nekogram.NekoConfig.meeroIosBubbles.Bool();
+            return tw.nekomimi.nekogram.MeeroBubbleStyles.current() != 0;
         } catch (Throwable ignore) {
             return false;
         }
@@ -8896,10 +8879,10 @@ public class Theme {
      * face would stop lining up, which is the one place the stock behaviour is
      * the correct one.
      */
-    /** MeeroX: whether the service line uses iOS's flat 13pt. */
+    /** MeeroX: whether the service line uses iOS's flat 13pt - follows the bubble-shape picker (active for any custom style). */
     private static boolean meeroIosServiceText() {
         try {
-            return tw.nekomimi.nekogram.NekoConfig.meeroIosBubbles.Bool();
+            return tw.nekomimi.nekogram.MeeroBubbleStyles.current() != 0;
         } catch (Throwable ignore) {
             return false;
         }

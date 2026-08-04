@@ -85,7 +85,11 @@ public class NekoConfig {
     // MeeroX: iOS 26 chat styling. Both default to on; turning them off
     // restores stock Telegram behaviour exactly.
     public static ConfigItem meeroMenuBlur = addConfig("meeroMenuBlur", configTypeBool, true);
+    // MeeroX v122: the iOS-bubble on/off switch became the meeroBubbleStyle
+    // picker below; this bool stays only so first launch after the update can
+    // migrate the old value (loadConfig below). No UI references it anymore.
     public static ConfigItem meeroIosBubbles = addConfig("meeroIosBubbles", configTypeBool, true);
+    public static ConfigItem meeroBubbleStyle = addConfig("meeroBubbleStyle", configTypeInt, 1);
     public static ConfigItem meeroTapMenu = addConfig("meeroTapMenu", configTypeBool, true);
     public static ConfigItem meeroIosAnim = addConfig("meeroIosAnim", configTypeBool, true);
     public static ConfigItem meeroCards = addConfig("meeroCards", configTypeBool, true);
@@ -367,6 +371,16 @@ public class NekoConfig {
                     o.value = o.defaultValue;
                     getPreferences().edit().remove(o.key).apply();
                 }
+            }
+            // MeeroX v122 one-time migration: the old meeroIosBubbles switch
+            // became the meeroBubbleStyle picker (0=stock, 1=official iOS,
+            // 2=iOS no tail, 3=capsule, 4=classic). First launch after the
+            // update maps it: off -> 0, on or never touched -> 1, so the
+            // update never flips anyone's screen on or off by itself.
+            if (!getPreferences().contains("meeroBubbleStyle")) {
+                int meeroMigrated = getPreferences().getBoolean("meeroIosBubbles", true) ? 1 : 0;
+                getPreferences().edit().putInt("meeroBubbleStyle", meeroMigrated).apply();
+                meeroBubbleStyle.value = meeroMigrated;
             }
             if (!configLoaded)
                 getPreferences().registerOnSharedPreferenceChangeListener(CloudSettingsHelper.listener);
