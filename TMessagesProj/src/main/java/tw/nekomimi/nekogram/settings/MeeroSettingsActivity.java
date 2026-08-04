@@ -181,7 +181,7 @@ public class MeeroSettingsActivity extends BaseNekoXSettingsActivity {
 
     private static final int TICK_STYLE_COUNT = MeeroTickStyles.COUNT;
 
-    private static String tickStyleName(int style) {
+    static String tickStyleName(int style) {
         switch (style) {
             case 1:  return getString(R.string.meeroTickName1);
             case 2:  return getString(R.string.meeroTickName2);
@@ -202,7 +202,7 @@ public class MeeroSettingsActivity extends BaseNekoXSettingsActivity {
         }
     }
 
-    private static String tickStyleDesc(int style) {
+    static String tickStyleDesc(int style) {
         switch (style) {
             case 1:  return getString(R.string.meeroTickDesc1);
             case 2:  return getString(R.string.meeroTickDesc2);
@@ -236,7 +236,7 @@ public class MeeroSettingsActivity extends BaseNekoXSettingsActivity {
      * the preview reads on any theme. "second" picks the mark that joins the
      * first on a read receipt, exactly as the cell layers them.
      */
-    private static Drawable tickStyleIcon(Context context, int style, boolean second) {
+    static Drawable tickStyleIcon(Context context, int style, boolean second) {
         if (style < 0 || style >= MeeroTickStyles.COUNT) {
             style = 0;
         }
@@ -255,91 +255,13 @@ public class MeeroSettingsActivity extends BaseNekoXSettingsActivity {
      * dialogs-header switch already documents.
      */
     private void showTickStyleDialog() {
-        final Context context = getParentActivity();
-        if (context == null) {
-            return;
-        }
-
-        final AlertDialog.Builder builder = new AlertDialog.Builder(context);
-        builder.setTitle(getString(R.string.MeeroTickStyle));
-
-        final int current = NekoConfig.meeroTickStyle.Int();
-        final AlertDialog[] dialogRef = new AlertDialog[1];
-
-        LinearLayout box = new LinearLayout(context);
-        box.setOrientation(LinearLayout.VERTICAL);
-
-        for (int i = 0; i < TICK_STYLE_COUNT; i++) {
-            final int style = i;
-
-            TextView title = new TextView(context);
-            title.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 16);
-            title.setTextColor(Theme.getColor(Theme.key_dialogTextBlack));
-            title.setText(tickStyleName(style));
-
-            TextView desc = new TextView(context);
-            desc.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 13);
-            desc.setTextColor(Theme.getColor(Theme.key_dialogTextGray3));
-            desc.setText(tickStyleDesc(style));
-
-            TextView check = new TextView(context);
-            check.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 18);
-            check.setTextColor(Theme.getColor(Theme.key_dialogTextBlue));
-            check.setText(style == current ? "✓" : "");
-            check.setMinWidth(AndroidUtilities.dp(32));
-            check.setGravity(Gravity.CENTER);
-
-            LinearLayout texts = new LinearLayout(context);
-            texts.setOrientation(LinearLayout.VERTICAL);
-            texts.addView(title);
-            texts.addView(desc);
-
-            // Live shape preview: the sent mark and the read-receipt second
-            // mark overlapped the way they stack in chat, so the shape is
-            // visible before anything is applied.
-            FrameLayout preview = new FrameLayout(context);
-            ImageView single = new ImageView(context);
-            single.setImageDrawable(tickStyleIcon(context, style, false));
-            ImageView second = new ImageView(context);
-            second.setImageDrawable(tickStyleIcon(context, style, true));
-            FrameLayout.LayoutParams lpSingle = new FrameLayout.LayoutParams(
-                    AndroidUtilities.dp(14), AndroidUtilities.dp(14), Gravity.START | Gravity.CENTER_VERTICAL);
-            FrameLayout.LayoutParams lpSecond = new FrameLayout.LayoutParams(
-                    AndroidUtilities.dp(14), AndroidUtilities.dp(14), Gravity.START | Gravity.CENTER_VERTICAL);
-            lpSecond.setMarginStart(AndroidUtilities.dp(8));
-            preview.addView(single, lpSingle);
-            preview.addView(second, lpSecond);
-
-            LinearLayout item = new LinearLayout(context);
-            item.setOrientation(LinearLayout.HORIZONTAL);
-            item.setPadding(AndroidUtilities.dp(16), AndroidUtilities.dp(9), AndroidUtilities.dp(16), AndroidUtilities.dp(9));
-            item.addView(preview, LayoutHelper.createLinear(AndroidUtilities.dp(42), LayoutHelper.MATCH_PARENT, Gravity.CENTER_VERTICAL));
-            item.addView(texts, LayoutHelper.createLinear(0, LayoutHelper.WRAP_CONTENT, 1f));
-            item.addView(check, LayoutHelper.createLinear(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.CENTER_VERTICAL));
-            item.setOnClickListener(v -> {
-                NekoConfig.meeroTickStyle.setConfigInt(style);
-                if (listAdapter != null) {
-                    listAdapter.notifyDataSetChanged();
-                }
-                if (dialogRef[0] != null) {
-                    dialogRef[0].dismiss();
-                }
-            });
-            box.addView(item);
-        }
-
-        TextView note = new TextView(context);
-        note.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 12.5f);
-        note.setTextColor(Theme.getColor(Theme.key_dialogTextGray3));
-        note.setText(getString(R.string.MeeroTickStyleDialogNote));
-        note.setPadding(AndroidUtilities.dp(20), AndroidUtilities.dp(6), AndroidUtilities.dp(20), AndroidUtilities.dp(14));
-        box.addView(note);
-
-        ScrollView scroll = new ScrollView(context);
-        scroll.addView(box);
-        builder.setView(scroll);
-        builder.setNegativeButton(getString(R.string.Cancel), null);
-        dialogRef[0] = builder.show();
+        // MeeroX v124: the old AlertDialog list became the modern shared
+        // bottom sheet (design A) - same skin for both pickers, tab #1.
+        MeeroPickerSheet.open(getParentActivity(), MeeroPickerSheet.TAB_TICKS, () -> {
+            if (listAdapter != null) {
+                listAdapter.notifyDataSetChanged();
+            }
+        });
     }
 
     // MeeroX v122: bubble shapes. Mirrors the tick picker one-to-one so the
@@ -347,7 +269,7 @@ public class MeeroSettingsActivity extends BaseNekoXSettingsActivity {
     // here each row draws the actual bubble outline it would apply.
     private static final int BUBBLE_STYLE_COUNT = MeeroBubbleStyles.COUNT;
 
-    private static String bubbleStyleName(int style) {
+    static String bubbleStyleName(int style) {
         switch (style) {
             case 1:  return getString(R.string.meeroBubbleName1);
             case 2:  return getString(R.string.meeroBubbleName2);
@@ -357,7 +279,7 @@ public class MeeroSettingsActivity extends BaseNekoXSettingsActivity {
         }
     }
 
-    private static String bubbleStyleDesc(int style) {
+    static String bubbleStyleDesc(int style) {
         switch (style) {
             case 1:  return getString(R.string.meeroBubbleDesc1);
             case 2:  return getString(R.string.meeroBubbleDesc2);
@@ -376,80 +298,13 @@ public class MeeroSettingsActivity extends BaseNekoXSettingsActivity {
     }
 
     private void showBubbleStyleDialog() {
-        final Context context = getParentActivity();
-        if (context == null) {
-            return;
-        }
-
-        final AlertDialog.Builder builder = new AlertDialog.Builder(context);
-        builder.setTitle(getString(R.string.MeeroBubbleStyle));
-
-        final int current = NekoConfig.meeroBubbleStyle.Int();
-        final AlertDialog[] dialogRef = new AlertDialog[1];
-
-        LinearLayout box = new LinearLayout(context);
-        box.setOrientation(LinearLayout.VERTICAL);
-
-        for (int i = 0; i < BUBBLE_STYLE_COUNT; i++) {
-            final int style = i;
-
-            TextView title = new TextView(context);
-            title.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 16);
-            title.setTextColor(Theme.getColor(Theme.key_dialogTextBlack));
-            title.setText(bubbleStyleName(style));
-
-            TextView desc = new TextView(context);
-            desc.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 13);
-            desc.setTextColor(Theme.getColor(Theme.key_dialogTextGray3));
-            desc.setText(bubbleStyleDesc(style));
-
-            TextView check = new TextView(context);
-            check.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 18);
-            check.setTextColor(Theme.getColor(Theme.key_dialogTextBlue));
-            check.setText(style == current ? "✓" : "");
-            check.setMinWidth(AndroidUtilities.dp(32));
-            check.setGravity(Gravity.CENTER);
-
-            LinearLayout texts = new LinearLayout(context);
-            texts.setOrientation(LinearLayout.VERTICAL);
-            texts.addView(title);
-            texts.addView(desc);
-
-            // Live shape preview: the exact outline this row would apply,
-            // drawn through the same contours the chat renderer uses.
-            ImageView preview = new ImageView(context);
-            preview.setImageDrawable(MeeroBubbleStyles.previewDrawable(style));
-
-            LinearLayout item = new LinearLayout(context);
-            item.setOrientation(LinearLayout.HORIZONTAL);
-            item.setPadding(AndroidUtilities.dp(16), AndroidUtilities.dp(9), AndroidUtilities.dp(16), AndroidUtilities.dp(9));
-            item.addView(preview, LayoutHelper.createLinear(AndroidUtilities.dp(58), AndroidUtilities.dp(32), Gravity.CENTER_VERTICAL));
-            item.addView(texts, LayoutHelper.createLinear(0, LayoutHelper.WRAP_CONTENT, 1f));
-            item.addView(check, LayoutHelper.createLinear(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.CENTER_VERTICAL));
-            item.setOnClickListener(v -> {
-                NekoConfig.meeroBubbleStyle.setConfigInt(style);
-                if (listAdapter != null) {
-                    listAdapter.notifyDataSetChanged();
-                }
-                if (dialogRef[0] != null) {
-                    dialogRef[0].dismiss();
-                }
-            });
-            box.addView(item);
-        }
-
-        TextView note = new TextView(context);
-        note.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 12.5f);
-        note.setTextColor(Theme.getColor(Theme.key_dialogTextGray3));
-        note.setText(getString(R.string.MeeroBubbleStyleDialogNote));
-        note.setPadding(AndroidUtilities.dp(20), AndroidUtilities.dp(6), AndroidUtilities.dp(20), AndroidUtilities.dp(14));
-        box.addView(note);
-
-        ScrollView scroll = new ScrollView(context);
-        scroll.addView(box);
-        builder.setView(scroll);
-        builder.setNegativeButton(getString(R.string.Cancel), null);
-        dialogRef[0] = builder.show();
+        // MeeroX v124: the old AlertDialog list became the modern shared
+        // bottom sheet (design A) - same skin for both pickers, tab #0.
+        MeeroPickerSheet.open(getParentActivity(), MeeroPickerSheet.TAB_BUBBLES, () -> {
+            if (listAdapter != null) {
+                listAdapter.notifyDataSetChanged();
+            }
+        });
     }
 
     @Override

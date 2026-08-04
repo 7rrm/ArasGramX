@@ -5,7 +5,6 @@
     <string name="meeroTicksSwitch">Custom read ticks</string>
     <string name="MeeroTicksSwitchInfo">A dedicated switch for the sent and read ticks: on shows the shape picked in the list below, off brings back the official Android Telegram ticks. Applies after restarting the app.</string>
     <string name="MeeroTickStyle">Tick shape</string>
-    <string name="MeeroTickStyleDialogNote">The new shape applies after restarting the app.</string>
     <string name="meeroTickName0">Current iOS tick</string>
     <string name="meeroTickDesc0">The exact same thin ticks you already have, completely untouched - the default.</string>
     <string name="meeroTickName1">Hearts</string>
@@ -179,7 +178,16 @@
     <string name="meeroBubbleDesc3">Fully rounded pill ends, no tail.</string>
     <string name="meeroBubbleName4">Classic</string>
     <string name="meeroBubbleDesc4">Soft 10dp corners with a small wedge tail.</string>
-    <string name="MeeroBubbleStyleDialogNote">Shapes apply instantly to text messages in every chat. Photos and videos keep their official Android look.</string>
+    <string name="meeroBubbleName5">Sharp modern</string>
+    <string name="meeroBubbleDesc5">Crisp 6dp corners, no tail. Minimal and flat.</string>
+    <string name="meeroBubbleName6">Instagram</string>
+    <string name="meeroBubbleDesc6">Extra-rounded 22dp, no tail. Instagram DM vibe.</string>
+    <string name="meeroBubbleName7">WhatsApp</string>
+    <string name="meeroBubbleDesc7">Soft 8dp corners with a tiny curved nub.</string>
+    <string name="MeeroPickerTabBubbles">Bubbles</string>
+    <string name="MeeroPickerTabTicks">Read marks</string>
+    <string name="MeeroPickerLiveHint">Live preview - your tap applies instantly</string>
+    <string name="MeeroPickerSwipeHint">Swipe the cards sideways for more</string>
     <string name="meeroTapMenu">Open menu with a single tap</string>
     <string name="MeeroTapMenuInfo">Tap a message bubble to open its menu. Long press keeps working.</string>
     <string name="meeroIosAnim">iOS message animation</string>

@@ -949,19 +949,20 @@ public class Theme {
                 } else {
                     if (drawFullBubble || currentType == TYPE_PREVIEW || customPaint || drawFullBottom) {
                         final int meeroBs = meeroBubbleStyle();
-                        if (meeroBs == 1 || meeroBs == 4) {
-                            // Official iOS / classic: the corner keeps the
-                            // FULL radius (exactly what Telegram for iOS
-                            // does - the tail curls out from behind it).
+                        if (meeroBs == 1 || meeroBs == 4 || meeroBs == 7) {
+                            // Tailed custom bubble (official iOS / classic /
+                            // WhatsApp): the corner keeps the FULL radius.
                             path.lineTo(bounds.right - dp(8), bounds.bottom - padding - rad);
                             rect.set(bounds.right - dp(8) - rad * 2, bounds.bottom - padding - rad * 2, bounds.right - dp(8), bounds.bottom - padding);
                             path.arcTo(rect, 0, 90, false);
                             if (meeroBs == 1) {
                                 tw.nekomimi.nekogram.MeeroBubbleStyles.appendOfficialTail(path, bounds.right - dp(8), bounds.bottom - padding, true, AndroidUtilities.density);
-                            } else {
+                            } else if (meeroBs == 4) {
                                 tw.nekomimi.nekogram.MeeroBubbleStyles.appendClassicTail(path, bounds.right - dp(8), bounds.bottom - padding, true, AndroidUtilities.density);
+                            } else {
+                                tw.nekomimi.nekogram.MeeroBubbleStyles.appendWhatsAppTail(path, bounds.right - dp(8), bounds.bottom - padding, true, AndroidUtilities.density);
                             }
-                        } else if (meeroBs == 2 || meeroBs == 3) {
+                        } else if (meeroBs == 2 || meeroBs == 3 || meeroBs == 5 || meeroBs == 6) {
                             // Tail-less modern corner: full radius, clean edge.
                             path.lineTo(bounds.right - dp(8), bounds.bottom - padding - rad);
                             rect.set(bounds.right - dp(8) - rad * 2, bounds.bottom - padding - rad * 2, bounds.right - dp(8), bounds.bottom - padding);
@@ -1026,17 +1027,19 @@ public class Theme {
                 } else {
                     if (drawFullBubble || currentType == TYPE_PREVIEW || customPaint || drawFullBottom) {
                         final int meeroBs = meeroBubbleStyle();
-                        if (meeroBs == 1 || meeroBs == 4) {
+                        if (meeroBs == 1 || meeroBs == 4 || meeroBs == 7) {
                             // Mirrored: full-radius corner, tail grows left.
                             path.lineTo(bounds.left + dp(8), bounds.bottom - padding - rad);
                             rect.set(bounds.left + dp(8), bounds.bottom - padding - rad * 2, bounds.left + dp(8) + rad * 2, bounds.bottom - padding);
                             path.arcTo(rect, 180, -90, false);
                             if (meeroBs == 1) {
                                 tw.nekomimi.nekogram.MeeroBubbleStyles.appendOfficialTail(path, bounds.left + dp(8), bounds.bottom - padding, false, AndroidUtilities.density);
-                            } else {
+                            } else if (meeroBs == 4) {
                                 tw.nekomimi.nekogram.MeeroBubbleStyles.appendClassicTail(path, bounds.left + dp(8), bounds.bottom - padding, false, AndroidUtilities.density);
+                            } else {
+                                tw.nekomimi.nekogram.MeeroBubbleStyles.appendWhatsAppTail(path, bounds.left + dp(8), bounds.bottom - padding, false, AndroidUtilities.density);
                             }
-                        } else if (meeroBs == 2 || meeroBs == 3) {
+                        } else if (meeroBs == 2 || meeroBs == 3 || meeroBs == 5 || meeroBs == 6) {
                             // Tail-less modern corner, mirrored.
                             path.lineTo(bounds.left + dp(8), bounds.bottom - padding - rad);
                             rect.set(bounds.left + dp(8), bounds.bottom - padding - rad * 2, bounds.left + dp(8) + rad * 2, bounds.bottom - padding);

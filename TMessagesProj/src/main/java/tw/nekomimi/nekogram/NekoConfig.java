@@ -374,7 +374,7 @@ public class NekoConfig {
             }
             // MeeroX v122 one-time migration: the old meeroIosBubbles switch
             // became the meeroBubbleStyle picker (0=stock, 1=official iOS,
-            // 2=iOS no tail, 3=capsule, 4=classic). First launch after the
+            // 4=classic, 5=sharp, 6=instagram, 7=whatsapp). First launch after the
             // update maps it: off -> 0, on or never touched -> 1, so the
             // update never flips anyone's screen on or off by itself.
             if (!getPreferences().contains("meeroBubbleStyle")) {

@@ -694,7 +694,6 @@
     <string name="meeroTicksSwitch">علامات قراءة مخصصة</string>
     <string name="MeeroTicksSwitchInfo">مفتاح مستقل لعلامات الإرسال والقراءة: عند التشغيل تُعرض العلامة بالشكل المختار من القائمة بالأسفل، وعند الإطفاء تعود علامة تيليجرام أندرويد الرسمية. يُطبَّق التغيير بعد إعادة تشغيل التطبيق.</string>
     <string name="MeeroTickStyle">شكل العلامة</string>
-    <string name="MeeroTickStyleDialogNote">يُطبَّق الشكل الجديد بعد إعادة تشغيل التطبيق.</string>
     <string name="meeroTickName0">علامة iOS الحالية</string>
     <string name="meeroTickDesc0">نفس علامة الصح الرفيعة الحالية تماماً وكما هي — الاختيار الافتراضي.</string>
     <string name="meeroTickName1">القلوب</string>
@@ -868,7 +867,16 @@
     <string name="meeroBubbleDesc3">أطراف مستديرة بالكامل على شكل كبسولة، بدون ذيل.</string>
     <string name="meeroBubbleName4">كلاسيك</string>
     <string name="meeroBubbleDesc4">زوايا ناعمة 10 مع ذيل مثلث صغير.</string>
-    <string name="MeeroBubbleStyleDialogNote">تُطبَّق الأشكال فوراً على الرسائل النصية في كل المحادثات. الصور والفيديوهات تبقى بشكل أندرويد الرسمي.</string>
+    <string name="meeroBubbleName5">حادة عصرية</string>
+    <string name="meeroBubbleDesc5">زوايا مستقيمة 6 بدون ذيل، طابع مينيمال نظيف.</string>
+    <string name="meeroBubbleName6">إنستغرام</string>
+    <string name="meeroBubbleDesc6">استدارة مفرطة 22 بدون ذيل، مثل رسائل إنستا.</string>
+    <string name="meeroBubbleName7">واتساب</string>
+    <string name="meeroBubbleDesc7">زوايا ناعمة 8 مع طرف منحني صغير مثل واتساب.</string>
+    <string name="MeeroPickerTabBubbles">الفقاعات</string>
+    <string name="MeeroPickerTabTicks">علامات القراءة</string>
+    <string name="MeeroPickerLiveHint">معاينة حية — لمسة على البطاقة تُطبَّق فوراً</string>
+    <string name="MeeroPickerSwipeHint">اسحب البطاقات جانبياً لعرض المزيد</string>
     <string name="meeroTapMenu">فتح القائمة بنقرة واحدة</string>
     <string name="MeeroTapMenuInfo">انقر على فقاعة الرسالة لفتح قائمتها. الضغط المطوّل يبقى يعمل.</string>
     <string name="meeroIosAnim">أنميشن الرسائل بنمط iOS</string>
