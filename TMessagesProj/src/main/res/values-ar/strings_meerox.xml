@@ -878,6 +878,8 @@
     <string name="MeeroPickerTabTicks">علامات القراءة</string>
     <string name="MeeroPickerLiveHint">معاينة حية — لمسة على البطاقة تُطبَّق فوراً</string>
     <string name="MeeroPickerSwipeHint">اسحب البطاقات جانبياً لعرض المزيد</string>
+    <string name="meeroGlassSettings">تصميم ميرو الزجاجي</string>
+    <string name="MeeroGlassSettingsInfo">جلد ثابت حصري لإعدادات ميرو: زجاج شفاف بتوهّج هادئ. لا يتأثر بثيمات تيليجرام نهائياً ويتبدّل مع الوضع الليلي/النهاري فقط.</string>
     <string name="meeroTapMenu">فتح القائمة بنقرة واحدة</string>
     <string name="MeeroTapMenuInfo">انقر على فقاعة الرسالة لفتح قائمتها. الضغط المطوّل يبقى يعمل.</string>
     <string name="meeroIosAnim">أنميشن الرسائل بنمط iOS</string>

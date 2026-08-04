@@ -189,6 +189,8 @@
     <string name="MeeroPickerTabTicks">Read marks</string>
     <string name="MeeroPickerLiveHint">Live preview - your tap applies instantly</string>
     <string name="MeeroPickerSwipeHint">Swipe the cards sideways for more</string>
+    <string name="meeroGlassSettings">Meero glass design</string>
+    <string name="MeeroGlassSettingsInfo">A fixed exclusive skin for Meero settings: frosted glass with a soft glow. It ignores Telegram themes completely and only follows day/night mode.</string>
     <string name="meeroTapMenu">Open menu with a single tap</string>
     <string name="MeeroTapMenuInfo">Tap a message bubble to open its menu. Long press keeps working.</string>
     <string name="meeroIosAnim">iOS message animation</string>

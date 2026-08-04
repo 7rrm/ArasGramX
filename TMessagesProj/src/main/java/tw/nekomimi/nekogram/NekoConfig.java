@@ -91,6 +91,10 @@ public class NekoConfig {
     public static ConfigItem meeroIosBubbles = addConfig("meeroIosBubbles", configTypeBool, true);
     public static ConfigItem meeroBubbleStyle = addConfig("meeroBubbleStyle", configTypeInt, 1);
     public static ConfigItem meeroTapMenu = addConfig("meeroTapMenu", configTypeBool, true);
+    // MeeroX v126: fixed exclusive "Glass Night" skin for MeeroX settings
+    // screens - ignores Telegram themes, follows day/night only. Default ON
+    // (display feature); OFF returns the stock themed look exactly.
+    public static ConfigItem meeroGlassSettings = addConfig("meeroGlassSettings", configTypeBool, true);
     public static ConfigItem meeroIosAnim = addConfig("meeroIosAnim", configTypeBool, true);
     public static ConfigItem meeroCards = addConfig("meeroCards", configTypeBool, true);
     public static ConfigItem meeroDialogsStyle = addConfig("meeroDialogsStyle", configTypeBool, true);

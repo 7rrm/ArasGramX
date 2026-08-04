@@ -4,27 +4,39 @@ import static org.telegram.messenger.LocaleController.getString;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.RecyclerView;
+
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.R;
 import org.telegram.ui.ActionBar.AlertDialog;
 import org.telegram.ui.ActionBar.Theme;
+import org.telegram.ui.ActionBar.ThemeDescription;
+import org.telegram.ui.ActionBar.Theme.ResourcesProvider;
+import org.telegram.ui.Cells.ShadowSectionCell;
 import org.telegram.ui.Components.LayoutHelper;
 import org.telegram.ui.Components.RecyclerListView;
 
+import java.util.ArrayList;
+
 import tw.nekomimi.nekogram.MeeroBubbleStyles;
+import tw.nekomimi.nekogram.MeeroGlassTheme;
 import tw.nekomimi.nekogram.MeeroTickStyles;
 import tw.nekomimi.nekogram.NekoConfig;
+import tw.nekomimi.nekogram.ui.cells.HeaderCell;
 import tw.nekomimi.nekogram.config.CellGroup;
 import tw.nekomimi.nekogram.config.cell.AbstractConfigCell;
 import tw.nekomimi.nekogram.config.cell.ConfigCellDivider;
@@ -83,6 +95,10 @@ public class MeeroSettingsActivity extends BaseNekoXSettingsActivity {
 
     // Appearance - what an idle screen looks like.
     private final AbstractConfigCell headerAppearance = cellGroup.appendCell(new ConfigCellHeader(getString(R.string.MeeroGroupAppearance)));
+    // MeeroX v126: the master switch for the fixed "Glass Night" skin of the
+    // MeeroX settings screens (ROADMAP batch v126: foundation + chrome).
+    // OFF returns the exact stock themed look; no other row cares about it.
+    private final AbstractConfigCell glassDesignRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroGlassSettings, getString(R.string.MeeroGlassSettingsInfo)));
     // MeeroX v125: ONE combined row owns both shape pickers - its name tells
     // the user it holds two features, and the tap opens the shared modern
     // sheet on the bubbles tab (the read-marks tab lives inside the same
@@ -175,8 +191,159 @@ public class MeeroSettingsActivity extends BaseNekoXSettingsActivity {
         listView.setAdapter(listAdapter);
 
         setupDefaultListeners();
+        applyMeeroGlassChrome();
 
         return superView;
+    }
+
+    // ------------------------------------------------------------------
+    // MeeroX v126: fixed "Glass Night" chrome (batch v126 = foundation).
+    //
+    // HOW "theme-proof" works here, in three layers, without touching any
+    // Telegram or NagramX rendering code:
+    //  1. getResourceProvider(): while the glass switch is on we answer
+    //     every theme-key lookup from the fixed MeeroGlassTheme palette, so
+    //     even Telegram's own adaptive ActionBar (which animates between
+    //     two theme keys on scroll) paints OUR fixed colors automatically.
+    //  2. getThemeDescriptions(): with the glass on we return an empty
+    //     list, so Telegram's theme-reload machinery simply has nothing to
+    //     repaint on this screen - "not affected by themes" is structural,
+    //     not a race against repaints. OFF returns the stock list verbatim.
+    //  3. onBindMeeroGlass(): every row bind either applies the glass look
+    //     or restores the exact stock colors, so the master switch flips
+    //     live with a simple notifyDataSetChanged().
+    // ------------------------------------------------------------------
+
+    private static final String GLASS_RULE = "meeroGlassHeaderRule";
+
+    private boolean glassOn() {
+        try {
+            return NekoConfig.meeroGlassSettings.Bool();
+        } catch (Throwable t) {
+            return true;
+        }
+    }
+
+    @Override
+    public ResourcesProvider getResourceProvider() {
+        ResourcesProvider base = super.getResourceProvider();
+        return glassOn() ? MeeroGlassTheme.wrap(base) : base;
+    }
+
+    @Override
+    public ArrayList<ThemeDescription> getThemeDescriptions() {
+        if (glassOn()) {
+            return new ArrayList<>();
+        }
+        return super.getThemeDescriptions();
+    }
+
+    private void applyMeeroGlassChrome() {
+        if (fragmentView == null) {
+            return;
+        }
+        if (glassOn()) {
+            fragmentView.setBackground(MeeroGlassTheme.screenBackground());
+        } else {
+            fragmentView.setBackgroundColor(Theme.getColor(Theme.key_windowBackgroundGray));
+        }
+    }
+
+    @Override
+    protected void handleCellClick(View view, int position, float x, float y) {
+        super.handleCellClick(view, position, x, y);
+        if (position >= 0 && position < cellGroup.rows.size()
+                && cellGroup.rows.get(position) == glassDesignRow) {
+            // Live flip: palette + cells repaint right now. Everything reads
+            // glassOn() lazily, so the provider and future binds follow the
+            // new value by themselves; we only nudge the eager parts.
+            if (glassOn()) {
+                fragmentView.setBackground(MeeroGlassTheme.screenBackground());
+                actionBar.setBackgroundColor(MeeroGlassTheme.actionBarBg());
+                actionBar.setTitleColor(MeeroGlassTheme.ink());
+                actionBar.setItemsColor(MeeroGlassTheme.ink(), false);
+            } else {
+                // exact stock, mirroring the base fragment's theme keys
+                fragmentView.setBackgroundColor(Theme.getColor(Theme.key_windowBackgroundGray));
+                actionBar.setBackgroundColor(Theme.getColor(Theme.key_avatar_backgroundActionBarBlue));
+                actionBar.setTitleColor(Theme.getColor(Theme.key_actionBarDefaultTitle));
+                actionBar.setItemsColor(Theme.getColor(Theme.key_avatar_actionBarIconBlue), false);
+            }
+            listAdapter.notifyDataSetChanged();
+        }
+    }
+
+    /** Applies the glass look - or restores exact stock - on every row bind. */
+    private void onBindMeeroGlass(@NonNull RecyclerView.ViewHolder holder) {
+        final View v = holder.itemView;
+        if (v == null) {
+            return;
+        }
+        if (glassOn()) {
+            v.setBackgroundColor(Color.TRANSPARENT);
+            if (v instanceof HeaderCell) {
+                HeaderCell h = (HeaderCell) v;
+                h.setTextColor(MeeroGlassTheme.headerInk());
+                TextView tv = h.getTextView();
+                if (tv != null) {
+                    tv.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 13);
+                    tv.setLetterSpacing(0.04f);
+                }
+                View rule = h.findViewWithTag(GLASS_RULE);
+                if (rule == null && h.getContext() != null) {
+                    rule = new View(h.getContext());
+                    rule.setTag(GLASS_RULE);
+                    rule.setBackground(MeeroGlassTheme.headerRule());
+                    h.addView(rule, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 2, 0, 4, 0, 0));
+                }
+                rule.setVisibility(View.VISIBLE);
+            } else {
+                tintCellText(v, MeeroGlassTheme.ink(), MeeroGlassTheme.sub());
+            }
+        } else {
+            v.setBackgroundColor(v instanceof ShadowSectionCell
+                    ? Theme.getColor(Theme.key_windowBackgroundGrayShadow)
+                    : Theme.getColor(Theme.key_windowBackgroundWhite));
+            if (v instanceof HeaderCell) {
+                HeaderCell h = (HeaderCell) v;
+                h.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlueHeader));
+                TextView tv = h.getTextView();
+                if (tv != null) {
+                    tv.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 15);
+                    tv.setLetterSpacing(0f);
+                }
+                View rule = h.findViewWithTag(GLASS_RULE);
+                if (rule != null) {
+                    rule.setVisibility(View.GONE);
+                }
+            } else {
+                tintCellText(v,
+                        Theme.getColor(Theme.key_windowBackgroundWhiteBlackText),
+                        Theme.getColor(Theme.key_windowBackgroundWhiteGrayText2));
+            }
+        }
+    }
+
+    /** First TextView in a cell is its title; the rest are subtitles/values. */
+    private void tintCellText(View v, int titleColor, int subColor) {
+        ArrayList<TextView> texts = new ArrayList<>(4);
+        collectTextViews(v, texts);
+        for (int i = 0; i < texts.size(); i++) {
+            texts.get(i).setTextColor(i == 0 ? titleColor : subColor);
+        }
+    }
+
+    private void collectTextViews(View v, ArrayList<TextView> out) {
+        if (v instanceof TextView) {
+            out.add((TextView) v);
+            return;
+        }
+        if (v instanceof ViewGroup) {
+            ViewGroup g = (ViewGroup) v;
+            for (int i = 0; i < g.getChildCount(); i++) {
+                collectTextViews(g.getChildAt(i), out);
+            }
+        }
     }
 
     static String tickStyleName(int style) {
@@ -313,6 +480,12 @@ public class MeeroSettingsActivity extends BaseNekoXSettingsActivity {
     private class ListAdapter extends BaseListAdapter {
         public ListAdapter(Context context) {
             super(context);
+        }
+
+        @Override
+        protected void onBindDefaultViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
+            // v126: glass chrome / stock restore per row (see onBindMeeroGlass)
+            onBindMeeroGlass(holder);
         }
     }
 }
