@@ -6694,9 +6694,10 @@ public class ChatActivityEnterView extends FrameLayout implements
                 updateSendButtonPaid();
                 // MeeroX v118: keep the empty-state quick-reply chip in sync
                 // with typing; the delayed pass settles after stock's
-                // mic/send swap animation finishes.
+                // mic/send swap animation finishes. (Qualified this:: - we
+                // are inside the anonymous TextWatcher here.)
                 meeroQuickReplyChipUpdate();
-                AndroidUtilities.runOnUIThread(this::meeroQuickReplyChipUpdate, 260);
+                AndroidUtilities.runOnUIThread(ChatActivityEnterView.this::meeroQuickReplyChipUpdate, 260);
             }
 
             @Override
