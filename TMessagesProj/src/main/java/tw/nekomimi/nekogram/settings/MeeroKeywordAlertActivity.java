@@ -74,6 +74,13 @@ public class MeeroKeywordAlertActivity extends BaseNekoSettingsActivity {
         entries.addAll(MeeroKeywordAlert.getEntries());
     }
 
+    // MeeroX v129: opt into the fixed glass design (chrome, cards,
+    // mock switches, entrance stagger) via the shared support pass.
+    @Override
+    protected boolean meeroGlassScreen() {
+        return true;
+    }
+
     @Override
     protected String getActionBarTitle() {
         return getString(R.string.MeeroKeywordTitle);

@@ -95,6 +95,10 @@ public class NekoConfig {
     // screens - ignores Telegram themes, follows day/night only. Default ON
     // (display feature); OFF returns the stock themed look exactly.
     public static ConfigItem meeroGlassSettings = addConfig("meeroGlassSettings", configTypeBool, true);
+    // MeeroX v129: switches drawn exactly like the preview mock (gradient
+    // track, glow, stretching knob). Default ON (display feature); OFF
+    // returns the stock Switch look even while the glass design stays on.
+    public static ConfigItem meeroGlassSwitches = addConfig("meeroGlassSwitches", configTypeBool, true);
     public static ConfigItem meeroIosAnim = addConfig("meeroIosAnim", configTypeBool, true);
     public static ConfigItem meeroCards = addConfig("meeroCards", configTypeBool, true);
     public static ConfigItem meeroDialogsStyle = addConfig("meeroDialogsStyle", configTypeBool, true);

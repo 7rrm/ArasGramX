@@ -40,6 +40,7 @@ import org.telegram.ui.Components.RecyclerListView;
 import java.util.ArrayList;
 
 import tw.nekomimi.nekogram.MeeroBubbleStyles;
+import tw.nekomimi.nekogram.MeeroGlassSupport;
 import tw.nekomimi.nekogram.MeeroGlassTheme;
 import tw.nekomimi.nekogram.MeeroTickStyles;
 import tw.nekomimi.nekogram.NekoConfig;
@@ -106,6 +107,9 @@ public class MeeroSettingsActivity extends BaseNekoXSettingsActivity {
     // MeeroX settings screens (ROADMAP batch v126: foundation + chrome).
     // OFF returns the exact stock themed look; no other row cares about it.
     private final AbstractConfigCell glassDesignRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroGlassSettings, getString(R.string.MeeroGlassSettingsInfo)));
+    // MeeroX v129: mock-accurate switches sit directly under the master
+    // design row. Own on/off; OFF = stock switch even under the glass skin.
+    private final AbstractConfigCell glassSwitchesRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroGlassSwitches, getString(R.string.MeeroGlassSwitchesInfo)));
     // MeeroX v125: ONE combined row owns both shape pickers - its name tells
     // the user it holds two features, and the tap opens the shared modern
     // sheet on the bubbles tab (the read-marks tab lives inside the same
@@ -220,22 +224,12 @@ public class MeeroSettingsActivity extends BaseNekoXSettingsActivity {
      * our fixed press tint. OFF restores the exact stock call.
      */
     private void applySectionsSkin() {
-        if (listView == null) {
-            return;
-        }
-        if (glassOn()) {
-            listView.setSections(
-                    view -> !(view instanceof TextInfoPrivacyCell
-                            || view instanceof ShadowSectionCell
-                            || view instanceof GraySectionCell
-                            || view instanceof CollapseTextCell),
-                    AndroidUtilities.dp(12), AndroidUtilities.dp(16),
-                    (canvas, rect, rx, ry, alpha) -> { /* glass: no themed section paint */ },
-                    true);
-            listView.setSelectorDrawableColor(MeeroGlassTheme.press());
-        } else {
-            listView.setSections(true);
-        }
+        // v129: shared with the legacy sub-screens (MeeroGlassSupport).
+        MeeroGlassSupport.applySectionsSkin(listView, glassOn(),
+                view -> !(view instanceof TextInfoPrivacyCell
+                        || view instanceof ShadowSectionCell
+                        || view instanceof GraySectionCell
+                        || view instanceof CollapseTextCell));
     }
 
     // ------------------------------------------------------------------
@@ -255,8 +249,6 @@ public class MeeroSettingsActivity extends BaseNekoXSettingsActivity {
     //     or restores the exact stock colors, so the master switch flips
     //     live with a simple notifyDataSetChanged().
     // ------------------------------------------------------------------
-
-    private static final String GLASS_RULE = "meeroGlassHeaderRule";
 
     private boolean glassOn() {
         // v127: single source of truth lives in MeeroGlassTheme so the cell
@@ -311,7 +303,13 @@ public class MeeroSettingsActivity extends BaseNekoXSettingsActivity {
                 actionBar.setTitleColor(Theme.getColor(Theme.key_actionBarDefaultTitle));
                 actionBar.setItemsColor(Theme.getColor(Theme.key_avatar_actionBarIconBlue), false);
             }
-            glassAnimMax = -1; // replay the entrance under the new look
+            glassEntrance.reset(); // replay the entrance under the new look
+            listAdapter.notifyDataSetChanged();
+        }
+        if (position >= 0 && position < cellGroup.rows.size()
+                && cellGroup.rows.get(position) == glassSwitchesRow) {
+            // Redraw-only toggle: swapped switches repaint per frame from
+            // the live flag, stock cells are untouched rows. Just rebind.
             listAdapter.notifyDataSetChanged();
         }
     }
@@ -323,60 +321,41 @@ public class MeeroSettingsActivity extends BaseNekoXSettingsActivity {
             return;
         }
         final int card = cardPos(position);
-        setRowMargins(v, card != 0);
+        MeeroGlassSupport.setRowMargins(v, card != 0);
         if (glassOn()) {
             if (v instanceof HeaderCell) {
-                v.setBackgroundColor(Color.TRANSPARENT);
-                HeaderCell h = (HeaderCell) v;
-                h.setTextColor(MeeroGlassTheme.headerInk());
-                TextView tv = h.getTextView();
-                if (tv != null) {
-                    tv.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 13);
-                    tv.setLetterSpacing(0.04f);
-                }
-                View rule = h.findViewWithTag(GLASS_RULE);
-                if (rule == null && h.getContext() != null) {
-                    rule = new View(h.getContext());
-                    rule.setTag(GLASS_RULE);
-                    rule.setBackground(MeeroGlassTheme.headerRule());
-                    h.addView(rule, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 2, 0, 4, 0, 0));
-                }
-                rule.setVisibility(View.VISIBLE);
+                MeeroGlassSupport.styleHeaderCell(v, true);
             } else if (card != 0) {
                 // v127: rows that live inside a section wear the glass card -
                 // rounded corners only on the card's outer edges.
                 v.setBackground(MeeroGlassTheme.card(card == CARD_TOP || card == CARD_SINGLE,
                         card == CARD_BOTTOM || card == CARD_SINGLE));
-                tintCellText(v, MeeroGlassTheme.ink(), MeeroGlassTheme.sub());
-                styleValueChip(v, true);
+                MeeroGlassSupport.tintCellText(v, MeeroGlassTheme.ink(), MeeroGlassTheme.sub());
+                MeeroGlassSupport.styleValueChip(v, true);
+                // v129: the mock switch is swapped in place of the stock one.
+                if (v instanceof TextCheckCell) {
+                    MeeroGlassSupport.swapSwitch((TextCheckCell) v);
+                }
             } else {
                 v.setBackgroundColor(Color.TRANSPARENT);
-                tintCellText(v, MeeroGlassTheme.ink(), MeeroGlassTheme.sub());
+                MeeroGlassSupport.tintCellText(v, MeeroGlassTheme.ink(), MeeroGlassTheme.sub());
             }
         } else {
             v.setBackgroundColor(v instanceof ShadowSectionCell
                     ? Theme.getColor(Theme.key_windowBackgroundGrayShadow)
                     : Theme.getColor(Theme.key_windowBackgroundWhite));
             if (v instanceof HeaderCell) {
-                HeaderCell h = (HeaderCell) v;
-                h.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlueHeader));
-                TextView tv = h.getTextView();
-                if (tv != null) {
-                    tv.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 15);
-                    tv.setLetterSpacing(0f);
-                }
-                View rule = h.findViewWithTag(GLASS_RULE);
-                if (rule != null) {
-                    rule.setVisibility(View.GONE);
-                }
+                MeeroGlassSupport.styleHeaderCell(v, false);
             } else {
-                tintCellText(v,
+                MeeroGlassSupport.tintCellText(v,
                         Theme.getColor(Theme.key_windowBackgroundWhiteBlackText),
                         Theme.getColor(Theme.key_windowBackgroundWhiteGrayText2));
             }
-            styleValueChip(v, false);
+            MeeroGlassSupport.styleValueChip(v, false);
         }
-        runGlassEntrance(v, position);
+        // v129: the mock's press squash on touchable card rows.
+        MeeroGlassSupport.attachPressPulse(v, glassOn() && card != 0 && !(v instanceof HeaderCell));
+        glassEntrance.run(v, position, glassOn());
     }
 
     // v127: section cards. Sections are exactly our regular grouping:
@@ -412,104 +391,11 @@ public class MeeroSettingsActivity extends BaseNekoXSettingsActivity {
         return CARD_MID;
     }
 
-    /** Card rows breathe in from the sides; structural rows span full width. */
-    private static void setRowMargins(View v, boolean inCard) {
-        if (!(v.getLayoutParams() instanceof RecyclerView.LayoutParams)) {
-            return;
-        }
-        RecyclerView.LayoutParams lp = (RecyclerView.LayoutParams) v.getLayoutParams();
-        int side = inCard ? AndroidUtilities.dp(12) : 0;
-        if (lp.leftMargin != side || lp.rightMargin != side || lp.topMargin != 0 || lp.bottomMargin != 0) {
-            lp.setMargins(side, 0, side, 0);
-            v.setLayoutParams(lp);
-        }
-    }
-
-    /**
-     * Select rows wear their current value as a rose chip (v127). The value
-     * label in TextSettingsCell is an AnimatedTextView, so it is found by
-     * type rather than by the TextView walk.
-     */
-    private void styleValueChip(View v, boolean glass) {
-        if (!(v instanceof TextSettingsCell)) {
-            return;
-        }
-        AnimatedTextView value = findAnimatedText(v);
-        if (value == null) {
-            return;
-        }
-        if (glass) {
-            value.setTextColor(MeeroGlassTheme.ACC1);
-            value.setTextSize(AndroidUtilities.dp(13));
-            value.setBackground(MeeroGlassTheme.chipBg());
-            value.setPadding(AndroidUtilities.dp(9), AndroidUtilities.dp(1),
-                    AndroidUtilities.dp(9), AndroidUtilities.dp(1));
-        } else {
-            value.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteValueText));
-            value.setTextSize(AndroidUtilities.dp(16));
-            value.setBackground(null);
-            value.setPadding(0, 0, 0, 0);
-        }
-    }
-
-    private AnimatedTextView findAnimatedText(View v) {
-        if (v instanceof AnimatedTextView) {
-            return (AnimatedTextView) v;
-        }
-        if (v instanceof ViewGroup) {
-            ViewGroup g = (ViewGroup) v;
-            for (int i = 0; i < g.getChildCount(); i++) {
-                AnimatedTextView found = findAnimatedText(g.getChildAt(i));
-                if (found != null) {
-                    return found;
-                }
-            }
-        }
-        return null;
-    }
-
-    // v127: gentle staggered rise the first time each row shows. Positions
-    // already seen skip straight to the settled state so scrolling back up
-    // never replays it. The master toggle resets the counter and replays.
-    private int glassAnimMax = -1;
-
-    private void runGlassEntrance(View v, int position) {
-        if (!glassOn() || position <= glassAnimMax) {
-            v.animate().cancel();
-            v.setAlpha(1f);
-            v.setTranslationY(0f);
-            return;
-        }
-        glassAnimMax = position;
-        v.setAlpha(0f);
-        v.setTranslationY(AndroidUtilities.dp(14));
-        v.animate().alpha(1f).translationY(0f)
-                .setDuration(280)
-                .setStartDelay(Math.min(position * 30L, 300L))
-                .start();
-    }
-
-    /** First TextView in a cell is its title; the rest are subtitles/values. */
-    private void tintCellText(View v, int titleColor, int subColor) {
-        ArrayList<TextView> texts = new ArrayList<>(4);
-        collectTextViews(v, texts);
-        for (int i = 0; i < texts.size(); i++) {
-            texts.get(i).setTextColor(i == 0 ? titleColor : subColor);
-        }
-    }
-
-    private void collectTextViews(View v, ArrayList<TextView> out) {
-        if (v instanceof TextView) {
-            out.add((TextView) v);
-            return;
-        }
-        if (v instanceof ViewGroup) {
-            ViewGroup g = (ViewGroup) v;
-            for (int i = 0; i < g.getChildCount(); i++) {
-                collectTextViews(g.getChildAt(i), out);
-            }
-        }
-    }
+    // v129: the row skinning helpers (margins, header style, value chips,
+    // text tinting, the entrance stagger) moved to MeeroGlassSupport so the
+    // fourteen legacy-base Meero sub-screens replay the exact same look;
+    // this screen keeps only its per-screen entrance state.
+    private final MeeroGlassSupport.Entrance glassEntrance = new MeeroGlassSupport.Entrance();
 
     static String tickStyleName(int style) {
         switch (style) {

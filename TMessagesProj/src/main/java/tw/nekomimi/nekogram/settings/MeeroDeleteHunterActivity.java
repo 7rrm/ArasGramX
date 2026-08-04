@@ -86,6 +86,13 @@ public class MeeroDeleteHunterActivity extends BaseNekoSettingsActivity {
         items.addAll(MeeroDeleteHunter.getLog());
     }
 
+    // MeeroX v129: opt into the fixed glass design (chrome, cards,
+    // mock switches, entrance stagger) via the shared support pass.
+    @Override
+    protected boolean meeroGlassScreen() {
+        return true;
+    }
+
     @Override
     protected String getActionBarTitle() {
         return getString(R.string.MeeroHunterTitle);

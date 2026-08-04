@@ -51,6 +51,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Locale;
 
+import tw.nekomimi.nekogram.MeeroGlassSupport;
+import tw.nekomimi.nekogram.MeeroGlassTheme;
 import tw.nekomimi.nekogram.ui.cells.AccountCell;
 import tw.nekomimi.nekogram.ui.cells.EmojiSetCell;
 import tw.nekomimi.nekogram.ui.cells.HeaderCell;
@@ -145,6 +147,7 @@ public abstract class BaseNekoSettingsActivity extends BaseFragment {
 
         listView.setSections(true);
         actionBar.setAdaptiveBackground(listView);
+        meeroApplyGlassChrome();
         return fragmentView;
     }
 
@@ -152,12 +155,15 @@ public abstract class BaseNekoSettingsActivity extends BaseFragment {
     protected void setParentLayout(ActionBarLayout layout) {
         if (layout != null && !hasWhiteActionBar()) {
             resourcesProvider = layout.getLastFragment().getResourceProvider();
+            meeroProviderWrapped = false; // v129: re-wrap around the new delegate if glass wants it
+            meeroEnsureGlassProvider();
         }
         super.setParentLayout(layout);
     }
 
     @Override
     public ActionBar createActionBar(Context context) {
+        meeroEnsureGlassProvider();
         ActionBar actionBar = super.createActionBar(context);
         if (hasWhiteActionBar()) {
             actionBar.setBackgroundColor(getThemedColor(Theme.key_windowBackgroundWhite));
@@ -199,6 +205,7 @@ public abstract class BaseNekoSettingsActivity extends BaseFragment {
     @Override
     public void onResume() {
         super.onResume();
+        meeroApplyGlassChrome();
         if (listAdapter != null) {
             listAdapter.notifyDataSetChanged();
         }
@@ -263,6 +270,61 @@ public abstract class BaseNekoSettingsActivity extends BaseFragment {
     @Override
     public Theme.ResourcesProvider getResourceProvider() {
         return resourcesProvider;
+    }
+
+    /**
+     * MeeroX v129: opt-in flag for the fixed glass skin on legacy-base
+     * screens. Only the fourteen Meero* screens override this to return
+     * true; every other screen on this base renders byte-identical to
+     * stock, glass master switch notwithstanding.
+     */
+    protected boolean meeroGlassScreen() {
+        return false;
+    }
+
+    private boolean meeroGlassActive() {
+        return meeroGlassScreen() && MeeroGlassTheme.enabled();
+    }
+
+    private boolean meeroProviderWrapped;
+
+    /**
+     * Legacy screens paint their ActionBar, blur scrim, status-bar
+     * luminance, section backgrounds and cells from this fragment's
+     * resource provider. Wrapped exactly once so every consumer - cells
+     * constructed with the field directly included - resolves through the
+     * fixed palette while the glass design is on, and falls back to pure
+     * stock resolution when it is off (the wrapper is live).
+     */
+    private void meeroEnsureGlassProvider() {
+        if (meeroGlassActive() && !meeroProviderWrapped) {
+            resourcesProvider = MeeroGlassTheme.wrapLegacy(resourcesProvider);
+            meeroProviderWrapped = true;
+        }
+    }
+
+    private boolean meeroChromeApplied;
+
+    /**
+     * Applies (or, after a toggle while this screen sat on the back stack,
+     * rolls back) the glass chrome: screen background, sections painter and
+     * row selector. Called from createView and onResume so the master
+     * switch flips this screen live either way. Rollback restores the exact
+     * stock calls the class made originally.
+     */
+    private void meeroApplyGlassChrome() {
+        if (fragmentView == null || listView == null) {
+            return;
+        }
+        if (meeroGlassActive()) {
+            meeroEnsureGlassProvider();
+            fragmentView.setBackground(MeeroGlassTheme.screenBackground());
+            MeeroGlassSupport.applySectionsSkin(listView, true, MeeroGlassSupport::legacySectionsKeep);
+        } else if (meeroChromeApplied) {
+            fragmentView.setBackgroundColor(getThemedColor(Theme.key_windowBackgroundGray));
+            listView.setSections(true);
+        }
+        meeroChromeApplied = meeroGlassActive();
     }
 
     @Override
@@ -340,6 +402,23 @@ public abstract class BaseNekoSettingsActivity extends BaseFragment {
             onBindViewHolder(holder, position, PARTIAL.equals(payload));
             meeroApplyCard(holder, position);
             meeroStyleHeader(holder);
+            meeroGlassBind(holder, position);
+        }
+
+        /** Per-adapter entrance state for the glass stagger (v129). */
+        private final MeeroGlassSupport.Entrance meeroEntrance = new MeeroGlassSupport.Entrance();
+
+        /**
+         * MeeroX v129: the glass skin pass runs LAST on every bind, after
+         * content and the older cards feature, so the fixed palette always
+         * wins visually; with the design off (or on non-opted-in screens)
+         * it restores/maintains the exact stock look instead.
+         */
+        private void meeroGlassBind(@NonNull RecyclerView.ViewHolder holder, int position) {
+            if (!meeroGlassScreen()) {
+                return;
+            }
+            MeeroGlassSupport.skinLegacyRow(holder, position, this, meeroGlassActive(), meeroEntrance);
         }
 
         /**

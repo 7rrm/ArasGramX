@@ -880,6 +880,8 @@
     <string name="MeeroPickerSwipeHint">اسحب البطاقات جانبياً لعرض المزيد</string>
     <string name="meeroGlassSettings">تصميم ميرو الزجاجي</string>
     <string name="MeeroGlassSettingsInfo">جلد ثابت حصري لإعدادات ميرو: زجاج شفاف بتوهّج هادئ. لا يتأثر بثيمات تيليجرام نهائياً ويتبدّل مع الوضع الليلي/النهاري فقط.</string>
+    <string name="meeroGlassSwitches">مفاتيح ميرو الزجاجية</string>
+    <string name="MeeroGlassSwitchesInfo">سويتشات مطابقة لموقع المعاينة: حبة 48×28 تمتلئ بتدرّج وردي إلى بنفسجي مع توهّج وردي ناعم عند التشغيل، وكرة بيضاء تتمدد تحت إصبعك، وحركة نابضة 280ms. الإطفاء يرجّع السويتش الأصلي حرفياً.</string>
     <string name="meeroTapMenu">فتح القائمة بنقرة واحدة</string>
     <string name="MeeroTapMenuInfo">انقر على فقاعة الرسالة لفتح قائمتها. الضغط المطوّل يبقى يعمل.</string>
     <string name="meeroIosAnim">أنميشن الرسائل بنمط iOS</string>

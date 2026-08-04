@@ -82,6 +82,13 @@ public class MeeroWatchActivity extends BaseNekoSettingsActivity {
         entries.addAll(MeeroWatch.getEntries());
     }
 
+    // MeeroX v129: opt into the fixed glass design (chrome, cards,
+    // mock switches, entrance stagger) via the shared support pass.
+    @Override
+    protected boolean meeroGlassScreen() {
+        return true;
+    }
+
     @Override
     protected String getActionBarTitle() {
         return getString(R.string.MeeroWatchTitle);

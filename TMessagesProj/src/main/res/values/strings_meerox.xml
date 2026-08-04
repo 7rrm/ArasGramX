@@ -191,6 +191,8 @@
     <string name="MeeroPickerSwipeHint">Swipe the cards sideways for more</string>
     <string name="meeroGlassSettings">Meero glass design</string>
     <string name="MeeroGlassSettingsInfo">A fixed exclusive skin for Meero settings: frosted glass with a soft glow. It ignores Telegram themes completely and only follows day/night mode.</string>
+    <string name="meeroGlassSwitches">Meero glass switches</string>
+    <string name="MeeroGlassSwitchesInfo">Switches drawn exactly like the preview mock: a 48x28 pill that fills with a rose-to-violet gradient and a soft rose glow when on, a white knob that stretches under your finger, and 280ms springy motion. Off keeps the stock switch.</string>
     <string name="meeroTapMenu">Open menu with a single tap</string>
     <string name="MeeroTapMenuInfo">Tap a message bubble to open its menu. Long press keeps working.</string>
     <string name="meeroIosAnim">iOS message animation</string>

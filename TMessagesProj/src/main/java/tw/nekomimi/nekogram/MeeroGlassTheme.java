@@ -39,6 +39,19 @@ public final class MeeroGlassTheme {
         }
     }
 
+    /**
+     * v129: the mock-accurate MeeroGlassSwitch is live only while BOTH the
+     * master design switch and its own dedicated row are on. Read lazily,
+     * so flipped rows redraw on the next frame.
+     */
+    public static boolean switchesEnabled() {
+        try {
+            return enabled() && NekoConfig.meeroGlassSwitches.Bool();
+        } catch (Throwable t) {
+            return enabled();
+        }
+    }
+
     /** Day/night comes from the app's own night state, not from theme colors. */
     public static boolean isNight() {
         try {
@@ -157,9 +170,18 @@ public final class MeeroGlassTheme {
      * theme resolution, i.e. exact stock.
      */
     public static Theme.ResourcesProvider cells() {
+        return cellsWith(null);
+    }
+
+    /**
+     * Same as {@link #cells()} but unmapped keys fall back to the given
+     * delegate instead of the global theme. Used by wrapLegacy() to chain
+     * the cell palette behind the chrome palette for legacy-base screens.
+     */
+    public static Theme.ResourcesProvider cellsWith(final Theme.ResourcesProvider delegate) {
         return key -> {
             if (!enabled()) {
-                return Theme.getColor(key);
+                return delegate != null ? delegate.getColor(key) : Theme.getColor(key);
             }
             if (key == Theme.key_windowBackgroundWhiteBlackText
                     || key == Theme.key_dialogTextBlack) {
@@ -191,7 +213,7 @@ public final class MeeroGlassTheme {
             if (key == Theme.key_divider) {
                 return sep();
             }
-            return Theme.getColor(key);
+            return delegate != null ? delegate.getColor(key) : Theme.getColor(key);
         };
     }
 
@@ -253,6 +275,35 @@ public final class MeeroGlassTheme {
                 return headerInk();
             }
             return delegate != null ? delegate.getColor(key) : Theme.getColor(key);
+        };
+    }
+
+    /**
+     * v129: provider for the LEGACY base (BaseNekoXSettingsActivity +
+     * BaseNekoSettingsActivity family). Those screens build their ActionBar,
+     * blur scrim, status-bar luminance and row backgrounds from
+     * key_windowBackgroundWhite directly, so on top of the normal chrome
+     * palette we additionally pin white -> the fixed bar color (the row
+     * skin pass replaces the actual row backgrounds anyway, and their
+     * switches are swapped to MeeroGlassSwitch, so the stock white-thumb
+     * mapping is not needed here) and make the gray section-shadow key
+     * transparent so themed separator bars disappear under glass. Cell
+     * palette keys resolve too, because legacy cells are constructed with
+     * this single provider. Everything is gated on the live toggle, so OFF
+     * resolves exactly like before.
+     */
+    public static Theme.ResourcesProvider wrapLegacy(final Theme.ResourcesProvider delegate) {
+        final Theme.ResourcesProvider chained = wrap(cellsWith(delegate));
+        return key -> {
+            if (enabled()) {
+                if (key == Theme.key_windowBackgroundWhite) {
+                    return actionBarBg();
+                }
+                if (key == Theme.key_windowBackgroundGrayShadow) {
+                    return Color.TRANSPARENT;
+                }
+            }
+            return chained.getColor(key);
         };
     }
 }

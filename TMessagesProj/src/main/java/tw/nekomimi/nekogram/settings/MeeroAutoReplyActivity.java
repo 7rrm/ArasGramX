@@ -94,6 +94,13 @@ public class MeeroAutoReplyActivity extends BaseNekoSettingsActivity {
         boundsInfoRow = addRow(); // v111: this is now the usage-guide button
     }
 
+    // MeeroX v129: opt into the fixed glass design (chrome, cards,
+    // mock switches, entrance stagger) via the shared support pass.
+    @Override
+    protected boolean meeroGlassScreen() {
+        return true;
+    }
+
     @Override
     protected String getActionBarTitle() {
         return getString(R.string.MeeroAutoReplyTitle);
