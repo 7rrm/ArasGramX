@@ -641,7 +641,6 @@ public class ChatActivityEnterView extends FrameLayout implements
     private TimerView recordTimerView;
     private FrameLayout audioVideoButtonContainer;
     private boolean audioVideoButtonContainerForbidden;
-    private ImageView meeroQuickReplyChip;
     private ChatActivityEnterViewAnimatedIconView audioVideoSendButton;
     private boolean isInVideoMode;
     @Nullable
@@ -3525,23 +3524,6 @@ public class ChatActivityEnterView extends FrameLayout implements
         audioVideoSendButton.setPadding(padding, padding, padding, padding);
         audioVideoButtonContainer.addView(audioVideoSendButton, LayoutHelper.createFrame(DEFAULT_HEIGHT, DEFAULT_HEIGHT));
 
-        // MeeroX v118: quick-reply chip, sitting directly left of the mic.
-        // The v117 trigger lives on the send button's long-press, but the
-        // send button only exists while the field has text - so the popup
-        // was unreachable in exactly the empty-field state it was made for.
-        // This chip appears in exactly that state and opens the same popup
-        // on a single tap. Bound to the same meeroQuickReply switch: off =
-        // the chip never shows. Mic / voice-recording behaviour untouched.
-        meeroQuickReplyChip = new ImageView(context);
-        meeroQuickReplyChip.setImageResource(R.drawable.baseline_reply_24);
-        meeroQuickReplyChip.setScaleType(ImageView.ScaleType.CENTER);
-        meeroQuickReplyChip.setColorFilter(new PorterDuffColorFilter(getThemedColor(Theme.key_glass_defaultIcon), PorterDuff.Mode.MULTIPLY));
-        meeroQuickReplyChip.setBackground(Theme.createSelectorDrawable(getThemedColor(Theme.key_listSelector)));
-        meeroQuickReplyChip.setContentDescription(getString(R.string.MeeroQuickReplyTitle));
-        meeroQuickReplyChip.setVisibility(GONE);
-        meeroQuickReplyChip.setOnClickListener(v -> meeroQuickReplyPopup(meeroQuickReplyChip));
-        sendButtonContainer.addView(meeroQuickReplyChip, LayoutHelper.createFrame(DEFAULT_HEIGHT, DEFAULT_HEIGHT, Gravity.RIGHT | Gravity.BOTTOM, 0, 0, DEFAULT_HEIGHT, 0));
-
         cancelBotButton = new ImageView(context);
         cancelBotButton.setVisibility(INVISIBLE);
         cancelBotButton.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
@@ -5158,112 +5140,46 @@ public class ChatActivityEnterView extends FrameLayout implements
     private ActionBarMenuSubItem actionScheduleButton;
 
     /**
-     * MeeroX v118: decides whether the quick-reply chip next to the mic is
-     * visible. It mirrors the exact states where stock shows the mic - empty
-     * text, no slow-mode timer, not recording (recordPanel hidden) - plus our
-     * own master switch, so the chip only ever appears where no other button
-     * competes for that spot. Called on every text change, record-state
-     * change and resume; a delayed pass picks up stock's 220 ms alpha
-     * transitions so the chip settles after animations finish.
+     * MeeroX v119: the quick-reply section injected at the TOP of the send
+     * preview action menu (ItemOptions shown on the send button long-press
+     * with text in the field). The v117 standalone popup and the v118 chip
+     * are gone - everything quick-reply lives in this stock-looking list
+     * now. Shown only while the master switch is on; off = byte-for-byte
+     * stock menu. A tap dismisses the preview and REPLACES the field text
+     * with the template; messages are never sent automatically.
      */
-    private void meeroQuickReplyChipUpdate() {
-        if (meeroQuickReplyChip == null) {
+    private void meeroQuickReplyOptions(ItemOptions options) {
+        if (!MeeroQuickReply.enabled() || parentFragment == null || messageEditText == null) {
             return;
         }
-        final boolean show = MeeroQuickReply.enabled()
-                && parentFragment != null
-                && parentFragment.getChatMode() != ChatActivity.MODE_QUICK_REPLIES
-                && messageEditText != null
-                && messageEditText.getText().length() == 0
-                && audioVideoButtonContainer != null
-                && audioVideoButtonContainer.getVisibility() == VISIBLE
-                && !recordingAudioVideo
-                && (recordPanel == null || recordPanel.getVisibility() != VISIBLE);
-        final int target = show ? VISIBLE : GONE;
-        if (meeroQuickReplyChip.getVisibility() != target) {
-            meeroQuickReplyChip.setVisibility(target);
-        }
-    }
-
-    /**
-     * MeeroX v117: the quick-reply template list attached to the send
-     * button's long-press. It is only offered when the input is empty and
-     * nothing is being forwarded - the two cases where stock Telegram shows
-     * nothing at all - so no Telegram behaviour changes anywhere. Choosing a
-     * template inserts it into the field; sending stays 100% manual.
-     */
-    private boolean meeroQuickReplyPopup(View view) {
-        if (!MeeroQuickReply.enabled() || parentFragment == null || messageEditText == null
-                || messageEditText.getText().length() > 0) {
-            return false;
-        }
-        try {
-            if (parentFragment.messagePreviewParams != null
-                    && parentFragment.messagePreviewParams.forwardMessages != null
-                    && parentFragment.messagePreviewParams.forwardMessages.messages != null
-                    && !parentFragment.messagePreviewParams.forwardMessages.messages.isEmpty()) {
-                return false; // stock schedule/silent popup owns the forward case
-            }
-        } catch (Throwable ignore) {
-        }
-
         final java.util.ArrayList<MeeroQuickReply.Template> templates = MeeroQuickReply.list();
-        final ActionBarPopupWindow.ActionBarPopupWindowLayout layout =
-                new ActionBarPopupWindow.ActionBarPopupWindowLayout(getContext(), resourcesProvider);
-        layout.setAnimationEnabled(false);
-        layout.setShownFromBottom(false);
-        final ActionBarPopupWindow[] windowRef = new ActionBarPopupWindow[1];
-
-        for (final MeeroQuickReply.Template t : templates) {
-            ActionBarMenuSubItem item = new ActionBarMenuSubItem(getContext(), true, true, resourcesProvider);
-            item.setTextAndIcon(MeeroQuickReply.previewOf(t.text), R.drawable.baseline_reply_24);
-            item.setMinimumWidth(dp(196));
-            item.setOnClickListener(v -> {
-                if (windowRef[0] != null && windowRef[0].isShowing()) windowRef[0].dismiss();
+        final int shown = Math.min(templates.size(), 5);
+        for (int i = 0; i < shown; i++) {
+            final MeeroQuickReply.Template t = templates.get(i);
+            options.add(R.drawable.baseline_reply_24, MeeroQuickReply.previewOf(t.text), () -> {
+                if (messageSendPreview != null) {
+                    messageSendPreview.dismiss(true);
+                    messageSendPreview = null;
+                }
                 messageEditText.setText(t.text);
                 messageEditText.setSelection(messageEditText.getText().length());
             });
-            layout.addView(item, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 48));
         }
-
-        ActionBarMenuSubItem addItem = new ActionBarMenuSubItem(getContext(), templates.isEmpty(), true, resourcesProvider);
-        addItem.setTextAndIcon(getString(R.string.MeeroQuickReplyAdd), R.drawable.deproko_baseline_text_add_24);
-        addItem.setMinimumWidth(dp(196));
-        addItem.setOnClickListener(v -> {
-            if (windowRef[0] != null && windowRef[0].isShowing()) windowRef[0].dismiss();
+        options.add(R.drawable.deproko_baseline_text_add_24, getString(R.string.MeeroQuickReplyAdd), () -> {
+            if (messageSendPreview != null) {
+                messageSendPreview.dismiss(true);
+                messageSendPreview = null;
+            }
             meeroQuickReplyEditor(null);
         });
-        layout.addView(addItem, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 48));
-
-        ActionBarMenuSubItem manageItem = new ActionBarMenuSubItem(getContext(), false, true, resourcesProvider);
-        manageItem.setTextAndIcon(getString(R.string.MeeroQuickReplyManage), R.drawable.baseline_edit_24);
-        manageItem.setMinimumWidth(dp(196));
-        manageItem.setOnClickListener(v -> {
-            if (windowRef[0] != null && windowRef[0].isShowing()) windowRef[0].dismiss();
+        options.add(R.drawable.baseline_edit_24, getString(R.string.MeeroQuickReplyManage), () -> {
+            if (messageSendPreview != null) {
+                messageSendPreview.dismiss(true);
+                messageSendPreview = null;
+            }
             parentFragment.presentFragment(new MeeroQuickReplyActivity());
         });
-        layout.addView(manageItem, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 48));
-
-        layout.setupRadialSelectors(getThemedColor(Theme.key_dialogButtonSelector));
-        final ActionBarPopupWindow popup = new ActionBarPopupWindow(layout, LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT);
-        windowRef[0] = popup;
-        popup.setAnimationEnabled(false);
-        popup.setAnimationStyle(R.style.PopupContextAnimation2);
-        popup.setOutsideTouchable(true);
-        popup.setClippingEnabled(true);
-        layout.measure(MeasureSpec.makeMeasureSpec(dp(1000), MeasureSpec.AT_MOST), MeasureSpec.makeMeasureSpec(dp(1000), MeasureSpec.AT_MOST));
-        view.getLocationInWindow(location);
-        // Anchor exactly like the stock send-options popup: above the button,
-        // right edge aligned to it.
-        popup.showAtLocation(view, Gravity.LEFT | Gravity.TOP,
-                location[0] + view.getMeasuredWidth() - layout.getMeasuredWidth() + dp(8),
-                location[1] - layout.getMeasuredHeight() - dp(2));
-        popup.dimBehind();
-        try {
-            if (!NekoConfig.disableVibration.Bool()) view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
-        } catch (Exception ignore) {
-        }
-        return true;
+        options.addGap();
     }
 
     /** MeeroX v117: add/edit dialog for one template; null means "new". */
@@ -5311,13 +5227,6 @@ public class ChatActivityEnterView extends FrameLayout implements
     private boolean onSendLongClick(View view) {
         if (isInScheduleMode() || parentFragment != null && parentFragment.getChatMode() == ChatActivity.MODE_QUICK_REPLIES || animatorEphemeralMessageVisibility.getValue()) {
             return false;
-        }
-        // MeeroX: quick-reply templates. The stock long-press does nothing
-        // with an empty field and nothing forwarding, so offering the
-        // template list covers exactly that gap - typed text and forwards
-        // keep the stock popup/preview untouched.
-        if (meeroQuickReplyPopup(view)) {
-            return true;
         }
         boolean sendWithoutSoundNax = NaConfig.INSTANCE.getSilentMessageByDefault().Bool();
         if (isStories || (messageEditText == null || TextUtils.isEmpty(messageEditText.getText())) && parentFragment != null && parentFragment.messagePreviewParams != null && parentFragment.messagePreviewParams.forwardMessages != null && parentFragment.messagePreviewParams.forwardMessages.messages != null && !parentFragment.messagePreviewParams.forwardMessages.messages.isEmpty()) {
@@ -5660,6 +5569,10 @@ public class ChatActivityEnterView extends FrameLayout implements
         }
 
         ItemOptions options = ItemOptions.makeOptions(this, resourcesProvider, sendButton);
+        // MeeroX v119: quick-reply templates occupy the top section of this
+        // menu (long-press send with any text in the field). Switch off =
+        // the section never appears and the menu stays exactly stock.
+        meeroQuickReplyOptions(options);
 
         final boolean self = parentFragment != null && UserObject.isUserSelf(parentFragment.getCurrentUser());
         boolean scheduleButtonValue = parentFragment != null && parentFragment.canScheduleMessage();
@@ -6692,12 +6605,6 @@ public class ChatActivityEnterView extends FrameLayout implements
                     }
                 }
                 updateSendButtonPaid();
-                // MeeroX v118: keep the empty-state quick-reply chip in sync
-                // with typing; the delayed pass settles after stock's
-                // mic/send swap animation finishes. (Qualified this:: - we
-                // are inside the anonymous TextWatcher here.)
-                meeroQuickReplyChipUpdate();
-                AndroidUtilities.runOnUIThread(ChatActivityEnterView.this::meeroQuickReplyChipUpdate, 260);
             }
 
             @Override
@@ -6785,10 +6692,6 @@ public class ChatActivityEnterView extends FrameLayout implements
             }
         });
         messageEditText.addTextChangedListener(new EditTextSuggestionsFix());
-        // MeeroX v118: first evaluation of the quick-reply chip now that the
-        // text field exists (it is created after the send-buttons container).
-        meeroQuickReplyChipUpdate();
-        AndroidUtilities.runOnUIThread(this::meeroQuickReplyChipUpdate, 260);
         messageEditText.setEnabled(messageEditTextEnabled);
         if (messageEditTextWatchers != null) {
             for (TextWatcher textWatcher : messageEditTextWatchers) {
@@ -7561,9 +7464,6 @@ public class ChatActivityEnterView extends FrameLayout implements
 
     public void onResume() {
         isPaused = false;
-        // MeeroX v118: refresh the quick-reply chip when the chat surfaces.
-        meeroQuickReplyChipUpdate();
-        AndroidUtilities.runOnUIThread(this::meeroQuickReplyChipUpdate, 260);
         if (hideKeyboardRunnable != null) {
             AndroidUtilities.cancelRunOnUIThread(hideKeyboardRunnable);
             hideKeyboardRunnable = null;
@@ -10905,10 +10805,6 @@ public class ChatActivityEnterView extends FrameLayout implements
         delegate.onAudioVideoInterfaceUpdated();
         updateSendAsButton();
         lastRecordState = recordState;
-        // MeeroX v118: re-evaluate the quick-reply chip after every
-        // record / slow-mode transition (immediately + after animations).
-        meeroQuickReplyChipUpdate();
-        AndroidUtilities.runOnUIThread(this::meeroQuickReplyChipUpdate, 260);
     }
 
     private void cancelRecordInterfaceInternal() {
