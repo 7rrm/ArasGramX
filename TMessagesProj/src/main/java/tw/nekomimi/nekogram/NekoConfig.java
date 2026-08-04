@@ -85,6 +85,12 @@ public class NekoConfig {
     // MeeroX: iOS 26 chat styling. Both default to on; turning them off
     // restores stock Telegram behaviour exactly.
     public static ConfigItem meeroMenuBlur = addConfig("meeroMenuBlur", configTypeBool, true);
+    // MeeroX v117: quick-reply templates - long-press the send button on an
+    // empty field to list saved templates; choosing one only inserts the text
+    // into the input box, the user always presses send themselves. Passive
+    // display feature, so default on; off removes the popup exactly like stock.
+    public static ConfigItem meeroQuickReply = addConfig("meeroQuickReply", configTypeBool, true);
+    public static ConfigItem meeroQuickReplyTemplates = addConfig("meeroQuickReplyTemplates", configTypeString, "[]");
     public static ConfigItem meeroIosBubbles = addConfig("meeroIosBubbles", configTypeBool, true);
     public static ConfigItem meeroTapMenu = addConfig("meeroTapMenu", configTypeBool, true);
     public static ConfigItem meeroIosAnim = addConfig("meeroIosAnim", configTypeBool, true);

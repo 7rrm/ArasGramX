@@ -232,8 +232,10 @@ import java.util.Locale;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import kotlin.Unit;
+import tw.nekomimi.nekogram.MeeroQuickReply;
 import tw.nekomimi.nekogram.helpers.ChatsHelper;
 import tw.nekomimi.nekogram.llm.LlmConfig;
+import tw.nekomimi.nekogram.settings.MeeroQuickReplyActivity;
 import tw.nekomimi.nekogram.utils.AndroidUtil;
 import tw.nekomimi.nekogram.utils.StringUtils;
 import tw.nekomimi.nekogram.NekoConfig;
@@ -5136,9 +5138,139 @@ public class ChatActivityEnterView extends FrameLayout implements
     }
 
     private ActionBarMenuSubItem actionScheduleButton;
+    /**
+     * MeeroX v117: the quick-reply template list attached to the send
+     * button's long-press. It is only offered when the input is empty and
+     * nothing is being forwarded - the two cases where stock Telegram shows
+     * nothing at all - so no Telegram behaviour changes anywhere. Choosing a
+     * template inserts it into the field; sending stays 100% manual.
+     */
+    private boolean meeroQuickReplyPopup(View view) {
+        if (!MeeroQuickReply.enabled() || parentFragment == null || messageEditText == null
+                || messageEditText.getText().length() > 0) {
+            return false;
+        }
+        try {
+            if (parentFragment.messagePreviewParams != null
+                    && parentFragment.messagePreviewParams.forwardMessages != null
+                    && parentFragment.messagePreviewParams.forwardMessages.messages != null
+                    && !parentFragment.messagePreviewParams.forwardMessages.messages.isEmpty()) {
+                return false; // stock schedule/silent popup owns the forward case
+            }
+        } catch (Throwable ignore) {
+        }
+
+        final java.util.ArrayList<MeeroQuickReply.Template> templates = MeeroQuickReply.list();
+        final ActionBarPopupWindow.ActionBarPopupWindowLayout layout =
+                new ActionBarPopupWindow.ActionBarPopupWindowLayout(getContext(), resourcesProvider);
+        layout.setAnimationEnabled(false);
+        layout.setShownFromBottom(false);
+        final ActionBarPopupWindow[] windowRef = new ActionBarPopupWindow[1];
+
+        for (final MeeroQuickReply.Template t : templates) {
+            ActionBarMenuSubItem item = new ActionBarMenuSubItem(getContext(), true, true, resourcesProvider);
+            item.setTextAndIcon(MeeroQuickReply.previewOf(t.text), R.drawable.baseline_reply_24);
+            item.setMinimumWidth(dp(196));
+            item.setOnClickListener(v -> {
+                if (windowRef[0] != null && windowRef[0].isShowing()) windowRef[0].dismiss();
+                messageEditText.setText(t.text);
+                messageEditText.setSelection(messageEditText.getText().length());
+            });
+            layout.addView(item, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 48));
+        }
+
+        ActionBarMenuSubItem addItem = new ActionBarMenuSubItem(getContext(), templates.isEmpty(), true, resourcesProvider);
+        addItem.setTextAndIcon(getString(R.string.MeeroQuickReplyAdd), R.drawable.deproko_baseline_text_add_24);
+        addItem.setMinimumWidth(dp(196));
+        addItem.setOnClickListener(v -> {
+            if (windowRef[0] != null && windowRef[0].isShowing()) windowRef[0].dismiss();
+            meeroQuickReplyEditor(null);
+        });
+        layout.addView(addItem, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 48));
+
+        ActionBarMenuSubItem manageItem = new ActionBarMenuSubItem(getContext(), false, true, resourcesProvider);
+        manageItem.setTextAndIcon(getString(R.string.MeeroQuickReplyManage), R.drawable.baseline_edit_24);
+        manageItem.setMinimumWidth(dp(196));
+        manageItem.setOnClickListener(v -> {
+            if (windowRef[0] != null && windowRef[0].isShowing()) windowRef[0].dismiss();
+            parentFragment.presentFragment(new MeeroQuickReplyActivity());
+        });
+        layout.addView(manageItem, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 48));
+
+        layout.setupRadialSelectors(getThemedColor(Theme.key_dialogButtonSelector));
+        final ActionBarPopupWindow popup = new ActionBarPopupWindow(layout, LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT);
+        windowRef[0] = popup;
+        popup.setAnimationEnabled(false);
+        popup.setAnimationStyle(R.style.PopupContextAnimation2);
+        popup.setOutsideTouchable(true);
+        popup.setClippingEnabled(true);
+        layout.measure(MeasureSpec.makeMeasureSpec(dp(1000), MeasureSpec.AT_MOST), MeasureSpec.makeMeasureSpec(dp(1000), MeasureSpec.AT_MOST));
+        view.getLocationInWindow(location);
+        // Anchor exactly like the stock send-options popup: above the button,
+        // right edge aligned to it.
+        popup.showAtLocation(view, Gravity.LEFT | Gravity.TOP,
+                location[0] + view.getMeasuredWidth() - layout.getMeasuredWidth() + dp(8),
+                location[1] - layout.getMeasuredHeight() - dp(2));
+        popup.dimBehind();
+        try {
+            if (!NekoConfig.disableVibration.Bool()) view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
+        } catch (Exception ignore) {
+        }
+        return true;
+    }
+
+    /** MeeroX v117: add/edit dialog for one template; null means "new". */
+    private void meeroQuickReplyEditor(final MeeroQuickReply.Template editing) {
+        if (parentActivity == null) {
+            return;
+        }
+        final EditText editText = new EditText(parentActivity);
+        editText.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 16);
+        editText.setTextColor(getThemedColor(Theme.key_dialogTextBlack));
+        editText.setHintTextColor(getThemedColor(Theme.key_windowBackgroundWhiteHintText));
+        if (editing != null) {
+            editText.setText(editing.text);
+        }
+        editText.setSelection(editText.getText().length());
+        editText.setHint(getString(R.string.MeeroQuickReplyHint));
+        FrameLayout container = new FrameLayout(parentActivity);
+        FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT);
+        lp.setMargins(dp(24), dp(4), dp(24), 0);
+        container.addView(editText, lp);
+        AlertDialog.Builder builder = new AlertDialog.Builder(parentActivity);
+        builder.setTitle(editing == null ? getString(R.string.MeeroQuickReplyAdd) : getString(R.string.MeeroQuickReplyEditTitle));
+        builder.setView(container);
+        builder.setPositiveButton(getString(R.string.Save), (dialog, which) -> {
+            final String value = editText.getText().toString();
+            final boolean ok = editing == null ? MeeroQuickReply.add(value) : MeeroQuickReply.update(editing.id, value);
+            android.widget.Toast.makeText(parentActivity,
+                    getString(ok ? R.string.MeeroQuickReplySaved : R.string.MeeroQuickReplyFull),
+                    android.widget.Toast.LENGTH_SHORT).show();
+        });
+        if (editing != null) {
+            builder.setNeutralButton(getString(R.string.Delete), (dialog, which) -> {
+                MeeroQuickReply.delete(editing.id);
+                android.widget.Toast.makeText(parentActivity, getString(R.string.MeeroQuickReplyDeleted), android.widget.Toast.LENGTH_SHORT).show();
+            });
+        }
+        builder.setNegativeButton(getString(R.string.Cancel), null);
+        builder.show();
+        editText.post(() -> {
+            editText.requestFocus();
+            AndroidUtilities.showKeyboard(editText);
+        });
+    }
+
     private boolean onSendLongClick(View view) {
         if (isInScheduleMode() || parentFragment != null && parentFragment.getChatMode() == ChatActivity.MODE_QUICK_REPLIES || animatorEphemeralMessageVisibility.getValue()) {
             return false;
+        }
+        // MeeroX: quick-reply templates. The stock long-press does nothing
+        // with an empty field and nothing forwarding, so offering the
+        // template list covers exactly that gap - typed text and forwards
+        // keep the stock popup/preview untouched.
+        if (meeroQuickReplyPopup(view)) {
+            return true;
         }
         boolean sendWithoutSoundNax = NaConfig.INSTANCE.getSilentMessageByDefault().Bool();
         if (isStories || (messageEditText == null || TextUtils.isEmpty(messageEditText.getText())) && parentFragment != null && parentFragment.messagePreviewParams != null && parentFragment.messagePreviewParams.forwardMessages != null && parentFragment.messagePreviewParams.forwardMessages.messages != null && !parentFragment.messagePreviewParams.forwardMessages.messages.isEmpty()) {
