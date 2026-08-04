@@ -13,6 +13,8 @@ import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ApplicationLoader;
 import org.telegram.messenger.BuildConfig;
 import org.telegram.messenger.FileLog;
+import org.telegram.messenger.LocaleController;
+import org.telegram.messenger.R;
 import org.telegram.ui.ActionBar.AlertDialog;
 import org.telegram.ui.ActionBar.BaseFragment;
 
@@ -352,19 +354,19 @@ public final class MeeroFreezeProbe {
             }
             reportDialogShown = true;
             AlertDialog.Builder b = new AlertDialog.Builder(activity);
-            b.setTitle(fragment.getString(org.telegram.messenger.R.string.MeeroFreezeReportTitle));
-            b.setMessage(fragment.getString(org.telegram.messenger.R.string.MeeroFreezeReportBody));
-            b.setPositiveButton(fragment.getString(org.telegram.messenger.R.string.MeeroFreezeReportCopy), (d, w) -> {
+            b.setTitle(LocaleController.getString(R.string.MeeroFreezeReportTitle));
+            b.setMessage(LocaleController.getString(R.string.MeeroFreezeReportBody));
+            b.setPositiveButton(LocaleController.getString(R.string.MeeroFreezeReportCopy), (d, w) -> {
                 try {
                     AndroidUtilities.addToClipboard(report);
                     //noinspection ResultOfMethodCallIgnored
                     f.delete();
-                    Toast.makeText(activity, fragment.getString(org.telegram.messenger.R.string.MeeroFreezeReportCopied), Toast.LENGTH_LONG).show();
+                    Toast.makeText(activity, LocaleController.getString(R.string.MeeroFreezeReportCopied), Toast.LENGTH_LONG).show();
                 } catch (Throwable t) {
                     FileLog.e(t);
                 }
             });
-            b.setNegativeButton(fragment.getString(org.telegram.messenger.R.string.MeeroFreezeReportLater), null);
+            b.setNegativeButton(LocaleController.getString(R.string.MeeroFreezeReportLater), null);
             b.show();
         } catch (Throwable t) {
             FileLog.e(t);
