@@ -9,7 +9,6 @@ import android.graphics.RadialGradient;
 import android.graphics.RectF;
 import android.graphics.Shader;
 import android.view.View;
-import android.view.animation.TimeInterpolator;
 
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.ui.ActionBar.Theme;
@@ -39,7 +38,7 @@ import org.telegram.ui.Components.Switch;
  */
 public class MeeroGlassSwitch extends Switch {
 
-    private static final TimeInterpolator GLASS_EASE =
+    private static final CubicBezierInterpolator GLASS_EASE =
             new CubicBezierInterpolator(0.2, 0.9, 0.3, 1.35);
 
     private float glassProgress;          // 0..1 travel of the knob
