@@ -10908,6 +10908,23 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                 if (meeroHeaderGroupGlass == null) {
                     return;
                 }
+                // MeeroX: the band belongs to the two buttons inside it, so it
+                // must share their fate. When search opens, the sliding pane
+                // slides in, or Done appears in edit mode, setAnimatedVisibility
+                // scales and fades both items to GONE - and the menu's width,
+                // measured from visible children only, collapses to its own side
+                // padding (~20dp). If the band still drew at that width it would
+                // shrink from a capsule into a small glass circle parked at the
+                // search bar's edge, floating behind it with no buttons inside.
+                // Track the buttons' alpha instead: no buttons, no band; while
+                // they fade the band fades in lockstep, so entering and leaving
+                // search stays one smooth, connected motion.
+                final float buttonsAlpha = Math.max(
+                        meeroComposeItem != null ? meeroComposeItem.getAlpha() : 0f,
+                        optionsItem != null ? optionsItem.getAlpha() : 0f);
+                if (buttonsAlpha <= 0.01f) {
+                    return;
+                }
                 // The band spans the menu's full width. That width now
                 // includes the side padding applied below, which is what gives
                 // the glyphs the same margin sideways as they already have
@@ -10922,7 +10939,9 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                 final int h = menu.getHeight();
                 final int top = Math.max(0, (h - groupSize) / 2);
                 meeroHeaderGroupGlass.setBounds(0, top, menu.getWidth(), top + groupSize);
+                meeroHeaderGroupGlass.setAlpha((int) (buttonsAlpha * 255));
                 meeroHeaderGroupGlass.draw(canvas);
+                meeroHeaderGroupGlass.setAlpha(255);
             });
         } catch (Throwable ignore) {
         }
