@@ -92,6 +92,10 @@ public class NekoConfig {
     public static ConfigItem meeroQuickReply = addConfig("meeroQuickReply", configTypeBool, true);
     public static ConfigItem meeroQuickReplyTemplates = addConfig("meeroQuickReplyTemplates", configTypeString, "[]");
     public static ConfigItem meeroIosBubbles = addConfig("meeroIosBubbles", configTypeBool, true);
+    // MeeroX v120: iMessage-native bubble geometry (tail-less, pinched outer
+    // corner) layered on top of the iOS bubbles mode above. Display-only,
+    // so default on; off keeps the classic Telegram-iOS look.
+    public static ConfigItem meeroImessageBubbles = addConfig("meeroImessageBubbles", configTypeBool, true);
     public static ConfigItem meeroTapMenu = addConfig("meeroTapMenu", configTypeBool, true);
     public static ConfigItem meeroIosAnim = addConfig("meeroIosAnim", configTypeBool, true);
     public static ConfigItem meeroCards = addConfig("meeroCards", configTypeBool, true);

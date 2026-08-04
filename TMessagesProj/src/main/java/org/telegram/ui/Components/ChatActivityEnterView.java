@@ -5156,14 +5156,24 @@ public class ChatActivityEnterView extends FrameLayout implements
         final int shown = Math.min(templates.size(), 5);
         for (int i = 0; i < shown; i++) {
             final MeeroQuickReply.Template t = templates.get(i);
-            options.add(R.drawable.baseline_reply_24, MeeroQuickReply.previewOf(t.text), () -> {
-                if (messageSendPreview != null) {
-                    messageSendPreview.dismiss(true);
-                    messageSendPreview = null;
-                }
-                messageEditText.setText(t.text);
-                messageEditText.setSelection(messageEditText.getText().length());
-            });
+            // MeeroX v120: tap inserts (replace + manual send), long-press
+            // shows the template's FULL text first without touching anything.
+            options.add(R.drawable.baseline_reply_24, MeeroQuickReply.previewOf(t.text),
+                () -> {
+                    AlertDialog.Builder preview = new AlertDialog.Builder(parentActivity);
+                    preview.setTitle(getString(R.string.MeeroQuickReplyPreview));
+                    preview.setMessage(t.text);
+                    preview.setPositiveButton(getString(R.string.OK), null);
+                    preview.show();
+                },
+                () -> {
+                    if (messageSendPreview != null) {
+                        messageSendPreview.dismiss(true);
+                        messageSendPreview = null;
+                    }
+                    messageEditText.setText(t.text);
+                    messageEditText.setSelection(messageEditText.getText().length());
+                });
         }
         options.add(R.drawable.deproko_baseline_text_add_24, getString(R.string.MeeroQuickReplyAdd), () -> {
             if (messageSendPreview != null) {
@@ -6586,6 +6596,18 @@ public class ChatActivityEnterView extends FrameLayout implements
                 }
                 isPaste = false;
                 checkSendButton(true);
+                // MeeroX v120: an IME suggestion commit deletes and inserts
+                // in one burst, and the two resulting states race stock's
+                // mic/send swap animations - animation cancels do not restore
+                // values, so both buttons could end up hidden. Whenever the
+                // emptiness of the text flips, re-apply the exact
+                // non-animated state once stock's 220 ms window is over.
+                // Harmless in the normal case: it only re-sets the state the
+                // animation already reached.
+                final int meeroPrevLen = charSequence.length() - count + before;
+                if ((meeroPrevLen == 0) != (charSequence.length() == 0)) {
+                    AndroidUtilities.runOnUIThread(() -> checkSendButton(false), 260);
+                }
                 CharSequence message = AndroidUtilities.getTrimmedString(charSequence.toString());
                 if (delegate != null) {
                     if (!ignoreTextChange) {
