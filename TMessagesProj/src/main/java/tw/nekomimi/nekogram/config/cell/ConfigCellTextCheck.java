@@ -26,7 +26,13 @@ public class ConfigCellTextCheck extends AbstractConfigCell implements WithBindC
 
     public ConfigCellTextCheck(ConfigItem bind, String subtitle, CharSequence customTitle) {
         this.bindConfig = bind;
-        this.title = customTitle == null ? getString(bindConfig.getKey()) : customTitle;
+        CharSequence resolvedTitle = customTitle == null ? getString(bindConfig.getKey()) : customTitle;
+        // MeeroX: a config key with no string resource used to crash the row
+        // bind with an NPE mid-scroll (v114-dbg report: meeroChatsMenuFog
+        // shipped in v107 without its title string). Falling back to the key
+        // keeps a missing translation from ever killing a settings list -
+        // any screen in the fork benefits, not just MeeroX ones.
+        this.title = resolvedTitle == null ? bindConfig.getKey() : resolvedTitle;
         this.subtitle = subtitle;
     }
 

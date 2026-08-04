@@ -855,6 +855,7 @@
     <string name="MeeroFontBadFormat">تعذّر تحميل هذا الملف كخط. اختر ملف .ttf أو .otf صالح.</string>
     <string name="MeeroFontDeleteConfirm">حذف هذا الخط؟</string>
     <string name="meeroMenuBlur">طمس خلف قائمة السياق</string>
+    <string name="meeroChatsMenuFog">طمس خلف منبثقة زر المحادثات</string>
     <string name="MeeroMenuBlurInfo">خلفية زجاجية ضبابية عند الضغط المطوّل على رسالة.</string>
     <string name="meeroIosBubbles">فقاعات رسائل بنمط iOS</string>
     <string name="MeeroIosBubblesInfo">شكل كبسولة مع ذيل واضح. أوقفه لاستعادة فقاعات تيليجرام الأصلية.</string>

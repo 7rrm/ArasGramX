@@ -166,6 +166,7 @@
     <string name="MeeroFontBadFormat">That file could not be loaded as a font. Pick a valid .ttf or .otf file.</string>
     <string name="MeeroFontDeleteConfirm">Delete this font?</string>
     <string name="meeroMenuBlur">Blur behind context menu</string>
+    <string name="meeroChatsMenuFog">Fog behind chats popup</string>
     <string name="MeeroMenuBlurInfo">Frosted glass backdrop when you long-press a message.</string>
     <string name="meeroIosBubbles">iOS-style message bubbles</string>
     <string name="MeeroIosBubblesInfo">Capsule shape with a visible tail. Turn off for stock Telegram bubbles.</string>
