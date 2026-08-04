@@ -167,7 +167,10 @@ public final class MeeroPickerSheet {
             title.setText(getString(bubbles ? R.string.MeeroBubbleStyle : R.string.MeeroTickStyle));
         };
 
-        final Runnable rebuildCards = () -> {
+        // Single-element holder: the card-tap lambda calls back into this
+        // runnable, which javac disallows inside its own initializer.
+        final Runnable[] rebuildCards = new Runnable[1];
+        rebuildCards[0] = () -> {
             cards.removeAllViews();
             final boolean bubbles = tab[0] == TAB_BUBBLES;
             final int count = bubbles ? MeeroBubbleStyles.COUNT : MeeroTickStyles.COUNT;
@@ -182,18 +185,18 @@ public final class MeeroPickerSheet {
                     if (onApply != null) {
                         onApply.run();
                     }
-                    rebuildCards.run();
+                    rebuildCards[0].run();
                     hero.refresh(tab[0], bubbles ? NekoConfig.meeroBubbleStyle.Int() : NekoConfig.meeroTickStyle.Int());
                 }));
             }
             hero.refresh(tab[0], bubbles ? NekoConfig.meeroBubbleStyle.Int() : NekoConfig.meeroTickStyle.Int());
         };
 
-        segL.setOnClickListener(v -> { tab[0] = TAB_BUBBLES; refreshSeg.run(); rebuildCards.run(); });
-        segR.setOnClickListener(v -> { tab[0] = TAB_TICKS; refreshSeg.run(); rebuildCards.run(); });
+        segL.setOnClickListener(v -> { tab[0] = TAB_BUBBLES; refreshSeg.run(); rebuildCards[0].run(); });
+        segR.setOnClickListener(v -> { tab[0] = TAB_TICKS; refreshSeg.run(); rebuildCards[0].run(); });
 
         refreshSeg.run();
-        rebuildCards.run();
+        rebuildCards[0].run();
 
         sheet.setCustomView(root);
         sheet.setBackgroundColor(colSheet);
