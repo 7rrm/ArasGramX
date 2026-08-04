@@ -27,6 +27,18 @@ public final class MeeroGlassTheme {
 
     private MeeroGlassTheme() {}
 
+    /**
+     * v127: single source of truth for the master switch, read lazily so a
+     * provider built once keeps following the toggle on every draw.
+     */
+    public static boolean enabled() {
+        try {
+            return NekoConfig.meeroGlassSettings.Bool();
+        } catch (Throwable t) {
+            return true;
+        }
+    }
+
     /** Day/night comes from the app's own night state, not from theme colors. */
     public static boolean isNight() {
         try {
@@ -72,6 +84,105 @@ public final class MeeroGlassTheme {
 
     public static int glowB() {
         return isNight() ? 0x217B5CFF /* violet 13% */ : 0x147B5CFF /* 8% */;
+    }
+
+    // ---------------- v127: cells layer ----------------
+
+    /** Hairline separator between rows inside a section card. */
+    public static int sep() {
+        return isNight() ? 0x12FFFFFF /* white 7% */ : 0x1214141A /* black 7% */;
+    }
+
+    /** Off-state switch track. */
+    public static int trackOff() {
+        return isNight() ? 0x2EFFFFFF /* white 18% */ : 0xFFD9D9E0;
+    }
+
+    /** Section card: translucent fill over the glow background. */
+    public static int cardFill() {
+        return isNight() ? 0x0DFFFFFF /* white 5% */ : 0xA8FFFFFF /* white 66% */;
+    }
+
+    public static int cardStroke() {
+        return isNight() ? 0x17FFFFFF /* white 9% */ : 0xD9FFFFFF /* white 85% */;
+    }
+
+    /** Value chip behind the current selection of a row. */
+    public static int chipFill() {
+        return 0x24FF4E8A; // rose 14%
+    }
+
+    public static int chipStroke() {
+        return 0x40FF4E8A; // rose 25%
+    }
+
+    /**
+     * Rounded section-card background; corners rounded only on the outer
+     * edges of the card so stacked rows read as one glass panel.
+     */
+    public static Drawable card(boolean roundTop, boolean roundBottom) {
+        GradientDrawable d = new GradientDrawable();
+        d.setColor(cardFill());
+        d.setStroke(AndroidUtilities.dp(1), cardStroke());
+        float rTop = AndroidUtilities.dp(roundTop ? 18 : 0);
+        float rBot = AndroidUtilities.dp(roundBottom ? 18 : 0);
+        d.setCornerRadii(new float[]{rTop, rTop, rTop, rTop, rBot, rBot, rBot, rBot});
+        return d;
+    }
+
+    public static Drawable chipBg() {
+        GradientDrawable d = new GradientDrawable();
+        d.setColor(chipFill());
+        d.setStroke(AndroidUtilities.dp(1), chipStroke());
+        d.setCornerRadius(AndroidUtilities.dp(12));
+        return d;
+    }
+
+    /**
+     * Cell-level provider (v127). Attached to the standard Telegram cells
+     * this screen constructs, so texts, the Switch widget and row hairlines
+     * all resolve through the fixed palette - the Switch even re-resolves
+     * per frame, which makes the master toggle self-healing on recycled
+     * views. When the switch is off every key falls back to the global
+     * theme resolution, i.e. exact stock.
+     */
+    public static Theme.ResourcesProvider cells() {
+        return key -> {
+            if (!enabled()) {
+                return Theme.getColor(key);
+            }
+            if (key == Theme.key_windowBackgroundWhiteBlackText
+                    || key == Theme.key_dialogTextBlack) {
+                return ink();
+            }
+            if (key == Theme.key_windowBackgroundWhiteGrayText2
+                    || key == Theme.key_dialogIcon) {
+                return sub();
+            }
+            if (key == Theme.key_windowBackgroundWhiteValueText) {
+                return ACC1;
+            }
+            if (key == Theme.key_windowBackgroundWhiteBlueHeader) {
+                return headerInk();
+            }
+            if (key == Theme.key_switchTrack || key == Theme.key_fill_RedNormal) {
+                return trackOff();
+            }
+            if (key == Theme.key_switchTrackChecked
+                    || key == Theme.key_switch2TrackChecked) {
+                return ACC1;
+            }
+            if (key == Theme.key_switchTrackBlueSelector) {
+                return isNight() ? 0x1AFFFFFF : 0x1A14141A;
+            }
+            if (key == Theme.key_switchTrackBlueSelectorChecked) {
+                return isNight() ? 0x2EFFFFFF : 0x26000000;
+            }
+            if (key == Theme.key_divider) {
+                return sep();
+            }
+            return Theme.getColor(key);
+        };
     }
 
     /**

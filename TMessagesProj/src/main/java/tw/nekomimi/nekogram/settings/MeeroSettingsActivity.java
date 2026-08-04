@@ -27,6 +27,10 @@ import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.ActionBar.ThemeDescription;
 import org.telegram.ui.ActionBar.Theme.ResourcesProvider;
 import org.telegram.ui.Cells.ShadowSectionCell;
+import org.telegram.ui.Cells.TextCell;
+import org.telegram.ui.Cells.TextCheckCell;
+import org.telegram.ui.Cells.TextSettingsCell;
+import org.telegram.ui.Components.AnimatedTextView;
 import org.telegram.ui.Components.LayoutHelper;
 import org.telegram.ui.Components.RecyclerListView;
 
@@ -217,11 +221,9 @@ public class MeeroSettingsActivity extends BaseNekoXSettingsActivity {
     private static final String GLASS_RULE = "meeroGlassHeaderRule";
 
     private boolean glassOn() {
-        try {
-            return NekoConfig.meeroGlassSettings.Bool();
-        } catch (Throwable t) {
-            return true;
-        }
+        // v127: single source of truth lives in MeeroGlassTheme so the cell
+        // providers and this screen always agree about the toggle state.
+        return MeeroGlassTheme.enabled();
     }
 
     @Override
@@ -269,19 +271,22 @@ public class MeeroSettingsActivity extends BaseNekoXSettingsActivity {
                 actionBar.setTitleColor(Theme.getColor(Theme.key_actionBarDefaultTitle));
                 actionBar.setItemsColor(Theme.getColor(Theme.key_avatar_actionBarIconBlue), false);
             }
+            glassAnimMax = -1; // replay the entrance under the new look
             listAdapter.notifyDataSetChanged();
         }
     }
 
     /** Applies the glass look - or restores exact stock - on every row bind. */
-    private void onBindMeeroGlass(@NonNull RecyclerView.ViewHolder holder) {
+    private void onBindMeeroGlass(@NonNull RecyclerView.ViewHolder holder, int position) {
         final View v = holder.itemView;
         if (v == null) {
             return;
         }
+        final int card = cardPos(position);
+        setRowMargins(v, card != 0);
         if (glassOn()) {
-            v.setBackgroundColor(Color.TRANSPARENT);
             if (v instanceof HeaderCell) {
+                v.setBackgroundColor(Color.TRANSPARENT);
                 HeaderCell h = (HeaderCell) v;
                 h.setTextColor(MeeroGlassTheme.headerInk());
                 TextView tv = h.getTextView();
@@ -297,7 +302,15 @@ public class MeeroSettingsActivity extends BaseNekoXSettingsActivity {
                     h.addView(rule, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 2, 0, 4, 0, 0));
                 }
                 rule.setVisibility(View.VISIBLE);
+            } else if (card != 0) {
+                // v127: rows that live inside a section wear the glass card -
+                // rounded corners only on the card's outer edges.
+                v.setBackground(MeeroGlassTheme.card(card == CARD_TOP || card == CARD_SINGLE,
+                        card == CARD_BOTTOM || card == CARD_SINGLE));
+                tintCellText(v, MeeroGlassTheme.ink(), MeeroGlassTheme.sub());
+                styleValueChip(v, true);
             } else {
+                v.setBackgroundColor(Color.TRANSPARENT);
                 tintCellText(v, MeeroGlassTheme.ink(), MeeroGlassTheme.sub());
             }
         } else {
@@ -321,7 +334,119 @@ public class MeeroSettingsActivity extends BaseNekoXSettingsActivity {
                         Theme.getColor(Theme.key_windowBackgroundWhiteBlackText),
                         Theme.getColor(Theme.key_windowBackgroundWhiteGrayText2));
             }
+            styleValueChip(v, false);
         }
+        runGlassEntrance(v, position);
+    }
+
+    // v127: section cards. Sections are exactly our regular grouping:
+    // header row opens a card, the next header or a divider closes it.
+    private static final int CARD_NONE = 0, CARD_SINGLE = 1, CARD_TOP = 2, CARD_MID = 3, CARD_BOTTOM = 4;
+
+    private int cardPos(int position) {
+        if (position < 0 || position >= cellGroup.rows.size()) {
+            return CARD_NONE;
+        }
+        AbstractConfigCell row = cellGroup.rows.get(position);
+        if (row instanceof ConfigCellHeader || row instanceof ConfigCellDivider) {
+            return CARD_NONE;
+        }
+        int start = -1;
+        for (int i = position - 1; i >= 0; i--) {
+            if (cellGroup.rows.get(i) instanceof ConfigCellHeader) { start = i; break; }
+            if (cellGroup.rows.get(i) instanceof ConfigCellDivider) { break; }
+        }
+        if (start < 0) {
+            return CARD_NONE;
+        }
+        int end = cellGroup.rows.size();
+        for (int i = start + 1; i < cellGroup.rows.size(); i++) {
+            if (cellGroup.rows.get(i) instanceof ConfigCellHeader
+                    || cellGroup.rows.get(i) instanceof ConfigCellDivider) { end = i; break; }
+        }
+        boolean first = position == start + 1;
+        boolean last = position == end - 1;
+        if (first && last) return CARD_SINGLE;
+        if (first) return CARD_TOP;
+        if (last) return CARD_BOTTOM;
+        return CARD_MID;
+    }
+
+    /** Card rows breathe in from the sides; structural rows span full width. */
+    private static void setRowMargins(View v, boolean inCard) {
+        if (!(v.getLayoutParams() instanceof RecyclerView.LayoutParams)) {
+            return;
+        }
+        RecyclerView.LayoutParams lp = (RecyclerView.LayoutParams) v.getLayoutParams();
+        int side = inCard ? AndroidUtilities.dp(12) : 0;
+        if (lp.leftMargin != side || lp.rightMargin != side || lp.topMargin != 0 || lp.bottomMargin != 0) {
+            lp.setMargins(side, 0, side, 0);
+            v.setLayoutParams(lp);
+        }
+    }
+
+    /**
+     * Select rows wear their current value as a rose chip (v127). The value
+     * label in TextSettingsCell is an AnimatedTextView, so it is found by
+     * type rather than by the TextView walk.
+     */
+    private void styleValueChip(View v, boolean glass) {
+        if (!(v instanceof TextSettingsCell)) {
+            return;
+        }
+        AnimatedTextView value = findAnimatedText(v);
+        if (value == null) {
+            return;
+        }
+        if (glass) {
+            value.setTextColor(MeeroGlassTheme.ACC1);
+            value.setTextSize(AndroidUtilities.dp(13));
+            value.setBackground(MeeroGlassTheme.chipBg());
+            value.setPadding(AndroidUtilities.dp(9), AndroidUtilities.dp(1),
+                    AndroidUtilities.dp(9), AndroidUtilities.dp(1));
+        } else {
+            value.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteValueText));
+            value.setTextSize(AndroidUtilities.dp(16));
+            value.setBackground(null);
+            value.setPadding(0, 0, 0, 0);
+        }
+    }
+
+    private AnimatedTextView findAnimatedText(View v) {
+        if (v instanceof AnimatedTextView) {
+            return (AnimatedTextView) v;
+        }
+        if (v instanceof ViewGroup) {
+            ViewGroup g = (ViewGroup) v;
+            for (int i = 0; i < g.getChildCount(); i++) {
+                AnimatedTextView found = findAnimatedText(g.getChildAt(i));
+                if (found != null) {
+                    return found;
+                }
+            }
+        }
+        return null;
+    }
+
+    // v127: gentle staggered rise the first time each row shows. Positions
+    // already seen skip straight to the settled state so scrolling back up
+    // never replays it. The master toggle resets the counter and replays.
+    private int glassAnimMax = -1;
+
+    private void runGlassEntrance(View v, int position) {
+        if (!glassOn() || position <= glassAnimMax) {
+            v.animate().cancel();
+            v.setAlpha(1f);
+            v.setTranslationY(0f);
+            return;
+        }
+        glassAnimMax = position;
+        v.setAlpha(0f);
+        v.setTranslationY(AndroidUtilities.dp(14));
+        v.animate().alpha(1f).translationY(0f)
+                .setDuration(280)
+                .setStartDelay(Math.min(position * 30L, 300L))
+                .start();
     }
 
     /** First TextView in a cell is its title; the rest are subtitles/values. */
@@ -483,9 +608,30 @@ public class MeeroSettingsActivity extends BaseNekoXSettingsActivity {
         }
 
         @Override
+        protected View createDefaultViewByType(int viewType) {
+            // v127: the standard cells, but born with the fixed MeeroX cell
+            // palette - the provider is live, so it also serves the stock
+            // look verbatim whenever the glass switch is off.
+            if (viewType == CellGroup.ITEM_TYPE_TEXT_CHECK) {
+                return new TextCheckCell(mContext, 21, false, MeeroGlassTheme.cells());
+            }
+            if (viewType == CellGroup.ITEM_TYPE_TEXT_SETTINGS_CELL) {
+                return new TextSettingsCell(mContext, MeeroGlassTheme.cells());
+            }
+            if (viewType == CellGroup.ITEM_TYPE_HEADER) {
+                return new HeaderCell(mContext, MeeroGlassTheme.cells());
+            }
+            if (viewType == CellGroup.ITEM_TYPE_TEXT_CHECK_ICON) {
+                return new TextCell(mContext, 23, false, true, MeeroGlassTheme.cells());
+            }
+            return super.createDefaultViewByType(viewType);
+        }
+
+        @Override
         protected void onBindDefaultViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
-            // v126: glass chrome / stock restore per row (see onBindMeeroGlass)
-            onBindMeeroGlass(holder);
+            // v126/v127: glass chrome / stock restore per row, card layout,
+            // value chips and the entrance stagger (see onBindMeeroGlass)
+            onBindMeeroGlass(holder, position);
         }
     }
 }
