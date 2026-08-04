@@ -13,6 +13,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.R;
+import org.telegram.messenger.Utilities;
 import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.Cells.CheckBoxCell;
 import org.telegram.ui.Cells.CreationTextCell;
@@ -62,11 +63,6 @@ public final class MeeroGlassSupport {
     /** Tag for the gradient rule view injected under section headers. */
     public static final String GLASS_RULE = "meeroGlassHeaderRule";
 
-    /** Minimal functional predicate (avoids java.util.function imports). */
-    public interface RowPredicate {
-        boolean keep(View row);
-    }
-
     // ------------------------------------------------------------------
     // Sections (the v128 scroll-wash fix), now for any screen.
     // ------------------------------------------------------------------
@@ -78,7 +74,7 @@ public final class MeeroGlassSupport {
      * is pinned to the fixed press tint. OFF restores the exact stock call.
      */
     public static void applySectionsSkin(RecyclerListView listView, boolean glass,
-                                         RowPredicate keepRow) {
+                                         Utilities.CallbackReturn<View, Boolean> keepRow) {
         if (listView == null) {
             return;
         }
