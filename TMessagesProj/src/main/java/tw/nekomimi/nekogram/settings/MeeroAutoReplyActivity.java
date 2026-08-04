@@ -26,7 +26,6 @@ import org.telegram.ui.Cells.TextInfoPrivacyCell;
 import java.util.Locale;
 
 import tw.nekomimi.nekogram.MeeroAutoReply;
-import tw.nekomimi.nekogram.MeeroQuickReply;
 import tw.nekomimi.nekogram.NekoConfig;
 import tw.nekomimi.nekogram.config.ConfigItem;
 import tw.nekomimi.nekogram.ui.cells.HeaderCell;
@@ -64,9 +63,6 @@ public class MeeroAutoReplyActivity extends BaseNekoSettingsActivity {
     private int nightTextRow;
     private int windowInfoRow;
     private int boundsInfoRow;
-    private int quickReplyHeaderRow;
-    private int quickReplyRow;
-    private int quickReplyManageRow;
 
     private static final int[] COOLDOWN_MINUTES = {0, 5, 10, 30, 60};
     private static final int[] DELAY_SECONDS = {0, 3, 5, 10};
@@ -96,10 +92,6 @@ public class MeeroAutoReplyActivity extends BaseNekoSettingsActivity {
         nightTextRow = addRow();
         windowInfoRow = -1;
         boundsInfoRow = addRow(); // v111: this is now the usage-guide button
-        // v117: quick-reply templates - appended last so nothing above shifts.
-        quickReplyHeaderRow = addRow();
-        quickReplyRow = addRow();
-        quickReplyManageRow = addRow();
     }
 
     @Override
@@ -213,11 +205,6 @@ public class MeeroAutoReplyActivity extends BaseNekoSettingsActivity {
         } else if (position == boundsInfoRow) {
             // v111: one popup holds everything this section used to spell out.
             tw.nekomimi.nekogram.MeeroUsageGuide.show(this, R.string.MeeroAutoReplyUsage);
-        } else if (position == quickReplyRow) {
-            NekoConfig.meeroQuickReply.toggleConfigBool();
-            ((TextCheckCell) view).setChecked(NekoConfig.meeroQuickReply.Bool());
-        } else if (position == quickReplyManageRow) {
-            presentFragment(new MeeroQuickReplyActivity());
         } else if (position == nightTextOnRow) {
             NekoConfig.meeroAutoReplyNightTextOn.toggleConfigBool();
             ((TextCheckCell) view).setChecked(NekoConfig.meeroAutoReplyNightTextOn.Bool());
@@ -341,8 +328,6 @@ public class MeeroAutoReplyActivity extends BaseNekoSettingsActivity {
         listAdapter.notifyItemChanged(rulesRow);
         listAdapter.notifyItemChanged(exclusionsRow);
         listAdapter.notifyItemChanged(poolRow);
-        // v117: the templates count may change in the manager or the chat popup.
-        listAdapter.notifyItemChanged(quickReplyManageRow);
     }
 
     private void showTextEditor() {
@@ -457,8 +442,6 @@ public class MeeroAutoReplyActivity extends BaseNekoSettingsActivity {
                     TextCheckCell checkCell = (TextCheckCell) holder.itemView;
                     if (position == autoReplyRow) {
                         checkCell.setTextAndCheck(getString(R.string.MeeroAutoReplyTitle), NekoConfig.meeroAutoReply.Bool(), true);
-                    } else if (position == quickReplyRow) {
-                        checkCell.setTextAndCheck(getString(R.string.meeroQuickReply), NekoConfig.meeroQuickReply.Bool(), true);
                     } else if (position == emojiRow) {
                         checkCell.setTextAndCheck(getString(R.string.MeeroRandomEmoji), NekoConfig.meeroAutoReplyRandomEmoji.Bool(), true);
                     } else if (position == windowRow) {
@@ -473,9 +456,6 @@ public class MeeroAutoReplyActivity extends BaseNekoSettingsActivity {
                         headerCell.setText(getString(R.string.MeeroRulesContentHeader));
                     } else if (position == timingHeaderRow) {
                         headerCell.setText(getString(R.string.MeeroRulesTimingHeader));
-                    } else if (position == quickReplyHeaderRow) {
-                        headerCell.setText(getString(R.string.MeeroQuickReplySection));
-                    }
                     break;
                 case TYPE_DETAIL_SETTINGS:
                     TextDetailSettingsCell detailCell = (TextDetailSettingsCell) holder.itemView;
@@ -508,10 +488,6 @@ public class MeeroAutoReplyActivity extends BaseNekoSettingsActivity {
                     } else if (position == boundsInfoRow) {
                         // v111: usage-guide button instead of the long footers.
                         textCell.setTextAndValue(getString(R.string.MeeroUsageGuide), "", true);
-                    } else if (position == quickReplyManageRow) {
-                        // v117: opens the templates manager; the value is the count.
-                        textCell.setTextAndValue(getString(R.string.MeeroQuickReplyManage), String.valueOf(MeeroQuickReply.count()), false);
-                    }
                     break;
                 case TYPE_INFO_PRIVACY:
                     TextInfoPrivacyCell cell = (TextInfoPrivacyCell) holder.itemView;
@@ -527,15 +503,14 @@ public class MeeroAutoReplyActivity extends BaseNekoSettingsActivity {
 
         @Override
         public int getItemViewType(int position) {
-            if (position == autoReplyRow || position == windowRow || position == emojiRow || position == nightTextOnRow || position == quickReplyRow) {
+            if (position == autoReplyRow || position == windowRow || position == emojiRow || position == nightTextOnRow) {
                 return TYPE_CHECK;
-            } else if (position == contentHeaderRow || position == timingHeaderRow || position == quickReplyHeaderRow) {
+            } else if (position == contentHeaderRow || position == timingHeaderRow) {
                 return TYPE_HEADER;
             } else if (position == textRow || position == nightTextRow) {
                 return TYPE_DETAIL_SETTINGS;
             } else if (position == rulesRow || position == exclusionsRow || position == poolRow || position == cooldownRow || position == delayRow
-                    || position == windowStartRow || position == windowEndRow || position == windowDaysRow || position == boundsInfoRow
-                    || position == quickReplyManageRow) {
+                    || position == windowStartRow || position == windowEndRow || position == windowDaysRow || position == boundsInfoRow) {
                 return TYPE_TEXT;
             }
             return TYPE_INFO_PRIVACY;

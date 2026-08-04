@@ -232,10 +232,8 @@ import java.util.Locale;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import kotlin.Unit;
-import tw.nekomimi.nekogram.MeeroQuickReply;
 import tw.nekomimi.nekogram.helpers.ChatsHelper;
 import tw.nekomimi.nekogram.llm.LlmConfig;
-import tw.nekomimi.nekogram.settings.MeeroQuickReplyActivity;
 import tw.nekomimi.nekogram.utils.AndroidUtil;
 import tw.nekomimi.nekogram.utils.StringUtils;
 import tw.nekomimi.nekogram.NekoConfig;
@@ -5139,101 +5137,6 @@ public class ChatActivityEnterView extends FrameLayout implements
 
     private ActionBarMenuSubItem actionScheduleButton;
 
-    /**
-     * MeeroX v119: the quick-reply section injected at the TOP of the send
-     * preview action menu (ItemOptions shown on the send button long-press
-     * with text in the field). The v117 standalone popup and the v118 chip
-     * are gone - everything quick-reply lives in this stock-looking list
-     * now. Shown only while the master switch is on; off = byte-for-byte
-     * stock menu. A tap dismisses the preview and REPLACES the field text
-     * with the template; messages are never sent automatically.
-     */
-    private void meeroQuickReplyOptions(ItemOptions options) {
-        if (!MeeroQuickReply.enabled() || parentFragment == null || messageEditText == null) {
-            return;
-        }
-        final java.util.ArrayList<MeeroQuickReply.Template> templates = MeeroQuickReply.list();
-        final int shown = Math.min(templates.size(), 5);
-        for (int i = 0; i < shown; i++) {
-            final MeeroQuickReply.Template t = templates.get(i);
-            // MeeroX v120: tap inserts (replace + manual send), long-press
-            // shows the template's FULL text first without touching anything.
-            options.add(R.drawable.baseline_reply_24, MeeroQuickReply.previewOf(t.text),
-                () -> {
-                    AlertDialog.Builder preview = new AlertDialog.Builder(parentActivity);
-                    preview.setTitle(getString(R.string.MeeroQuickReplyPreview));
-                    preview.setMessage(t.text);
-                    preview.setPositiveButton(getString(R.string.OK), null);
-                    preview.show();
-                },
-                () -> {
-                    if (messageSendPreview != null) {
-                        messageSendPreview.dismiss(true);
-                        messageSendPreview = null;
-                    }
-                    messageEditText.setText(t.text);
-                    messageEditText.setSelection(messageEditText.getText().length());
-                });
-        }
-        options.add(R.drawable.deproko_baseline_text_add_24, getString(R.string.MeeroQuickReplyAdd), () -> {
-            if (messageSendPreview != null) {
-                messageSendPreview.dismiss(true);
-                messageSendPreview = null;
-            }
-            meeroQuickReplyEditor(null);
-        });
-        options.add(R.drawable.baseline_edit_24, getString(R.string.MeeroQuickReplyManage), () -> {
-            if (messageSendPreview != null) {
-                messageSendPreview.dismiss(true);
-                messageSendPreview = null;
-            }
-            parentFragment.presentFragment(new MeeroQuickReplyActivity());
-        });
-        options.addGap();
-    }
-
-    /** MeeroX v117: add/edit dialog for one template; null means "new". */
-    private void meeroQuickReplyEditor(final MeeroQuickReply.Template editing) {
-        if (parentActivity == null) {
-            return;
-        }
-        final EditText editText = new EditText(parentActivity);
-        editText.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 16);
-        editText.setTextColor(getThemedColor(Theme.key_dialogTextBlack));
-        editText.setHintTextColor(getThemedColor(Theme.key_windowBackgroundWhiteHintText));
-        if (editing != null) {
-            editText.setText(editing.text);
-        }
-        editText.setSelection(editText.getText().length());
-        editText.setHint(getString(R.string.MeeroQuickReplyHint));
-        FrameLayout container = new FrameLayout(parentActivity);
-        FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT);
-        lp.setMargins(dp(24), dp(4), dp(24), 0);
-        container.addView(editText, lp);
-        AlertDialog.Builder builder = new AlertDialog.Builder(parentActivity);
-        builder.setTitle(editing == null ? getString(R.string.MeeroQuickReplyAdd) : getString(R.string.MeeroQuickReplyEditTitle));
-        builder.setView(container);
-        builder.setPositiveButton(getString(R.string.Save), (dialog, which) -> {
-            final String value = editText.getText().toString();
-            final boolean ok = editing == null ? MeeroQuickReply.add(value) : MeeroQuickReply.update(editing.id, value);
-            android.widget.Toast.makeText(parentActivity,
-                    getString(ok ? R.string.MeeroQuickReplySaved : R.string.MeeroQuickReplyFull),
-                    android.widget.Toast.LENGTH_SHORT).show();
-        });
-        if (editing != null) {
-            builder.setNeutralButton(getString(R.string.Delete), (dialog, which) -> {
-                MeeroQuickReply.delete(editing.id);
-                android.widget.Toast.makeText(parentActivity, getString(R.string.MeeroQuickReplyDeleted), android.widget.Toast.LENGTH_SHORT).show();
-            });
-        }
-        builder.setNegativeButton(getString(R.string.Cancel), null);
-        builder.show();
-        editText.post(() -> {
-            editText.requestFocus();
-            AndroidUtilities.showKeyboard(editText);
-        });
-    }
-
     private boolean onSendLongClick(View view) {
         if (isInScheduleMode() || parentFragment != null && parentFragment.getChatMode() == ChatActivity.MODE_QUICK_REPLIES || animatorEphemeralMessageVisibility.getValue()) {
             return false;
@@ -5579,10 +5482,6 @@ public class ChatActivityEnterView extends FrameLayout implements
         }
 
         ItemOptions options = ItemOptions.makeOptions(this, resourcesProvider, sendButton);
-        // MeeroX v119: quick-reply templates occupy the top section of this
-        // menu (long-press send with any text in the field). Switch off =
-        // the section never appears and the menu stays exactly stock.
-        meeroQuickReplyOptions(options);
 
         final boolean self = parentFragment != null && UserObject.isUserSelf(parentFragment.getCurrentUser());
         boolean scheduleButtonValue = parentFragment != null && parentFragment.canScheduleMessage();

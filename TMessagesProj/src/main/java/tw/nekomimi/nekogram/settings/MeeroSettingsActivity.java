@@ -83,7 +83,6 @@ public class MeeroSettingsActivity extends BaseNekoXSettingsActivity {
     // Appearance - what an idle screen looks like.
     private final AbstractConfigCell headerAppearance = cellGroup.appendCell(new ConfigCellHeader(getString(R.string.MeeroGroupAppearance)));
     private final AbstractConfigCell iosBubblesRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosBubbles, getString(R.string.MeeroIosBubblesInfo)));
-    private final AbstractConfigCell imessageBubblesRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroImessageBubbles, getString(R.string.MeeroImessageBubblesInfo)));
     private final AbstractConfigCell cardsRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroCards, getString(R.string.MeeroCardsInfo)));
     private final AbstractConfigCell dialogsStyleRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroDialogsStyle, getString(R.string.MeeroDialogsStyleInfo)));
     private final AbstractConfigCell glassBordersRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroGlassBorders, getString(R.string.MeeroGlassBordersInfo)));

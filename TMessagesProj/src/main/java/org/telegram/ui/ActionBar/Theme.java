@@ -212,20 +212,13 @@ public class Theme {
          */
         public static int meeroBubbleRadius() {
             try {
-                if (meeroImessageShape()) {
-                    // iMessage's corners measured from the reference bubble:
-                    // 18dp, tighter than the capsule-like 20 of the classic
-                    // iOS mode. Clamped to heightHalf by the caller, so short
-                    // bubbles stay correct.
-                    return 18;
-                }
                 if (tw.nekomimi.nekogram.NekoConfig.meeroIosBubbles.Bool()) {
-                    // Measured from the reference screenshot: a 664x190 bubble
-                    // has a 40px corner, i.e. ~21% of its height. Telegram
-                    // wants the value in dp and clamps it to heightHalf, so 20
-                    // reproduces that curve on a normal two-line bubble while
-                    // short bubbles stay correct.
-                    return 20;
+                    // MeeroX v121 (researched via Telegram-iOS sources):
+                    // Telegram for iOS draws bubbles with a mainRadius of
+                    // ~17pt and Android dp tracks pt closely, so 18
+                    // reproduces the official iPhone curve - the caller
+                    // clamps to heightHalf, keeping short bubbles correct.
+                    return 18;
                 }
             } catch (Throwable ignore) {}
             return SharedConfig.bubbleRadius;
@@ -274,21 +267,6 @@ public class Theme {
         private static boolean meeroIosTail() {
             try {
                 return tw.nekomimi.nekogram.NekoConfig.meeroIosBubbles.Bool();
-            } catch (Throwable ignore) {
-                return false;
-            }
-        }
-
-        /**
-         * MeeroX v120: the iMessage-native geometry the user asked for -
-         * tail-less, tighter 18dp corners, and one small pinched corner on
-         * the sender's side (like Apple's Messages / TurboTel). Only
-         * meaningful while the iOS bubble mode itself is enabled.
-         */
-        private static boolean meeroImessageShape() {
-            try {
-                return tw.nekomimi.nekogram.NekoConfig.meeroIosBubbles.Bool()
-                        && tw.nekomimi.nekogram.NekoConfig.meeroImessageBubbles.Bool();
             } catch (Throwable ignore) {
                 return false;
             }
@@ -1012,14 +990,7 @@ public class Theme {
                     }
                 } else {
                     if (drawFullBubble || currentType == TYPE_PREVIEW || customPaint || drawFullBottom) {
-                        if (meeroImessageShape()) {
-                            // MeeroX v120: iMessage-native outer corner - no
-                            // tail, just a small pinched ~5dp quarter arc.
-                            final float pinch = dp(5);
-                            path.lineTo(bounds.right - dp(8), bounds.bottom - padding - pinch);
-                            rect.set(bounds.right - dp(8) - pinch * 2, bounds.bottom - padding - pinch * 2, bounds.right - dp(8), bounds.bottom - padding);
-                            path.arcTo(rect, 0, 90, false);
-                        } else if (meeroIosTail()) {
+                        if (meeroIosTail()) {
                             // iOS leaves the body one tail-height above the
                             // baseline, then curls out and back in.
                             path.lineTo(bounds.right - dp(8), bounds.bottom - padding - smallRad);
@@ -1083,14 +1054,7 @@ public class Theme {
                     }
                 } else {
                     if (drawFullBubble || currentType == TYPE_PREVIEW || customPaint || drawFullBottom) {
-                        if (meeroImessageShape()) {
-                            // MeeroX v120: mirrored iMessage pinch on the
-                            // incoming (left) outer corner - tail-less too.
-                            final float pinch = dp(5);
-                            path.lineTo(bounds.left + dp(8), bounds.bottom - padding - pinch);
-                            rect.set(bounds.left + dp(8), bounds.bottom - padding - pinch * 2, bounds.left + dp(8) + pinch * 2, bounds.bottom - padding);
-                            path.arcTo(rect, 180, -90, false);
-                        } else if (meeroIosTail()) {
+                        if (meeroIosTail()) {
                             // Mirrored: the incoming tail grows to the left.
                             path.lineTo(bounds.left + dp(8), bounds.bottom - padding - smallRad);
                             meeroAppendIosTail(path, bounds.left + dp(8), bounds.bottom - padding, smallRad, false);
