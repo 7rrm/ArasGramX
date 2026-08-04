@@ -85,9 +85,6 @@ public class NekoConfig {
     // MeeroX: iOS 26 chat styling. Both default to on; turning them off
     // restores stock Telegram behaviour exactly.
     public static ConfigItem meeroMenuBlur = addConfig("meeroMenuBlur", configTypeBool, true);
-    // MeeroX v114-dbg: hidden flag for the freeze diagnosis probe. Deleted
-    // again once the settings-screen freeze is found and fixed.
-    public static ConfigItem meeroFreezeProbe = addConfig("meeroFreezeProbe", configTypeBool, true);
     public static ConfigItem meeroIosBubbles = addConfig("meeroIosBubbles", configTypeBool, true);
     public static ConfigItem meeroTapMenu = addConfig("meeroTapMenu", configTypeBool, true);
     public static ConfigItem meeroIosAnim = addConfig("meeroIosAnim", configTypeBool, true);

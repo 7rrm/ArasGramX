@@ -22,7 +22,6 @@ import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.Components.LayoutHelper;
 import org.telegram.ui.Components.RecyclerListView;
 
-import tw.nekomimi.nekogram.MeeroFreezeProbe;
 import tw.nekomimi.nekogram.MeeroTickStyles;
 import tw.nekomimi.nekogram.NekoConfig;
 import tw.nekomimi.nekogram.config.CellGroup;
@@ -171,24 +170,8 @@ public class MeeroSettingsActivity extends BaseNekoXSettingsActivity {
         listView.setAdapter(listAdapter);
 
         setupDefaultListeners();
-        // v114-dbg: fingerprint the freeze. No-op unless the hidden flag is on.
-        MeeroFreezeProbe.attach(listView, layoutManager);
 
         return superView;
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        // v114-dbg: if the probe captured a stall/crash since the last visit,
-        // offer it as a clipboard copy the user can paste back to us.
-        MeeroFreezeProbe.maybeShowReportDialog(this);
-    }
-
-    @Override
-    public void onFragmentDestroy() {
-        MeeroFreezeProbe.detach();
-        super.onFragmentDestroy();
     }
 
     private static final int TICK_STYLE_COUNT = MeeroTickStyles.COUNT;
@@ -381,15 +364,6 @@ public class MeeroSettingsActivity extends BaseNekoXSettingsActivity {
     private class ListAdapter extends BaseListAdapter {
         public ListAdapter(Context context) {
             super(context);
-        }
-
-        @Override
-        public void onBindViewHolder(@androidx.annotation.NonNull androidx.recyclerview.widget.RecyclerView.ViewHolder holder, int position) {
-            // v114-dbg: stopwatch around the real bind; feeds the probe's
-            // per-row maxima so a fat row shows up in the stall report.
-            final long t0 = MeeroFreezeProbe.beginBind();
-            super.onBindViewHolder(holder, position);
-            MeeroFreezeProbe.endBind(position, t0);
         }
     }
 }
