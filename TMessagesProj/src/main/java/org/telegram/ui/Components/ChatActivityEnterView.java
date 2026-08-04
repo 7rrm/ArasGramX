@@ -641,6 +641,7 @@ public class ChatActivityEnterView extends FrameLayout implements
     private TimerView recordTimerView;
     private FrameLayout audioVideoButtonContainer;
     private boolean audioVideoButtonContainerForbidden;
+    private ImageView meeroQuickReplyChip;
     private ChatActivityEnterViewAnimatedIconView audioVideoSendButton;
     private boolean isInVideoMode;
     @Nullable
@@ -3524,6 +3525,23 @@ public class ChatActivityEnterView extends FrameLayout implements
         audioVideoSendButton.setPadding(padding, padding, padding, padding);
         audioVideoButtonContainer.addView(audioVideoSendButton, LayoutHelper.createFrame(DEFAULT_HEIGHT, DEFAULT_HEIGHT));
 
+        // MeeroX v118: quick-reply chip, sitting directly left of the mic.
+        // The v117 trigger lives on the send button's long-press, but the
+        // send button only exists while the field has text - so the popup
+        // was unreachable in exactly the empty-field state it was made for.
+        // This chip appears in exactly that state and opens the same popup
+        // on a single tap. Bound to the same meeroQuickReply switch: off =
+        // the chip never shows. Mic / voice-recording behaviour untouched.
+        meeroQuickReplyChip = new ImageView(context);
+        meeroQuickReplyChip.setImageResource(R.drawable.baseline_reply_24);
+        meeroQuickReplyChip.setScaleType(ImageView.ScaleType.CENTER);
+        meeroQuickReplyChip.setColorFilter(new PorterDuffColorFilter(getThemedColor(Theme.key_glass_defaultIcon), PorterDuff.Mode.MULTIPLY));
+        meeroQuickReplyChip.setBackground(Theme.createSelectorDrawable(getThemedColor(Theme.key_listSelector)));
+        meeroQuickReplyChip.setContentDescription(getString(R.string.MeeroQuickReplyTitle));
+        meeroQuickReplyChip.setVisibility(GONE);
+        meeroQuickReplyChip.setOnClickListener(v -> meeroQuickReplyPopup(meeroQuickReplyChip));
+        sendButtonContainer.addView(meeroQuickReplyChip, LayoutHelper.createFrame(DEFAULT_HEIGHT, DEFAULT_HEIGHT, Gravity.RIGHT | Gravity.BOTTOM, 0, 0, DEFAULT_HEIGHT, 0));
+
         cancelBotButton = new ImageView(context);
         cancelBotButton.setVisibility(INVISIBLE);
         cancelBotButton.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
@@ -5138,6 +5156,35 @@ public class ChatActivityEnterView extends FrameLayout implements
     }
 
     private ActionBarMenuSubItem actionScheduleButton;
+
+    /**
+     * MeeroX v118: decides whether the quick-reply chip next to the mic is
+     * visible. It mirrors the exact states where stock shows the mic - empty
+     * text, no slow-mode timer, not recording (recordPanel hidden) - plus our
+     * own master switch, so the chip only ever appears where no other button
+     * competes for that spot. Called on every text change, record-state
+     * change and resume; a delayed pass picks up stock's 220 ms alpha
+     * transitions so the chip settles after animations finish.
+     */
+    private void meeroQuickReplyChipUpdate() {
+        if (meeroQuickReplyChip == null) {
+            return;
+        }
+        final boolean show = MeeroQuickReply.enabled()
+                && parentFragment != null
+                && parentFragment.getChatMode() != ChatActivity.MODE_QUICK_REPLIES
+                && messageEditText != null
+                && messageEditText.getText().length() == 0
+                && audioVideoButtonContainer != null
+                && audioVideoButtonContainer.getVisibility() == VISIBLE
+                && !recordingAudioVideo
+                && (recordPanel == null || recordPanel.getVisibility() != VISIBLE);
+        final int target = show ? VISIBLE : GONE;
+        if (meeroQuickReplyChip.getVisibility() != target) {
+            meeroQuickReplyChip.setVisibility(target);
+        }
+    }
+
     /**
      * MeeroX v117: the quick-reply template list attached to the send
      * button's long-press. It is only offered when the input is empty and
@@ -6645,6 +6692,11 @@ public class ChatActivityEnterView extends FrameLayout implements
                     }
                 }
                 updateSendButtonPaid();
+                // MeeroX v118: keep the empty-state quick-reply chip in sync
+                // with typing; the delayed pass settles after stock's
+                // mic/send swap animation finishes.
+                meeroQuickReplyChipUpdate();
+                AndroidUtilities.runOnUIThread(this::meeroQuickReplyChipUpdate, 260);
             }
 
             @Override
@@ -6732,6 +6784,10 @@ public class ChatActivityEnterView extends FrameLayout implements
             }
         });
         messageEditText.addTextChangedListener(new EditTextSuggestionsFix());
+        // MeeroX v118: first evaluation of the quick-reply chip now that the
+        // text field exists (it is created after the send-buttons container).
+        meeroQuickReplyChipUpdate();
+        AndroidUtilities.runOnUIThread(this::meeroQuickReplyChipUpdate, 260);
         messageEditText.setEnabled(messageEditTextEnabled);
         if (messageEditTextWatchers != null) {
             for (TextWatcher textWatcher : messageEditTextWatchers) {
@@ -7504,6 +7560,9 @@ public class ChatActivityEnterView extends FrameLayout implements
 
     public void onResume() {
         isPaused = false;
+        // MeeroX v118: refresh the quick-reply chip when the chat surfaces.
+        meeroQuickReplyChipUpdate();
+        AndroidUtilities.runOnUIThread(this::meeroQuickReplyChipUpdate, 260);
         if (hideKeyboardRunnable != null) {
             AndroidUtilities.cancelRunOnUIThread(hideKeyboardRunnable);
             hideKeyboardRunnable = null;
@@ -10845,6 +10904,10 @@ public class ChatActivityEnterView extends FrameLayout implements
         delegate.onAudioVideoInterfaceUpdated();
         updateSendAsButton();
         lastRecordState = recordState;
+        // MeeroX v118: re-evaluate the quick-reply chip after every
+        // record / slow-mode transition (immediately + after animations).
+        meeroQuickReplyChipUpdate();
+        AndroidUtilities.runOnUIThread(this::meeroQuickReplyChipUpdate, 260);
     }
 
     private void cancelRecordInterfaceInternal() {
