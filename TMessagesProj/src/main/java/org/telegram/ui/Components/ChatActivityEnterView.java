@@ -683,6 +683,22 @@ public class ChatActivityEnterView extends FrameLayout implements
     private FrameLayout meeroAttachWrap;
     private boolean meeroAttachSyncPosted;
     private android.graphics.Paint meeroPillStrokePaint;
+
+    /**
+     * MeeroX v135: factory handed down from ChatActivity (same one the
+     * under-keyboard bubble uses) so the iOS composer capsule can render as
+     * REAL blurred glass like the old field did, instead of a flat wash.
+     */
+    private BlurredBackgroundDrawableViewFactory meeroCapsuleFactory;
+    private BlurredBackgroundDrawable meeroCapsuleDrawable;
+
+    public void setMeeroIosCapsuleFactory(BlurredBackgroundDrawableViewFactory factory) {
+        if (meeroCapsuleFactory != factory) {
+            meeroCapsuleFactory = factory;
+            meeroCapsuleDrawable = null;
+        }
+    }
+
     private ImageView sendOutlineView;
     public RichMessageLayout.PreviewView richDraftPreview;
     private boolean richDraftActive;
@@ -6561,7 +6577,10 @@ public class ChatActivityEnterView extends FrameLayout implements
                     allowChangeToSmile = false;
                 }
 
-                if ((before == 0 && !TextUtils.isEmpty(charSequence) || before != 0 && TextUtils.isEmpty(charSequence)) && allowChangeToSmile) {
+                // MeeroX v135: the iOS glyph also flips sticker<->smile on
+                // empty<->typed even when the emoji page is 0 (the stock
+                // allowChangeToSmile gate skips exactly that case).
+                if ((before == 0 && !TextUtils.isEmpty(charSequence) || before != 0 && TextUtils.isEmpty(charSequence)) && (allowChangeToSmile || meeroIosComposer())) {
                     setEmojiButtonImage(false, true);
                 }
                 if (lineCount != messageEditText.getLineCount()) {
@@ -11568,6 +11587,9 @@ public class ChatActivityEnterView extends FrameLayout implements
                 }
             }
         }
+        if (meeroCapsuleDrawable != null) {
+            meeroCapsuleDrawable.updateColors();
+        }
         sendOutlineView.setColorFilter(getThemedColor(Theme.key_telegram_color), PorterDuff.Mode.SRC_IN);
     }
 
@@ -14132,7 +14154,21 @@ public class ChatActivityEnterView extends FrameLayout implements
             } else {
                 currentPage = emojiView.getCurrentPage();
             }
-            if (currentPage == 0 || !allowStickers && !allowGifs) {
+            if (meeroIosComposer()) {
+                // MeeroX v135 (user request): iOS punctuation is by text
+                // state, not by which emoji-panel page was last open - the
+                // empty field carries the STICKER glyph and the moment text
+                // exists it becomes the SMILE glyph (panel-open still flips
+                // to KEYBOARD above, and sticker-restricted chats stay on
+                // SMILE so the button always opens something).
+                if (!stickersEnabled) {
+                    nextIcon = ChatActivityEnterViewAnimatedIconView.State.SMILE;
+                } else if (messageEditText != null && !TextUtils.isEmpty(messageEditText.getText())) {
+                    nextIcon = ChatActivityEnterViewAnimatedIconView.State.SMILE;
+                } else {
+                    nextIcon = ChatActivityEnterViewAnimatedIconView.State.STICKER;
+                }
+            } else if (currentPage == 0 || !allowStickers && !allowGifs) {
                 nextIcon = ChatActivityEnterViewAnimatedIconView.State.SMILE;
             } else if (messageEditText != null && !TextUtils.isEmpty(messageEditText.getText())) {
                 nextIcon = ChatActivityEnterViewAnimatedIconView.State.SMILE;
@@ -16918,9 +16954,39 @@ public class ChatActivityEnterView extends FrameLayout implements
         // turning into an oval.
         final float radius = Math.min(dp(20), (bottom - top) / 2f);
         AndroidUtilities.rectTmp.set(left, top, right, bottom);
-        canvas.drawRoundRect(AndroidUtilities.rectTmp, radius, radius, meeroPillPaint);
+        // MeeroX v135 (user follow-up): the flat wash read as "no glass at
+        // all" next to the two glass circles. When ChatActivity handed us
+        // its blur factory, the capsule renders as the same blurred glass
+        // the header pills use (fill + blur + strokes + shadow, day/night
+        // resolved by the provider). Flat path below stays as the fallback
+        // when the blur pipeline is unavailable.
+        if (meeroIos && meeroCapsuleFactory != null) {
+            try {
+                if (meeroCapsuleDrawable == null) {
+                    meeroCapsuleDrawable = meeroCapsuleFactory.create(
+                            messageEditTextContainer,
+                            org.telegram.ui.Components.blur3.drawable.color.impl.BlurredBackgroundProviderImpl.headerButton(resourcesProvider));
+                }
+                if (meeroCapsuleDrawable != null) {
+                    meeroCapsuleDrawable.setRadius(radius);
+                    meeroCapsuleDrawable.setBounds(
+                            Math.round(left), Math.round(top), Math.round(right), Math.round(bottom));
+                    meeroCapsuleDrawable.draw(canvas);
+                    return;
+                }
+            } catch (Throwable ignore) {
+                meeroCapsuleDrawable = null;
+            }
+        }
         if (meeroIos) {
+            // Fallback: same milk the circles wear (was nearly invisible at
+            // 7.5% next to their 9% - that gap is why it read as no glass).
+            meeroPillPaint.setColor(dark ? 0x17FFFFFF : 0xD9FFFFFF);
+            meeroPillStrokePaint.setColor(dark ? 0x1FFFFFFF : 0x0D000000);
+            canvas.drawRoundRect(AndroidUtilities.rectTmp, radius, radius, meeroPillPaint);
             canvas.drawRoundRect(AndroidUtilities.rectTmp, radius, radius, meeroPillStrokePaint);
+        } else {
+            canvas.drawRoundRect(AndroidUtilities.rectTmp, radius, radius, meeroPillPaint);
         }
     }
 

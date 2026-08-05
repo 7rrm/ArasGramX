@@ -18309,6 +18309,10 @@ public class ChatActivity extends BaseFragment implements
             }
             if (chatActivityEnterView != null && child == chatActivityEnterView.controlsView) {
                 chatActivityEnterView.controlsView.setBlurredBackgroundFactory(glassBackgroundDrawableFactory);
+                // MeeroX v135: same factory feeds the iOS composer capsule,
+                // so the message field renders as real blurred glass (like
+                // the stock input island used to draw) instead of a wash.
+                chatActivityEnterView.setMeeroIosCapsuleFactory(glassBackgroundDrawableFactory);
             }
         }
 
