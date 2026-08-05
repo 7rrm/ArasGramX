@@ -234,6 +234,15 @@ public class ChatInputViewsContainer extends FrameLayout {
         return getMeasuredHeight() - maxBottomInset - dp(INPUT_BUBBLE_BOTTOM);
     }
 
+    /** MeeroX v134: iOS-composer switch, read lazily, fail-safe to stock. */
+    private static boolean meeroHideIslandForIos() {
+        try {
+            return tw.nekomimi.nekogram.NekoConfig.meeroIosInputPill.Bool();
+        } catch (Throwable ignore) {
+            return false;
+        }
+    }
+
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
@@ -269,7 +278,11 @@ public class ChatInputViewsContainer extends FrameLayout {
         tmpRect.offset(0, blurTop + (int) bubbleInputTranlationY);
 
         blurredBackgroundDrawable.setBounds(tmpRect);
-        if (drawInputBackground)
+        // MeeroX v134: the iOS composer (meeroIosInputPill) floats its own
+        // pieces - this stock "input island" bubble is the old band that
+        // stayed visible UNDER the new layout. Live-gated so flipping the
+        // switch restores it without recreating the chat.
+        if (drawInputBackground && !meeroHideIslandForIos())
             blurredBackgroundDrawable.draw(canvas);
 
         if (needDrawInAppKeyboard) {

@@ -2762,7 +2762,9 @@ public class ChatActivityEnterView extends FrameLayout implements
         emojiButton.setFocusable(true);
         int padding = dp(7.5f);
         emojiButton.setPadding(padding, padding, padding, padding);
-        emojiButton.setColorFilter(new PorterDuffColorFilter(getThemedColor(Theme.key_glass_defaultIcon), PorterDuff.Mode.SRC_IN));
+        // MeeroX v134: iOS glyphs are neutral (white at night, system grey
+        // in day) - only the stock merged bar takes the themed accent tint.
+        emojiButton.setColorFilter(new PorterDuffColorFilter(meeroIosComposer() ? meeroIosGlyphColor() : getThemedColor(Theme.key_glass_defaultIcon), PorterDuff.Mode.SRC_IN));
         emojiButton.setBackground(Theme.createInsetRoundRectDrawable(getThemedColor(Theme.key_listSelector), dp(19), dp(1), dp(3)));
         emojiButton.setOnClickListener(v -> {
             if (adjustPanLayoutHelper != null && adjustPanLayoutHelper.animationInProgress()) {
@@ -3639,6 +3641,9 @@ public class ChatActivityEnterView extends FrameLayout implements
         };
         sendButton.setVisibility(INVISIBLE);
         sendButton.setContentDescription(getString(R.string.Send));
+        // MeeroX v134: iOS composer uses the accent circle + white up-arrow
+        // glyph instead of Telegram's paper plane.
+        meeroApplyIosSendIcon();
         sendButton.setSoundEffectsEnabled(false);
         sendButton.setScaleX(0.1f);
         sendButton.setScaleY(0.1f);
@@ -9217,11 +9222,13 @@ public class ChatActivityEnterView extends FrameLayout implements
                             if (sideButtons != null && (!NekoConfig.useChatAttachMediaMenu.Bool() || isStories)) {
                                 sideButtons.showButton(ChatActivitySideControlsButtonsLayout.BUTTON_ATTACH, captionNearAttach, true);
                                 if (attachButton != null) {
-                                    animators.add(ObjectAnimator.ofFloat(attachButton, View.ALPHA, attachButtonAlpha = captionNearAttach ? 0.0f : 1.0f));
-                                    animators.add(ObjectAnimator.ofFloat(attachButton, View.SCALE_X, captionNearAttach ? 0.5f : 1.0f));
-                                    animators.add(ObjectAnimator.ofFloat(attachButton, View.SCALE_Y, captionNearAttach ? 0.5f : 1.0f));
+                                    // MeeroX v134: iOS keeps the attach circle while typing.
+                                    final boolean meeroHide = captionNearAttach && !meeroKeepAttachVisible();
+                                    animators.add(ObjectAnimator.ofFloat(attachButton, View.ALPHA, attachButtonAlpha = meeroHide ? 0.0f : 1.0f));
+                                    animators.add(ObjectAnimator.ofFloat(attachButton, View.SCALE_X, meeroHide ? 0.5f : 1.0f));
+                                    animators.add(ObjectAnimator.ofFloat(attachButton, View.SCALE_Y, meeroHide ? 0.5f : 1.0f));
                                 }
-                            } else if (attachButton != null && (!NekoConfig.useChatAttachMediaMenu.Bool() || isStories)) {
+                            } else if (attachButton != null && (!NekoConfig.useChatAttachMediaMenu.Bool() || isStories) && !meeroKeepAttachVisible()) {
                                 animators.add(ObjectAnimator.ofFloat(attachButton, View.ALPHA, attachButtonAlpha = 0.0f));
                                 animators.add(ObjectAnimator.ofFloat(attachButton, View.SCALE_X, 0.5f));
                                 animators.add(ObjectAnimator.ofFloat(attachButton, View.SCALE_Y, 0.5f));
@@ -9397,11 +9404,13 @@ public class ChatActivityEnterView extends FrameLayout implements
                             if (sideButtons != null) {
                                 sideButtons.showButton(ChatActivitySideControlsButtonsLayout.BUTTON_ATTACH, captionNearAttach, true);
                                 if (attachButton != null) {
-                                    attachButton.setAlpha(attachButtonAlpha = captionNearAttach ? 0.0f : 1.0f);
-                                    attachButton.setScaleX(captionNearAttach ? 0.5f : 1.0f);
-                                    attachButton.setScaleY(captionNearAttach ? 0.5f : 1.0f);
+                                    // MeeroX v134: iOS keeps the attach circle while typing.
+                                    final boolean meeroHide = captionNearAttach && !meeroKeepAttachVisible();
+                                    attachButton.setAlpha(attachButtonAlpha = meeroHide ? 0.0f : 1.0f);
+                                    attachButton.setScaleX(meeroHide ? 0.5f : 1.0f);
+                                    attachButton.setScaleY(meeroHide ? 0.5f : 1.0f);
                                 }
-                            } else if (attachButton != null) {
+                            } else if (attachButton != null && !meeroKeepAttachVisible()) {
                                 attachButton.setAlpha(attachButtonAlpha = 0.0f);
                                 attachButton.setScaleX(0.5f);
                                 attachButton.setScaleY(0.5f);
@@ -9431,10 +9440,12 @@ public class ChatActivityEnterView extends FrameLayout implements
                             attachButtonAnimator.cancel();
                             attachButtonAnimator = null;
                         }
+                        // MeeroX v134: iOS keeps the attach circle while typing.
+                        final boolean meeroHide = captionNearAttach && !meeroKeepAttachVisible();
                         attachButtonAnimator = attachButton.animate()
-                            .alpha(attachButtonAlpha = captionNearAttach ? 0.0f : 1.0f)
-                            .scaleX(captionNearAttach ? 0.5f : 1.0f)
-                            .scaleY(captionNearAttach ? 0.5f : 1.0f)
+                            .alpha(attachButtonAlpha = meeroHide ? 0.0f : 1.0f)
+                            .scaleX(meeroHide ? 0.5f : 1.0f)
+                            .scaleY(meeroHide ? 0.5f : 1.0f)
                             .setInterpolator(CubicBezierInterpolator.EASE_OUT_QUINT)
                             .setDuration(320);
                         attachButtonAnimator.start();
@@ -9882,7 +9893,10 @@ public class ChatActivityEnterView extends FrameLayout implements
             if (scheduledButton != null && scheduledButton.getTag() != null) {
                 layoutParams.rightMargin = dp(50);
             } else {
-                layoutParams.rightMargin = dp(2);
+                // MeeroX v134: 2dp was tuned for the merged pill where the
+                // attach glyph still sat there; inside the iOS capsule the
+                // text needs real breathing room from its edge.
+                layoutParams.rightMargin = meeroAttachWrap != null ? dp(10) : dp(2);
             }
         }
         layoutParams.rightMargin = Math.max(layoutParams.rightMargin, Math.max(0, sendButton.width() - dp(DEFAULT_HEIGHT)));
@@ -11531,7 +11545,9 @@ public class ChatActivityEnterView extends FrameLayout implements
             botKeyboardView.updateColors();
         }
         updateAudioVideoSendButtonColor();
-        emojiButton.setColorFilter(new PorterDuffColorFilter(getThemedColor(Theme.key_glass_defaultIcon), PorterDuff.Mode.SRC_IN));
+        // MeeroX v134: iOS glyphs are neutral; see the same branch at the
+        // constructor. Re-evaluated here so theme/day-night flips re-tint.
+        emojiButton.setColorFilter(new PorterDuffColorFilter(meeroIosComposer() ? meeroIosGlyphColor() : getThemedColor(Theme.key_glass_defaultIcon), PorterDuff.Mode.SRC_IN));
         emojiButton.setBackground(Theme.createSelectorDrawable(getThemedColor(Theme.key_listSelector)));
         deleteRichDraftButton.setColorFilter(new PorterDuffColorFilter(getThemedColor(Theme.key_glass_defaultIcon), PorterDuff.Mode.SRC_IN));
         deleteRichDraftButton.setBackground(Theme.createInsetRoundRectDrawable(getThemedColor(Theme.key_listSelector), dp(19), dp(1), dp(3)));
@@ -16711,6 +16727,38 @@ public class ChatActivityEnterView extends FrameLayout implements
     }
 
     /**
+     * MeeroX v134: stock checkSendButton fades the attach button out while
+     * typing (and on RTL it always counts as "caption near attach"). iOS
+     * keeps the attach circle pinned next to the capsule while text is
+     * typed, so every typing-hide below is suppressed while the attach
+     * button lives in its transplanted wrap. Record/voice and slow-mode
+     * flows keep the stock hide - those legitimately replace the composer.
+     */
+    private boolean meeroKeepAttachVisible() {
+        return meeroAttachWrap != null;
+    }
+
+    /**
+     * MeeroX v134: send glyph swap. iOS draws the composer send as a filled
+     * accent circle with a white up-arrow; Telegram uses a paper plane.
+     * Schedule mode keeps its calendar glyph in both looks. Idempotent:
+     * SendButton.setResourceId no-ops when the id matches.
+     */
+    private void meeroApplyIosSendIcon() {
+        try {
+            if (sendButton == null) {
+                return;
+            }
+            if (meeroIosComposer() && !isInScheduleMode()) {
+                sendButton.setResourceId(R.drawable.baseline_arrow_upward_24);
+            } else {
+                sendButton.setResourceId(isInScheduleMode() ? R.drawable.input_schedule : R.drawable.send_plane_24);
+            }
+        } catch (Throwable ignore) {
+        }
+    }
+
+    /**
      * Cheap per-frame hook called from drawBackground/onDraw: when the live
      * switch and the attach button's actual parent disagree, post the
      * reparent so it runs outside the draw, once.
@@ -16797,17 +16845,22 @@ public class ChatActivityEnterView extends FrameLayout implements
                     attachLayout.setLayoutParams(alp);
                 }
             }
-            // Mic glyph tint tracks the mode too (it swaps between WHITE on
-            // the stock accent disc and the neutral iOS tone); waiting for
-            // the next updateColors() would leave a stale tint after a live
+            // Mic + emoji glyph tints track the mode too (they swap between
+            // the themed accent look and the neutral iOS tone); waiting for
+            // the next updateColors() would leave stale tints after a live
             // toggle.
             updateAudioVideoSendButtonColor();
+            if (emojiButton != null) {
+                emojiButton.setColorFilter(new PorterDuffColorFilter(meeroIosComposer() ? meeroIosGlyphColor() : getThemedColor(Theme.key_glass_defaultIcon), PorterDuff.Mode.SRC_IN));
+            }
             // The text's right margin embeds the attach slot's 48dp; re-run
             // with the state that produced it so it shrinks (or restores)
             // in the same frame as the swap rather than on the next event.
             if (messageEditText != null) {
                 updateFieldRight(lastAttachVisible);
             }
+            // Send glyph follows the mode too (plane <-> iOS up-arrow).
+            meeroApplyIosSendIcon();
         } catch (Throwable ignore) {
             // Never let a cosmetic swap break the composer.
         }
