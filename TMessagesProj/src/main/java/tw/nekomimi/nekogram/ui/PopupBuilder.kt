@@ -10,8 +10,6 @@ import android.graphics.Rect
 import android.graphics.RectF
 import android.graphics.Shader
 import android.graphics.drawable.Drawable
-import android.graphics.drawable.GradientDrawable
-import android.os.Build
 import android.view.View
 import android.widget.TextView
 import org.telegram.messenger.AndroidUtilities
@@ -58,20 +56,9 @@ class PopupBuilder @JvmOverloads constructor(anchor: View, dialog: Boolean = fal
             // 1.5dp rose->violet edge ring, 12dp to match the stock sheet
             // asset exactly (popup_fixed_alert4 measures ~11.7dp; the stock
             // body+shadow 9-patch stays underneath, so nothing breaks).
-            val ring = GradientDrawable()
-            ring.cornerRadius = AndroidUtilities.dp(12f).toFloat()
-            ring.setColor(0)
-            if (Build.VERSION.SDK_INT >= 29) {
-                ring.setGradientStroke(
-                    AndroidUtilities.dp(1.5f),
-                    intArrayOf(0x88FF4E8A.toInt(), 0x557B5CFF, 0x22FFFFFF),
-                    null,
-                    GradientDrawable.Orientation.TL_BR
-                )
-            } else {
-                ring.setStroke(AndroidUtilities.dp(1.5f), 0x66FF4E8A)
-            }
-            getPopupLayout().foreground = ring
+            // Drawn by our own tiny Drawable: GradientDrawable.setGradientStroke
+            // is not in this module's compile SDK (v132 build lesson).
+            getPopupLayout().foreground = EdgeRing()
 
             for (i in 0 until itemViews.size) {
                 val tv = itemViews[i]
@@ -94,6 +81,47 @@ class PopupBuilder @JvmOverloads constructor(anchor: View, dialog: Boolean = fal
 
         }
 
+    }
+
+    /** 1.5dp rose->violet rounded ring, drawn over the popup sheet's edge. */
+    private class EdgeRing : Drawable() {
+
+        private val stroke = Paint(Paint.ANTI_ALIAS_FLAG)
+        private val rectF = RectF()
+
+        init {
+            stroke.style = Paint.Style.STROKE
+            stroke.strokeWidth = AndroidUtilities.dp(1.5f).toFloat()
+        }
+
+        override fun onBoundsChange(bounds: Rect) {
+            stroke.shader = null
+            val inset = stroke.strokeWidth / 2f
+            stroke.shader = LinearGradient(
+                bounds.left.toFloat(), bounds.top.toFloat(),
+                bounds.right.toFloat(), bounds.bottom.toFloat(),
+                intArrayOf(0x88FF4E8A.toInt(), 0x557B5CFF, 0x22FFFFFF),
+                null, Shader.TileMode.CLAMP
+            )
+            rectF.set(
+                bounds.left + inset, bounds.top + inset,
+                bounds.right - inset, bounds.bottom - inset
+            )
+        }
+
+        override fun draw(canvas: Canvas) {
+            canvas.drawRoundRect(rectF, AndroidUtilities.dp(12f).toFloat(), AndroidUtilities.dp(12f).toFloat(), stroke)
+        }
+
+        override fun setAlpha(alpha: Int) {
+            stroke.alpha = alpha
+        }
+
+        override fun setColorFilter(colorFilter: ColorFilter?) {
+        }
+
+        @Deprecated("Deprecated in Java")
+        override fun getOpacity(): Int = PixelFormat.TRANSLUCENT
     }
 
     /** Gradient rose->violet oval with a white check, for the selected row. */
