@@ -467,7 +467,7 @@ public final class MeeroPickerSheet {
             final boolean rtl = LocaleController.isRTL;
             for (Msg m : msgs) {
                 textPaint.setColor(m.outgoing ? colMsgOut : colMsgIn);
-                m.layout = new StaticLayout.Builder
+                m.layout = StaticLayout.Builder
                         .obtain(m.text, 0, m.text.length(), textPaint, maxTextW)
                         .setAlignment(Layout.Alignment.ALIGN_NORMAL)
                         .setIncludePad(false)
