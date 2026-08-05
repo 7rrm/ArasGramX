@@ -59,11 +59,11 @@ class PopupBuilder @JvmOverloads constructor(anchor: View, dialog: Boolean = fal
             // asset exactly (popup_fixed_alert4 measures ~11.7dp; the stock
             // body+shadow 9-patch stays underneath, so nothing breaks).
             val ring = GradientDrawable()
-            ring.cornerRadius = AndroidUtilities.dp(12).toFloat()
+            ring.cornerRadius = AndroidUtilities.dp(12f).toFloat()
             ring.setColor(0)
             if (Build.VERSION.SDK_INT >= 29) {
                 ring.setGradientStroke(
-                    AndroidUtilities.dpf2(1.5f),
+                    AndroidUtilities.dp(1.5f),
                     intArrayOf(0x88FF4E8A.toInt(), 0x557B5CFF, 0x22FFFFFF),
                     null,
                     GradientDrawable.Orientation.TL_BR
@@ -80,8 +80,8 @@ class PopupBuilder @JvmOverloads constructor(anchor: View, dialog: Boolean = fal
                     tv.setTextColor(MeeroGlassTheme.ACC1)
                     tv.paint.isFakeBoldText = true
                     val badge = CheckBadge()
-                    badge.setBounds(0, 0, AndroidUtilities.dp(18), AndroidUtilities.dp(18))
-                    tv.compoundDrawablePadding = AndroidUtilities.dp(8)
+                    badge.setBounds(0, 0, AndroidUtilities.dp(18f), AndroidUtilities.dp(18f))
+                    tv.compoundDrawablePadding = AndroidUtilities.dp(8f)
                     tv.setCompoundDrawablesRelative(null, null, badge, null)
                 } else {
                     tv.setTextColor(MeeroGlassTheme.ink())
@@ -105,7 +105,7 @@ class PopupBuilder @JvmOverloads constructor(anchor: View, dialog: Boolean = fal
 
         init {
             mark.color = -0x1 // white
-            mark.textSize = AndroidUtilities.dp(11).toFloat()
+            mark.textSize = AndroidUtilities.dp(11f).toFloat()
             mark.isFakeBoldText = true
             mark.textAlign = Paint.Align.CENTER
         }
