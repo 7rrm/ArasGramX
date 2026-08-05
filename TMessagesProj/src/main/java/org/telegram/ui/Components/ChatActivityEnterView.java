@@ -692,12 +692,52 @@ public class ChatActivityEnterView extends FrameLayout implements
      */
     private BlurredBackgroundDrawableViewFactory meeroCapsuleFactory;
     private BlurredBackgroundDrawable meeroCapsuleDrawable;
+    private BlurredBackgroundDrawable meeroMicGlassDrawable;
 
     public void setMeeroIosCapsuleFactory(BlurredBackgroundDrawableViewFactory factory) {
         if (meeroCapsuleFactory != factory) {
             meeroCapsuleFactory = factory;
             meeroCapsuleDrawable = null;
+            meeroMicGlassDrawable = null;
+            // v139: upgrade the attach circle to real glass too (it is built
+            // flat during the constructor, before the handoff happens).
+            meeroApplyIosCircleGlass();
         }
+    }
+
+    // MeeroX v139: the attach circle wears the SAME blurred-glass drawable
+    // the header pills use (instead of the flat 0x17 milk the user called
+    // "لا يوجد زجاج اصلا"). Falls back to the old flat circle when the blur
+    // pipeline is not around.
+    private void meeroApplyIosCircleGlass() {
+        if (meeroAttachWrap == null) {
+            return;
+        }
+        BlurredBackgroundDrawable glass = null;
+        if (meeroCapsuleFactory != null) {
+            try {
+                glass = meeroCapsuleFactory.create(
+                        meeroAttachWrap,
+                        org.telegram.ui.Components.blur3.drawable.color.impl.BlurredBackgroundProviderImpl.headerButton(resourcesProvider));
+                glass.setRadius(dp(24));
+            } catch (Throwable ignore) {
+                glass = null;
+            }
+        }
+        if (glass != null) {
+            meeroAttachWrap.setBackground(glass);
+            return;
+        }
+        final android.graphics.drawable.GradientDrawable circle = new android.graphics.drawable.GradientDrawable();
+        circle.setShape(android.graphics.drawable.GradientDrawable.OVAL);
+        if (Theme.getActiveTheme().isDark()) {
+            circle.setColor(0x17FFFFFF);
+            circle.setStroke(dp(1), 0x1FFFFFFF);
+        } else {
+            circle.setColor(0xD9FFFFFF);
+            circle.setStroke(dp(1), 0x0D000000);
+        }
+        meeroAttachWrap.setBackground(circle);
     }
 
     private ImageView sendOutlineView;
@@ -3364,10 +3404,11 @@ public class ChatActivityEnterView extends FrameLayout implements
                     // far side - iOS never paints the accent behind the mic.
                     // The typed-text SEND button is a different view with its
                     // own accent circle, so it stays rose untouched.
+                    // MeeroX v139: the "glass" here was a flat milk fill the
+                    // user called "لا يوجد زجاج اصلا" - it now renders the
+                    // SAME BlurredBackgroundDrawable the header pills draw,
+                    // with the flat path kept as pipeline-less fallback.
                     final boolean meeroIos = meeroIosComposer();
-                    paint.setColor(meeroIos
-                            ? (Theme.getActiveTheme().isDark() ? 0x17FFFFFF : 0xD9FFFFFF)
-                            : getThemedColor(Theme.key_chat_messagePanelSend));
                     final float margin = dpf2(3);
                     final float height = dpf2(38);
                     final float width = dpf2(38);
@@ -3377,15 +3418,39 @@ public class ChatActivityEnterView extends FrameLayout implements
                             getMeasuredWidth() - margin,
                             getMeasuredHeight() - margin
                     );
+                    BlurredBackgroundDrawable meeroMicGlass = null;
+                    if (meeroIos && meeroCapsuleFactory != null) {
+                        try {
+                            if (meeroMicGlassDrawable == null) {
+                                meeroMicGlassDrawable = meeroCapsuleFactory.create(
+                                        audioVideoButtonContainer,
+                                        org.telegram.ui.Components.blur3.drawable.color.impl.BlurredBackgroundProviderImpl.headerButton(resourcesProvider));
+                            }
+                            meeroMicGlass = meeroMicGlassDrawable;
+                        } catch (Throwable ignore) {
+                            meeroMicGlassDrawable = null;
+                        }
+                    }
 
                     canvas.save();
                     canvas.scale(s, s, backgroundRect.centerX(), backgroundRect.centerY());
-                    canvas.drawRoundRect(backgroundRect, r, r, paint);
-                    if (meeroIos) {
-                        meeroStrokePaint.setStyle(Paint.Style.STROKE);
-                        meeroStrokePaint.setStrokeWidth(dpf2(1));
-                        meeroStrokePaint.setColor(Theme.getActiveTheme().isDark() ? 0x1FFFFFFF : 0x0D000000);
-                        canvas.drawRoundRect(backgroundRect, r, r, meeroStrokePaint);
+                    if (meeroMicGlass != null) {
+                        meeroMicGlass.setRadius(dpf2(19));
+                        meeroMicGlass.setBounds(
+                                Math.round(backgroundRect.left), Math.round(backgroundRect.top),
+                                Math.round(backgroundRect.right), Math.round(backgroundRect.bottom));
+                        meeroMicGlass.draw(canvas);
+                    } else {
+                        paint.setColor(meeroIos
+                                ? (Theme.getActiveTheme().isDark() ? 0x17FFFFFF : 0xD9FFFFFF)
+                                : getThemedColor(Theme.key_chat_messagePanelSend));
+                        canvas.drawRoundRect(backgroundRect, r, r, paint);
+                        if (meeroIos) {
+                            meeroStrokePaint.setStyle(Paint.Style.STROKE);
+                            meeroStrokePaint.setStrokeWidth(dpf2(1));
+                            meeroStrokePaint.setColor(Theme.getActiveTheme().isDark() ? 0x1FFFFFFF : 0x0D000000);
+                            canvas.drawRoundRect(backgroundRect, r, r, meeroStrokePaint);
+                        }
                     }
                     canvas.restore();
                 }
@@ -11636,6 +11701,20 @@ public class ChatActivityEnterView extends FrameLayout implements
         if (meeroCapsuleDrawable != null) {
             meeroCapsuleDrawable.updateColors();
         }
+        // MeeroX v139: the glass trio refreshes together on theme/day-night
+        // flips (attach circle may still hold the flat fallback drawable -
+        // only glass ones answer updateColors).
+        if (meeroAttachWrap != null && meeroAttachWrap.getBackground() instanceof BlurredBackgroundDrawable) {
+            ((BlurredBackgroundDrawable) meeroAttachWrap.getBackground()).updateColors();
+        } else if (meeroAttachWrap != null) {
+            // still on the flat fallback: rebuild it so day/night flips and
+            // a late factory handoff both land correctly.
+            meeroApplyIosCircleGlass();
+        }
+        if (meeroMicGlassDrawable != null) {
+            meeroMicGlassDrawable.updateColors();
+            audioVideoButtonContainer.invalidate();
+        }
         sendOutlineView.setColorFilter(getThemedColor(Theme.key_telegram_color), PorterDuff.Mode.SRC_IN);
     }
 
@@ -16872,16 +16951,9 @@ public class ChatActivityEnterView extends FrameLayout implements
                     ((android.view.ViewGroup) parent).removeView(attachButton);
                 }
                 meeroAttachWrap = new FrameLayout(getContext());
-                final android.graphics.drawable.GradientDrawable circle = new android.graphics.drawable.GradientDrawable();
-                circle.setShape(android.graphics.drawable.GradientDrawable.OVAL);
-                if (Theme.getActiveTheme().isDark()) {
-                    circle.setColor(0x17FFFFFF);
-                    circle.setStroke(dp(1), 0x1FFFFFFF);
-                } else {
-                    circle.setColor(0xD9FFFFFF);
-                    circle.setStroke(dp(1), 0x0D000000);
-                }
-                meeroAttachWrap.setBackground(circle);
+                // v139: real header-pill glass when the factory is in, flat
+                // circle otherwise (helper keeps both creation paths equal).
+                meeroApplyIosCircleGlass();
                 meeroAttachWrap.addView(attachButton,
                         LayoutHelper.createFrame(DEFAULT_HEIGHT, DEFAULT_HEIGHT, Gravity.CENTER));
                 textFieldContainer.addView(meeroAttachWrap,
@@ -17086,17 +17158,11 @@ public class ChatActivityEnterView extends FrameLayout implements
             }
         }
         if (meeroIos) {
-            if (meeroBlurCapsuleDrawn) {
-                // MeeroX v137 (user follow-up): on the uniform dark backdrop
-                // the provider capsule reads as a bare wash - "الزجاج ماكو"
-                // next to the two glass circles. Reinforce it with a boost
-                // pass on top of the blur (milk + a clearly visible rim), so
-                // the big span finally reads as glass in both modes.
-                meeroPillPaint.setColor(dark ? 0x11FFFFFF : 0x21FFFFFF);
-                meeroPillStrokePaint.setColor(dark ? 0x1FFFFFFF : 0x0F000000);
-                canvas.drawRoundRect(AndroidUtilities.rectTmp, radius, radius, meeroPillPaint);
-                canvas.drawRoundRect(AndroidUtilities.rectTmp, radius, radius, meeroPillStrokePaint);
-            } else {
+            // MeeroX v139 (user follow-up): NO boost pass here anymore - the
+            // v137 overlay is exactly the "فقط تمويه" he rejected; the raw
+            // provider capsule IS the header pill's glass. Fallback flat path
+            // stays for the pipeline-less moments.
+            if (!meeroBlurCapsuleDrawn) {
                 // Fallback: same milk the circles wear (was nearly invisible
                 // at 7.5% next to their 9% - that gap is why it read as no
                 // glass).
