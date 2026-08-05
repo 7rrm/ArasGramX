@@ -71,6 +71,13 @@ public class NekoGeneralSettingsActivity extends BaseNekoXSettingsActivity {
         return "general";
     }
 
+    // MeeroX v131: opt into the fixed glass design (chrome, cards,
+    // mock switches, entrance stagger) via the shared support pass.
+    @Override
+    protected boolean meeroGlassScreen() {
+        return true;
+    }
+
     private ValueAnimator statusBarColorAnimator;
     private Parcelable recyclerViewState = null;
 
@@ -214,8 +221,8 @@ public class NekoGeneralSettingsActivity extends BaseNekoXSettingsActivity {
     private final AbstractConfigCell notificationIconRow = cellGroup.appendCell(new ConfigCellSelectBox(null, NaConfig.INSTANCE.getNotificationIcon(), new String[]{
             getString(R.string.MapPreviewProviderTelegram),
             getString(R.string.NagramX),
-            getString(R.string.Nagram),
-            getString(R.string.NekoX)
+            getString(R.string.MeeroIconAlt),
+            getString(R.string.MeeroIconStyle2)
     }, null));
     private final AbstractConfigCell tabletModeRow = cellGroup.appendCell(new ConfigCellSelectBox(null, NekoConfig.tabletMode, new String[]{
             getString(R.string.TabletModeDefault),

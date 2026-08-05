@@ -49,6 +49,13 @@ public class RegexChatFiltersListActivity extends BaseNekoSettingsActivity {
         endRow = rowCount;
     }
 
+    // MeeroX v131: opt into the fixed glass design (chrome, cards,
+    // mock switches, entrance stagger) via the shared support pass.
+    @Override
+    protected boolean meeroGlassScreen() {
+        return true;
+    }
+
     @Override
     protected String getActionBarTitle() {
         try {

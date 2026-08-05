@@ -45,6 +45,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Locale;
 
+import tw.nekomimi.nekogram.MeeroGlassSupport;
+import tw.nekomimi.nekogram.MeeroGlassTheme;
 import tw.nekomimi.nekogram.config.CellGroup;
 import tw.nekomimi.nekogram.config.ConfigItem;
 import tw.nekomimi.nekogram.config.cell.AbstractConfigCell;
@@ -123,16 +125,86 @@ public class BaseNekoXSettingsActivity extends BaseFragment {
 
         listView.setSections(true);
         actionBar.setAdaptiveBackground(listView);
+        meeroApplyGlassChrome();
         return fragmentView;
     }
 
     protected void onActionBarItemClick(int id) {
     }
 
+    // ------------------------------------------------------------------
+    // MeeroX v131: fixed "Glass Night" design for the newer-base screens
+    // (General / Chat / Translator / Experimental opt in below via
+    // meeroGlassScreen()). Mirrors the legacy base's integration: a live
+    // provider wrap (pure stock while off), chrome applied from createView
+    // and re-applied - or rolled back - from onResume, theme descriptions
+    // suppressed so Telegram's repaint machinery has nothing to recolor,
+    // and one shared per-row skin pass in the adapter's dispatcher.
+    // MeeroSettingsActivity runs its own path and deliberately keeps the
+    // default (false), so nothing here touches it.
+    // ------------------------------------------------------------------
+
+    /** Opt-in: does this screen wear the fixed glass design? */
+    protected boolean meeroGlassScreen() {
+        return false;
+    }
+
+    private boolean meeroGlassActive() {
+        return meeroGlassScreen() && MeeroGlassTheme.enabled();
+    }
+
+    private Theme.ResourcesProvider meeroWrappedProvider;
+    private Theme.ResourcesProvider meeroWrappedBase;
+
+    /**
+     * While the glass design is on, every provider consumer on this screen
+     * (adaptive ActionBar, bulletins, sheet cells, dialogs handed the
+     * provider) resolves through the fixed palette. The wrap is live, so
+     * the moment the master switch flips this resolves pure stock again.
+     * Screen chrome plus dialog keys: dialogs built with this provider
+     * (import confirm below, or any subclass passing getResourceProvider())
+     * pick up the glass sheet palette for free.
+     */
+    @Override
+    public Theme.ResourcesProvider getResourceProvider() {
+        final Theme.ResourcesProvider base = super.getResourceProvider();
+        if (!meeroGlassActive()) {
+            return base;
+        }
+        if (meeroWrappedProvider == null || meeroWrappedBase != base) {
+            meeroWrappedBase = base;
+            meeroWrappedProvider = MeeroGlassTheme.dialog(MeeroGlassTheme.wrap(base));
+        }
+        return meeroWrappedProvider;
+    }
+
+    private boolean meeroChromeApplied;
+
+    /**
+     * Applies (or, after a toggle while this screen sat on the back stack,
+     * rolls back) the glass chrome: screen background, sections painter and
+     * row selector. Rollback restores the exact stock calls this class made
+     * originally.
+     */
+    private void meeroApplyGlassChrome() {
+        if (fragmentView == null || listView == null) {
+            return;
+        }
+        if (meeroGlassActive()) {
+            fragmentView.setBackground(MeeroGlassTheme.screenBackground());
+            MeeroGlassSupport.applySectionsSkin(listView, true, MeeroGlassSupport::cellGroupSectionsKeep);
+        } else if (meeroChromeApplied) {
+            fragmentView.setBackgroundColor(getThemedColor(Theme.key_windowBackgroundGray));
+            listView.setSections(true);
+        }
+        meeroChromeApplied = meeroGlassActive();
+    }
+
     @SuppressLint("NotifyDataSetChanged")
     @Override
     public void onResume() {
         super.onResume();
+        meeroApplyGlassChrome();
         if (getListAdapter() != null) {
             getListAdapter().notifyDataSetChanged();
         }
@@ -338,7 +410,12 @@ public class BaseNekoXSettingsActivity extends BaseFragment {
                 scrollToRow(key, unknown);
                 return;
             }
-            var builder = new AlertDialog.Builder(context);
+            // MeeroX v131: on glass screens this dialog follows the fixed
+            // sheet palette (via the wrapped provider); stock dialogs keep
+            // the plain constructor, byte-for-byte behavior.
+            var builder = meeroGlassActive()
+                    ? new AlertDialog.Builder(context, getResourceProvider())
+                    : new AlertDialog.Builder(context);
             builder.setTitle(getString(R.string.ImportSettings));
             builder.setMessage(getString(R.string.ImportSettingsAlert));
             builder.setNegativeButton(getString(R.string.Cancel), (dialogInter, i) -> scrollToRow(key, unknown));
@@ -379,6 +456,13 @@ public class BaseNekoXSettingsActivity extends BaseFragment {
 
     @Override
     public ArrayList<ThemeDescription> getThemeDescriptions() {
+        // MeeroX v131: with the glass design on, Telegram's theme-reload
+        // machinery simply has nothing to repaint on this screen - "not
+        // affected by themes" is structural, not a race against repaints.
+        // OFF returns the stock list verbatim (mirrors MeeroSettingsActivity).
+        if (meeroGlassActive()) {
+            return new ArrayList<>();
+        }
         ArrayList<ThemeDescription> themeDescriptions = new ArrayList<>();
         themeDescriptions.add(new ThemeDescription(listView, ThemeDescription.FLAG_CELLBACKGROUNDCOLOR, new Class[]{EmptyCell.class, TextSettingsCell.class, TextCheckCell.class, HeaderCell.class, TextDetailSettingsCell.class, NotificationsCheckCell.class}, null, null, null, Theme.key_windowBackgroundWhite));
         themeDescriptions.add(new ThemeDescription(fragmentView, ThemeDescription.FLAG_BACKGROUND, null, null, null, null, Theme.key_windowBackgroundGray));
@@ -470,7 +554,22 @@ public class BaseNekoXSettingsActivity extends BaseFragment {
                     a.onBindViewHolder(holder);
                     onBindDefaultViewHolder(holder, position);
                 }
+                // MeeroX v131: glass skin (or exact stock restore) per row
+                // on opted-in screens. Runs after the subclass hooks so the
+                // glass look always wins over per-screen tinting, exactly
+                // like the legacy base. MeeroSettingsActivity keeps the
+                // default (no opt-in) and is untouched by this.
+                meeroGlassBind(holder, position);
             }
+        }
+
+        private final MeeroGlassSupport.Entrance meeroEntrance = new MeeroGlassSupport.Entrance();
+
+        private void meeroGlassBind(@NonNull RecyclerView.ViewHolder holder, int position) {
+            if (!meeroGlassScreen()) {
+                return;
+            }
+            MeeroGlassSupport.skinCellGroupRow(holder, position, getCellGroup(), meeroGlassActive(), meeroEntrance);
         }
 
         protected void onBindCustomViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {

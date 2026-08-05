@@ -110,6 +110,13 @@ public class NekoTranslatorSettingsActivity extends BaseNekoXSettingsActivity {
         return "translator";
     }
 
+    // MeeroX v131: opt into the fixed glass design (chrome, cards,
+    // mock switches, entrance stagger) via the shared support pass.
+    @Override
+    protected boolean meeroGlassScreen() {
+        return true;
+    }
+
     private final int initialTranslationProvider;
     private final CellGroup cellGroup = new CellGroup(this);
     private final AbstractConfigCell headerOptions = cellGroup.appendCell(new ConfigCellHeader(getString(R.string.TranslatorOptions)));

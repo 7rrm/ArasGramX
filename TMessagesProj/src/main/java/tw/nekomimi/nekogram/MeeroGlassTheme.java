@@ -327,4 +327,41 @@ public final class MeeroGlassTheme {
             return chained.getColor(key);
         };
     }
+
+    /**
+     * v131: dialog palette layered on the fixed palette. AlertDialogs
+     * constructed on a glass screen (import/export confirm, input sheets)
+     * still resolve the themed dialog keys, which in many dark themes are
+     * a cold blue-grey that clashes with the glass sheet colour - the
+     * user's report #4. Chained on top of the normal chain so the window
+     * chrome keys (ink, press, backgrounds) keep mapping too, and gated on
+     * the live toggle like everything else: with the design off every key
+     * resolves exactly as the delegate would.
+     */
+    public static Theme.ResourcesProvider dialog(final Theme.ResourcesProvider delegate) {
+        final Theme.ResourcesProvider chained = wrapLegacy(delegate);
+        return key -> {
+            if (enabled()) {
+                if (key == Theme.key_dialogBackground) {
+                    return sheetBg();
+                }
+                if (key == Theme.key_dialogBackgroundGray) {
+                    return isNight() ? 0xFF1C1C26 : 0xFFE9E9F0;
+                }
+                if (key == Theme.key_dialogButton
+                        || key == Theme.key_dialogTextBlue
+                        || key == Theme.key_dialogTextBlue2
+                        || key == Theme.key_dialogTextLink) {
+                    return ACC1;
+                }
+                if (key == Theme.key_dialogTextGray) {
+                    return sub();
+                }
+                if (key == Theme.key_dialogButtonSelector) {
+                    return press();
+                }
+            }
+            return chained.getColor(key);
+        };
+    }
 }

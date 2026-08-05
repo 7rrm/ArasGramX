@@ -93,6 +93,13 @@ public class NekoExperimentalSettingsActivity extends BaseNekoXSettingsActivity 
         return "experimental";
     }
 
+    // MeeroX v131: opt into the fixed glass design (chrome, cards,
+    // mock switches, entrance stagger) via the shared support pass.
+    @Override
+    protected boolean meeroGlassScreen() {
+        return true;
+    }
+
     private AnimatorSet animatorSet;
     private boolean sensitiveCanChange = false;
     private boolean sensitiveEnabled = false;

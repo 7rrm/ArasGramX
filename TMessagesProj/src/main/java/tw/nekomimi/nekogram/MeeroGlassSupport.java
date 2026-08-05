@@ -34,6 +34,10 @@ import org.telegram.ui.Components.Switch;
 
 import java.util.ArrayList;
 
+import tw.nekomimi.nekogram.config.CellGroup;
+import tw.nekomimi.nekogram.config.cell.AbstractConfigCell;
+import tw.nekomimi.nekogram.config.cell.ConfigCellDivider;
+import tw.nekomimi.nekogram.config.cell.ConfigCellHeader;
 import tw.nekomimi.nekogram.settings.BaseNekoSettingsActivity;
 import tw.nekomimi.nekogram.ui.cells.AccountCell;
 import tw.nekomimi.nekogram.ui.cells.HeaderCell;
@@ -435,6 +439,114 @@ public final class MeeroGlassSupport {
             }
             attachPressPulse(v, false);
         }
+        if (entrance != null) {
+            entrance.run(v, position, glass);
+        }
+    }
+
+    // ------------------------------------------------------------------
+    // CellGroup-base (BaseNekoXSettingsActivity) row skinning
+    //
+    // v131: the main MeeroX screen grew its row pass inside the activity;
+    // the four remaining newer-base screens (General / Chat / Translator /
+    // Experimental) need the exact same look, so the pass moves here next
+    // to its legacy sibling. This is a verbatim port of the main screen's
+    // binder - same order, same colours, same restore values - and the
+    // main screen now calls this too, so the two renders can never drift
+    // apart again.
+    // ------------------------------------------------------------------
+
+    /**
+     * Sections "keep" predicate for cellGroup screens: structural rows
+     * (info footers, section shadows, gray spacers, collapse cells) span
+     * full width without a section gap; every other row keeps one -
+     * identical to what the main MeeroX screen has used since v128.
+     */
+    public static boolean cellGroupSectionsKeep(View view) {
+        return !(view instanceof org.telegram.ui.Cells.TextInfoPrivacyCell
+                || view instanceof ShadowSectionCell
+                || view instanceof org.telegram.ui.Cells.GraySectionCell
+                || view instanceof org.telegram.ui.Cells.CollapseTextCell);
+    }
+
+    /**
+     * Card edges from the row list: a header opens a card, the next header
+     * or a divider closes it (the main screen's rule since v127).
+     */
+    public static int cellGroupCardPos(CellGroup cellGroup, int position) {
+        if (cellGroup == null || position < 0 || position >= cellGroup.rows.size()) {
+            return CARD_NONE;
+        }
+        AbstractConfigCell row = cellGroup.rows.get(position);
+        if (row instanceof ConfigCellHeader || row instanceof ConfigCellDivider) {
+            return CARD_NONE;
+        }
+        int start = -1;
+        for (int i = position - 1; i >= 0; i--) {
+            if (cellGroup.rows.get(i) instanceof ConfigCellHeader) { start = i; break; }
+            if (cellGroup.rows.get(i) instanceof ConfigCellDivider) { break; }
+        }
+        if (start < 0) {
+            return CARD_NONE;
+        }
+        int end = cellGroup.rows.size();
+        for (int i = start + 1; i < cellGroup.rows.size(); i++) {
+            if (cellGroup.rows.get(i) instanceof ConfigCellHeader
+                    || cellGroup.rows.get(i) instanceof ConfigCellDivider) { end = i; break; }
+        }
+        boolean first = position == start + 1;
+        boolean last = position == end - 1;
+        if (first && last) return CARD_SINGLE;
+        if (first) return CARD_TOP;
+        if (last) return CARD_BOTTOM;
+        return CARD_MID;
+    }
+
+    /**
+     * One bind pass for every cellGroup-base screen: applies the glass look
+     * when enabled or restores the exact stock look when not. Verbatim port
+     * of the main screen's binder (margins always, header styling, glass
+     * cards with in-card hairlines, value chips, mock-switch swap, press
+     * pulse, entrance stagger; stock restore paints the exact base keys).
+     */
+    public static void skinCellGroupRow(@NonNull RecyclerView.ViewHolder holder, int position,
+                                        CellGroup cellGroup, boolean glass, Entrance entrance) {
+        final View v = holder.itemView;
+        if (v == null) {
+            return;
+        }
+        final int card = cellGroupCardPos(cellGroup, position);
+        setRowMargins(v, card != 0);
+        if (glass) {
+            if (v instanceof HeaderCell) {
+                styleHeaderCell(v, true);
+            } else if (card != 0) {
+                v.setBackground(MeeroGlassTheme.card(card == CARD_TOP || card == CARD_SINGLE,
+                        card == CARD_BOTTOM || card == CARD_SINGLE,
+                        card == CARD_MID || card == CARD_BOTTOM));
+                tintCellText(v, MeeroGlassTheme.ink(), MeeroGlassTheme.sub());
+                styleValueChip(v, true);
+                if (v instanceof TextCheckCell) {
+                    swapSwitch((TextCheckCell) v);
+                }
+            } else {
+                v.setBackgroundColor(Color.TRANSPARENT);
+                tintCellText(v, MeeroGlassTheme.ink(), MeeroGlassTheme.sub());
+            }
+        } else {
+            v.setBackgroundColor(v instanceof ShadowSectionCell
+                    ? Theme.getColor(Theme.key_windowBackgroundGrayShadow)
+                    : Theme.getColor(Theme.key_windowBackgroundWhite));
+            if (v instanceof HeaderCell) {
+                styleHeaderCell(v, false);
+            } else {
+                tintCellText(v,
+                        Theme.getColor(Theme.key_windowBackgroundWhiteBlackText),
+                        Theme.getColor(Theme.key_windowBackgroundWhiteGrayText2));
+            }
+            styleValueChip(v, false);
+        }
+        attachPressPulse(v, glass && card != 0 && !(v instanceof HeaderCell));
         if (entrance != null) {
             entrance.run(v, position, glass);
         }

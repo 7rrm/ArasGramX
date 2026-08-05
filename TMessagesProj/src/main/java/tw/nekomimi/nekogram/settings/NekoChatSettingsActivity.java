@@ -88,6 +88,13 @@ public class NekoChatSettingsActivity extends BaseNekoXSettingsActivity implemen
         return "chat";
     }
 
+    // MeeroX v131: opt into the fixed glass design (chrome, cards,
+    // mock switches, entrance stagger) via the shared support pass.
+    @Override
+    protected boolean meeroGlassScreen() {
+        return true;
+    }
+
     private final CellGroup cellGroup = new CellGroup(this);
 
     // Sticker Size

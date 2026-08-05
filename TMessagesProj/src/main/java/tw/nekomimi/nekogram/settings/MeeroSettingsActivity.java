@@ -4,7 +4,6 @@ import static org.telegram.messenger.LocaleController.getString;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.util.TypedValue;
@@ -316,82 +315,11 @@ public class MeeroSettingsActivity extends BaseNekoXSettingsActivity {
 
     /** Applies the glass look - or restores exact stock - on every row bind. */
     private void onBindMeeroGlass(@NonNull RecyclerView.ViewHolder holder, int position) {
-        final View v = holder.itemView;
-        if (v == null) {
-            return;
-        }
-        final int card = cardPos(position);
-        MeeroGlassSupport.setRowMargins(v, card != 0);
-        if (glassOn()) {
-            if (v instanceof HeaderCell) {
-                MeeroGlassSupport.styleHeaderCell(v, true);
-            } else if (card != 0) {
-                // v127: rows that live inside a section wear the glass card -
-                // rounded corners only on the card's outer edges.
-                // v130: joined rows below the first carry the mock's 1px
-                // in-card separator, inset from the inline-start edge.
-                v.setBackground(MeeroGlassTheme.card(card == CARD_TOP || card == CARD_SINGLE,
-                        card == CARD_BOTTOM || card == CARD_SINGLE,
-                        card == CARD_MID || card == CARD_BOTTOM));
-                MeeroGlassSupport.tintCellText(v, MeeroGlassTheme.ink(), MeeroGlassTheme.sub());
-                MeeroGlassSupport.styleValueChip(v, true);
-                // v129: the mock switch is swapped in place of the stock one.
-                if (v instanceof TextCheckCell) {
-                    MeeroGlassSupport.swapSwitch((TextCheckCell) v);
-                }
-            } else {
-                v.setBackgroundColor(Color.TRANSPARENT);
-                MeeroGlassSupport.tintCellText(v, MeeroGlassTheme.ink(), MeeroGlassTheme.sub());
-            }
-        } else {
-            v.setBackgroundColor(v instanceof ShadowSectionCell
-                    ? Theme.getColor(Theme.key_windowBackgroundGrayShadow)
-                    : Theme.getColor(Theme.key_windowBackgroundWhite));
-            if (v instanceof HeaderCell) {
-                MeeroGlassSupport.styleHeaderCell(v, false);
-            } else {
-                MeeroGlassSupport.tintCellText(v,
-                        Theme.getColor(Theme.key_windowBackgroundWhiteBlackText),
-                        Theme.getColor(Theme.key_windowBackgroundWhiteGrayText2));
-            }
-            MeeroGlassSupport.styleValueChip(v, false);
-        }
-        // v129: the mock's press squash on touchable card rows.
-        MeeroGlassSupport.attachPressPulse(v, glassOn() && card != 0 && !(v instanceof HeaderCell));
-        glassEntrance.run(v, position, glassOn());
-    }
-
-    // v127: section cards. Sections are exactly our regular grouping:
-    // header row opens a card, the next header or a divider closes it.
-    private static final int CARD_NONE = 0, CARD_SINGLE = 1, CARD_TOP = 2, CARD_MID = 3, CARD_BOTTOM = 4;
-
-    private int cardPos(int position) {
-        if (position < 0 || position >= cellGroup.rows.size()) {
-            return CARD_NONE;
-        }
-        AbstractConfigCell row = cellGroup.rows.get(position);
-        if (row instanceof ConfigCellHeader || row instanceof ConfigCellDivider) {
-            return CARD_NONE;
-        }
-        int start = -1;
-        for (int i = position - 1; i >= 0; i--) {
-            if (cellGroup.rows.get(i) instanceof ConfigCellHeader) { start = i; break; }
-            if (cellGroup.rows.get(i) instanceof ConfigCellDivider) { break; }
-        }
-        if (start < 0) {
-            return CARD_NONE;
-        }
-        int end = cellGroup.rows.size();
-        for (int i = start + 1; i < cellGroup.rows.size(); i++) {
-            if (cellGroup.rows.get(i) instanceof ConfigCellHeader
-                    || cellGroup.rows.get(i) instanceof ConfigCellDivider) { end = i; break; }
-        }
-        boolean first = position == start + 1;
-        boolean last = position == end - 1;
-        if (first && last) return CARD_SINGLE;
-        if (first) return CARD_TOP;
-        if (last) return CARD_BOTTOM;
-        return CARD_MID;
+        // v131: the pass itself moved to MeeroGlassSupport.skinCellGroupRow
+        // (verbatim port) so the four remaining newer-base screens render
+        // through the very same code; this screen keeps only its per-screen
+        // entrance state and toggle.
+        MeeroGlassSupport.skinCellGroupRow(holder, position, cellGroup, glassOn(), glassEntrance);
     }
 
     // v129: the row skinning helpers (margins, header style, value chips,

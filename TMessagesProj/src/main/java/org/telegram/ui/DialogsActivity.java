@@ -547,6 +547,10 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
      */
     private static final int MEERO_HEADER_GROUP = 38;
     private BlurredBackgroundDrawable meeroHeaderGroupGlass;
+    // MeeroX v131: every glass surface the header creates (the Edit pill,
+    // the compose/overflow capsule band and any standalone discs). Used by
+    // meeroRefreshHeaderGlassColors() below.
+    private final java.util.ArrayList<BlurredBackgroundDrawable> meeroHeaderGlassDrawables = new java.util.ArrayList<>();
 
     /**
      * MeeroX: paints a drawable at a fixed size, centred in its bounds.
@@ -10819,6 +10823,33 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
      * iOS layout. Purely cosmetic - the click handling is untouched.
      */
     /**
+     * MeeroX v131: the day/night fix (the user's report #5).
+     *
+     * BlurredBackgroundDrawable caches its provider colors once, when the
+     * provider is attached; the glass content behind it re-renders live,
+     * but the tint, strokes and shadow do not. The pills were created while
+     * the night theme was up, so after switching to day the header kept a
+     * dark-cached overlay and the «Edit» pill and the button capsule looked
+     * like night glass on a light screen. Re-running updateColors() on a
+     * theme change re-resolves the provider (its lambdas read the theme
+     * live) while the rest of the bar repaints through its themed keys.
+     */
+    private void meeroRefreshHeaderGlassColors() {
+        try {
+            for (int i = 0; i < meeroHeaderGlassDrawables.size(); i++) {
+                final BlurredBackgroundDrawable bg = meeroHeaderGlassDrawables.get(i);
+                if (bg != null) {
+                    bg.updateColors();
+                }
+            }
+            if (actionBar != null) {
+                actionBar.invalidate();
+            }
+        } catch (Throwable ignore) {
+        }
+    }
+
+    /**
      * MeeroX: swaps a header button's flat circle for a real blurred glass
      * disc. Falls back silently when the blur pipeline is unavailable, in
      * which case the tinted circle from meeroRoundHeaderButton stays.
@@ -10904,6 +10935,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                     menu, BlurredBackgroundProviderImpl.headerButton(resourceProvider));
             group.setRadius(groupSize / 2f);
             meeroHeaderGroupGlass = group;
+            meeroHeaderGlassDrawables.add(group);
             menu.setMeeroBackgroundPainter(canvas -> {
                 if (meeroHeaderGroupGlass == null) {
                     return;
@@ -10975,6 +11007,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
             bg.setRadius(size / 2f);
             item.setBackground(new MeeroCenteredDrawable(bg, 0, size));
             item.setClipToOutline(false);
+            meeroHeaderGlassDrawables.add(bg);
         } catch (Throwable ignore) {
         }
     }
@@ -11001,6 +11034,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
             // bar lays this view out at the full bar height.
             item.setBackground(new MeeroCenteredDrawable(bg, size, size));
             item.setClipToOutline(false);
+            meeroHeaderGlassDrawables.add(bg);
         } catch (Throwable ignore) {
         }
     }
@@ -13012,6 +13046,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
             }
 
             iBlur3SourceColor.setColor(getThemedColor(Theme.key_windowBackgroundWhite));
+            meeroRefreshHeaderGlassColors();
             if (topPanelLayout != null) {
                 topPanelLayout.updateColors();
             }
