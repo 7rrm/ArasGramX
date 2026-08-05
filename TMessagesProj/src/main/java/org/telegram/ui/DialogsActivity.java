@@ -11022,14 +11022,24 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
             final BlurredBackgroundDrawable bg = iBlur3FactoryLiquidGlass.create(
                     item, BlurredBackgroundProviderImpl.headerButton(resourceProvider));
             bg.setRadius(size / 2f);
-            // v135 (user instruction): draw the pill EXACTLY like the pair
-            // (compose + overflow band) next to it - plain provider-driven
-            // glass, no isDark() branching at build time (it misfired and
-            // pinned the day look), no overlay skins. The label colour is
-            // kept current the pair's way: re-resolved from the theme key on
-            // every refresh in meeroGlassHeaderButton/doneItem style (see
-            // meeroRefreshHeaderGlassColors).
-            item.setBackground(new MeeroCenteredDrawable(bg, 0, size));
+            // v136 (user instruction): paint the pill EVERY FRAME, the way
+            // the two stacked buttons' band is painted (their glass never
+            // desyncs), instead of a view background that only repaints with
+            // the button. This is what finally made the pill's glass absent
+            // next to the pair: same drawable, same provider - nothing ever
+            // invalidated it. The painter runs in the item's onDraw, under
+            // the label, from the item's own bounds (wide by the word, tall
+            // MEERO_HEADER_BUTTON, centred in the full-height slot).
+            item.setMeeroBackgroundPainter(canvas -> {
+                final int bw = item.getWidth();
+                final int bh = item.getHeight();
+                if (bw <= 0 || bh <= 0) {
+                    return;
+                }
+                final int top = (bh - size) / 2;
+                bg.setBounds(0, top, bw, top + size);
+                bg.draw(canvas);
+            });
             item.setIconColor(getThemedColor(Theme.key_actionBarDefaultIcon));
             item.setClipToOutline(false);
             meeroHeaderGlassDrawables.add(bg);

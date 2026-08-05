@@ -2773,6 +2773,20 @@ public class ChatActivityEnterView extends FrameLayout implements
 
                 }
             }
+
+            @Override
+            public void setState(State state, boolean animate) {
+                // MeeroX v136: in iOS-composer mode the field glyph is the
+                // static sticker asset from Telegram-iOS itself, pinned at
+                // the field's right end like on the iPhone - the RLottie
+                // smile/keyboard transitions would just fight it. Panel
+                // open/close still works; the glyph simply stays, exactly
+                // like iOS (its accessory icon never morphs).
+                if (meeroAttachWrap != null) {
+                    return;
+                }
+                super.setState(state, animate);
+            }
         };
         emojiButton.setContentDescription(getString(R.string.AccDescrEmojiButton));
         emojiButton.setFocusable(true);
@@ -6468,6 +6482,14 @@ public class ChatActivityEnterView extends FrameLayout implements
         messageEditText.setCursorColor(getThemedColor(Theme.key_chat_messagePanelCursor));
         messageEditText.setHandlesColor(getThemedColor(Theme.key_chat_TextSelectionCursor));
         messageEditTextContainer.addView(messageEditText, 1, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, Gravity.BOTTOM, 52, 0, isChat ? 50 : 2, 1.5f));
+        // MeeroX v136: when the iOS transplant happened at construction time
+        // (before this field existed), its left-margin rule has to be
+        // applied now that the field does.
+        if (meeroAttachWrap != null) {
+            final FrameLayout.LayoutParams meeroTlp = (FrameLayout.LayoutParams) messageEditText.getLayoutParams();
+            meeroTlp.leftMargin = dp(10);
+            messageEditText.setLayoutParams(meeroTlp);
+        }
 
         richDraftPreview = new RichMessageLayout.PreviewView(getContext(), currentAccount, resourcesProvider);
         richDraftPreview.setAllowActions(false);
@@ -6577,10 +6599,7 @@ public class ChatActivityEnterView extends FrameLayout implements
                     allowChangeToSmile = false;
                 }
 
-                // MeeroX v135: the iOS glyph also flips sticker<->smile on
-                // empty<->typed even when the emoji page is 0 (the stock
-                // allowChangeToSmile gate skips exactly that case).
-                if ((before == 0 && !TextUtils.isEmpty(charSequence) || before != 0 && TextUtils.isEmpty(charSequence)) && (allowChangeToSmile || meeroIosComposer())) {
+                if ((before == 0 && !TextUtils.isEmpty(charSequence) || before != 0 && TextUtils.isEmpty(charSequence)) && allowChangeToSmile) {
                     setEmojiButtonImage(false, true);
                 }
                 if (lineCount != messageEditText.getLineCount()) {
@@ -9901,21 +9920,19 @@ public class ChatActivityEnterView extends FrameLayout implements
             } else {
                 layoutParams.rightMargin = dp(50);
             }
-            // MeeroX v133: transplanted attach lives OUTSIDE the field, so it
-            // must stop reserving its 48dp slot inside the text's right
-            // margin. 50->10, 98->58, 146->106; the other right-side buttons
-            // (bot / silent / scheduled) keep their share.
-            if (meeroAttachWrap != null) {
-                layoutParams.rightMargin = Math.max(dp(10), layoutParams.rightMargin - dp(40));
-            }
+            // MeeroX v136: v133 slimmed this band because the attach slot
+            // emptied; but the in-field glyph button now LIVES in it (its
+            // iOS-designated right end), so the text must keep clearing the
+            // full 50dp band like stock. The other right-side buttons (bot /
+            // silent / scheduled) keep stacking on top as before.
         } else {
             if (scheduledButton != null && scheduledButton.getTag() != null) {
                 layoutParams.rightMargin = dp(50);
             } else {
-                // MeeroX v134: 2dp was tuned for the merged pill where the
-                // attach glyph still sat there; inside the iOS capsule the
-                // text needs real breathing room from its edge.
-                layoutParams.rightMargin = meeroAttachWrap != null ? dp(10) : dp(2);
+                // MeeroX v136: inside the iOS capsule the right band is the
+                // glyph button's home - keep the 52dp reservation even with
+                // the right-side row empty, so text never runs under it.
+                layoutParams.rightMargin = meeroAttachWrap != null ? dp(52) : dp(2);
             }
         }
         layoutParams.rightMargin = Math.max(layoutParams.rightMargin, Math.max(0, sendButton.width() - dp(DEFAULT_HEIGHT)));
@@ -11570,11 +11587,12 @@ public class ChatActivityEnterView extends FrameLayout implements
         emojiButton.setBackground(Theme.createSelectorDrawable(getThemedColor(Theme.key_listSelector)));
         deleteRichDraftButton.setColorFilter(new PorterDuffColorFilter(getThemedColor(Theme.key_glass_defaultIcon), PorterDuff.Mode.SRC_IN));
         deleteRichDraftButton.setBackground(Theme.createInsetRoundRectDrawable(getThemedColor(Theme.key_listSelector), dp(19), dp(1), dp(3)));
-        // MeeroX v133 (iOS composer): re-resolve the standalone attach
+        // MeeroX v136 (iOS composer): re-resolve the standalone attach
         // circle + glyph per theme change (day/night split), the same way
-        // updateAudioVideoSendButtonColor above re-resolves the mic.
+        // updateAudioVideoSendButtonColor above re-resolves the mic. SRC_IN,
+        // not MULTIPLY: the authentic Telegram-iOS glyph is black.
         if (meeroAttachWrap != null && attachButton != null) {
-            attachButton.setColorFilter(new PorterDuffColorFilter(meeroIosGlyphColor(), PorterDuff.Mode.MULTIPLY));
+            attachButton.setColorFilter(new PorterDuffColorFilter(meeroIosGlyphColor(), PorterDuff.Mode.SRC_IN));
             android.graphics.drawable.Drawable wd = meeroAttachWrap.getBackground();
             if (wd instanceof android.graphics.drawable.GradientDrawable) {
                 android.graphics.drawable.GradientDrawable g = (android.graphics.drawable.GradientDrawable) wd;
@@ -14154,21 +14172,11 @@ public class ChatActivityEnterView extends FrameLayout implements
             } else {
                 currentPage = emojiView.getCurrentPage();
             }
-            if (meeroIosComposer()) {
-                // MeeroX v135 (user request): iOS punctuation is by text
-                // state, not by which emoji-panel page was last open - the
-                // empty field carries the STICKER glyph and the moment text
-                // exists it becomes the SMILE glyph (panel-open still flips
-                // to KEYBOARD above, and sticker-restricted chats stay on
-                // SMILE so the button always opens something).
-                if (!stickersEnabled) {
-                    nextIcon = ChatActivityEnterViewAnimatedIconView.State.SMILE;
-                } else if (messageEditText != null && !TextUtils.isEmpty(messageEditText.getText())) {
-                    nextIcon = ChatActivityEnterViewAnimatedIconView.State.SMILE;
-                } else {
-                    nextIcon = ChatActivityEnterViewAnimatedIconView.State.STICKER;
-                }
-            } else if (currentPage == 0 || !allowStickers && !allowGifs) {
+            // MeeroX v136: the v135 sticker<->smile-by-text-state swap was
+            // superseded by the user's pinned static iOS glyph (its setState
+            // bypass above swallows whatever this method computes in iOS
+            // mode anyway) - so the stock chain runs unchanged here.
+            if (currentPage == 0 || !allowStickers && !allowGifs) {
                 nextIcon = ChatActivityEnterViewAnimatedIconView.State.SMILE;
             } else if (messageEditText != null && !TextUtils.isEmpty(messageEditText.getText())) {
                 nextIcon = ChatActivityEnterViewAnimatedIconView.State.SMILE;
@@ -16786,7 +16794,10 @@ public class ChatActivityEnterView extends FrameLayout implements
                 return;
             }
             if (meeroIosComposer() && !isInScheduleMode()) {
-                sendButton.setResourceId(R.drawable.baseline_arrow_upward_24);
+                // v136: the icon now IS Telegram-iOS's own SendIcon asset
+                // (white plane glyph extracted from the official repo), not
+                // a generic material arrow.
+                sendButton.setResourceId(R.drawable.meerox_ios_send);
             } else {
                 sendButton.setResourceId(isInScheduleMode() ? R.drawable.input_schedule : R.drawable.send_plane_24);
             }
@@ -16847,7 +16858,12 @@ public class ChatActivityEnterView extends FrameLayout implements
                         LayoutHelper.createFrame(DEFAULT_HEIGHT, DEFAULT_HEIGHT, Gravity.CENTER));
                 textFieldContainer.addView(meeroAttachWrap,
                         LayoutHelper.createFrame(DEFAULT_HEIGHT, DEFAULT_HEIGHT, Gravity.BOTTOM | Gravity.LEFT, 8, 0, 0, 0));
-                attachButton.setColorFilter(new PorterDuffColorFilter(meeroIosGlyphColor(), PorterDuff.Mode.MULTIPLY));
+                // v136: the glyph assets come from Telegram-iOS itself
+                // (Chat/Input/Text imagesets) so they match the iPhone
+                // 1:1. iOS PNGs are BLACK glyphs -> they need SRC_IN, not
+                // the MULTIPLY the light-coloured stock drawables used.
+                attachButton.setImageResource(R.drawable.meerox_ios_attach);
+                attachButton.setColorFilter(new PorterDuffColorFilter(meeroIosGlyphColor(), PorterDuff.Mode.SRC_IN));
                 attachButton.setTranslationX(0);
                 // Wrapping must not resurrect a hidden button: mirror where
                 // the stock animation state had got to.
@@ -16856,6 +16872,26 @@ public class ChatActivityEnterView extends FrameLayout implements
                 final FrameLayout.LayoutParams mlp = (FrameLayout.LayoutParams) messageEditTextContainer.getLayoutParams();
                 mlp.leftMargin = dp(48 + 8);
                 messageEditTextContainer.setLayoutParams(mlp);
+                // v136 (user instruction): pin the in-field glyph button at
+                // the RIGHT end of the capsule - its designated place on the
+                // iPhone - and give it the authentic Telegram-iOS sticker
+                // asset (setState is bypassed while wrapped, so this static
+                // glyph cannot be overwritten; when text exists the hint
+                // flows from the left like in the reference shot).
+                if (emojiButton != null) {
+                    final FrameLayout.LayoutParams elp = (FrameLayout.LayoutParams) emojiButton.getLayoutParams();
+                    elp.gravity = Gravity.BOTTOM | Gravity.RIGHT;
+                    elp.leftMargin = 0;
+                    elp.rightMargin = dp(2);
+                    emojiButton.setLayoutParams(elp);
+                    emojiButton.setImageResource(R.drawable.meerox_ios_field_sticker);
+                    emojiButton.setColorFilter(new PorterDuffColorFilter(meeroIosGlyphColor(), PorterDuff.Mode.SRC_IN));
+                }
+                if (messageEditText != null) {
+                    final FrameLayout.LayoutParams tlp = (FrameLayout.LayoutParams) messageEditText.getLayoutParams();
+                    tlp.leftMargin = dp(10);
+                    messageEditText.setLayoutParams(tlp);
+                }
                 // attachLayout (bot / gift / silent buttons) was padded one
                 // 48dp slot off the field's right edge to clear the stock
                 // attach button; with it gone the band closes up.
@@ -16870,6 +16906,7 @@ public class ChatActivityEnterView extends FrameLayout implements
                 meeroAttachWrap = null;
                 messageEditTextContainer.addView(attachButton,
                         LayoutHelper.createFrame(DEFAULT_HEIGHT, DEFAULT_HEIGHT, Gravity.BOTTOM | Gravity.RIGHT));
+                attachButton.setImageResource(R.drawable.msg_input_attach2);
                 attachButton.setColorFilter(new PorterDuffColorFilter(getThemedColor(Theme.key_glass_defaultIcon), PorterDuff.Mode.MULTIPLY));
                 attachButton.setTranslationX(attachLayoutPaddingTranslationX + attachLayoutTranslationX + messageTextTranslationX);
                 final FrameLayout.LayoutParams mlp = (FrameLayout.LayoutParams) messageEditTextContainer.getLayoutParams();
@@ -16879,6 +16916,21 @@ public class ChatActivityEnterView extends FrameLayout implements
                     final FrameLayout.LayoutParams alp = (FrameLayout.LayoutParams) attachLayout.getLayoutParams();
                     alp.rightMargin = dp(DEFAULT_HEIGHT);
                     attachLayout.setLayoutParams(alp);
+                }
+                // v136: hand the in-field button its stock place + animated
+                // glyph back.
+                if (emojiButton != null) {
+                    final FrameLayout.LayoutParams elp = (FrameLayout.LayoutParams) emojiButton.getLayoutParams();
+                    elp.gravity = Gravity.BOTTOM | Gravity.LEFT;
+                    elp.leftMargin = dp(2);
+                    elp.rightMargin = 0;
+                    emojiButton.setLayoutParams(elp);
+                    setEmojiButtonImage(false, false);
+                }
+                if (messageEditText != null) {
+                    final FrameLayout.LayoutParams tlp = (FrameLayout.LayoutParams) messageEditText.getLayoutParams();
+                    tlp.leftMargin = dp(52);
+                    messageEditText.setLayoutParams(tlp);
                 }
             }
             // Mic + emoji glyph tints track the mode too (they swap between
@@ -16949,10 +17001,10 @@ public class ChatActivityEnterView extends FrameLayout implements
         if (right <= left || bottom <= top) {
             return;
         }
-        // iOS rounds the composer to 20pt; on a taller multi-line field the
-        // radius is capped at half the height so it stays a capsule instead of
-        // turning into an oval.
-        final float radius = Math.min(dp(20), (bottom - top) / 2f);
+        // v136 (user follow-up): FULL capsule - the iPhone field's ends are
+        // true semicircles (radius = half the height), and the 20dp cap was
+        // what made ours read as subtly boxy next to it.
+        final float radius = (bottom - top) / 2f;
         AndroidUtilities.rectTmp.set(left, top, right, bottom);
         // MeeroX v135 (user follow-up): the flat wash read as "no glass at
         // all" next to the two glass circles. When ChatActivity handed us

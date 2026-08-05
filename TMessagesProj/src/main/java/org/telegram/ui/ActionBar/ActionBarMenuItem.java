@@ -94,6 +94,27 @@ public class ActionBarMenuItem extends FrameLayout {
 
     private FrameLayout wrappedSearchFrameLayout;
 
+    // MeeroX v136: per-item version of ActionBarMenu.MeeroBackgroundPainter.
+    // A View background only paints with the view's own invalidations, which
+    // let the Edit pill's blur read as "no glass" next to the painted pair
+    // beside it. Painting in onDraw - under the children, exactly like the
+    // pair's menu painter - makes the pill's glass identical by construction.
+    private ActionBarMenu.MeeroBackgroundPainter meeroBackgroundPainter;
+
+    public void setMeeroBackgroundPainter(ActionBarMenu.MeeroBackgroundPainter painter) {
+        meeroBackgroundPainter = painter;
+        setWillNotDraw(painter == null);
+        invalidate();
+    }
+
+    @Override
+    protected void onDraw(Canvas canvas) {
+        if (meeroBackgroundPainter != null) {
+            meeroBackgroundPainter.draw(canvas);
+        }
+        super.onDraw(canvas);
+    }
+
     public static void addText(ActionBarPopupWindow.ActionBarPopupWindowLayout popupLayout, String text, Theme.ResourcesProvider resourcesProvider) {
         final TextView textView = new TextView(popupLayout.getContext());
         textView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 13);
