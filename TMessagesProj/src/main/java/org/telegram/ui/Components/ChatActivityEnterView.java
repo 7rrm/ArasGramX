@@ -683,6 +683,7 @@ public class ChatActivityEnterView extends FrameLayout implements
     private FrameLayout meeroAttachWrap;
     private boolean meeroAttachSyncPosted;
     private android.graphics.Paint meeroPillStrokePaint;
+    private android.graphics.Paint meeroPillDividerPaint;
 
     /**
      * MeeroX v135: factory handed down from ChatActivity (same one the
@@ -3608,6 +3609,23 @@ public class ChatActivityEnterView extends FrameLayout implements
                     super.draw(canvas);
                 }
             }
+
+            @Override
+            public void setState(State state, boolean animate) {
+                // MeeroX v137: in iOS-composer mode the resting mic shows
+                // the authentic outline glyph from Telegram-iOS's own asset
+                // (Chat/Input/Text/IconMicrophone) instead of the stock
+                // filled lottie frame. Only the VOICE resting state is
+                // replaced; the mic<->video morph keeps the stock animation,
+                // and flipping the style switch restores the lottie for good
+                // (a state refresh runs at the end of meeroSyncIosAttach).
+                if (state == State.VOICE && meeroIosComposer()) {
+                    super.setState(state, false);
+                    setImageResource(R.drawable.meerox_ios_mic);
+                    return;
+                }
+                super.setState(state, animate);
+            }
         };
         audioVideoSendButton.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
 //        audioVideoSendButton.setFocusable(true);
@@ -6489,6 +6507,8 @@ public class ChatActivityEnterView extends FrameLayout implements
             final FrameLayout.LayoutParams meeroTlp = (FrameLayout.LayoutParams) messageEditText.getLayoutParams();
             meeroTlp.leftMargin = dp(10);
             messageEditText.setLayoutParams(meeroTlp);
+            // v137: same physical-left anchoring the live toggle applies.
+            messageEditText.setGravity(Gravity.BOTTOM | Gravity.LEFT);
         }
 
         richDraftPreview = new RichMessageLayout.PreviewView(getContext(), currentAccount, resourcesProvider);
@@ -9918,7 +9938,10 @@ public class ChatActivityEnterView extends FrameLayout implements
             } else if (botButton != null && botButton.getVisibility() == VISIBLE || notifyButton != null && notifyButton.getVisibility() == VISIBLE || scheduledButton != null && scheduledButton.getTag() != null) {
                 layoutParams.rightMargin = dp(98);
             } else {
-                layoutParams.rightMargin = dp(50);
+                // MeeroX v137: iOS accessory slot is slimmer now (36dp + 3
+                // margin), so the text only clears 40dp there; stock keeps
+                // the full 50dp band.
+                layoutParams.rightMargin = meeroAttachWrap != null ? dp(40) : dp(50);
             }
             // MeeroX v136: v133 slimmed this band because the attach slot
             // emptied; but the in-field glyph button now LIVES in it (its
@@ -9929,10 +9952,10 @@ public class ChatActivityEnterView extends FrameLayout implements
             if (scheduledButton != null && scheduledButton.getTag() != null) {
                 layoutParams.rightMargin = dp(50);
             } else {
-                // MeeroX v136: inside the iOS capsule the right band is the
-                // glyph button's home - keep the 52dp reservation even with
-                // the right-side row empty, so text never runs under it.
-                layoutParams.rightMargin = meeroAttachWrap != null ? dp(52) : dp(2);
+                // MeeroX v137: inside the iOS capsule the right band is the
+                // glyph button's home; the slot is slimmer now (v137), so
+                // 40dp is enough to keep text clear of glyph + divider.
+                layoutParams.rightMargin = meeroAttachWrap != null ? dp(40) : dp(2);
             }
         }
         layoutParams.rightMargin = Math.max(layoutParams.rightMargin, Math.max(0, sendButton.width() - dp(DEFAULT_HEIGHT)));
@@ -16882,7 +16905,12 @@ public class ChatActivityEnterView extends FrameLayout implements
                     final FrameLayout.LayoutParams elp = (FrameLayout.LayoutParams) emojiButton.getLayoutParams();
                     elp.gravity = Gravity.BOTTOM | Gravity.RIGHT;
                     elp.leftMargin = 0;
-                    elp.rightMargin = dp(2);
+                    // v137: the real iPhone accessory slot is ~33pt wide (its
+                    // left edge IS the hairline divider), not a full 48dp
+                    // button column; width+margin now mirror the reference.
+                    elp.width = dp(36);
+                    elp.rightMargin = dp(3);
+                    elp.height = dp(DEFAULT_HEIGHT);
                     emojiButton.setLayoutParams(elp);
                     emojiButton.setImageResource(R.drawable.meerox_ios_field_sticker);
                     emojiButton.setColorFilter(new PorterDuffColorFilter(meeroIosGlyphColor(), PorterDuff.Mode.SRC_IN));
@@ -16891,6 +16919,10 @@ public class ChatActivityEnterView extends FrameLayout implements
                     final FrameLayout.LayoutParams tlp = (FrameLayout.LayoutParams) messageEditText.getLayoutParams();
                     tlp.leftMargin = dp(10);
                     messageEditText.setLayoutParams(tlp);
+                    // v137: the iPhone field anchors hint+text+caret at the
+                    // physical left edge of the capsule (they floated mid-
+                    // field before); absolute LEFT works regardless of RTL.
+                    messageEditText.setGravity(Gravity.BOTTOM | Gravity.LEFT);
                 }
                 // attachLayout (bot / gift / silent buttons) was padded one
                 // 48dp slot off the field's right edge to clear the stock
@@ -16924,6 +16956,7 @@ public class ChatActivityEnterView extends FrameLayout implements
                     elp.gravity = Gravity.BOTTOM | Gravity.LEFT;
                     elp.leftMargin = dp(2);
                     elp.rightMargin = 0;
+                    elp.width = dp(DEFAULT_HEIGHT);
                     emojiButton.setLayoutParams(elp);
                     setEmojiButtonImage(false, false);
                 }
@@ -16931,6 +16964,7 @@ public class ChatActivityEnterView extends FrameLayout implements
                     final FrameLayout.LayoutParams tlp = (FrameLayout.LayoutParams) messageEditText.getLayoutParams();
                     tlp.leftMargin = dp(52);
                     messageEditText.setLayoutParams(tlp);
+                    messageEditText.setGravity(Gravity.BOTTOM);
                 }
             }
             // Mic + emoji glyph tints track the mode too (they swap between
@@ -16940,6 +16974,14 @@ public class ChatActivityEnterView extends FrameLayout implements
             updateAudioVideoSendButtonColor();
             if (emojiButton != null) {
                 emojiButton.setColorFilter(new PorterDuffColorFilter(meeroIosComposer() ? meeroIosGlyphColor() : getThemedColor(Theme.key_glass_defaultIcon), PorterDuff.Mode.SRC_IN));
+            }
+            // MeeroX v137: refresh the resting mic state right away - the
+            // setState override picks the authentic iOS asset (on) or puts
+            // the stock lottie mic back (off); without a refresh the old
+            // image would linger until the next state change.
+            if (audioVideoSendButton != null
+                    && audioVideoSendButton.getCurrentState() == ChatActivityEnterViewAnimatedIconView.State.VOICE) {
+                audioVideoSendButton.setState(ChatActivityEnterViewAnimatedIconView.State.VOICE, false);
             }
             // The text's right margin embeds the attach slot's 48dp; re-run
             // with the state that produced it so it shrinks (or restores)
@@ -17012,6 +17054,7 @@ public class ChatActivityEnterView extends FrameLayout implements
         // the header pills use (fill + blur + strokes + shadow, day/night
         // resolved by the provider). Flat path below stays as the fallback
         // when the blur pipeline is unavailable.
+        boolean meeroBlurCapsuleDrawn = false;
         if (meeroIos && meeroCapsuleFactory != null) {
             try {
                 if (meeroCapsuleDrawable == null) {
@@ -17024,19 +17067,44 @@ public class ChatActivityEnterView extends FrameLayout implements
                     meeroCapsuleDrawable.setBounds(
                             Math.round(left), Math.round(top), Math.round(right), Math.round(bottom));
                     meeroCapsuleDrawable.draw(canvas);
-                    return;
+                    meeroBlurCapsuleDrawn = true;
                 }
             } catch (Throwable ignore) {
                 meeroCapsuleDrawable = null;
             }
         }
         if (meeroIos) {
-            // Fallback: same milk the circles wear (was nearly invisible at
-            // 7.5% next to their 9% - that gap is why it read as no glass).
-            meeroPillPaint.setColor(dark ? 0x17FFFFFF : 0xD9FFFFFF);
-            meeroPillStrokePaint.setColor(dark ? 0x1FFFFFFF : 0x0D000000);
-            canvas.drawRoundRect(AndroidUtilities.rectTmp, radius, radius, meeroPillPaint);
-            canvas.drawRoundRect(AndroidUtilities.rectTmp, radius, radius, meeroPillStrokePaint);
+            if (meeroBlurCapsuleDrawn) {
+                // MeeroX v137 (user follow-up): on the uniform dark backdrop
+                // the provider capsule reads as a bare wash - "الزجاج ماكو"
+                // next to the two glass circles. Reinforce it with a boost
+                // pass on top of the blur (milk + a clearly visible rim), so
+                // the big span finally reads as glass in both modes.
+                meeroPillPaint.setColor(dark ? 0x11FFFFFF : 0x21FFFFFF);
+                meeroPillStrokePaint.setColor(dark ? 0x1FFFFFFF : 0x0F000000);
+                canvas.drawRoundRect(AndroidUtilities.rectTmp, radius, radius, meeroPillPaint);
+                canvas.drawRoundRect(AndroidUtilities.rectTmp, radius, radius, meeroPillStrokePaint);
+            } else {
+                // Fallback: same milk the circles wear (was nearly invisible
+                // at 7.5% next to their 9% - that gap is why it read as no
+                // glass).
+                meeroPillPaint.setColor(dark ? 0x17FFFFFF : 0xD9FFFFFF);
+                meeroPillStrokePaint.setColor(dark ? 0x1FFFFFFF : 0x0D000000);
+                canvas.drawRoundRect(AndroidUtilities.rectTmp, radius, radius, meeroPillPaint);
+                canvas.drawRoundRect(AndroidUtilities.rectTmp, radius, radius, meeroPillStrokePaint);
+            }
+            // MeeroX v137 (user follow-up): the real iPhone field has a
+            // hairline separator at the accessory slot's left edge (verified
+            // on the reference screenshot). Draw it over the capsule, under
+            // the glyph (children draw after this).
+            if (emojiButton != null && emojiButton.getVisibility() == VISIBLE) {
+                if (meeroPillDividerPaint == null) {
+                    meeroPillDividerPaint = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+                }
+                meeroPillDividerPaint.setColor(dark ? 0x24FFFFFF : 0x14000000);
+                final float dividerX = right - dp(33);
+                canvas.drawLine(dividerX, top + dp(8), dividerX, bottom - dp(8), meeroPillDividerPaint);
+            }
         } else {
             canvas.drawRoundRect(AndroidUtilities.rectTmp, radius, radius, meeroPillPaint);
         }
