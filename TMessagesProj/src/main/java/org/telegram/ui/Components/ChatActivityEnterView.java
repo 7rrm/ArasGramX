@@ -3879,9 +3879,11 @@ public class ChatActivityEnterView extends FrameLayout implements
                 // MeeroX v133: the -48dp base shift only exists to clear the
                 // attach slot INSIDE the field. Once the attach button is
                 // transplanted out (iOS composer), the scheduled button owns
-                // the rightmost band itself.
+                // the rightmost band itself - v138: minus the iOS accessory
+                // slot's 42dp, so a pending schedule no longer rides on top
+                // of the sticker glyph either.
                 super.setTranslationX(
-                    dp(meeroAttachWrap != null ? 0 : -DEFAULT_HEIGHT) +
+                    dp(meeroAttachWrap != null ? -42 : -DEFAULT_HEIGHT) +
                     innerTranslationX + attachLayoutPaddingTranslationX + attachLayoutTranslationX +
                     dp(giftButton != null && giftButton.getVisibility() == View.VISIBLE ? -DEFAULT_HEIGHT : 0) * (giftButton == null ? 0 : giftButton.getAlpha()) +
                     dp(botButton != null && botButton.getVisibility() == VISIBLE ? -DEFAULT_HEIGHT : 0) * (botButton == null ? 0 : botButton.getAlpha())
@@ -9934,14 +9936,16 @@ public class ChatActivityEnterView extends FrameLayout implements
             layoutParams.rightMargin = dp(suggestButtonVisible ? 50 : 2) + Math.max(0, sendButton.width() - dp(DEFAULT_HEIGHT));
         } else if (attachVisible == 1 || attachVisible == 2/* && layoutParams.rightMargin != dp(2)*/) {
             if (botButton != null && botButton.getVisibility() == VISIBLE && scheduledButton != null && scheduledButton.getVisibility() == VISIBLE && attachButton != null && attachButton.getVisibility() == VISIBLE) {
-                layoutParams.rightMargin = dp(146);
+                layoutParams.rightMargin = meeroAttachWrap != null ? dp(142) : dp(146);
             } else if (botButton != null && botButton.getVisibility() == VISIBLE || notifyButton != null && notifyButton.getVisibility() == VISIBLE || scheduledButton != null && scheduledButton.getTag() != null) {
-                layoutParams.rightMargin = dp(98);
+                // MeeroX v138: iOS bands shifted 42dp by the accessory slot
+                // instead of the stock 48 - text clears 46+48 either way.
+                layoutParams.rightMargin = meeroAttachWrap != null ? dp(94) : dp(98);
             } else {
-                // MeeroX v137: iOS accessory slot is slimmer now (36dp + 3
-                // margin), so the text only clears 40dp there; stock keeps
-                // the full 50dp band.
-                layoutParams.rightMargin = meeroAttachWrap != null ? dp(40) : dp(50);
+            // MeeroX v138: slot is 3+36=39dp; 40 left the last 2dp of the
+            // line kissing the glyph zone ("الرسالة مدموجة مع الأيقونة" في
+            // وضع التعديل) - 46 clears the slot with a comfortable gap.
+            layoutParams.rightMargin = meeroAttachWrap != null ? dp(46) : dp(50);
             }
             // MeeroX v136: v133 slimmed this band because the attach slot
             // emptied; but the in-field glyph button now LIVES in it (its
@@ -9950,12 +9954,13 @@ public class ChatActivityEnterView extends FrameLayout implements
             // silent / scheduled) keep stacking on top as before.
         } else {
             if (scheduledButton != null && scheduledButton.getTag() != null) {
-                layoutParams.rightMargin = dp(50);
+                // MeeroX v138: with a schedule pending, the button sits one
+                // 48dp band left of the accessory slot (46+48).
+                layoutParams.rightMargin = meeroAttachWrap != null ? dp(94) : dp(50);
             } else {
-                // MeeroX v137: inside the iOS capsule the right band is the
-                // glyph button's home; the slot is slimmer now (v137), so
-                // 40dp is enough to keep text clear of glyph + divider.
-                layoutParams.rightMargin = meeroAttachWrap != null ? dp(40) : dp(2);
+                // MeeroX v138: inside the iOS capsule the right band is the
+                // glyph button's home (3+36 slot + divider + gap -> 46dp).
+                layoutParams.rightMargin = meeroAttachWrap != null ? dp(46) : dp(2);
             }
         }
         layoutParams.rightMargin = Math.max(layoutParams.rightMargin, Math.max(0, sendButton.width() - dp(DEFAULT_HEIGHT)));
@@ -16926,10 +16931,14 @@ public class ChatActivityEnterView extends FrameLayout implements
                 }
                 // attachLayout (bot / gift / silent buttons) was padded one
                 // 48dp slot off the field's right edge to clear the stock
-                // attach button; with it gone the band closes up.
+                // attach button; with it gone the band closes up - but only
+                // to the iOS accessory slot's left edge (3 margin + 36 slot
+                // + 3 gap = 42dp). v137's 0 let the "/" bot command button
+                // (input_bot2) land on top of the sticker glyph in bot
+                // groups.
                 if (attachLayout != null) {
                     final FrameLayout.LayoutParams alp = (FrameLayout.LayoutParams) attachLayout.getLayoutParams();
-                    alp.rightMargin = 0;
+                    alp.rightMargin = dp(42);
                     attachLayout.setLayoutParams(alp);
                 }
             } else if (!want && meeroAttachWrap != null) {
@@ -17043,10 +17052,13 @@ public class ChatActivityEnterView extends FrameLayout implements
         if (right <= left || bottom <= top) {
             return;
         }
-        // v136 (user follow-up): FULL capsule - the iPhone field's ends are
-        // true semicircles (radius = half the height), and the 20dp cap was
-        // what made ours read as subtly boxy next to it.
-        final float radius = (bottom - top) / 2f;
+        // MeeroX v138 (user follow-up): cap the radius at the single-line
+        // stadium radius. v136 removed the cap entirely ("تضليع"), but h/2
+        // at ANY height turns a tall multi-line field into a giant ellipse
+        // whose lower-right rim sweeps under the accessory glyph. iOS keeps
+        // a constant corner radius: full semicircle on one line, a rounded
+        // rect once the field grows - exactly this formula.
+        final float radius = Math.min((bottom - top) / 2f, dp(24));
         AndroidUtilities.rectTmp.set(left, top, right, bottom);
         // MeeroX v135 (user follow-up): the flat wash read as "no glass at
         // all" next to the two glass circles. When ChatActivity handed us

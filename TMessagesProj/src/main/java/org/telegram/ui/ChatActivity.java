@@ -8481,6 +8481,17 @@ public class ChatActivity extends BaseFragment implements
                 }
             }
         };
+        // MeeroX v138: hand the blur factory straight after construction.
+        // The v135 route waited for the contentView.addView(controlsView)
+        // hook below, but that hook can NEVER fire: while the composer's own
+        // constructor is adding controlsView, the chatActivityEnterView field
+        // is still null, so the condition dies and the capsule silently stays
+        // on the flat fallback — the blur glass only ever showed up after a
+        // record/cancel redraw. controlsView gets the same direct treatment.
+        chatActivityEnterView.setMeeroIosCapsuleFactory(glassBackgroundDrawableFactory);
+        if (chatActivityEnterView.controlsView != null) {
+            chatActivityEnterView.controlsView.setBlurredBackgroundFactory(glassBackgroundDrawableFactory);
+        }
         chatActivityEnterView.setVisibility(View.VISIBLE);
         chatActivityEnterView.getEditField().adaptiveCreateLinkDialog = true;
         if (chatMode == MODE_EDIT_BUSINESS_LINK) {
