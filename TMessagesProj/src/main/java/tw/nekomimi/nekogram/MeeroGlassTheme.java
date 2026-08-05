@@ -7,6 +7,7 @@ import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.LayerDrawable;
 
 import org.telegram.messenger.AndroidUtilities;
+import org.telegram.messenger.LocaleController;
 import org.telegram.ui.ActionBar.Theme;
 
 /**
@@ -144,13 +145,33 @@ public final class MeeroGlassTheme {
      * edges of the card so stacked rows read as one glass panel.
      */
     public static Drawable card(boolean roundTop, boolean roundBottom) {
+        return card(roundTop, roundBottom, false);
+    }
+
+    /**
+     * The glass card. v130 parity pass: radius is 20dp like the mock (.card
+     * border-radius:20px), and rows joined to a row ABOVE them draw the
+     * mock's in-card 1px separator (.row+.row::before), inset 16dp from the
+     * inline-start edge exactly like inset-inline-start:16px - RTL moves it
+     * to the physical right side, mirroring the CSS.
+     */
+    public static Drawable card(boolean roundTop, boolean roundBottom, boolean topHairline) {
         GradientDrawable d = new GradientDrawable();
         d.setColor(cardFill());
         d.setStroke(AndroidUtilities.dp(1), cardStroke());
-        float rTop = AndroidUtilities.dp(roundTop ? 18 : 0);
-        float rBot = AndroidUtilities.dp(roundBottom ? 18 : 0);
+        float rTop = AndroidUtilities.dp(roundTop ? 20 : 0);
+        float rBot = AndroidUtilities.dp(roundBottom ? 20 : 0);
         d.setCornerRadii(new float[]{rTop, rTop, rTop, rTop, rBot, rBot, rBot, rBot});
-        return d;
+        if (!topHairline) {
+            return d;
+        }
+        final boolean rtl = LocaleController.isRTL;
+        LayerDrawable layers = new LayerDrawable(new Drawable[]{d, new ColorDrawable(sep())});
+        layers.setLayerHeight(1, Math.max(1, AndroidUtilities.dp(0.66f)));
+        layers.setLayerGravity(1, android.view.Gravity.TOP);
+        layers.setLayerInset(1, rtl ? 0 : AndroidUtilities.dp(16), 0,
+                rtl ? AndroidUtilities.dp(16) : 0, 0);
+        return layers;
     }
 
     public static Drawable chipBg() {

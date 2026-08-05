@@ -328,8 +328,11 @@ public class MeeroSettingsActivity extends BaseNekoXSettingsActivity {
             } else if (card != 0) {
                 // v127: rows that live inside a section wear the glass card -
                 // rounded corners only on the card's outer edges.
+                // v130: joined rows below the first carry the mock's 1px
+                // in-card separator, inset from the inline-start edge.
                 v.setBackground(MeeroGlassTheme.card(card == CARD_TOP || card == CARD_SINGLE,
-                        card == CARD_BOTTOM || card == CARD_SINGLE));
+                        card == CARD_BOTTOM || card == CARD_SINGLE,
+                        card == CARD_MID || card == CARD_BOTTOM));
                 MeeroGlassSupport.tintCellText(v, MeeroGlassTheme.ink(), MeeroGlassTheme.sub());
                 MeeroGlassSupport.styleValueChip(v, true);
                 // v129: the mock switch is swapped in place of the stock one.

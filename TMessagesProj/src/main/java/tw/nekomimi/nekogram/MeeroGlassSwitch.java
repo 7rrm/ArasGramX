@@ -74,9 +74,18 @@ public class MeeroGlassSwitch extends Switch {
 
     @Override
     public void setChecked(boolean checked, int iconType, boolean animated) {
+        final boolean changed = checked != isChecked();
         final float target = checked ? 1f : 0f;
         // super keeps listeners, haptics and icon bookkeeping identical.
         super.setChecked(checked, iconType, animated);
+        if (!changed) {
+            // v130 FIX (user report #2): clicking a row fires setChecked and
+            // the following rebind fires it AGAIN with the same value. We
+            // used to cancel + snap on that second call, killing the 280ms
+            // travel two frames in - toggles looked instant. Idempotent
+            // re-sets must leave a running animation alone.
+            return;
+        }
         cancelGlassAnimator();
         if (!glassMode() || !animated || getWindowToken() == null) {
             glassProgress = target;

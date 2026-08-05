@@ -430,6 +430,13 @@ public class NekoSettingsActivity extends BaseNekoSettingsActivity {
         });
     }
 
+    // MeeroX v130 (user-requested): the sections hub joins the fixed
+    // glass design; icon tiles survive via the glass skin pass.
+    @Override
+    protected boolean meeroGlassScreen() {
+        return true;
+    }
+
     @Override
     protected String getActionBarTitle() {
         return getString(R.string.NekoSettings);

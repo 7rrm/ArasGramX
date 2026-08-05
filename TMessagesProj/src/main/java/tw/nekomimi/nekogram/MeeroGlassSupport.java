@@ -301,6 +301,11 @@ public final class MeeroGlassSupport {
     // ------------------------------------------------------------------
 
     public static final class Entrance {
+        // v130 parity: the mock is rise-by-10px + fade over 450ms with a
+        // spring ease and a 45ms per-row stagger (animation: rise .45s
+        // var(--ease), animation-delay: i*45ms).
+        private static final org.telegram.ui.Components.CubicBezierInterpolator EASE =
+                new org.telegram.ui.Components.CubicBezierInterpolator(0.2, 0.9, 0.3, 1.35);
         private int max = -1;
 
         public void run(View v, int position, boolean glass) {
@@ -312,10 +317,11 @@ public final class MeeroGlassSupport {
             }
             max = position;
             v.setAlpha(0f);
-            v.setTranslationY(AndroidUtilities.dp(14));
+            v.setTranslationY(AndroidUtilities.dp(10));
             v.animate().alpha(1f).translationY(0f)
-                    .setDuration(280)
-                    .setStartDelay(Math.min(position * 30L, 300L))
+                    .setDuration(450)
+                    .setInterpolator(EASE)
+                    .setStartDelay(Math.min(position * 45L, 315L))
                     .start();
         }
 
@@ -381,10 +387,19 @@ public final class MeeroGlassSupport {
             } else if (card) {
                 final int edge = legacyCardPos(adapter, position);
                 setRowMargins(v, true);
+                // v130: rows joining a row above show the mock's 1px in-card
+                // separator, inset from the inline-start edge.
                 v.setBackground(MeeroGlassTheme.card(edge == CARD_TOP || edge == CARD_SINGLE,
-                        edge == CARD_BOTTOM || edge == CARD_SINGLE));
+                        edge == CARD_BOTTOM || edge == CARD_SINGLE,
+                        edge == CARD_MID || edge == CARD_BOTTOM));
                 tintCellText(v, MeeroGlassTheme.ink(), MeeroGlassTheme.sub());
                 styleValueChip(v, true);
+                // v130: keep the accent icon tiles (they are applied by the
+                // older cards feature, which glass screens now skip).
+                if (v instanceof TextCell) {
+                    ((TextCell) v).setMeeroIconTile(position);
+                    ((TextCell) v).setMeeroDividerEnabled(false);
+                }
                 if (v instanceof TextCheckCell) {
                     swapSwitch((TextCheckCell) v);
                 }
@@ -413,6 +428,11 @@ public final class MeeroGlassSupport {
                         Theme.getColor(Theme.key_windowBackgroundWhiteGrayText2));
             }
             styleValueChip(v, false);
+            // undo exactly what the glass pass touched; the legacy cards
+            // feature (if on) re-dyes tiles/dividers right after us.
+            if (v instanceof TextCell) {
+                ((TextCell) v).setMeeroIconTile(-1);
+            }
             attachPressPulse(v, false);
         }
         if (entrance != null) {

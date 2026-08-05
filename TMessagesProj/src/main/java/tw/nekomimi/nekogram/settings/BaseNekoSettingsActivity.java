@@ -400,9 +400,19 @@ public abstract class BaseNekoSettingsActivity extends BaseFragment {
         public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
             var payload = holder.getPayload();
             onBindViewHolder(holder, position, PARTIAL.equals(payload));
-            meeroApplyCard(holder, position);
-            meeroStyleHeader(holder);
-            meeroGlassBind(holder, position);
+            // v130: the glass skin binds FIRST and, when active, is the ONLY
+            // card authority on the row - the legacy cards feature must not
+            // paint its standalone pills over/under it in ANY bind order
+            // (called in the old order, a stale card state survived until a
+            // rebind; the user's image-2 report). When glass is off the
+            // legacy feature resumes ownership, exactly like before v129.
+            if (meeroGlassActive()) {
+                meeroGlassBind(holder, position);
+            } else {
+                meeroGlassBind(holder, position);
+                meeroApplyCard(holder, position);
+                meeroStyleHeader(holder);
+            }
         }
 
         /** Per-adapter entrance state for the glass stagger (v129). */
