@@ -8911,6 +8911,13 @@ public class ChatActivity extends BaseFragment implements
             }
         };
         bottomChannelButtonsLayout.setVisibility(View.INVISIBLE);
+        // MeeroX v140 (user follow-up): the big bottom CTA ("إلغاء حظر
+        // المستخدم" and friends) rendered bare over the chat, while the
+        // official app blurs it. The layout already OWNS the glass pipeline -
+        // this setup call just was never made here (only ChannelAdminLog-
+        // Activity bothered), so the drawable stayed null and drawChild
+        // painted nothing.
+        bottomChannelButtonsLayout.setupDrawableForContainer();
         bottomChannelButtonsLayout.setClipChildren(false);
         bottomChannelButtonsLayout.setAccentColor(getThemedColor(Theme.key_featuredStickers_addButton));
         bottomChannelButtonsLayout.setButtonOnClickListener(ChatActivityChannelButtonsLayout.BUTTON_SEARCH, v -> {

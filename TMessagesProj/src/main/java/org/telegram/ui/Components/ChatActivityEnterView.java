@@ -693,12 +693,14 @@ public class ChatActivityEnterView extends FrameLayout implements
     private BlurredBackgroundDrawableViewFactory meeroCapsuleFactory;
     private BlurredBackgroundDrawable meeroCapsuleDrawable;
     private BlurredBackgroundDrawable meeroMicGlassDrawable;
+    private BlurredBackgroundDrawable meeroTopViewGlassDrawable;
 
     public void setMeeroIosCapsuleFactory(BlurredBackgroundDrawableViewFactory factory) {
         if (meeroCapsuleFactory != factory) {
             meeroCapsuleFactory = factory;
             meeroCapsuleDrawable = null;
             meeroMicGlassDrawable = null;
+            meeroTopViewGlassDrawable = null;
             // v139: upgrade the attach circle to real glass too (it is built
             // flat during the constructor, before the handoff happens).
             meeroApplyIosCircleGlass();
@@ -5017,9 +5019,16 @@ public class ChatActivityEnterView extends FrameLayout implements
         }
         int bottom = top + Theme.chat_composeShadowDrawable.getIntrinsicHeight();
         // iOS floats the composer directly over the chat wallpaper: no panel
-        // fill, no compose shadow. While a reply/edit preview is pinned
-        // above the field, that strip still needs a backing, so stock runs.
-        if (meeroIosComposer() && (topView == null || topView.getVisibility() != View.VISIBLE)) {
+        // fill, no compose shadow.
+        // MeeroX v140 (user follow-up): while a reply/edit strip is pinned,
+        // stock used to revive the FLAT panel just for that strip - which is
+        // exactly the "replied message shows no glass" the user reported.
+        // Now the strip gets its own REAL glass sheet (same header-pill
+        // drawable) and the composer keeps floating over the wallpaper.
+        if (meeroIosComposer()) {
+            if (topView != null && topView.getVisibility() == View.VISIBLE) {
+                meeroDrawTopViewGlass(canvas);
+            }
             return;
         }
 
@@ -5042,13 +5051,48 @@ public class ChatActivityEnterView extends FrameLayout implements
         }
     }
 
-    public float getVisualHeight() {
-        float top = animatedTop;
-        if (topView != null && topView.getVisibility() == View.VISIBLE) {
-            top += (1f - getTopViewEnterProgress()) * topView.getLayoutParams().height;
+    // MeeroX v140: glass backing for the pinned reply/edit strip - the SAME
+    // header-pill drawable as field/attach/mic, full-width sheet with the
+    // panel's side margins. Flat translucent sheet stays as the pipeline
+    // -less fallback so the strip never floats bare over the wallpaper.
+    private void meeroDrawTopViewGlass(Canvas canvas) {
+        if (topView == null || topView.getLayoutParams() == null || getMeasuredWidth() <= 0) {
+            return;
         }
-        return getMeasuredHeight() - top;
+        final int sheetTop = topView.getTop() + dp(2);
+        final int sheetBottom = topView.getTop() + topView.getLayoutParams().height - dp(1);
+        if (sheetBottom <= sheetTop) {
+            return;
+        }
+        BlurredBackgroundDrawable glass = null;
+        if (meeroCapsuleFactory != null) {
+            try {
+                if (meeroTopViewGlassDrawable == null) {
+                    meeroTopViewGlassDrawable = meeroCapsuleFactory.create(
+                            topView,
+                            org.telegram.ui.Components.blur3.drawable.color.impl.BlurredBackgroundProviderImpl.headerButton(resourcesProvider));
+                }
+                glass = meeroTopViewGlassDrawable;
+            } catch (Throwable ignore) {
+                meeroTopViewGlassDrawable = null;
+            }
+        }
+        if (glass != null) {
+            glass.setRadius(dp(20));
+            glass.setBounds(dp(6), sheetTop, getMeasuredWidth() - dp(6), sheetBottom);
+            glass.draw(canvas);
+        } else {
+            if (meeroPillPaint == null) {
+                meeroPillPaint = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+            }
+            final boolean dark = Theme.getActiveTheme().isDark();
+            meeroPillPaint.setColor(dark ? 0x17FFFFFF : 0xD9FFFFFF);
+            AndroidUtilities.rectTmp.set(dp(6), sheetTop, getMeasuredWidth() - dp(6), sheetBottom);
+            canvas.drawRoundRect(AndroidUtilities.rectTmp, dp(20), dp(20), meeroPillPaint);
+        }
     }
+
+    public float getVisualHeight() {    }
 
 
     private boolean dismissSendPreviewSent;
@@ -11714,6 +11758,10 @@ public class ChatActivityEnterView extends FrameLayout implements
         if (meeroMicGlassDrawable != null) {
             meeroMicGlassDrawable.updateColors();
             audioVideoButtonContainer.invalidate();
+        }
+        if (meeroTopViewGlassDrawable != null) {
+            meeroTopViewGlassDrawable.updateColors();
+            invalidate();
         }
         sendOutlineView.setColorFilter(getThemedColor(Theme.key_telegram_color), PorterDuff.Mode.SRC_IN);
     }
