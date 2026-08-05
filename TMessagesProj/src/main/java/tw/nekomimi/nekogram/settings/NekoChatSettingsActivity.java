@@ -604,7 +604,8 @@ public class NekoChatSettingsActivity extends BaseNekoXSettingsActivity implemen
                     .mapToObj(String::valueOf)
                     .collect(Collectors.toList());
             PopupBuilder builder = new PopupBuilder(view);
-            builder.setItems(types, (i, str) -> {
+            // MeeroX v132: the glass popup marks the current selection in rose.
+            builder.setItems(types, types.indexOf(String.valueOf(NekoConfig.maxRecentStickerCount.Int())), (i, str) -> {
                 NekoConfig.maxRecentStickerCount.setConfigInt(Integer.parseInt(str.toString()));
                 listAdapter.notifyItemChanged(position);
                 return Unit.INSTANCE;
@@ -638,7 +639,11 @@ public class NekoChatSettingsActivity extends BaseNekoXSettingsActivity implemen
             arrayList.add(getString(R.string.Delete));
             types.add(DoubleTap.DOUBLE_TAP_ACTION_DELETE);
             PopupBuilder builder = new PopupBuilder(view);
-            builder.setItems(arrayList, (i, str) -> {
+            // MeeroX v132: the glass popup marks the current selection in rose.
+            final boolean isDoubleTapIn = position == cellGroup.rows.indexOf(doubleTapActionRow);
+            builder.setItems(arrayList, types.indexOf(isDoubleTapIn
+                            ? NaConfig.INSTANCE.getDoubleTapAction().Int()
+                            : NaConfig.INSTANCE.getDoubleTapActionOut().Int()), (i, str) -> {
                 if (position == cellGroup.rows.indexOf(doubleTapActionRow)) {
                     NaConfig.INSTANCE.getDoubleTapAction().setConfigInt(types.get(i));
                 } else {

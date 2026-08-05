@@ -10836,6 +10836,15 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
      */
     private void meeroRefreshHeaderGlassColors() {
         try {
+            // v132 (user follow-up): the capsule band heals with a plain
+            // updateColors() because the menu repaints it manually every
+            // frame, but the Edit pill is a plain View background and kept
+            // its night palette through the very same refresh. Baked-opaque
+            // provider colors in a view background are not reliably
+            // re-resolved in place - so the pill is REBUILT from scratch
+            // with a fresh provider on every theme change. Cheap (theme
+            // switches are rare) and correct by construction.
+            meeroGlassPillHeaderButton(meeroEditItem);
             for (int i = 0; i < meeroHeaderGlassDrawables.size(); i++) {
                 final BlurredBackgroundDrawable bg = meeroHeaderGlassDrawables.get(i);
                 if (bg != null) {

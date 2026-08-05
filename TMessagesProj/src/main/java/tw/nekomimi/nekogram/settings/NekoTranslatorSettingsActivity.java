@@ -286,10 +286,14 @@ public class NekoTranslatorSettingsActivity extends BaseNekoXSettingsActivity {
             filteredProviders.add(provider);
         }
         String[] itemNames = new String[filteredProviders.size()];
+        int providerSel = -1; // MeeroX v132: the glass popup marks the current selection in rose.
         for (int i = 0; i < filteredProviders.size(); i++) {
             itemNames[i] = getString(filteredProviders.get(i).nameResId);
+            if (filteredProviders.get(i).providerConstant == configItem.Int()) {
+                providerSel = i;
+            }
         }
-        builder.setItems(itemNames, (i, __) -> {
+        builder.setItems(itemNames, providerSel, (i, __) -> {
             configItem.setConfigInt(filteredProviders.get(i).providerConstant);
             onSelected.run();
             return Unit.INSTANCE;

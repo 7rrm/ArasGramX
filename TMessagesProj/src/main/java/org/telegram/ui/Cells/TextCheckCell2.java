@@ -38,7 +38,7 @@ public class TextCheckCell2 extends FrameLayout {
     public int id;
     private TextView textView;
     private TextView valueTextView;
-    private Switch checkBox;
+    public Switch checkBox; // MeeroX v132: made public so the glass swap can redirect it (mirrors TextCheckCell)
     private boolean needDivider;
     private boolean isMultiline;
 

@@ -90,7 +90,8 @@ public class ConfigCellSelectBox extends AbstractConfigCell implements WithBindC
 
         PopupBuilder builder = new PopupBuilder(view);
 
-        builder.setItems(this.selectList, (i, __) -> {
+        // MeeroX v132: the glass popup marks the current selection in rose.
+        builder.setItems(this.selectList, getSelectedIndex(bindConfig.Int()), (i, __) -> {
             int selectedValue = getSelectedValue(i);
             bindConfig.setConfigInt(selectedValue);
 

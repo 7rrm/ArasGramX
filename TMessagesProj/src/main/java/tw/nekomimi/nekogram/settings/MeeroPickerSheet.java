@@ -357,25 +357,45 @@ public final class MeeroPickerSheet {
                 tick2 = t[1];
             }
             final float w = getWidth(), h = getHeight();
-            MeeroBubbleStyles.drawPreview(canvas, style, false, 0, dp(1.5f), w, h - dp(1.5f), colOut);
+            // v132 fix: RTL mirror, same as the hero - an outgoing mini
+            // message on an Arabic screen wears its tail bottom-left.
+            final boolean rtl = LocaleController.isRTL;
+            MeeroBubbleStyles.drawPreview(canvas, style, rtl, 0, dp(1.5f), w, h - dp(1.5f), colOut);
 
-            // drawPreview keeps a 7dp tail allowance on the right; the text
-            // block sits centered inside the body, above a tiny meta row.
-            final float bodyR = w - dp(7);
+            // drawPreview keeps a 7dp tail allowance on the outing side; the
+            // text block sits centered inside the body, above the meta row.
+            final float dpu = AndroidUtilities.density;
+            final float bodyL = rtl ? 7f * dpu : 0f;
+            final float bodyR = rtl ? w : w - 7f * dpu;
             final float metaH = dp(7.5f);
             final float textBase = (h - metaH) / 2f + textPaint.getTextSize() * 0.38f;
             final float textW = textPaint.measureText(text);
-            canvas.drawText(text, Math.max(dp(4), (bodyR - textW) / 2f - dp(2)), textBase, textPaint);
+            canvas.drawText(text, Math.max(dp(4), bodyL + (bodyR - bodyL - textW) / 2f - dp(1)), textBase, textPaint);
 
             final float timeW = metaPaint.measureText(time);
             final float tick = dp(6f);
-            final float metaR = bodyR - dp(5);
+            final float overlap = dp(2.5f);
+            final float ticksW = tick * 2f - overlap;
+            final float gap = dp(2.5f);
+            final float metaW = timeW + gap + ticksW;
             final float base = h - dp(6.5f);
-            tick2.setBounds((int) (metaR - tick - dp(3) - tick), (int) (base - tick), (int) (metaR - tick - dp(3)), (int) base);
-            tick2.draw(canvas);
-            tick1.setBounds((int) (metaR - tick), (int) (base - tick), (int) metaR, (int) base);
-            tick1.draw(canvas);
-            canvas.drawText(time, metaR - tick - dp(3) - tick - dp(2.5f) - timeW, base - dp(1), metaPaint);
+            if (rtl) {
+                float cx = bodyL + dp(5);
+                tick2.setBounds((int) cx, (int) (base - tick), (int) (cx + tick), (int) base);
+                tick2.draw(canvas);
+                tick1.setBounds((int) (cx + tick - overlap), (int) (base - tick), (int) (cx + ticksW), (int) base);
+                tick1.draw(canvas);
+                cx += ticksW + gap;
+                canvas.drawText(time, cx, base - dp(1), metaPaint);
+            } else {
+                float cx = bodyR - dp(5) - metaW;
+                canvas.drawText(time, cx, base - dp(1), metaPaint);
+                cx += timeW + gap;
+                tick2.setBounds((int) cx, (int) (base - tick), (int) (cx + tick), (int) base);
+                tick2.draw(canvas);
+                tick1.setBounds((int) (cx + tick - overlap), (int) (base - tick), (int) (cx + ticksW), (int) base);
+                tick1.draw(canvas);
+            }
         }
     }
 
@@ -467,18 +487,30 @@ public final class MeeroPickerSheet {
             final boolean rtl = LocaleController.isRTL;
             for (Msg m : msgs) {
                 textPaint.setColor(m.outgoing ? colMsgOut : colMsgIn);
-                m.layout = StaticLayout.Builder
+                // v132 fix (user report #1): TWO passes. The layout box used
+                // to be maxTextW wide regardless of content, so RTL-aligned
+                // short lines sat at the right end of a box far wider than
+                // the bubble and got clipped outside it ("نص مقصوص وكلام غير
+                // موجود"). Pass one measures, pass two rebuilds the layout at
+                // exactly the widest line, so box width == bubble content.
+                StaticLayout probe = StaticLayout.Builder
                         .obtain(m.text, 0, m.text.length(), textPaint, maxTextW)
                         .setAlignment(Layout.Alignment.ALIGN_NORMAL)
                         .setIncludePad(false)
                         .build();
                 float lineW = 0;
-                for (int l = 0; l < m.layout.getLineCount(); l++) {
-                    lineW = Math.max(lineW, m.layout.getLineWidth(l));
+                for (int l = 0; l < probe.getLineCount(); l++) {
+                    lineW = Math.max(lineW, probe.getLineWidth(l));
                 }
-                // Bubble width: text + side padding + the 7dp tail allowance
-                // drawPreview() reserves on the outing side.
-                m.bw = (float) Math.ceil(lineW) + dp(18) + dp(7);
+                final int contentW = Math.max(dp(24), Math.min(maxTextW, (int) Math.ceil(lineW)));
+                m.layout = StaticLayout.Builder
+                        .obtain(m.text, 0, m.text.length(), textPaint, contentW)
+                        .setAlignment(Layout.Alignment.ALIGN_NORMAL)
+                        .setIncludePad(false)
+                        .build();
+                // Bubble width: exact text + side padding + the 7dp tail
+                // allowance drawPreview() reserves on the outing side.
+                m.bw = contentW + dp(18) + dp(7);
                 m.bh = m.layout.getHeight() + dp(14) + dp(13);
                 final boolean rightSide = m.outgoing != rtl;
                 m.x = rightSide ? w - pad - m.bw : pad;
@@ -530,7 +562,11 @@ public final class MeeroPickerSheet {
                     canvas.saveLayerAlpha(m.x - dp(8), m.y - dp(8), m.x + m.bw + dp(8), m.y + m.bh + dp(8),
                             (int) (255 * p));
                 }
-                MeeroBubbleStyles.drawPreview(canvas, bubbleStyle, !m.outgoing, m.x, m.y, m.x + m.bw, m.y + m.bh, bubbleColor);
+                // v132 fix: in RTL the conversation mirror also mirrors the
+                // TAIL side - an outgoing bubble on the left wears its tail
+                // at the bottom-left ("incoming" shape), otherwise the tail
+                // pointed inward and read as a crack in the bubble.
+                MeeroBubbleStyles.drawPreview(canvas, bubbleStyle, shapeIncoming(m), m.x, m.y, m.x + m.bw, m.y + m.bh, bubbleColor);
                 drawMessageContent(canvas, m);
                 if (transformed) {
                     canvas.restore();
@@ -542,12 +578,20 @@ public final class MeeroPickerSheet {
             }
         }
 
+        /** Tail side in the preview: mirrored with the conversation in RTL. */
+        private static boolean shapeIncoming(Msg m) {
+            return LocaleController.isRTL ? m.outgoing : !m.outgoing;
+        }
+
         /** Text block + meta row (time, and ticks on outgoing) inside one bubble. */
         private void drawMessageContent(Canvas canvas, Msg m) {
             final float dpu = AndroidUtilities.density;
-            // drawPreview body: incoming starts 7dp in; outgoing ends 7dp early.
-            final float bodyL = m.outgoing ? m.x : m.x + 7f * dpu;
-            final float bodyR = m.outgoing ? m.x + m.bw - 7f * dpu : m.x + m.bw;
+            final boolean rtl = LocaleController.isRTL;
+            // body inset follows the SHAPE side (mirrored in RTL), not the
+            // message direction (see onDraw / shapeIncoming).
+            final boolean shapeIn = shapeIncoming(m);
+            final float bodyL = shapeIn ? m.x + 7f * dpu : m.x;
+            final float bodyR = shapeIn ? m.x + m.bw : m.x + m.bw - 7f * dpu;
 
             textPaint.setColor(m.outgoing ? colMsgOut : colMsgIn);
             metaPaint.setColor(m.outgoing ? colTimeOut : colTimeIn);
@@ -558,29 +602,47 @@ public final class MeeroPickerSheet {
             m.layout.draw(canvas);
             canvas.restore();
 
-            // meta row, hugging the bubble's inner bottom-end corner.
+            // Meta row at the reading-end corner, exactly like a chat: in
+            // LTR "10:25 ✓✓" at the right, in RTL "✓✓ 10:25" at the left.
             final float timeW = metaPaint.measureText(m.time);
             final float tick = m.outgoing ? dp(11) : 0f;
             final float tickGap = m.outgoing ? dp(3) : 0f;
-            // the two tick drawables overlap by a third, like the chat screen.
-            final float ticksW = m.outgoing ? tick + dp(5) + tick : 0f;
-            float metaR = bodyR - dp(9);
+            // the two tick drawables overlap by ~a third, like the chat
+            // screen - at this size more overlap reads as a double-check,
+            // too little reads as "/✓" (the user's "كسور" remark).
+            final float tickOverlap = dp(4.5f);
+            final float ticksW = m.outgoing ? tick * 2f - tickOverlap : 0f;
+            final float metaW = timeW + tickGap + ticksW;
             final float baseline = m.y + m.bh - dp(7);
-            if (m.outgoing && tick1 != null && tick2 != null) {
-                tick2.setBounds((int) (metaR - ticksW), (int) (baseline - tick), (int) (metaR - ticksW + tick), (int) baseline);
-                tick2.draw(canvas);
-                tick1.setBounds((int) (metaR - tick), (int) (baseline - tick), (int) metaR, (int) baseline);
-                tick1.draw(canvas);
-            } else if (m.outgoing) {
+            if (m.outgoing && (tick1 == null || tick2 == null)) {
                 Drawable[] t = metaTicks(ctx, NekoConfig.meeroTickStyle.Int(), colTimeOut);
                 tick1 = t[0];
                 tick2 = t[1];
-                tick2.setBounds((int) (metaR - ticksW), (int) (baseline - tick), (int) (metaR - ticksW + tick), (int) baseline);
-                tick2.draw(canvas);
-                tick1.setBounds((int) (metaR - tick), (int) (baseline - tick), (int) metaR, (int) baseline);
-                tick1.draw(canvas);
             }
-            canvas.drawText(m.time, metaR - ticksW - tickGap - timeW, baseline - dp(1.5f), metaPaint);
+            final float metaStart = rtl ? bodyL + dp(9) : bodyR - dp(9) - metaW;
+            if (rtl) {
+                float cx = metaStart;
+                if (m.outgoing && tick1 != null && tick2 != null) {
+                    tick2.setBounds((int) cx, (int) (baseline - tick), (int) (cx + tick), (int) baseline);
+                    tick2.draw(canvas);
+                    tick1.setBounds((int) (cx + tick - tickOverlap), (int) (baseline - tick),
+                            (int) (cx + tick * 2f - tickOverlap), (int) baseline);
+                    tick1.draw(canvas);
+                    cx += ticksW + tickGap;
+                }
+                canvas.drawText(m.time, cx, baseline - dp(1.5f), metaPaint);
+            } else {
+                float cx = metaStart;
+                canvas.drawText(m.time, cx, baseline - dp(1.5f), metaPaint);
+                cx += timeW + tickGap;
+                if (m.outgoing && tick1 != null && tick2 != null) {
+                    tick2.setBounds((int) cx, (int) (baseline - tick), (int) (cx + tick), (int) baseline);
+                    tick2.draw(canvas);
+                    tick1.setBounds((int) (cx + tick - tickOverlap), (int) (baseline - tick),
+                            (int) (cx + tick * 2f - tickOverlap), (int) baseline);
+                    tick1.draw(canvas);
+                }
+            }
         }
     }
 }

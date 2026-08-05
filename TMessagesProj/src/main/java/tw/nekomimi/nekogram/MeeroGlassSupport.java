@@ -261,6 +261,37 @@ public final class MeeroGlassSupport {
         cell.addView(glass, Math.min(Math.max(index, 0), cell.getChildCount()), params);
     }
 
+    /**
+     * Same swap for TextCheckCell2 (the iOS-style check cell used by the
+     * premium-elements and disable-swipe rows) - the user's v132 report #2:
+     * those rows kept the stock white switch while every sibling row wore
+     * the glass one. The field is public since v132, so setChecked() keeps
+     * driving the new widget exactly like the TextCheckCell swap.
+     */
+    public static void swapSwitch(TextCheckCell2 cell) {
+        final Switch old = cell.checkBox;
+        if (old == null || old instanceof MeeroGlassSwitch) {
+            return;
+        }
+        ViewGroup.LayoutParams oldParams = old.getLayoutParams();
+        final int index = cell.indexOfChild(old);
+        final boolean wasChecked = old.isChecked();
+        cell.removeView(old);
+
+        MeeroGlassSwitch glass = new MeeroGlassSwitch(cell.getContext());
+        glass.setChecked(wasChecked, false);
+        cell.checkBox = glass;
+
+        FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
+                AndroidUtilities.dp(48), AndroidUtilities.dp(28));
+        if (oldParams instanceof FrameLayout.LayoutParams) {
+            FrameLayout.LayoutParams o = (FrameLayout.LayoutParams) oldParams;
+            params.gravity = o.gravity;
+            params.setMargins(o.leftMargin, o.topMargin, o.rightMargin, o.bottomMargin);
+        }
+        cell.addView(glass, Math.min(Math.max(index, 0), cell.getChildCount()), params);
+    }
+
     // ------------------------------------------------------------------
     // Press pulse (mock: .row:active { transform: scale(.994) })
     // ------------------------------------------------------------------
@@ -406,6 +437,8 @@ public final class MeeroGlassSupport {
                 }
                 if (v instanceof TextCheckCell) {
                     swapSwitch((TextCheckCell) v);
+                } else if (v instanceof TextCheckCell2) {
+                    swapSwitch((TextCheckCell2) v);
                 }
                 attachPressPulse(v, true);
             } else {
@@ -528,6 +561,8 @@ public final class MeeroGlassSupport {
                 styleValueChip(v, true);
                 if (v instanceof TextCheckCell) {
                     swapSwitch((TextCheckCell) v);
+                } else if (v instanceof TextCheckCell2) {
+                    swapSwitch((TextCheckCell2) v);
                 }
             } else {
                 v.setBackgroundColor(Color.TRANSPARENT);

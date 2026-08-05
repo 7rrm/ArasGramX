@@ -361,6 +361,15 @@ public class NekoExperimentalSettingsActivity extends BaseNekoXSettingsActivity 
             }));
         } else if (position == cellGroup.rows.indexOf(customAudioBitrateRow)) {
             PopupBuilder builder = new PopupBuilder(view);
+            // MeeroX v132: the glass popup marks the current selection in rose.
+            final int[] bitrateValues = {32, 64, 128, 192, 256, 320};
+            int bitrateSel = -1;
+            for (int bi = 0; bi < bitrateValues.length; bi++) {
+                if (bitrateValues[bi] == NekoConfig.customAudioBitrate.Int()) {
+                    bitrateSel = bi;
+                    break;
+                }
+            }
             builder.setItems(new String[]{
                     "32 (" + getString(R.string.Default) + ")",
                     "64",
@@ -368,7 +377,7 @@ public class NekoExperimentalSettingsActivity extends BaseNekoXSettingsActivity 
                     "192",
                     "256",
                     "320"
-            }, (i, __) -> {
+            }, bitrateSel, (i, __) -> {
                 switch (i) {
                     case 0:
                         NekoConfig.customAudioBitrate.setConfigInt(32);
