@@ -693,17 +693,18 @@ public class ChatActivityEnterView extends FrameLayout implements
     private BlurredBackgroundDrawableViewFactory meeroCapsuleFactory;
     private BlurredBackgroundDrawable meeroCapsuleDrawable;
     private BlurredBackgroundDrawable meeroMicGlassDrawable;
-    private BlurredBackgroundDrawable meeroTopViewGlassDrawable;
 
     public void setMeeroIosCapsuleFactory(BlurredBackgroundDrawableViewFactory factory) {
         if (meeroCapsuleFactory != factory) {
             meeroCapsuleFactory = factory;
             meeroCapsuleDrawable = null;
             meeroMicGlassDrawable = null;
-            meeroTopViewGlassDrawable = null;
             // v139: upgrade the attach circle to real glass too (it is built
             // flat during the constructor, before the handoff happens).
             meeroApplyIosCircleGlass();
+            // v141: same late-upgrade for the reply/edit card (topView may
+            // have been added before this handoff happened).
+            meeroApplyIosTopViewCard();
         }
     }
 
@@ -740,6 +741,74 @@ public class ChatActivityEnterView extends FrameLayout implements
             circle.setStroke(dp(1), 0x0D000000);
         }
         meeroAttachWrap.setBackground(circle);
+    }
+
+    // MeeroX v141 (user follow-up): the pinned reply/edit strip becomes its
+    // own SEPARATE floating glass card ("بطاقة الرد بزجاج منفصل عن حقل
+    // كتابه يعني ليس مدموج") - exactly how the iPhone shows a reply quote
+    // above the composer. The glass is set as the BACKGROUND OF topView
+    // itself: the same drawable-as-background-of-the-view-passed-to-create()
+    // pattern the attach circle and the island bubble already prove
+    // on-device. v140 instead drew a sheet on this parent's canvas while
+    // handing topView to create(); the blur pipeline's position tracking +
+    // invalidation contract is anchored to the view passed to create(), so
+    // the sheet stayed wrong/invisible on-device ("الرد على رساله الى الأن
+    // لا يوجد زجاج"). Side margins get the capsule's 6dp and the corner is
+    // 18dp (vs the capsule's 24dp), so the card reads as its OWN element,
+    // detached from the writing capsule below it. Flat fallback keeps the
+    // pipeline-less path usable, and everything restores to exact stock
+    // when the switch goes off (meeroRestoreStockTopViewCard).
+    private void meeroApplyIosTopViewCard() {
+        if (topView == null || !meeroIosComposer()) {
+            return;
+        }
+        BlurredBackgroundDrawable glass = null;
+        if (meeroCapsuleFactory != null) {
+            try {
+                glass = meeroCapsuleFactory.create(
+                        topView,
+                        org.telegram.ui.Components.blur3.drawable.color.impl.BlurredBackgroundProviderImpl.headerButton(resourcesProvider));
+                glass.setRadius(dp(18));
+            } catch (Throwable ignore) {
+                glass = null;
+            }
+        }
+        if (glass != null) {
+            topView.setBackground(glass);
+        } else {
+            final android.graphics.drawable.GradientDrawable card = new android.graphics.drawable.GradientDrawable();
+            card.setShape(android.graphics.drawable.GradientDrawable.RECTANGLE);
+            card.setCornerRadius(dp(18));
+            if (Theme.getActiveTheme().isDark()) {
+                card.setColor(0x17FFFFFF);
+                card.setStroke(dp(1), 0x1FFFFFFF);
+            } else {
+                card.setColor(0xD9FFFFFF);
+                card.setStroke(dp(1), 0x0D000000);
+            }
+            topView.setBackground(card);
+        }
+        if (topView.getLayoutParams() instanceof MarginLayoutParams) {
+            final MarginLayoutParams lp = (MarginLayoutParams) topView.getLayoutParams();
+            lp.leftMargin = dp(6);
+            lp.rightMargin = dp(6);
+            topView.setLayoutParams(lp);
+        }
+        topView.invalidate();
+    }
+
+    private void meeroRestoreStockTopViewCard() {
+        if (topView == null) {
+            return;
+        }
+        topView.setBackground(null);
+        if (topView.getLayoutParams() instanceof MarginLayoutParams) {
+            final MarginLayoutParams lp = (MarginLayoutParams) topView.getLayoutParams();
+            lp.leftMargin = 0;
+            lp.rightMargin = 0;
+            topView.setLayoutParams(lp);
+        }
+        topView.invalidate();
     }
 
     private ImageView sendOutlineView;
@@ -5019,16 +5088,12 @@ public class ChatActivityEnterView extends FrameLayout implements
         }
         int bottom = top + Theme.chat_composeShadowDrawable.getIntrinsicHeight();
         // iOS floats the composer directly over the chat wallpaper: no panel
-        // fill, no compose shadow.
-        // MeeroX v140 (user follow-up): while a reply/edit strip is pinned,
-        // stock used to revive the FLAT panel just for that strip - which is
-        // exactly the "replied message shows no glass" the user reported.
-        // Now the strip gets its own REAL glass sheet (same header-pill
-        // drawable) and the composer keeps floating over the wallpaper.
+        // fill, no compose shadow. MeeroX v141: the pinned reply/edit strip
+        // wears its own REAL glass card as its view background (see
+        // meeroApplyIosTopViewCard); v140 drew that sheet HERE on the parent
+        // canvas, which broke the blur pipeline's view-binding contract and
+        // left the strip bare on-device - nothing is painted from here now.
         if (meeroIosComposer()) {
-            if (topView != null && topView.getVisibility() == View.VISIBLE) {
-                meeroDrawTopViewGlass(canvas);
-            }
             return;
         }
 
@@ -5048,47 +5113,6 @@ public class ChatActivityEnterView extends FrameLayout implements
             }
         } else {
             canvas.drawRect(0, bottom, getWidth(), getHeight(), getThemedPaint(Theme.key_paint_chatComposeBackground));
-        }
-    }
-
-    // MeeroX v140: glass backing for the pinned reply/edit strip - the SAME
-    // header-pill drawable as field/attach/mic, full-width sheet with the
-    // panel's side margins. Flat translucent sheet stays as the pipeline
-    // -less fallback so the strip never floats bare over the wallpaper.
-    private void meeroDrawTopViewGlass(Canvas canvas) {
-        if (topView == null || topView.getLayoutParams() == null || getMeasuredWidth() <= 0) {
-            return;
-        }
-        final int sheetTop = topView.getTop() + dp(2);
-        final int sheetBottom = topView.getTop() + topView.getLayoutParams().height - dp(1);
-        if (sheetBottom <= sheetTop) {
-            return;
-        }
-        BlurredBackgroundDrawable glass = null;
-        if (meeroCapsuleFactory != null) {
-            try {
-                if (meeroTopViewGlassDrawable == null) {
-                    meeroTopViewGlassDrawable = meeroCapsuleFactory.create(
-                            topView,
-                            org.telegram.ui.Components.blur3.drawable.color.impl.BlurredBackgroundProviderImpl.headerButton(resourcesProvider));
-                }
-                glass = meeroTopViewGlassDrawable;
-            } catch (Throwable ignore) {
-                meeroTopViewGlassDrawable = null;
-            }
-        }
-        if (glass != null) {
-            glass.setRadius(dp(20));
-            glass.setBounds(dp(6), sheetTop, getMeasuredWidth() - dp(6), sheetBottom);
-            glass.draw(canvas);
-        } else {
-            if (meeroPillPaint == null) {
-                meeroPillPaint = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
-            }
-            final boolean dark = Theme.getActiveTheme().isDark();
-            meeroPillPaint.setColor(dark ? 0x17FFFFFF : 0xD9FFFFFF);
-            AndroidUtilities.rectTmp.set(dp(6), sheetTop, getMeasuredWidth() - dp(6), sheetBottom);
-            canvas.drawRoundRect(AndroidUtilities.rectTmp, dp(20), dp(20), meeroPillPaint);
         }
     }
 
@@ -7282,6 +7306,10 @@ public class ChatActivityEnterView extends FrameLayout implements
         topView = view;
         addView(topView, 0, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, height, Gravity.TOP | Gravity.LEFT));
         needShowTopView = false;
+
+        // MeeroX v141: pin the separate iOS glass card onto the strip (no-op
+        // while the iOS composer switch is off).
+        meeroApplyIosTopViewCard();
 
         checkUi_TopViewVisibility();
     }
@@ -11765,9 +11793,15 @@ public class ChatActivityEnterView extends FrameLayout implements
             meeroMicGlassDrawable.updateColors();
             audioVideoButtonContainer.invalidate();
         }
-        if (meeroTopViewGlassDrawable != null) {
-            meeroTopViewGlassDrawable.updateColors();
-            invalidate();
+        if (topView != null && topView.getBackground() instanceof BlurredBackgroundDrawable) {
+            // v141: the reply/edit glass card lives on the strip view itself;
+            // refresh it on day/night flips exactly like the trio above.
+            ((BlurredBackgroundDrawable) topView.getBackground()).updateColors();
+            topView.invalidate();
+        } else if (topView != null && meeroIosComposer()) {
+            // still on the flat fallback: rebuild so day/night flips and a
+            // late factory handoff both land correctly.
+            meeroApplyIosTopViewCard();
         }
         sendOutlineView.setColorFilter(getThemedColor(Theme.key_telegram_color), PorterDuff.Mode.SRC_IN);
     }
@@ -17126,6 +17160,13 @@ public class ChatActivityEnterView extends FrameLayout implements
             }
             // Send glyph follows the mode too (plane <-> iOS up-arrow).
             meeroApplyIosSendIcon();
+            // v141: the reply/edit card follows the mode as well - applied
+            // when on, restored to the exact bare stock strip when off.
+            if (meeroIosComposer()) {
+                meeroApplyIosTopViewCard();
+            } else {
+                meeroRestoreStockTopViewCard();
+            }
         } catch (Throwable ignore) {
             // Never let a cosmetic swap break the composer.
         }
