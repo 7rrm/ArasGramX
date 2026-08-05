@@ -593,6 +593,57 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
             return android.graphics.PixelFormat.TRANSLUCENT;
         }
     }
+
+    /**
+     * MeeroX v133: explicit DAY skin for the Edit pill. The blur drawable
+     * underneath can only reproduce the provider's wash; on the white day
+     * header that reads as "no glass at all". This overlay adds the two
+     * cues glass needs to survive on white: a brighter translucent fill
+     * and a soft dark hairline around the capsule. Night never uses it.
+     */
+    private static class MeeroPillDaySkin extends android.graphics.drawable.Drawable {
+        private final android.graphics.Paint fill = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+        private final android.graphics.Paint stroke = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+        private final android.graphics.RectF rect = new android.graphics.RectF();
+        private final float radius;
+
+        MeeroPillDaySkin(float radius) {
+            this.radius = radius;
+            fill.setColor(0x61FFFFFF);
+            stroke.setStyle(android.graphics.Paint.Style.STROKE);
+            stroke.setStrokeWidth(dp(1));
+            stroke.setColor(0x14000000);
+        }
+
+        @Override
+        public void draw(android.graphics.Canvas canvas) {
+            final android.graphics.Rect b = getBounds();
+            rect.set(b.left + 0.5f, b.top + 0.5f, b.right - 0.5f, b.bottom - 0.5f);
+            canvas.drawRoundRect(rect, radius, radius, fill);
+            canvas.drawRoundRect(rect, radius, radius, stroke);
+        }
+
+        @Override
+        public void setAlpha(int alpha) {
+            // Multiply, never replace: a parent LayerDrawable propagates
+            // setAlpha(255) to children, which would erase the baked
+            // translucency of both paints.
+            fill.setAlpha((0x61 * alpha) / 255);
+            stroke.setAlpha((0x14 * alpha) / 255);
+        }
+
+        @Override
+        public void setColorFilter(android.graphics.ColorFilter cf) {
+            fill.setColorFilter(cf);
+            stroke.setColorFilter(cf);
+        }
+
+        @Override
+        public int getOpacity() {
+            return android.graphics.PixelFormat.TRANSLUCENT;
+        }
+    }
+
     private ActionBarMenuItem downloadsItem;
     private DownloadProgressIcon downloadProgressIcon;
     private boolean downloadsItemVisible;
@@ -11014,7 +11065,22 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
             final BlurredBackgroundDrawable bg = iBlur3FactoryLiquidGlass.create(
                     item, BlurredBackgroundProviderImpl.headerButton(resourceProvider));
             bg.setRadius(size / 2f);
-            item.setBackground(new MeeroCenteredDrawable(bg, 0, size));
+            // v133 (user follow-up): in DAY mode the provider baked a nearly
+            // invisible white-on-white fill and the label took the header's
+            // pale rose tint - the pill "lost its glass" and the word washed
+            // out. Layer an explicit day skin over the blur (38% white fill +
+            // 8% black hairline) and pin the label to a strong rose, resolved
+            // at build time; the pill is rebuilt on every theme change, so
+            // night keeps the old untouched path.
+            if (Theme.getActiveTheme().isDark()) {
+                item.setBackground(new MeeroCenteredDrawable(bg, 0, size));
+            } else {
+                final android.graphics.drawable.LayerDrawable layers =
+                        new android.graphics.drawable.LayerDrawable(
+                                new android.graphics.drawable.Drawable[]{ bg, new MeeroPillDaySkin(size / 2f) });
+                item.setBackground(new MeeroCenteredDrawable(layers, 0, size));
+                item.setIconColor(0xFFC2255A);
+            }
             item.setClipToOutline(false);
             meeroHeaderGlassDrawables.add(bg);
         } catch (Throwable ignore) {

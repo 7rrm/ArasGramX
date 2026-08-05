@@ -674,6 +674,15 @@ public class ChatActivityEnterView extends FrameLayout implements
     public FrameLayout messageEditTextContainer;
     public FrameLayout textFieldContainer;
     public FrameLayout sendButtonContainer;
+    // MeeroX v133 (iOS composer, approved mock input-bar-mock-v133.html):
+    // wrapper that carries the transplanted attach button as a standalone
+    // glass circle at the far LEFT of the composer. Null = stock merged
+    // pill layout. Reparenting is queued out of onDraw (view-tree edits are
+    // illegal during a draw) and mirrored by the attach button's own
+    // setAlpha/setScale/setVisibility overrides below.
+    private FrameLayout meeroAttachWrap;
+    private boolean meeroAttachSyncPosted;
+    private android.graphics.Paint meeroPillStrokePaint;
     private ImageView sendOutlineView;
     public RichMessageLayout.PreviewView richDraftPreview;
     private boolean richDraftActive;
@@ -2864,6 +2873,39 @@ public class ChatActivityEnterView extends FrameLayout implements
                     if (getAlpha() < 0.5f) return false;
                     return super.dispatchTouchEvent(event);
                 }
+                // MeeroX v133 (iOS composer): every show/hide animation in
+                // this file targets THIS view, whichever parent it sits in.
+                // While transplanted, mirror alpha+visibility onto the wrap
+                // and move scaling onto the wrap too (the glyph keeps scale
+                // 1 so it cannot double-shrink inside its own circle).
+                @Override
+                public void setAlpha(float alpha) {
+                    super.setAlpha(alpha);
+                    if (meeroAttachWrap != null) meeroAttachWrap.setAlpha(alpha);
+                }
+                @Override
+                public void setScaleX(float scaleX) {
+                    if (meeroAttachWrap != null) {
+                        meeroAttachWrap.setScaleX(scaleX);
+                        if (getScaleX() != 1f) super.setScaleX(1f);
+                    } else {
+                        super.setScaleX(scaleX);
+                    }
+                }
+                @Override
+                public void setScaleY(float scaleY) {
+                    if (meeroAttachWrap != null) {
+                        meeroAttachWrap.setScaleY(scaleY);
+                        if (getScaleY() != 1f) super.setScaleY(1f);
+                    } else {
+                        super.setScaleY(scaleY);
+                    }
+                }
+                @Override
+                public void setVisibility(int visibility) {
+                    super.setVisibility(visibility);
+                    if (meeroAttachWrap != null) meeroAttachWrap.setVisibility(visibility);
+                }
             };
             attachButton.setScaleType(ImageView.ScaleType.CENTER);
             attachButton.setColorFilter(new PorterDuffColorFilter(getThemedColor(Theme.key_glass_defaultIcon), PorterDuff.Mode.MULTIPLY));
@@ -2878,6 +2920,11 @@ public class ChatActivityEnterView extends FrameLayout implements
             });
             attachButton.setContentDescription(getString(R.string.AccDescrAttachButton));
             updateFieldRight(1);
+            // MeeroX v133: if the iOS composer switch is on at chat-open,
+            // transplant the attach button into its standalone left circle
+            // now (live toggles afterwards are handled by the onDraw sync
+            // queue in drawBackground).
+            meeroSyncIosAttach();
         }
 
         aiButton = new ImageView(context);
@@ -3263,6 +3310,7 @@ public class ChatActivityEnterView extends FrameLayout implements
             }
 
             private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+            private final Paint meeroStrokePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
             private final RectF backgroundRect = new RectF();
 
             @Override
@@ -3278,7 +3326,15 @@ public class ChatActivityEnterView extends FrameLayout implements
                     }
 
                     final float r = dpf2(19);
-                    paint.setColor(getThemedColor(Theme.key_chat_messagePanelSend));
+                    // MeeroX v133 (iOS composer): the mic/video disc becomes a
+                    // neutral glass circle, matching the attach circle on the
+                    // far side - iOS never paints the accent behind the mic.
+                    // The typed-text SEND button is a different view with its
+                    // own accent circle, so it stays rose untouched.
+                    final boolean meeroIos = meeroIosComposer();
+                    paint.setColor(meeroIos
+                            ? (Theme.getActiveTheme().isDark() ? 0x17FFFFFF : 0xD9FFFFFF)
+                            : getThemedColor(Theme.key_chat_messagePanelSend));
                     final float margin = dpf2(3);
                     final float height = dpf2(38);
                     final float width = dpf2(38);
@@ -3292,6 +3348,12 @@ public class ChatActivityEnterView extends FrameLayout implements
                     canvas.save();
                     canvas.scale(s, s, backgroundRect.centerX(), backgroundRect.centerY());
                     canvas.drawRoundRect(backgroundRect, r, r, paint);
+                    if (meeroIos) {
+                        meeroStrokePaint.setStyle(Paint.Style.STROKE);
+                        meeroStrokePaint.setStrokeWidth(dpf2(1));
+                        meeroStrokePaint.setColor(Theme.getActiveTheme().isDark() ? 0x1FFFFFFF : 0x0D000000);
+                        canvas.drawRoundRect(backgroundRect, r, r, meeroStrokePaint);
+                    }
                     canvas.restore();
                 }
                 super.dispatchDraw(canvas);
@@ -3761,8 +3823,12 @@ public class ChatActivityEnterView extends FrameLayout implements
             @Override
             public void setTranslationX(float translationX) {
                 innerTranslationX = translationX;
+                // MeeroX v133: the -48dp base shift only exists to clear the
+                // attach slot INSIDE the field. Once the attach button is
+                // transplanted out (iOS composer), the scheduled button owns
+                // the rightmost band itself.
                 super.setTranslationX(
-                    dp(-DEFAULT_HEIGHT) +
+                    dp(meeroAttachWrap != null ? 0 : -DEFAULT_HEIGHT) +
                     innerTranslationX + attachLayoutPaddingTranslationX + attachLayoutTranslationX +
                     dp(giftButton != null && giftButton.getVisibility() == View.VISIBLE ? -DEFAULT_HEIGHT : 0) * (giftButton == null ? 0 : giftButton.getAlpha()) +
                     dp(botButton != null && botButton.getVisibility() == VISIBLE ? -DEFAULT_HEIGHT : 0) * (botButton == null ? 0 : botButton.getAlpha())
@@ -4698,7 +4764,14 @@ public class ChatActivityEnterView extends FrameLayout implements
             messageTextTranslationX = offset;
             updateMessageTextParams();
         }
-        attachButton.setTranslationX(attachLayoutPaddingTranslationX + attachLayoutTranslationX + offset);
+        // MeeroX v133: while transplanted, the standalone circle slides, not
+        // the glyph inside it (translation on the glyph would walk it off its
+        // circle). Stock path untouched.
+        if (meeroAttachWrap != null) {
+            meeroAttachWrap.setTranslationX(attachLayoutPaddingTranslationX + attachLayoutTranslationX + offset);
+        } else {
+            attachButton.setTranslationX(attachLayoutPaddingTranslationX + attachLayoutTranslationX + offset);
+        }
         audioVideoSendButton.setTranslationX(offset);
         if (botButton != null) {
             botButton.setTranslationX(offset);
@@ -4812,12 +4885,23 @@ public class ChatActivityEnterView extends FrameLayout implements
         if (!shouldDrawBackground) {
             return;
         }
+        // MeeroX v133 (iOS composer): cheap live-toggle hook. onDraw calls us
+        // every frame; when the switch and the attach button's parent
+        // disagree, queue the reparent OUTSIDE the draw (view-tree edits are
+        // illegal mid-draw) and let it run on the next loop turn.
+        meeroQueueIosAttachSync();
         int top = animatedTop;
         top += Theme.chat_composeShadowDrawable.getIntrinsicHeight() * (1f - composeShadowAlpha);
         if (topView != null && topView.getVisibility() == View.VISIBLE) {
             top += (1f - getTopViewEnterProgress()) * topView.getLayoutParams().height;
         }
         int bottom = top + Theme.chat_composeShadowDrawable.getIntrinsicHeight();
+        // iOS floats the composer directly over the chat wallpaper: no panel
+        // fill, no compose shadow. While a reply/edit preview is pinned
+        // above the field, that strip still needs a backing, so stock runs.
+        if (meeroIosComposer() && (topView == null || topView.getVisibility() != View.VISIBLE)) {
+            return;
+        }
 
         if (withComposeShadowDrawable) {
             Theme.chat_composeShadowDrawable.setAlpha((int) (composeShadowAlpha * 0xFF));
@@ -9787,6 +9871,13 @@ public class ChatActivityEnterView extends FrameLayout implements
             } else {
                 layoutParams.rightMargin = dp(50);
             }
+            // MeeroX v133: transplanted attach lives OUTSIDE the field, so it
+            // must stop reserving its 48dp slot inside the text's right
+            // margin. 50->10, 98->58, 146->106; the other right-side buttons
+            // (bot / silent / scheduled) keep their share.
+            if (meeroAttachWrap != null) {
+                layoutParams.rightMargin = Math.max(dp(10), layoutParams.rightMargin - dp(40));
+            }
         } else {
             if (scheduledButton != null && scheduledButton.getTag() != null) {
                 layoutParams.rightMargin = dp(50);
@@ -11444,6 +11535,23 @@ public class ChatActivityEnterView extends FrameLayout implements
         emojiButton.setBackground(Theme.createSelectorDrawable(getThemedColor(Theme.key_listSelector)));
         deleteRichDraftButton.setColorFilter(new PorterDuffColorFilter(getThemedColor(Theme.key_glass_defaultIcon), PorterDuff.Mode.SRC_IN));
         deleteRichDraftButton.setBackground(Theme.createInsetRoundRectDrawable(getThemedColor(Theme.key_listSelector), dp(19), dp(1), dp(3)));
+        // MeeroX v133 (iOS composer): re-resolve the standalone attach
+        // circle + glyph per theme change (day/night split), the same way
+        // updateAudioVideoSendButtonColor above re-resolves the mic.
+        if (meeroAttachWrap != null && attachButton != null) {
+            attachButton.setColorFilter(new PorterDuffColorFilter(meeroIosGlyphColor(), PorterDuff.Mode.MULTIPLY));
+            android.graphics.drawable.Drawable wd = meeroAttachWrap.getBackground();
+            if (wd instanceof android.graphics.drawable.GradientDrawable) {
+                android.graphics.drawable.GradientDrawable g = (android.graphics.drawable.GradientDrawable) wd;
+                if (Theme.getActiveTheme().isDark()) {
+                    g.setColor(0x17FFFFFF);
+                    g.setStroke(dp(1), 0x1FFFFFFF);
+                } else {
+                    g.setColor(0xD9FFFFFF);
+                    g.setStroke(dp(1), 0x0D000000);
+                }
+            }
+        }
         sendOutlineView.setColorFilter(getThemedColor(Theme.key_telegram_color), PorterDuff.Mode.SRC_IN);
     }
 
@@ -11452,9 +11560,11 @@ public class ChatActivityEnterView extends FrameLayout implements
             return;
         }
         boolean isMenuState = audioVideoSendButton.getCurrentState() == ChatActivityEnterViewAnimatedIconView.State.MENU;
+        // MeeroX v133 (iOS composer): the mic glyph turns neutral grey/white
+        // over its new glass disc; the stock accent disc needed pure white.
         int color = audioVideoButtonContainerForbidden || isMenuState
                 ? getThemedColor(Theme.key_glass_defaultIcon)
-                : Color.WHITE;
+                : (meeroIosComposer() ? meeroIosGlyphColor() : Color.WHITE);
         audioVideoSendButton.setColorFilter(new PorterDuffColorFilter(color, PorterDuff.Mode.SRC_IN));
         audioVideoButtonContainer.setBackground(isMenuState
                 ? Theme.createSelectorDrawable(getThemedColor(Theme.key_listSelector))
@@ -15826,9 +15936,16 @@ public class ChatActivityEnterView extends FrameLayout implements
 
     private void updateAttachButtonTranslationX() {
         if (attachButton == null) return;
-        attachButton.setTranslationX(attachLayoutPaddingTranslationX + attachLayoutTranslationX + (sendButton != null ? (
+        final float tx = attachLayoutPaddingTranslationX + attachLayoutTranslationX + (sendButton != null ? (
             -Math.max(0, sendButton.width() - dp(DEFAULT_HEIGHT + 12)) * sendButton.getAlpha()
-        ) : 0));
+        ) : 0);
+        // MeeroX v133: while transplanted, the standalone circle slides, not
+        // the glyph inside it.
+        if (meeroAttachWrap != null) {
+            meeroAttachWrap.setTranslationX(tx);
+        } else {
+            attachButton.setTranslationX(tx);
+        }
     }
 
     private void updateEmojiButtonParams() {
@@ -16579,6 +16696,123 @@ public class ChatActivityEnterView extends FrameLayout implements
         }
     }
 
+    /**
+     * MeeroX v133: the full iOS-composer gate = the old capsule switch, but
+     * only in real chats. Stories and other composers keep the stock merged
+     * pill so their layouts never meet the transplant.
+     */
+    private boolean meeroIosComposer() {
+        return isChat && !isStories && meeroIosInputPill();
+    }
+
+    /** iOS glyph tone: near-white at night, system grey in day. */
+    private static int meeroIosGlyphColor() {
+        return Theme.getActiveTheme().isDark() ? 0xFFEBEBF2 : 0xFF77777F;
+    }
+
+    /**
+     * Cheap per-frame hook called from drawBackground/onDraw: when the live
+     * switch and the attach button's actual parent disagree, post the
+     * reparent so it runs outside the draw, once.
+     */
+    private void meeroQueueIosAttachSync() {
+        if (meeroAttachSyncPosted) {
+            return;
+        }
+        if (meeroIosComposer() == (meeroAttachWrap != null)) {
+            return;
+        }
+        meeroAttachSyncPosted = true;
+        post(() -> {
+            meeroAttachSyncPosted = false;
+            meeroSyncIosAttach();
+            invalidate();
+        });
+    }
+
+    /**
+     * Moves the attach button between the stock slot (inside the field, far
+     * right) and the iOS slot (own glass circle at the composer's far LEFT),
+     * and shifts the field container's left margin accordingly. Fully
+     * reversible, so flipping the settings switch mid-chat swaps layouts
+     * without recreating the screen.
+     */
+    private void meeroSyncIosAttach() {
+        if (attachButton == null || messageEditTextContainer == null || textFieldContainer == null) {
+            return;
+        }
+        final boolean want = meeroIosComposer();
+        try {
+            if (want && meeroAttachWrap == null) {
+                android.view.ViewParent parent = attachButton.getParent();
+                if (parent instanceof android.view.ViewGroup) {
+                    ((android.view.ViewGroup) parent).removeView(attachButton);
+                }
+                meeroAttachWrap = new FrameLayout(getContext());
+                final android.graphics.drawable.GradientDrawable circle = new android.graphics.drawable.GradientDrawable();
+                circle.setShape(android.graphics.drawable.GradientDrawable.OVAL);
+                if (Theme.getActiveTheme().isDark()) {
+                    circle.setColor(0x17FFFFFF);
+                    circle.setStroke(dp(1), 0x1FFFFFFF);
+                } else {
+                    circle.setColor(0xD9FFFFFF);
+                    circle.setStroke(dp(1), 0x0D000000);
+                }
+                meeroAttachWrap.setBackground(circle);
+                meeroAttachWrap.addView(attachButton,
+                        LayoutHelper.createFrame(DEFAULT_HEIGHT, DEFAULT_HEIGHT, Gravity.CENTER));
+                textFieldContainer.addView(meeroAttachWrap,
+                        LayoutHelper.createFrame(DEFAULT_HEIGHT, DEFAULT_HEIGHT, Gravity.BOTTOM | Gravity.LEFT, 8, 0, 0, 0));
+                attachButton.setColorFilter(new PorterDuffColorFilter(meeroIosGlyphColor(), PorterDuff.Mode.MULTIPLY));
+                attachButton.setTranslationX(0);
+                // Wrapping must not resurrect a hidden button: mirror where
+                // the stock animation state had got to.
+                meeroAttachWrap.setAlpha(attachButton.getAlpha());
+                meeroAttachWrap.setVisibility(attachButton.getVisibility());
+                final FrameLayout.LayoutParams mlp = (FrameLayout.LayoutParams) messageEditTextContainer.getLayoutParams();
+                mlp.leftMargin = dp(48 + 8);
+                messageEditTextContainer.setLayoutParams(mlp);
+                // attachLayout (bot / gift / silent buttons) was padded one
+                // 48dp slot off the field's right edge to clear the stock
+                // attach button; with it gone the band closes up.
+                if (attachLayout != null) {
+                    final FrameLayout.LayoutParams alp = (FrameLayout.LayoutParams) attachLayout.getLayoutParams();
+                    alp.rightMargin = 0;
+                    attachLayout.setLayoutParams(alp);
+                }
+            } else if (!want && meeroAttachWrap != null) {
+                meeroAttachWrap.removeView(attachButton);
+                textFieldContainer.removeView(meeroAttachWrap);
+                meeroAttachWrap = null;
+                messageEditTextContainer.addView(attachButton,
+                        LayoutHelper.createFrame(DEFAULT_HEIGHT, DEFAULT_HEIGHT, Gravity.BOTTOM | Gravity.RIGHT));
+                attachButton.setColorFilter(new PorterDuffColorFilter(getThemedColor(Theme.key_glass_defaultIcon), PorterDuff.Mode.MULTIPLY));
+                attachButton.setTranslationX(attachLayoutPaddingTranslationX + attachLayoutTranslationX + messageTextTranslationX);
+                final FrameLayout.LayoutParams mlp = (FrameLayout.LayoutParams) messageEditTextContainer.getLayoutParams();
+                mlp.leftMargin = 0;
+                messageEditTextContainer.setLayoutParams(mlp);
+                if (attachLayout != null) {
+                    final FrameLayout.LayoutParams alp = (FrameLayout.LayoutParams) attachLayout.getLayoutParams();
+                    alp.rightMargin = dp(DEFAULT_HEIGHT);
+                    attachLayout.setLayoutParams(alp);
+                }
+            }
+            // Mic glyph tint tracks the mode too (it swaps between WHITE on
+            // the stock accent disc and the neutral iOS tone); waiting for
+            // the next updateColors() would leave a stale tint after a live
+            // toggle.
+            updateAudioVideoSendButtonColor();
+            // The text's right margin embeds the attach slot's 48dp; re-run
+            // with the state that produced it so it shrinks (or restores)
+            // in the same frame as the swap rather than on the next event.
+            if (messageEditText != null) {
+                updateFieldRight(lastAttachVisible);
+            }
+        } catch (Throwable ignore) {
+            // Never let a cosmetic swap break the composer.
+        }
+    }
+
     private void meeroDrawInputPill(Canvas canvas, View container) {
         if (!meeroIosInputPill() || messageEditText == null
                 || messageEditText.getVisibility() != VISIBLE
@@ -16588,17 +16822,38 @@ public class ChatActivityEnterView extends FrameLayout implements
         if (meeroPillPaint == null) {
             meeroPillPaint = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
         }
-        final int page = getThemedColor(Theme.key_chat_messagePanelBackground);
-        final boolean dark = tw.nekomimi.nekogram.MeeroShadow.isDark(page);
-        meeroPillPaint.setColor(androidx.core.graphics.ColorUtils.setAlphaComponent(
-                dark ? 0xFFFFFFFF : 0xFF000000, dark ? 20 : 14));
+        if (meeroPillStrokePaint == null) {
+            meeroPillStrokePaint = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+            meeroPillStrokePaint.setStyle(android.graphics.Paint.Style.STROKE);
+            meeroPillStrokePaint.setStrokeWidth(dpf2(1));
+        }
+        final boolean meeroIos = meeroIosComposer();
+        final boolean dark = Theme.getActiveTheme().isDark();
+        // v133: real chats get the full iOS capsule (stronger translucent
+        // fill + hairline, spanning the width like the reference composer);
+        // everywhere else keeps the v1 subtle wash so the feature never
+        // regresses outside its scope.
+        meeroPillPaint.setColor(meeroIos
+                ? (dark ? 0x13FFFFFF : 0xE0FFFFFF)
+                : androidx.core.graphics.ColorUtils.setAlphaComponent(dark ? 0xFFFFFFFF : 0xFF000000, dark ? 20 : 14));
+        meeroPillStrokePaint.setColor(dark ? 0x1CFFFFFF : 0x0F000000);
 
-        // Span the field itself, stretched a little so the text is not flush
-        // against the curve, and clamped to the container so a tall multi-line
-        // draft cannot push the capsule past the panel.
-        final float left = Math.max(0, messageEditText.getX() - dp(8));
-        final float right = Math.min(container.getMeasuredWidth(),
-                messageEditText.getX() + messageEditText.getMeasuredWidth() + dp(8));
+        final float left;
+        final float right;
+        if (meeroIos) {
+            // Full-width capsule inside the (already margined) field
+            // container: the emoji button lives inside it, the attach circle
+            // is outside on the left, the mic/send zone outside on the right.
+            left = dp(6);
+            right = Math.max(left + dp(10), container.getMeasuredWidth() - dp(6));
+        } else {
+            // Span the field itself, stretched a little so the text is not flush
+            // against the curve, and clamped to the container so a tall multi-line
+            // draft cannot push the capsule past the panel.
+            left = Math.max(0, messageEditText.getX() - dp(8));
+            right = Math.min(container.getMeasuredWidth(),
+                    messageEditText.getX() + messageEditText.getMeasuredWidth() + dp(8));
+        }
         final float top = Math.max(0, messageEditText.getY() - dp(4));
         final float bottom = Math.min(container.getMeasuredHeight(),
                 messageEditText.getY() + messageEditText.getMeasuredHeight() + dp(4));
@@ -16611,6 +16866,9 @@ public class ChatActivityEnterView extends FrameLayout implements
         final float radius = Math.min(dp(20), (bottom - top) / 2f);
         AndroidUtilities.rectTmp.set(left, top, right, bottom);
         canvas.drawRoundRect(AndroidUtilities.rectTmp, radius, radius, meeroPillPaint);
+        if (meeroIos) {
+            canvas.drawRoundRect(AndroidUtilities.rectTmp, radius, radius, meeroPillStrokePaint);
+        }
     }
 
     public boolean drawMessageEditText(Canvas canvas, Utilities.Callback0Return<Boolean> drawChild) {

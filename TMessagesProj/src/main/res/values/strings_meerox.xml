@@ -225,8 +225,8 @@
     <string name="meeroIosMenuAnim">Menus grow from the item</string>
     <string name="MeeroIosMenuAnimInfo">A context menu scales up out of the message or row it belongs to, instead of always unfolding from its own corner.</string>
     <string name="StyleIos">iOS</string>
-    <string name="meeroIosInputPill">Rounded message field</string>
-    <string name="MeeroIosInputPillInfo">Draws the composer text area as a filled capsule, the way iOS does, with the emoji and attach buttons left outside it.</string>
+    <string name="meeroIosInputPill">iOS-style composer bar</string>
+    <string name="MeeroIosInputPillInfo">A floating, panel-free composer: attach moves into its own glass circle at the far left, the text sits in a capsule with the emoji inside it, and the mic becomes a neutral circle that turns into a rose send button while typing. Off restores the stock Telegram bar.</string>
     <string name="meeroIosWaveform">iOS voice waveform</string>
     <string name="MeeroIosWaveformInfo">Wider, fully rounded waveform bars on a 4pt pitch, and a lighter recording indicator, matching Telegram for iOS.</string>
     <string name="MeeroSectionCategories">Categories</string>

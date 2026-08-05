@@ -3,13 +3,12 @@ package tw.nekomimi.nekogram.ui
 import android.annotation.SuppressLint
 import android.graphics.Canvas
 import android.graphics.ColorFilter
-import android.graphics.LinearGradient
 import android.graphics.Paint
+import android.graphics.Path
 import android.graphics.PixelFormat
 import android.graphics.Rect
-import android.graphics.RectF
-import android.graphics.Shader
 import android.graphics.drawable.Drawable
+import android.graphics.drawable.LayerDrawable
 import android.view.View
 import android.widget.TextView
 import org.telegram.messenger.AndroidUtilities
@@ -34,13 +33,14 @@ class PopupBuilder @JvmOverloads constructor(anchor: View, dialog: Boolean = fal
     }
 
     /**
-     * MeeroX v132: glass identity for every select popup (approved mock
-     * popup-mock-v132.html). v131 only retinted the sheet, which read as
-     * "nothing changed"; now the popup wears the full Glass Night styling:
-     * fixed sheet color, a 1.5dp rose->violet edge ring, the fixed press
-     * tint (the stock themed ripple leaked through before - plain TextView
-     * rows were never covered by setPopupItemsSelectorColor), and the
-     * CURRENT selection drawn in rose with a gradient check badge.
+     * MeeroX v133: the user picked the "iOS Sheet" re-design (approved mock
+     * popup-options-v133.html, option 1) over v132's edge-ring + badge look.
+     * The popup now reads like a native iPhone menu: a fixed-colour rounded
+     * sheet, NO outer ring of any kind, hairline 0.5dp separators between
+     * rows, the fixed press tint underneath (the stock themed ripple leaked
+     * through before - plain TextView rows were never covered by
+     * setPopupItemsSelectorColor), and the CURRENT selection in rose bold
+     * with a thin outlined check at the reading-end side.
      *
      * Everything lives behind the live master switch: with the design off
      * none of it runs and the popup is byte-identical to stock.
@@ -53,28 +53,40 @@ class PopupBuilder @JvmOverloads constructor(anchor: View, dialog: Boolean = fal
 
             redrawPopup(MeeroGlassTheme.sheetBg())
 
-            // 1.5dp rose->violet edge ring, 12dp to match the stock sheet
-            // asset exactly (popup_fixed_alert4 measures ~11.7dp; the stock
-            // body+shadow 9-patch stays underneath, so nothing breaks).
-            // Drawn by our own tiny Drawable: GradientDrawable.setGradientStroke
-            // is not in this module's compile SDK (v132 build lesson).
-            getPopupLayout().foreground = EdgeRing()
+            // v132 drew a gradient EdgeRing as the popup's foreground. The
+            // iOS Sheet has no ring at all - clear it so a popup re-shown
+            // after a theme change never keeps a stale ring.
+            getPopupLayout().foreground = null
+
+            val hairColor = if (MeeroGlassTheme.isNight()) 0x268C8CA0 else 0x1F141428
 
             for (i in 0 until itemViews.size) {
+
                 val tv = itemViews[i]
-                tv.setBackgroundDrawable(Theme.createSelectorDrawable(MeeroGlassTheme.press(), 1))
+
+                // Press feedback is its own layer, the separator sits on top
+                // of it so a pressed row's tint runs underneath the hairline
+                // exactly like iOS draws it. Last row carries no separator.
+                val press = Theme.createSelectorDrawable(MeeroGlassTheme.press(), 1)
+                tv.background = if (i < itemViews.size - 1) {
+                    LayerDrawable(arrayOf(press, Hairline(hairColor)))
+                } else {
+                    press
+                }
+
                 if (i == selectedIndex) {
                     tv.setTextColor(MeeroGlassTheme.ACC1)
                     tv.paint.isFakeBoldText = true
-                    val badge = CheckBadge()
-                    badge.setBounds(0, 0, AndroidUtilities.dp(18f), AndroidUtilities.dp(18f))
+                    val mark = CheckMark()
+                    mark.setBounds(0, 0, AndroidUtilities.dp(16f), AndroidUtilities.dp(16f))
                     tv.compoundDrawablePadding = AndroidUtilities.dp(8f)
-                    tv.setCompoundDrawablesRelative(null, null, badge, null)
+                    tv.setCompoundDrawablesRelative(null, null, mark, null)
                 } else {
                     tv.setTextColor(MeeroGlassTheme.ink())
                     tv.paint.isFakeBoldText = false
                     tv.setCompoundDrawablesRelative(null, null, null, null)
                 }
+
             }
 
         } catch (ignore: Throwable) {
@@ -83,38 +95,34 @@ class PopupBuilder @JvmOverloads constructor(anchor: View, dialog: Boolean = fal
 
     }
 
-    /** 1.5dp rose->violet rounded ring, drawn over the popup sheet's edge. */
-    private class EdgeRing : Drawable() {
+    /**
+     * 1px hairline pinned to the row's bottom edge, inset 16dp from the
+     * text side like iOS menu separators. Draws nothing on the last row
+     * because the skin simply never assigns it there.
+     */
+    private class Hairline(private val color: Int) : Drawable() {
 
-        private val stroke = Paint(Paint.ANTI_ALIAS_FLAG)
-        private val rectF = RectF()
-
-        init {
-            stroke.style = Paint.Style.STROKE
-            stroke.strokeWidth = AndroidUtilities.dp(1.5f).toFloat()
-        }
-
-        override fun onBoundsChange(bounds: Rect) {
-            stroke.shader = null
-            val inset = stroke.strokeWidth / 2f
-            stroke.shader = LinearGradient(
-                bounds.left.toFloat(), bounds.top.toFloat(),
-                bounds.right.toFloat(), bounds.bottom.toFloat(),
-                intArrayOf(0x88FF4E8A.toInt(), 0x557B5CFF, 0x22FFFFFF),
-                null, Shader.TileMode.CLAMP
-            )
-            rectF.set(
-                bounds.left + inset, bounds.top + inset,
-                bounds.right - inset, bounds.bottom - inset
-            )
-        }
+        private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+        private val baseAlpha = color ushr 24
 
         override fun draw(canvas: Canvas) {
-            canvas.drawRoundRect(rectF, AndroidUtilities.dp(12f).toFloat(), AndroidUtilities.dp(12f).toFloat(), stroke)
+            val b = bounds
+            // Assigning color also rewrites paint.alpha to color's own, so
+            // propagate manually: base alpha times the propagated factor.
+            val propagated = (baseAlpha * propagatedAlpha) / 255
+            paint.color = (propagated shl 24) or (color and 0x00FFFFFF)
+            val one = AndroidUtilities.dpf2(1f).let { if (it < 1f) 1f else it }
+            // Inset from the trailing (reading-end) edge only; in RTL the
+            // compound tick sits at the end, so the line starts clean under
+            // the text block on both directions.
+            val inset = AndroidUtilities.dp(16f).toFloat()
+            canvas.drawRect(b.left + inset, b.bottom - one, b.right.toFloat(), b.bottom.toFloat(), paint)
         }
 
+        private var propagatedAlpha = 255
+
         override fun setAlpha(alpha: Int) {
-            stroke.alpha = alpha
+            propagatedAlpha = alpha
         }
 
         override fun setColorFilter(colorFilter: ColorFilter?) {
@@ -124,39 +132,33 @@ class PopupBuilder @JvmOverloads constructor(anchor: View, dialog: Boolean = fal
         override fun getOpacity(): Int = PixelFormat.TRANSLUCENT
     }
 
-    /** Gradient rose->violet oval with a white check, for the selected row. */
-    private class CheckBadge : Drawable() {
+    /** Thin outlined check in the accent colour, replacing v132's filled badge. */
+    private class CheckMark : Drawable() {
 
-        private val circle = Paint(Paint.ANTI_ALIAS_FLAG)
-        private val mark = Paint(Paint.ANTI_ALIAS_FLAG)
-        private val rectF = RectF()
+        private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+        private val path = Path()
 
         init {
-            mark.color = -0x1 // white
-            mark.textSize = AndroidUtilities.dp(11f).toFloat()
-            mark.isFakeBoldText = true
-            mark.textAlign = Paint.Align.CENTER
-        }
-
-        override fun onBoundsChange(bounds: Rect) {
-            circle.shader = LinearGradient(
-                bounds.left.toFloat(), bounds.top.toFloat(),
-                bounds.right.toFloat(), bounds.bottom.toFloat(),
-                0xFFFF4E8A.toInt(), 0xFF7B5CFF.toInt(), Shader.TileMode.CLAMP
-            )
+            paint.color = MeeroGlassTheme.ACC1
+            paint.style = Paint.Style.STROKE
+            paint.strokeWidth = AndroidUtilities.dpf2(2f)
+            paint.strokeCap = Paint.Cap.ROUND
+            paint.strokeJoin = Paint.Join.ROUND
         }
 
         override fun draw(canvas: Canvas) {
             val b = bounds
-            rectF.set(b.left.toFloat(), b.top.toFloat(), b.right.toFloat(), b.bottom.toFloat())
-            canvas.drawOval(rectF, circle)
-            val cy = rectF.centerY() - (mark.descent() + mark.ascent()) / 2f
-            canvas.drawText("\u2713", rectF.centerX(), cy, mark)
+            val w = b.width().toFloat()
+            val h = b.height().toFloat()
+            path.reset()
+            path.moveTo(b.left + w * 0.22f, b.top + h * 0.55f)
+            path.lineTo(b.left + w * 0.44f, b.top + h * 0.76f)
+            path.lineTo(b.left + w * 0.80f, b.top + h * 0.30f)
+            canvas.drawPath(path, paint)
         }
 
         override fun setAlpha(alpha: Int) {
-            circle.alpha = alpha
-            mark.alpha = alpha
+            paint.alpha = alpha
         }
 
         override fun setColorFilter(colorFilter: ColorFilter?) {
