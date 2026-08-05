@@ -5092,7 +5092,13 @@ public class ChatActivityEnterView extends FrameLayout implements
         }
     }
 
-    public float getVisualHeight() {    }
+    public float getVisualHeight() {
+        float top = animatedTop;
+        if (topView != null && topView.getVisibility() == View.VISIBLE) {
+            top += (1f - getTopViewEnterProgress()) * topView.getLayoutParams().height;
+        }
+        return getMeasuredHeight() - top;
+    }
 
 
     private boolean dismissSendPreviewSent;
