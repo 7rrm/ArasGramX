@@ -1896,49 +1896,54 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
     }
 
     /**
-     * MeeroX (v148, his verdict on v147: "كبسولة الاسم نحيفة جدا / خلي مثل
-     * الرسمي تلي أندرويد ولاكن بكبسولة صغيرة على قد الحجم"): the iOS chat
-     * bar now keeps the OFFICIAL Telegram-Android title typography
-     * (18 semibold / 14 regular) - the capsule itself stays small by
-     * hugging the content (see getVisualWidth + ActionBar's dynamic pill
-     * inset), not by shrinking the text. The small v147 scale (13/9) broke
-     * on his large custom Arabic font (title ellipsized to dots). The
-     * method stays the single pin-point for title metrics; both states are
-     * the stock 18/14 now.
+     * MeeroX (v149, his approved pick "A" from preview-bar-v149b): the iOS
+     * chat bar keeps the 18 title EXACTLY like official Telegram Android
+     * ("خلي مثل الرسمي"), the subtitle drops to 13 and hugs the title with
+     * a -3dp line tuck (his custom Arabic font carries tall line boxes, so
+     * the v148 18/14 spread looked "طويلة"). The capsule's SMALL height
+     * comes from this packed content + the slim dp(6) padding in ActionBar
+     * (~43dp pill on his device = the ellipi reference ratio, 74% band
+     * fill). false restores the exact stock 18/14 with zero translation.
      */
     public void meeroApplyIosTitleMetrics(boolean ios) {
         if (titleTextView != null) {
             titleTextView.setTextSize(18);
         }
         if (subtitleTextView != null) {
-            subtitleTextView.setTextSize(14);
+            subtitleTextView.setTextSize(ios ? 13 : 14);
+            subtitleTextView.setTranslationY(ios ? -dp(3) : 0);
         }
         if (animatedSubtitleTextView != null) {
-            animatedSubtitleTextView.setTextSize(dp(14));
+            animatedSubtitleTextView.setTextSize(dp(ios ? 13 : 14));
+            animatedSubtitleTextView.setTranslationY(ios ? -dp(3) : 0);
         }
         checkActionBar(false);
         requestLayout();
     }
 
     /**
-     * MeeroX (v148): measured height (px) of the title + visible subtitle
-     * text block. SimpleTextView.getTextHeight() is the REAL StaticLayout
-     * line height, so it already absorbs his large custom Arabic font
-     * metrics (the reason every fixed pill height - 44dp, 38dp - clipped
-     * or starved the text). ActionBar's dispatchDraw uses this to size the
-     * iOS name pill vertically ("بكبسولة صغيرة على قد الحجم").
+     * MeeroX (v148/v149): measured height (px) of the title + visible
+     * subtitle text block. SimpleTextView.getTextHeight() is the REAL
+     * StaticLayout line height, so it already absorbs his large custom
+     * Arabic font metrics. v149: when both lines exist, subtract the
+     * dp(3) line tuck that meeroApplyIosTitleMetrics applies visually, so
+     * ActionBar's pill math matches what he actually sees.
      */
     public int meeroTextBlockHeight() {
         int h = 0;
         if (titleTextView != null) {
             h += titleTextView.getTextHeight();
         }
+        int subH = 0;
         if (subtitleTextView != null && subtitleTextView.getVisibility() == VISIBLE) {
-            h += subtitleTextView.getTextHeight();
+            subH = subtitleTextView.getTextHeight();
         } else if (animatedSubtitleTextView != null && animatedSubtitleTextView.getVisibility() == VISIBLE) {
-            h += animatedSubtitleTextView.getTextHeight();
+            subH = animatedSubtitleTextView.getTextHeight();
         }
-        return h;
+        if (subH > 0) {
+            h += subH - dp(3); // v149 "-3dp" line tuck (his pick A)
+        }
+        return Math.max(h, 0);
     }
 
     /**

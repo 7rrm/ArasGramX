@@ -790,16 +790,15 @@ public class ChatActivityEnterView extends FrameLayout implements
         }
         if (topView.getLayoutParams() instanceof MarginLayoutParams) {
             final MarginLayoutParams lp = (MarginLayoutParams) topView.getLayoutParams();
-            // v142 (user verdict, mock "preview-topbar-reply-v142"): the card
-            // must sit on the FIELD's edges, not span the whole row over the
-            // attach/mic circles (the "طاخة" he felt). 62 = container left
-            // margin (48+8) + capsule inset 6; 54 = container right margin
-            // (48, mic slot) + inset 6.
-            // (v148: exact restore of this state - his verdict on the v147
-            // fused R1 strip: "الرد مدموج مع حقل الكتابه / خلي منفصل /
-            // قبله كان بدون مشاكل".)
-            lp.leftMargin = dp(62);
-            lp.rightMargin = dp(54);
+            // v149 (his approved pick from mock "preview-bar-reply-v149" +
+            // "preview-bar-v149b"): the reply card spans the WHOLE row -
+            // "اريده على طول حقل كتابه / يعني فوق المشبك ولفويس" - 8dp screen
+            // insets on both sides so it runs from above the attach circle
+            // to above the mic circle, while staying a SEPARATE floating
+            // card (no fusion slide, no padding shifts; the v147 fused R1
+            // and the v142 62/54 field-aligned variants are both retired).
+            lp.leftMargin = dp(8);
+            lp.rightMargin = dp(8);
             topView.setLayoutParams(lp);
         }
         topView.invalidate();

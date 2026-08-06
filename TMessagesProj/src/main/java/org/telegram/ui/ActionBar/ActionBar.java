@@ -2463,22 +2463,19 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
                 right = rightDefault;
             }
 
-            // MeeroX (v148, his verdict: "كبسولة الاسم نحيفة جدا / خلي مثل
-            // الرسمي / بكبسولة صغيرة على قد الحجم"): pill height now HUGS
-            // the real text block (meeroTextBlockHeight measures the actual
-            // StaticLayout lines, so a large custom Arabic font can no
-            // longer clip or starve inside a fixed 38/44dp shell) + dp(12)
-            // vertical padding, clamped between dp(40) and the full 58dp
-            // band. Stock-font devices land ~46-50dp (reference pill is
-            // ~77% of its band), his device fills more of the band exactly
-            // like official Telegram Android's full-height title. Rings and
-            // circles are untouched.
+            // MeeroX (v149, his approved pick "A" from preview-bar-v149b):
+            // pill = packed text block (18 title / 13 tucked subtitle) +
+            // slim dp(6) total vertical padding -> ~43dp on his device
+            // (74% band fill = the ellipi reference ratio; the v148 dp(12)
+            // padding made 53dp "طويلة"). Clamped dp(38)..band so a
+            // title-only chat never gets a sliver-pill. Rings/circles and
+            // the hug-width (v148) are untouched.
             int meeroPillInset = 0;
             if (meeroIosFrostedStrip) {
                 final int meeroSpan = b - t;
                 final int meeroContentH = chatAvatarContainer != null ? chatAvatarContainer.meeroTextBlockHeight() : 0;
-                int meeroPillH = meeroContentH > 0 ? meeroContentH + dp(12) : meeroSpan - dp(4);
-                meeroPillH = Math.max(dp(40), Math.min(meeroPillH, meeroSpan));
+                int meeroPillH = meeroContentH > 0 ? meeroContentH + dp(6) : meeroSpan - dp(4);
+                meeroPillH = Math.max(dp(38), Math.min(meeroPillH, meeroSpan));
                 meeroPillInset = (meeroSpan - meeroPillH) / 2;
             }
             glassDrawable.setBounds(left, t + meeroPillInset, right, b - meeroPillInset);
