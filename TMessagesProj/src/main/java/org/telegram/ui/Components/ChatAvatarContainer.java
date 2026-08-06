@@ -1896,20 +1896,21 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
     }
 
     /**
-     * MeeroX (v146): official Telegram-iOS ChatTitleComponent typography for
-     * the iOS chat bar - title 17 semibold, subtitle 12 regular (stock
-     * Android bar uses 18/14). Passing false restores the exact stock sizes.
-     * The smaller subtitle is a big part of why the iPhone pill looks slim.
+     * MeeroX (v147, his mid-scale pick "B" from preview-bar-reply-v147):
+     * reference-image proportions (ellipi header ~1.3x) - title 13 semibold,
+     * subtitle 9. v146 used the official Apple metrics (17/12) which he
+     * rejected as \"طويل/كبير\" vs his reference picture. false restores the
+     * exact stock 18/14 sizes.
      */
     public void meeroApplyIosTitleMetrics(boolean ios) {
         if (titleTextView != null) {
-            titleTextView.setTextSize(ios ? 17 : 18);
+            titleTextView.setTextSize(ios ? 13 : 18);
         }
         if (subtitleTextView != null) {
-            subtitleTextView.setTextSize(ios ? 12 : 14);
+            subtitleTextView.setTextSize(ios ? 9 : 14);
         }
         if (animatedSubtitleTextView != null) {
-            animatedSubtitleTextView.setTextSize(dp(ios ? 12 : 14));
+            animatedSubtitleTextView.setTextSize(dp(ios ? 9 : 14));
         }
         checkActionBar(false);
         requestLayout();

@@ -790,14 +790,16 @@ public class ChatActivityEnterView extends FrameLayout implements
         }
         if (topView.getLayoutParams() instanceof MarginLayoutParams) {
             final MarginLayoutParams lp = (MarginLayoutParams) topView.getLayoutParams();
-            // v142 (user verdict, mock "preview-topbar-reply-v142"): the card
-            // must sit on the FIELD's edges, not span the whole row over the
-            // attach/mic circles (the "طاخة" he felt). 62 = container left
-            // margin (48+8) + capsule inset 6; 54 = container right margin
-            // (48, mic slot) + inset 6.
-            lp.leftMargin = dp(62);
-            lp.rightMargin = dp(54);
+            // v147 R1 (his pick from mock "preview-bar-reply-v147"): FUSED
+            // strip, the official ReplyAccessoryPanelNode anatomy - the strip
+            // spans the panel (8dp screen inset, incl. the attach/mic
+            // columns) and its colored reply line opens exactly at the field
+            // text column (8 margin + 48 padding = the capsule's dp(56)), the
+            // ✕ close lands in the mic column like iOS's trailing close.
+            lp.leftMargin = dp(8);
+            lp.rightMargin = dp(8);
             topView.setLayoutParams(lp);
+            topView.setPadding(dp(48), 0, 0, 0);
         }
         topView.invalidate();
     }
@@ -813,6 +815,7 @@ public class ChatActivityEnterView extends FrameLayout implements
             lp.rightMargin = 0;
             topView.setLayoutParams(lp);
         }
+        topView.setPadding(0, 0, 0, 0);
         topView.invalidate();
     }
 
@@ -17403,7 +17406,12 @@ public class ChatActivityEnterView extends FrameLayout implements
         if (topView != null) {
             final float y = getMeasuredHeight() - animatorInputFieldHeight.getFactor();
 
-            topView.setTranslationY(y - topView.getMeasuredHeight() * visibility);
+            // MeeroX v147 R1 (his pick from the mock): slide the reply strip
+            // down so its bottom edge overlaps the capsule's top rim - the
+            // official ReplyAccessoryPanelNode is glued to the input panel,
+            // not a floating card with a gap (gap measured ~11dp, dp(9)
+            // lands the strip bottom a whisker under the capsule's top rim).
+            topView.setTranslationY(y - topView.getMeasuredHeight() * visibility + (meeroIosComposer() ? dp(9) : 0));
             topView.setVisibility(visibility > 0 ? VISIBLE : GONE);
         }
 

@@ -2463,10 +2463,11 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
                 right = rightDefault;
             }
 
-            // MeeroX (v146, iOS ChatTitleComponent): under the iOS chat bar the
-            // name pill is 44pt tall (22pt radius) inside the 58dp band, not
-            // full-band height - the back/photo circles keep the full band.
-            final int meeroPillInset = meeroIosFrostedStrip ? dp(7) : 0;
+            // MeeroX (v147, his mid-scale pick "B"): under the iOS chat bar the
+            // name pill is 38dp tall inside the 58dp band, not full-band
+            // height - the back/photo circles keep the full band (v146=44dp,
+            // he judged it still too big vs the reference picture).
+            final int meeroPillInset = meeroIosFrostedStrip ? dp(10) : 0;
             glassDrawable.setBounds(left, t + meeroPillInset, right, b - meeroPillInset);
             glassDrawable.draw(canvas);
         }
