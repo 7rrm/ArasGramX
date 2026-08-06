@@ -17671,7 +17671,7 @@ public class ChatActivity extends BaseFragment implements
                     // white chevron + compact light badge.
                     meeroBarAvatarItem.setOnClickListener(v -> meeroShowIosChatBarSheet(av));
                     avatarContainer.setMeeroIosAvatarTap(v -> meeroShowIosChatBarSheet(av));
-                    avatarContainer.meeroApplyIosTitleMetrics(true); // v146: official iOS 17/12 title typography
+                    avatarContainer.meeroApplyIosTitleMetrics(true); // v148: pins stock 18/14 title typography (his verdict: official-Android text, small hugging capsule)
                     actionBar.meeroIosFrostedStrip = true;
                     if (actionBar.backButtonImageView != null) {
                         if (meeroSavedBackArrowTint == null) {

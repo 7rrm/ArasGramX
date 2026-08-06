@@ -1896,24 +1896,49 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
     }
 
     /**
-     * MeeroX (v147, his mid-scale pick "B" from preview-bar-reply-v147):
-     * reference-image proportions (ellipi header ~1.3x) - title 13 semibold,
-     * subtitle 9. v146 used the official Apple metrics (17/12) which he
-     * rejected as \"طويل/كبير\" vs his reference picture. false restores the
-     * exact stock 18/14 sizes.
+     * MeeroX (v148, his verdict on v147: "كبسولة الاسم نحيفة جدا / خلي مثل
+     * الرسمي تلي أندرويد ولاكن بكبسولة صغيرة على قد الحجم"): the iOS chat
+     * bar now keeps the OFFICIAL Telegram-Android title typography
+     * (18 semibold / 14 regular) - the capsule itself stays small by
+     * hugging the content (see getVisualWidth + ActionBar's dynamic pill
+     * inset), not by shrinking the text. The small v147 scale (13/9) broke
+     * on his large custom Arabic font (title ellipsized to dots). The
+     * method stays the single pin-point for title metrics; both states are
+     * the stock 18/14 now.
      */
     public void meeroApplyIosTitleMetrics(boolean ios) {
         if (titleTextView != null) {
-            titleTextView.setTextSize(ios ? 13 : 18);
+            titleTextView.setTextSize(18);
         }
         if (subtitleTextView != null) {
-            subtitleTextView.setTextSize(ios ? 9 : 14);
+            subtitleTextView.setTextSize(14);
         }
         if (animatedSubtitleTextView != null) {
-            animatedSubtitleTextView.setTextSize(dp(ios ? 9 : 14));
+            animatedSubtitleTextView.setTextSize(dp(14));
         }
         checkActionBar(false);
         requestLayout();
+    }
+
+    /**
+     * MeeroX (v148): measured height (px) of the title + visible subtitle
+     * text block. SimpleTextView.getTextHeight() is the REAL StaticLayout
+     * line height, so it already absorbs his large custom Arabic font
+     * metrics (the reason every fixed pill height - 44dp, 38dp - clipped
+     * or starved the text). ActionBar's dispatchDraw uses this to size the
+     * iOS name pill vertically ("بكبسولة صغيرة على قد الحجم").
+     */
+    public int meeroTextBlockHeight() {
+        int h = 0;
+        if (titleTextView != null) {
+            h += titleTextView.getTextHeight();
+        }
+        if (subtitleTextView != null && subtitleTextView.getVisibility() == VISIBLE) {
+            h += subtitleTextView.getTextHeight();
+        } else if (animatedSubtitleTextView != null && animatedSubtitleTextView.getVisibility() == VISIBLE) {
+            h += animatedSubtitleTextView.getTextHeight();
+        }
+        return h;
     }
 
     /**
@@ -1952,14 +1977,15 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
         if (hasVisibleAvatar()) {
             width += dp(52 + 12);
         } else {
-            // MeeroX (v146, ported from Telegram-iOS ChatTitleComponent.swift):
-            // the title pill is content + 14pt side insets (28dp total - the
-            // remaining dp(12) is added by the pill's own outer padding in
-            // ActionBar) with a minimum content width of 150pt, so the pill is
-            // a steady "iPhone size" for short names and grows with long ones
-            // (his ask: "خلي حجم ثابت مثل حجم الآيفون أما إذا كان اسم كبير خلي
-            // متحرك"). Final pill floor = dp(166) + dp(12) = 178dp = 150+28.
-            width = Math.max(width + dp(16), dp(166));
+            // MeeroX (v148, his verdict: "بكبسولة صغيرة على قد الحجم"):
+            // the content width hugs the text exactly - content + dp(16),
+            // NO minimum floor any more. The v146 150pt floor (final pill
+            // 178dp) made short names/subtitles like "عضو واحد" float
+            // inside a "طويلة" stretched capsule (his v146+ref screenshots).
+            // ActionBar adds its own p*2 = dp(12) outer pad on top, for a
+            // final ~dp(28) total horizontal padding like the reference
+            // (ellipi/iOS) pill.
+            width = width + dp(16);
         }
         return (int) width;
     }
