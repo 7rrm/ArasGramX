@@ -17695,7 +17695,7 @@ public class ChatActivity extends BaseFragment implements
             items.add(LocaleController.getString(muted ? R.string.Unmute : R.string.Mute));
             actions.add(() -> toggleMute(false));
             if (avatarContainer != null) {
-                items.add(LocaleController.getString(R.string.Profile));
+                items.add(LocaleController.getString(R.string.ViewProfile));
                 actions.add(() -> avatarContainer.openProfile(true));
             }
             tw.nekomimi.nekogram.ui.PopupBuilder builder = new tw.nekomimi.nekogram.ui.PopupBuilder(anchor);
