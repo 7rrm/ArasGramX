@@ -192,6 +192,9 @@ public class ItemOptions {
 
     private DimView dimView;
     private ViewTreeObserver.OnPreDrawListener preDrawListener;
+    // MeeroX: set in openAt when a too-tall message forced the menu to dock at
+    // the lower edge; DimView then slides the scrimmed message up to moveToY.
+    private boolean meeroTallShift;
 
     private android.graphics.Rect viewAdditionalOffsets = new android.graphics.Rect();
     private ViewGroup layout;
@@ -1512,7 +1515,19 @@ public class ItemOptions {
                 y -= layout.getMeasuredHeight();
                 if (allowCenter && Math.max(0, y + scrimHeight) + layout.getMeasuredHeight() > point[1] + scrimViewBounds.top && scrimViewBounds.height() == scrimView.getHeight()) {
                     above = false;
-                    y = (container.getHeight() - layout.getMeasuredHeight()) / 2f - scrimHeight - container.getY();
+                    // MeeroX: the stock fallback centered the menu ON TOP of a message too
+                    // tall to fit above or below - exactly the bug he reported. Instead dock
+                    // the menu at the lower edge and slide the scrimmed message up so its
+                    // bottom ends 8dp above the menu (his approved "stacking-shift" mock).
+                    // This branch runs ONLY when nothing fits (the previously-broken case);
+                    // normal menus never reach it, and there is no separate switch by his
+                    // request - blur/skin switches stay the only ones.
+                    final float meeroMenuTop = Math.min(container.getHeight(), bottomLimit) - layout.getMeasuredHeight() - dp(8);
+                    y = meeroMenuTop - scrimHeight - container.getY();
+                    meeroTallShift = true;
+                    if (dimView != null) {
+                        dimView.moveToY = meeroMenuTop - dp(8) - scrimViewBounds.height();
+                    }
                 }
             }
             Y = (int) (y + scrimHeight + container.getY()); // under scrimView
@@ -2133,6 +2148,9 @@ public class ItemOptions {
                 if (allowMoveScrim) {
                     getPointOnScreen(scrimView, pointContainer, point);
                     canvas.translate(lerp(point[0], moveToX, dimProgress), lerp(point[1], moveToY, dimProgress));
+                } else if (meeroTallShift) {
+                    // MeeroX: slide the too-tall message up (Y only) so it ends above the docked menu.
+                    canvas.translate(point[0], lerp(point[1], moveToY, dimProgress));
                 } else {
                     canvas.translate(point[0], point[1]);
                 }
@@ -2177,6 +2195,9 @@ public class ItemOptions {
                 if (allowMoveScrim) {
                     getPointOnScreen(scrimView, pointContainer, point);
                     canvas.translate(lerp(point[0], moveToX, moveProgress), lerp(point[1], moveToY, moveProgress));
+                } else if (meeroTallShift) {
+                    // MeeroX: slide the too-tall message up (Y only) so it ends above the docked menu.
+                    canvas.translate(point[0], lerp(point[1], moveToY, moveProgress));
                 } else {
                     canvas.translate(point[0], point[1]);
                 }
