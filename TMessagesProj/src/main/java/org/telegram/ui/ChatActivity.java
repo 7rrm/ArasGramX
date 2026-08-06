@@ -1766,6 +1766,7 @@ public class ChatActivity extends BaseFragment implements
     private final static int bot_settings = 31;
     private final static int call = 32;
     private final static int video_call = 33;
+    private final static int meero_bar_avatar = 91;
 
     private final static int attach_photo = 0;
     private final static int attach_gallery = 1;
@@ -17604,7 +17605,7 @@ public class ChatActivity extends BaseFragment implements
                 && chatMode == 0 && threadMessageId == 0;
     }
 
-    private boolean meeroAvatarDetached;
+    private ActionBarMenuItem meeroBarAvatarItem;
 
     /**
      * Applies/restores the iPhone header anatomy:
@@ -17628,35 +17629,52 @@ public class ChatActivity extends BaseFragment implements
             if (headerItem != null) {
                 headerItem.setVisibility(on ? View.GONE : View.VISIBLE);
             }
-            if (avatarContainer != null && avatarContainer.avatarImageView != null && actionBar != null) {
+            if (avatarContainer != null && avatarContainer.avatarImageView != null && actionBar != null && actionBar.menu != null) {
                 final BackupImageView av = avatarContainer.avatarImageView;
-                if (on && !meeroAvatarDetached && av.getParent() == avatarContainer) {
-                    avatarContainer.removeView(av);
-                    actionBar.addView(av, LayoutHelper.createFrame(42, 42, Gravity.TOP | Gravity.RIGHT,
-                            0, (actionBar.getOccupyStatusBar() ? AndroidUtilities.statusBarHeight : 0) + dp(7), dp(6), 0));
-                    // The tools the clean bar no longer shows: one long-press
-                    // away, exactly like the approved mock's flow card.
-                    av.setOnLongClickListener(v -> {
-                        meeroShowIosChatBarSheet(av);
-                        return true;
-                    });
+                if (on) {
+                    // v142-follow-up (his screenshot: "صار فقط 2 حقول وحقل
+                    // طويل مومثل المعاينه"): v142 first added the photo as a
+                    // plain ActionBar child - but ActionBar.onLayout only
+                    // ever positions its own known child set, so the photo
+                    // was never laid out (invisible), and with the menu left
+                    // empty the glass pill spanned to the screen edge. The
+                    // photo now lives as the LAST ITEM of the bar's own menu:
+                    // stock machinery lays it out, and the non-zero menu
+                    // width pulls the pill's right edge back from the avatar
+                    // band exactly like the kebab era.
+                    if (meeroBarAvatarItem == null) {
+                        meeroBarAvatarItem = actionBar.menu.addItemWithWidth(meero_bar_avatar, 0, dp(48), null);
+                        meeroBarAvatarItem.getIconView().setVisibility(View.GONE);
+                    }
+                    meeroBarAvatarItem.setVisibility(View.VISIBLE);
+                    if (av.getParent() != meeroBarAvatarItem) {
+                        if (av.getParent() instanceof ViewGroup) {
+                            ((ViewGroup) av.getParent()).removeView(av);
+                        }
+                        meeroBarAvatarItem.addView(av, LayoutHelper.createFrame(42, 42, Gravity.CENTER));
+                        // The tools the clean bar no longer shows: one long-
+                        // press away, exactly like the approved mock's flow.
+                        av.setOnLongClickListener(v -> {
+                            meeroShowIosChatBarSheet(av);
+                            return true;
+                        });
+                    }
                     avatarContainer.setOnLongClickListener(v -> {
                         meeroShowIosChatBarSheet(avatarContainer);
                         return true;
                     });
-                    meeroAvatarDetached = true;
                     avatarContainer.requestLayout();
-                    actionBar.requestLayout();
-                } else if (!on && meeroAvatarDetached) {
-                    if (av.getParent() instanceof ViewGroup) {
-                        ((ViewGroup) av.getParent()).removeView(av);
+                } else if (meeroBarAvatarItem != null) {
+                    meeroBarAvatarItem.setVisibility(View.GONE);
+                    if (av.getParent() != avatarContainer) {
+                        if (av.getParent() instanceof ViewGroup) {
+                            ((ViewGroup) av.getParent()).removeView(av);
+                        }
+                        avatarContainer.addView(av);
+                        av.setOnLongClickListener(null);
                     }
-                    avatarContainer.addView(av);
-                    av.setOnLongClickListener(null);
                     avatarContainer.setOnLongClickListener(null);
-                    meeroAvatarDetached = false;
                     avatarContainer.requestLayout();
-                    actionBar.requestLayout();
                 }
             }
         } catch (Throwable ignore) {
