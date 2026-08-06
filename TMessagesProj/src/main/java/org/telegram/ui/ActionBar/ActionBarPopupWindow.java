@@ -315,6 +315,7 @@ public class ActionBarPopupWindow extends PopupWindow {
         private Drawable meeroCardDrawable;
         private final Paint meeroSepPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         private HashMap<ActionBarMenuSubItem, int[]> meeroSavedSel;
+        private java.util.function.BooleanSupplier meeroCfgOverride;
 
         public void meeroEnableIosMenuSkin() {
             meeroSkinEligible = true;
@@ -322,7 +323,21 @@ public class ActionBarPopupWindow extends PopupWindow {
             requestLayout();
         }
 
+        // MeeroX: same opt-in as above, but the skin follows a caller-provided
+        // switch (used by the message context-menu so it can have its own setting).
+        public void meeroEnableIosMenuSkin(java.util.function.BooleanSupplier cfg) {
+            meeroCfgOverride = cfg;
+            meeroEnableIosMenuSkin();
+        }
+
         private boolean meeroCfg() {
+            if (meeroCfgOverride != null) {
+                try {
+                    return meeroCfgOverride.getAsBoolean();
+                } catch (Throwable ignore) {
+                    return false;
+                }
+            }
             try {
                 return tw.nekomimi.nekogram.NekoConfig.meeroIosPopupMenu.Bool();
             } catch (Throwable ignore) {

@@ -915,6 +915,8 @@
     <string name="MeeroIosMenuAnimInfo">قائمة السياق تتوسّع من الرسالة أو الصف الي تخصّه، بدل ما تنفتح دائماً من زاويتها.</string>
     <string name="meeroIosPopupMenu">قوائم منبثقة بنمط آيفون</string>
     <string name="MeeroIosPopupMenuInfo">قائمة ⋮ بشكل الآيفون: بطاقة مدوّرة، الأيقونة بالطرف المقابل، فواصل شعرية، وخيارات الحذف ببطاقة حمراء منفصلة.</string>
+    <string name="meeroIosMsgMenu">قائمة سياق الرسالة بنمط آيفون</string>
+    <string name="MeeroIosMsgMenuInfo">قائمة الضغطة المطولة على الرسالة بشكل الآيفون: نفس البطاقة والفواصل والأيقونات بالطرف المقابل، والحذف ببطاقة حمراء منفصلة.</string>
     <string name="StyleIos">آي أو إس</string>
     <string name="meeroIosInputPill">شريط الكتابة مثل آيفون</string>
     <string name="MeeroIosInputPillInfo">لوحة شفافة فوق خلفية الدردشة: المشبك بدائرة زجاجية أقصى اليسار، كبسولة حقل بداخلها الإيموجي، والمايك دائرة رمادية تتحول لزر إرسال وردي عند الكتابة. إطفاءه يرجع تصميم تليكرام الرسمي.</string>

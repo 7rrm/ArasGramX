@@ -40,7 +40,7 @@ public class ActionBarMenuSubItem extends FrameLayout {
      */
     private static boolean meeroIosRows() {
         try {
-            return tw.nekomimi.nekogram.NekoConfig.meeroIosMenuAnim.Bool() || tw.nekomimi.nekogram.NekoConfig.meeroIosPopupMenu.Bool();
+            return tw.nekomimi.nekogram.NekoConfig.meeroIosMenuAnim.Bool() || tw.nekomimi.nekogram.NekoConfig.meeroIosPopupMenu.Bool() || tw.nekomimi.nekogram.NekoConfig.meeroIosMsgMenu.Bool();
         } catch (Throwable ignore) {
             return false;
         }
@@ -50,10 +50,12 @@ public class ActionBarMenuSubItem extends FrameLayout {
      * MeeroX: full iOS popup look (v153) - gates only what the popup-menu
      * switch owns (44dp rows, trailing icon, end-side text gap). The shared
      * row cosmetics above continue to honour the older menu-animation switch.
+     * The message context-menu switch (v155) shares the same row metrics so
+     * both menus look identical, like iOS.
      */
     private static boolean meeroIosPopup() {
         try {
-            return tw.nekomimi.nekogram.NekoConfig.meeroIosPopupMenu.Bool();
+            return tw.nekomimi.nekogram.NekoConfig.meeroIosPopupMenu.Bool() || tw.nekomimi.nekogram.NekoConfig.meeroIosMsgMenu.Bool();
         } catch (Throwable ignore) {
             return false;
         }

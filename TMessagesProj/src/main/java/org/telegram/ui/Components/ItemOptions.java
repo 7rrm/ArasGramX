@@ -283,6 +283,14 @@ public class ItemOptions {
                 super.onMeasure(widthMeasureSpec, heightMeasureSpec);
             }
         };
+        // MeeroX: opt the message context-menu into the iOS skin, gated by its own switch (default ON; OFF = stock).
+        lastLayout.meeroEnableIosMenuSkin(() -> {
+            try {
+                return tw.nekomimi.nekogram.NekoConfig.meeroIosMsgMenu.Bool();
+            } catch (Throwable ignore) {
+                return false;
+            }
+        });
         lastLayout.setDispatchKeyEventListener(keyEvent -> {
             if (keyEvent.getKeyCode() == KeyEvent.KEYCODE_BACK && keyEvent.getRepeatCount() == 0 && actionBarPopupWindow != null && actionBarPopupWindow.isShowing()) {
                 dismiss();
@@ -844,6 +852,14 @@ public class ItemOptions {
             layout.addView(lastLayout, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, maxHeight > 0 ? maxHeight / AndroidUtilities.density : LayoutHelper.WRAP_CONTENT, Gravity.TOP));
         }
         lastLayout = new ActionBarPopupWindow.ActionBarPopupWindowLayout(context, R.drawable.popup_fixed_alert4, resourcesProvider, !vertical ? ActionBarPopupWindow.ActionBarPopupWindowLayout.FLAG_DONT_USE_SCROLLVIEW : 0);
+        // MeeroX: opt the message context-menu into the iOS skin, gated by its own switch (default ON; OFF = stock).
+        lastLayout.meeroEnableIosMenuSkin(() -> {
+            try {
+                return tw.nekomimi.nekogram.NekoConfig.meeroIosMsgMenu.Bool();
+            } catch (Throwable ignore) {
+                return false;
+            }
+        });
         lastLayout.setDispatchKeyEventListener(keyEvent -> {
             if (keyEvent.getKeyCode() == KeyEvent.KEYCODE_BACK && keyEvent.getRepeatCount() == 0 && actionBarPopupWindow != null && actionBarPopupWindow.isShowing()) {
                 dismiss();
@@ -1507,7 +1523,21 @@ public class ItemOptions {
             lastLayout.swipeBackGravityBottom = true;
         }
 
-        if (allowMoveScrim && dimView != null) {
+        // MeeroX: message taller than the space left under it - dock the menu to
+        // the lower edge and shift the message up just above it, so the menu never
+        // lands on top of the message. Only activates in the currently-broken
+        // tall-message case; the normal branch below is untouched. No separate
+        // switch per user request - the existing blur/skin switches stay the only ones.
+        boolean meeroTooTall = allowMoveScrim && dimView != null && scrimView != null
+            && scrimViewBounds.bottom + layout.getMeasuredHeight() + dp(16) > Math.min(container.getHeight(), bottomLimit);
+        if (meeroTooTall) {
+            Y = Math.min(container.getHeight(), bottomLimit) - layout.getMeasuredHeight() - dp(8);
+            dimView.moveToY = Y - scrimViewBounds.bottom - dp(8);
+            X = (int) (dimView.moveToX + scrimViewBounds.right - layout.getMeasuredWidth() + dp(4));
+            if (allowMoveScrimGravity == Gravity.LEFT) {
+                X = (int) (dimView.moveToX - dp(8));
+            }
+        } else if (allowMoveScrim && dimView != null) {
 //            float layoutTop = Utilities.clamp(Y + this.translateY, container.getHeight() - layout.getMeasuredHeight(), 0);
 //            float layoutBottom = layoutTop + layout.getMeasuredHeight();
 //            if (AndroidUtilities.intersect1d(layoutTop, layoutBottom, point[1], point[1] + scrimViewBounds.bottom)) {
