@@ -194,6 +194,7 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
         }
 
         final boolean avatarClickable = parentFragment != null && (parentFragment.getChatMode() == 0 || parentFragment.getChatMode() == ChatActivity.MODE_SUGGESTIONS || (parentFragment.getChatMode() == ChatActivity.MODE_PINNED && isCentered())) && !UserObject.isReplyUser(parentFragment.getCurrentUser()) && (parentFragment.getCurrentUser() == null || parentFragment.getCurrentUser().id != UserObject.VERIFY);
+        meeroAvatarClickable = avatarClickable; // MeeroX: captured so setMeeroIosAvatarTap(null) restores the exact stock state
         avatarImageView = new BackupImageView(context) {
 
             StoriesUtilities.AvatarStoryParams params = new StoriesUtilities.AvatarStoryParams(true) {
@@ -775,7 +776,14 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         int padding = isCentered() ? dp(isPreviewMode() ? 35 : 10) : 0;
         final int width = MeasureSpec.getSize(widthMeasureSpec);
-        final int availableWidth = width - dp(((avatarImageView.getVisibility() == VISIBLE || isCentered()) ? 54 : 0) + 16);
+        // MeeroX (v144): reserve the 54dp avatar slot only while the avatar
+        // actually lives in this container. Under the iOS chat-bar layout the
+        // photo is detached into the bar's own edge item; keeping the
+        // reservation measured the texts ~54dp narrower than the pill and the
+        // "centered" title landed ~30dp left of the pill's true center (his
+        // v143 pixel check: name center x497 vs pill center x585).
+        final boolean meeroAvatarHere = avatarImageView.getParent() == this;
+        final int availableWidth = width - dp((meeroAvatarHere && (avatarImageView.getVisibility() == VISIBLE || isCentered()) ? 54 : 0) + 16);
         avatarImageView.measure(MeasureSpec.makeMeasureSpec(dp(avatarSizeInDp) - 2, MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(dp(avatarSizeInDp) - 2, MeasureSpec.EXACTLY));
         titleTextView.measure(MeasureSpec.makeMeasureSpec(availableWidth - padding, MeasureSpec.AT_MOST), MeasureSpec.makeMeasureSpec(dp(24 + 8), MeasureSpec.AT_MOST));
         if (subtitleTextView != null) {
@@ -1851,7 +1859,38 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
     }
 
     public boolean hasVisibleAvatar() {
-        return avatarImageView != null && avatarImageView.getVisibility() == VISIBLE;
+        // MeeroX: an avatar that was MOVED OUT of this container (the iOS
+        // chat-bar turns it into the bar's own right-edge menu item) must not
+        // count as a visible avatar here any more. Without the parent check,
+        // ActionBar.checkAvatarContainerWidth() kept forcing the dp(192)
+        // minimum + the dp(52+12) reservation below, so the glass pill stayed
+        // fat and off-center even though the photo was no longer inside it
+        // (his v143 screenshot: "حقل الاسم نفس القديم بلضبط").
+        return avatarImageView != null && avatarImageView.getVisibility() == VISIBLE && avatarImageView.getParent() == this;
+    }
+
+    /**
+     * MeeroX (v144): tap override for the photo while the iOS chat-bar
+     * layout is active (his pick: tap opens the glass tools sheet directly,
+     * the profile opens from the sheet's "View profile" item). Passing null
+     * reinstalls the exact stock click behaviour.
+     */
+    private boolean meeroAvatarClickable;
+    public void setMeeroIosAvatarTap(View.OnClickListener listener) {
+        if (avatarImageView == null) {
+            return;
+        }
+        if (listener != null) {
+            avatarImageView.setOnClickListener(listener);
+        } else if (meeroAvatarClickable) {
+            avatarImageView.setOnClickListener(v -> {
+                if (!onAvatarClick()) {
+                    openProfile(true);
+                }
+            });
+        } else {
+            avatarImageView.setOnClickListener(null);
+        }
     }
 
     public int getVisualWidth() {

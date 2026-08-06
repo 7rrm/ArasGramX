@@ -101,6 +101,8 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
     private BlurredBackgroundDrawable glassDrawable;
     private Drawable glassDrawableBack;
     private Drawable glassDrawableMenu;
+    /** MeeroX (v144): skip the glass disc behind the menu edge item so the chat photo sits plain, exactly like the iPhone bar (his pick). Set by ChatActivity.meeroSyncIosChatBar(); always false for stock. */
+    public boolean meeroHideMenuGlassButton;
     private INavigationLayout.BackButtonState backButtonState = INavigationLayout.BackButtonState.BACK;
     public UnreadImageView backButtonImageView;
     private BackupImageView avatarSearchImageView;
@@ -2445,7 +2447,7 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
             glassDrawableBack.setBounds(0, t, s + p * 2, b);
             glassDrawableBack.draw(canvas);
         }
-        if (glassDrawableMenu != null && menuWidth > 0 && !glassOnlyBack) {
+        if (glassDrawableMenu != null && menuWidth > 0 && !glassOnlyBack && !meeroHideMenuGlassButton) {
             glassDrawableMenu.setBounds(getWidth() - Math.max(s, menuWidth) - p * 2, t, getWidth(), b);
             glassDrawableMenu.setAlpha(hasForcedMenuWidth ? 255 : (int) (255 * animatorHasMenuItems.getFloatValue()));
             glassDrawableMenu.draw(canvas);

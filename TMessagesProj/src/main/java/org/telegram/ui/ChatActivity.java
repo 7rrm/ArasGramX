@@ -17659,6 +17659,15 @@ public class ChatActivity extends BaseFragment implements
                             return true;
                         });
                     }
+                    // v144 (his picks): plain TAP on the photo opens the glass
+                    // tools sheet directly (the profile lives inside it as
+                    // "View profile"), and the photo floats WITHOUT the glass
+                    // disc behind it - the plain iPhone circle. Long-press
+                    // keeps opening the same sheet.
+                    meeroBarAvatarItem.setOnClickListener(v -> meeroShowIosChatBarSheet(av));
+                    avatarContainer.setMeeroIosAvatarTap(v -> meeroShowIosChatBarSheet(av));
+                    actionBar.meeroHideMenuGlassButton = true;
+                    actionBar.invalidate();
                     avatarContainer.setOnLongClickListener(v -> {
                         meeroShowIosChatBarSheet(avatarContainer);
                         return true;
@@ -17666,6 +17675,7 @@ public class ChatActivity extends BaseFragment implements
                     avatarContainer.requestLayout();
                 } else if (meeroBarAvatarItem != null) {
                     meeroBarAvatarItem.setVisibility(View.GONE);
+                    meeroBarAvatarItem.setOnClickListener(null);
                     if (av.getParent() != avatarContainer) {
                         if (av.getParent() instanceof ViewGroup) {
                             ((ViewGroup) av.getParent()).removeView(av);
@@ -17673,6 +17683,12 @@ public class ChatActivity extends BaseFragment implements
                         avatarContainer.addView(av);
                         av.setOnLongClickListener(null);
                     }
+                    // v144: restore the exact stock photo state (tap = profile
+                    // again via the container, glass disc behind the menu item
+                    // comes back with the rest of the bar).
+                    avatarContainer.setMeeroIosAvatarTap(null);
+                    actionBar.meeroHideMenuGlassButton = false;
+                    actionBar.invalidate();
                     avatarContainer.setOnLongClickListener(null);
                     avatarContainer.requestLayout();
                 }
