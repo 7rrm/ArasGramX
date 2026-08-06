@@ -1766,7 +1766,6 @@ public class ChatActivity extends BaseFragment implements
     private final static int bot_settings = 31;
     private final static int call = 32;
     private final static int video_call = 33;
-    private final static int meero_bar_avatar = 91;
 
     private final static int attach_photo = 0;
     private final static int attach_gallery = 1;
@@ -4580,10 +4579,7 @@ public class ChatActivity extends BaseFragment implements
 
             @Override
             protected boolean isCentered() {
-                // MeeroX v142: the iOS chat bar also runs the centered
-                // anatomy (name/status centered in the pill, avatar detached
-                // to its own edge circle by meeroSyncIosChatBar()).
-                return isTitleCentered() || meeroIosChatBarLayoutOn();
+                return isTitleCentered();
             }
 
             @Override
@@ -17596,208 +17592,6 @@ public class ChatActivity extends BaseFragment implements
         }
     }
 
-    // ── MeeroX v142: iOS-clean chat header (approved mock
-    // "preview-topbar-reply-v142", user picked V1) ─────────────────
-    // Gate: build-time visual layout (isCentered override + avatar detach).
-    // Mirrors the icon-creation scopes above: normal chats only.
-    private boolean meeroIosChatBarLayoutOn() {
-        return tw.nekomimi.nekogram.NekoConfig.meeroIosChatBar.Bool()
-                && chatMode == 0 && threadMessageId == 0;
-    }
-
-    private ActionBarMenuItem meeroBarAvatarItem;
-
-    /** MeeroX (v145): the back arrow's original tint for exact stock restore when the iOS chat bar is switched off. */
-    private android.graphics.ColorFilter meeroSavedBackArrowTint;
-
-    /**
-     * Applies/restores the iPhone header anatomy:
-     *  - hide the call icon, search icon and the kebab FROM THE BAR (their
-     *    actions stay one tap away through the profile screen or the
-     *    long-press glass sheet - nothing is removed functionally),
-     *  - move the photo out of the pill into its own right-edge circle,
-     *  - the title pill itself centers via the isCentered() override above.
-     * Runs from onResume() so toggling the switch converges the next time a
-     * chat is (re)opened; stock stays untouched whenever the switch is off.
-     */
-    private void meeroSyncIosChatBar() {
-        final boolean on = meeroIosChatBarLayoutOn();
-        try {
-            if (audioCallIconItem != null) {
-                audioCallIconItem.setVisibility(on ? View.GONE : (showAudioCallAsIcon ? View.VISIBLE : View.GONE));
-            }
-            if (searchIconItem != null) {
-                searchIconItem.setVisibility(on ? View.GONE : View.VISIBLE);
-            }
-            if (headerItem != null) {
-                headerItem.setVisibility(on ? View.GONE : View.VISIBLE);
-            }
-            if (avatarContainer != null && avatarContainer.avatarImageView != null && actionBar != null && actionBar.menu != null) {
-                final BackupImageView av = avatarContainer.avatarImageView;
-                if (on) {
-                    // v142-follow-up (his screenshot: "صار فقط 2 حقول وحقل
-                    // طويل مومثل المعاينه"): v142 first added the photo as a
-                    // plain ActionBar child - but ActionBar.onLayout only
-                    // ever positions its own known child set, so the photo
-                    // was never laid out (invisible), and with the menu left
-                    // empty the glass pill spanned to the screen edge. The
-                    // photo now lives as the LAST ITEM of the bar's own menu:
-                    // stock machinery lays it out, and the non-zero menu
-                    // width pulls the pill's right edge back from the avatar
-                    // band exactly like the kebab era.
-                    if (meeroBarAvatarItem == null) {
-                        meeroBarAvatarItem = actionBar.menu.addItemWithWidth(meero_bar_avatar, 0, dp(48), null);
-                        meeroBarAvatarItem.getIconView().setVisibility(View.GONE);
-                    }
-                    meeroBarAvatarItem.setVisibility(View.VISIBLE);
-                    if (av.getParent() != meeroBarAvatarItem) {
-                        if (av.getParent() instanceof ViewGroup) {
-                            ((ViewGroup) av.getParent()).removeView(av);
-                        }
-                        meeroBarAvatarItem.addView(av, LayoutHelper.createFrame(42, 42, Gravity.CENTER));
-                        // The tools the clean bar no longer shows: one long-
-                        // press away, exactly like the approved mock's flow.
-                        av.setOnLongClickListener(v -> {
-                            meeroShowIosChatBarSheet(av);
-                            return true;
-                        });
-                    }
-                    // v144 (his pick): plain TAP on the photo opens the glass
-                    // tools sheet directly (the profile lives inside it as
-                    // "View profile"); long-press opens the same sheet.
-                    // v145 (his picks): the photo KEEPS its glass ring (he
-                    // reverted the plain-circle pick), the whole bar backdrop
-                    // frosts over iPhone-style, and the back button turns iOS:
-                    // white chevron + compact light badge.
-                    meeroBarAvatarItem.setOnClickListener(v -> meeroShowIosChatBarSheet(av));
-                    avatarContainer.setMeeroIosAvatarTap(v -> meeroShowIosChatBarSheet(av));
-                    avatarContainer.meeroApplyIosTitleMetrics(true); // v149: his pick A - 18 title + 13 tucked subtitle (ellipi-ratio capsule)
-                    actionBar.meeroIosFrostedStrip = true;
-                    if (actionBar.backButtonImageView != null) {
-                        if (meeroSavedBackArrowTint == null) {
-                            meeroSavedBackArrowTint = actionBar.backButtonImageView.getColorFilter();
-                        }
-                        actionBar.backButtonImageView.setColorFilter(Color.WHITE);
-                        // v146 (his ask): badge goes back to EXACTLY stock -
-                        // pink pill + unread MESSAGE count ("خلي 99 عادي مثل
-                        // قبل"); only the chevron stays iOS-white.
-                    }
-                    actionBar.invalidate();
-                    avatarContainer.setOnLongClickListener(v -> {
-                        meeroShowIosChatBarSheet(avatarContainer);
-                        return true;
-                    });
-                    avatarContainer.requestLayout();
-                } else if (meeroBarAvatarItem != null) {
-                    meeroBarAvatarItem.setVisibility(View.GONE);
-                    meeroBarAvatarItem.setOnClickListener(null);
-                    if (av.getParent() != avatarContainer) {
-                        if (av.getParent() instanceof ViewGroup) {
-                            ((ViewGroup) av.getParent()).removeView(av);
-                        }
-                        avatarContainer.addView(av);
-                        av.setOnLongClickListener(null);
-                    }
-                    // v144/v145/v146: restore the exact stock state - tap =
-                    // profile again via the container, stock 18/14 typography,
-                    // stock pink arrow + stock badge, no frosted backdrop.
-                    avatarContainer.setMeeroIosAvatarTap(null);
-                    avatarContainer.meeroApplyIosTitleMetrics(false);
-                    actionBar.meeroIosFrostedStrip = false;
-                    if (actionBar.backButtonImageView != null) {
-                        actionBar.backButtonImageView.setColorFilter(meeroSavedBackArrowTint);
-                        actionBar.backButtonImageView.setMeeroIosBadge(false);
-                        meeroSavedBackArrowTint = null;
-                    }
-                    actionBar.invalidate();
-                    avatarContainer.setOnLongClickListener(null);
-                    avatarContainer.requestLayout();
-                }
-            }
-        } catch (Throwable ignore) {
-            // cosmetic header tweak - never take the chat down with it.
-        }
-    }
-
-    // The glass quick menu behind the long-press (approved mock flow card):
-    // only actions whose handlers already exist one line away in this class.
-    private void meeroShowIosChatBarSheet(View anchor) {
-        try {
-            final ArrayList<CharSequence> items = new ArrayList<>();
-            final ArrayList<Runnable> actions = new ArrayList<>();
-            if (currentUser != null && showAudioCallAsIcon) {
-                items.add(LocaleController.getString(R.string.Call));
-                actions.add(() -> {
-                    if (currentUser != null && getParentActivity() != null) {
-                        VoIPHelper.startCall(currentUser, false, userInfo != null && userInfo.video_calls_available, getParentActivity(), getMessagesController().getUserFull(currentUser.id), getAccountInstance());
-                    }
-                });
-                final TLRPC.UserFull uf = getMessagesController().getUserFull(currentUser.id);
-                if (uf != null && uf.video_calls_available) {
-                    items.add(LocaleController.getString(R.string.VideoCall));
-                    actions.add(() -> {
-                        if (currentUser != null && getParentActivity() != null) {
-                            VoIPHelper.startCall(currentUser, true, true, getParentActivity(), getMessagesController().getUserFull(currentUser.id), getAccountInstance());
-                        }
-                    });
-                }
-            }
-            if (currentEncryptedChat == null) {
-                items.add(LocaleController.getString(R.string.Search));
-                actions.add(() -> openSearchWithText(isSupportedTags() ? "" : null));
-            }
-            final boolean muted = getMessagesController().isDialogMuted(dialog_id, getTopicId());
-            items.add(LocaleController.getString(muted ? R.string.Unmute : R.string.Mute));
-            actions.add(() -> toggleMute(false));
-            if (avatarContainer != null) {
-                items.add(LocaleController.getString(R.string.ViewProfile));
-                actions.add(() -> avatarContainer.openProfile(true));
-            }
-            // v145 (his report "الادوات ليس كلها"): the approved mock always
-            // promised «More (the current full menu)» - I had missed it in
-            // v142-v144. Opens the ORIGINAL kebab submenu with every tool the
-            // chat type has. The kebab is unhidden just for the anchor (a
-            // GONE menu child has no layout position to anchor the popup to),
-            // then re-hidden when the user closes that menu.
-            if (headerItem != null) {
-                items.add(LocaleController.getString(R.string.MeeroMoreTools));
-                actions.add(() -> {
-                    if (headerItem != null) {
-                        headerItem.setVisibility(View.VISIBLE);
-                        headerItem.post(() -> {
-                            if (headerItem != null) {
-                                headerItem.toggleSubMenu();
-                                headerItem.setOnMenuDismiss(processed -> {
-                                    if (meeroIosChatBarLayoutOn()) {
-                                        headerItem.setVisibility(View.GONE);
-                                    }
-                                });
-                            }
-                        });
-                    }
-                });
-            }
-            tw.nekomimi.nekogram.ui.PopupBuilder builder = new tw.nekomimi.nekogram.ui.PopupBuilder(anchor);
-            builder.setItems(items, -1, (i, s) -> {
-                if (i >= 0 && i < actions.size()) {
-                    actions.get(i).run();
-                }
-                return Unit.INSTANCE;
-            });
-            builder.show();
-        } catch (Throwable ignore) {
-        }
-    }
-
-    /**
-     * MeeroX (v145): the iPhone back badge counts UNREAD CHATS (muted
-     * excluded), not unread messages - this is why his iPhone showed "4"
-     * while our badge said "99+". Falls back to the stock message count if
-     * anything goes wrong.
-     */
-    // v146: meeroIosUnreadChatsCount() removed — back badge restored to the
-    // stock unread-MESSAGE counter ("خلي 99 عادي مثل قبل").
-
     private void toggleMute(boolean instant) {
         boolean muted = getMessagesController().isDialogMuted(dialog_id, getTopicId());
         if (!muted) {
@@ -19542,7 +19336,7 @@ public class ChatActivity extends BaseFragment implements
                 }
                 if (!actionBar.isSearchFieldVisible() && audioCallIconItem != null) {
                     // MeeroX: the iOS chat bar never shows bar icons - keep it gone even when this updater runs after our sync.
-                    audioCallIconItem.setVisibility((showAudioCallAsIcon && !showSearchAsIcon && !meeroIosChatBarLayoutOn()) ? View.VISIBLE : View.GONE);
+                    audioCallIconItem.setVisibility((showAudioCallAsIcon && !showSearchAsIcon) ? View.VISIBLE : View.GONE);
                 }
                 if (headerItem != null) {
                     TLRPC.UserFull userInfo = getCurrentUserInfo();
@@ -25485,7 +25279,7 @@ public class ChatActivity extends BaseFragment implements
                                     item.animate().alpha(1f).setDuration(160).setInterpolator(CubicBezierInterpolator.EASE_IN).setStartDelay(50).start();
                                 }
                                 // MeeroX: keep the icon hidden while the iOS chat bar is on.
-                                audioCallIconItem.setVisibility(meeroIosChatBarLayoutOn() ? View.GONE : View.VISIBLE);
+                                audioCallIconItem.setVisibility(View.VISIBLE);
                             }
                         } else {
                             headerItem.showSubItem(call, true);
@@ -25778,7 +25572,7 @@ public class ChatActivity extends BaseFragment implements
                 }
             } else if (id == NotificationCenter.dialogsUnreadCounterChanged) {
                 if (actionBar != null) { // NekoX
-                    actionBar.unreadBadgeSetCount(getMessagesStorage().getMainUnreadCount()); // v146: stock message count, his ask
+                    actionBar.unreadBadgeSetCount(getMessagesStorage().getMainUnreadCount());
                 }
             }
         } else if (id == NotificationCenter.dialogTranslate) {
@@ -31368,7 +31162,7 @@ public class ChatActivity extends BaseFragment implements
             if (userFull != null && userFull.phone_calls_available) {
                 showAudioCallAsIcon = !inPreviewMode;
                 // MeeroX: keep the icon hidden while the iOS chat bar is on.
-                audioCallIconItem.setVisibility(meeroIosChatBarLayoutOn() ? View.GONE : View.VISIBLE);
+                audioCallIconItem.setVisibility(View.VISIBLE);
             } else {
                 showAudioCallAsIcon = false;
                 audioCallIconItem.setVisibility(View.GONE);
@@ -31456,7 +31250,6 @@ public class ChatActivity extends BaseFragment implements
         tw.nekomimi.nekogram.MeeroChatLock.maybePromptGate(this);
         // MeeroX v142: converge the iOS-clean chat header (icons hidden,
         // avatar detached) with the switch state on every (re)entry.
-        meeroSyncIosChatBar();
         cachedIsGestureNavigation = AndroidUtil.isGestureNavigation(getContext());
         checkShowBlur(false);
         activityResumeTime = System.currentTimeMillis();
@@ -40478,7 +40271,7 @@ public class ChatActivity extends BaseFragment implements
                 }
                 // na: unread count
                 if (actionBar != null) {
-                    actionBar.unreadBadgeSetCount(getMessagesStorage().getMainUnreadCount()); // v146: stock message count, his ask
+                    actionBar.unreadBadgeSetCount(getMessagesStorage().getMainUnreadCount());
                 }
             } else if (holder.itemView instanceof ChatActionCell) {
                 final ChatActionCell actionCell = (ChatActionCell) holder.itemView;

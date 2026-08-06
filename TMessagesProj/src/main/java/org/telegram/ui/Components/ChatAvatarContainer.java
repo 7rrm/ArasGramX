@@ -194,7 +194,6 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
         }
 
         final boolean avatarClickable = parentFragment != null && (parentFragment.getChatMode() == 0 || parentFragment.getChatMode() == ChatActivity.MODE_SUGGESTIONS || (parentFragment.getChatMode() == ChatActivity.MODE_PINNED && isCentered())) && !UserObject.isReplyUser(parentFragment.getCurrentUser()) && (parentFragment.getCurrentUser() == null || parentFragment.getCurrentUser().id != UserObject.VERIFY);
-        meeroAvatarClickable = avatarClickable; // MeeroX: captured so setMeeroIosAvatarTap(null) restores the exact stock state
         avatarImageView = new BackupImageView(context) {
 
             StoriesUtilities.AvatarStoryParams params = new StoriesUtilities.AvatarStoryParams(true) {
@@ -776,14 +775,7 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         int padding = isCentered() ? dp(isPreviewMode() ? 35 : 10) : 0;
         final int width = MeasureSpec.getSize(widthMeasureSpec);
-        // MeeroX (v144): reserve the 54dp avatar slot only while the avatar
-        // actually lives in this container. Under the iOS chat-bar layout the
-        // photo is detached into the bar's own edge item; keeping the
-        // reservation measured the texts ~54dp narrower than the pill and the
-        // "centered" title landed ~30dp left of the pill's true center (his
-        // v143 pixel check: name center x497 vs pill center x585).
-        final boolean meeroAvatarHere = avatarImageView.getParent() == this;
-        final int availableWidth = width - dp((meeroAvatarHere && (avatarImageView.getVisibility() == VISIBLE || isCentered()) ? 54 : 0) + 16);
+        final int availableWidth = width - dp(((avatarImageView.getVisibility() == VISIBLE || isCentered()) ? 54 : 0) + 16);
         avatarImageView.measure(MeasureSpec.makeMeasureSpec(dp(avatarSizeInDp) - 2, MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(dp(avatarSizeInDp) - 2, MeasureSpec.EXACTLY));
         titleTextView.measure(MeasureSpec.makeMeasureSpec(availableWidth - padding, MeasureSpec.AT_MOST), MeasureSpec.makeMeasureSpec(dp(24 + 8), MeasureSpec.AT_MOST));
         if (subtitleTextView != null) {
@@ -893,17 +885,9 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
         if (isCentered()) {
             avatarLeft = getWidth() - leftPadding - avatarImageView.getMeasuredWidth() - 1;
         }
-        // MeeroX v142 (iOS chat bar): the avatar may be DETACHED from this
-        // container into the ActionBar itself (its own edge circle). Calling
-        // layout() on a view we no longer own would teleport it back into
-        // pill coordinates - skip positioning, and skip the text offset
-        // reservation, while it lives elsewhere.
-        final boolean meeroAvatarDetached = avatarImageView.getParent() != this;
-        if (!meeroAvatarDetached) {
-            avatarImageView.layout(avatarLeft, 1 + viewTop, avatarLeft + avatarImageView.getMeasuredWidth(), 1 + viewTop + avatarImageView.getMeasuredHeight());
-        }
+        avatarImageView.layout(avatarLeft, 1 + viewTop, avatarLeft + avatarImageView.getMeasuredWidth(), 1 + viewTop + avatarImageView.getMeasuredHeight());
 
-        int l = leftPadding + (avatarImageView.getVisibility() == VISIBLE && !meeroAvatarDetached && !isCentered() ? dp(glassMode ? 49.66f : 55) : (isCentered() ? 0 : dp(glassMode ? 13 : 1))) + (isCentered() ? 0 : rightAvatarPadding);
+        int l = leftPadding + (avatarImageView.getVisibility() == VISIBLE && !isCentered() ? dp(glassMode ? 49.66f : 55) : (isCentered() ? 0 : dp(glassMode ? 13 : 1))) + (isCentered() ? 0 : rightAvatarPadding);
         if (isPreviewMode() && isCentered()) {
             l += dp(AndroidUtilities.isTablet() ? 80 : 72) / 2;
         }
@@ -968,11 +952,6 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
     public void setCommunityItemVisible(boolean visible) {
         if (communityItem != null) {
             communityItem.setVisibility(visible && !avatarImageIsHidden && !isCentered() ? VISIBLE : GONE);
-        }
-        if (meeroIosMode) {
-            // v151: (re)arm the fixed-capsule marquee after any layout -
-            // throttled by meeroMarqueeScheduled, cancelled on detachment.
-            meeroScheduleMarquee(1400);
         }
     }
 
@@ -1695,7 +1674,6 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
     @Override
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
-        meeroStopMarquee(); // MeeroX v151
         if (parentFragment != null) {
             NotificationCenter.getInstance(currentAccount).removeObserver(this, NotificationCenter.didUpdateConnectionState);
             NotificationCenter.getGlobalInstance().removeObserver(this, NotificationCenter.emojiLoaded);
@@ -1864,273 +1842,8 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
         }
     }
 
-    /**
-     * MeeroX (v145): the glass pill's width depends on the avatar being a
-     * child of THIS container (the iOS chat-bar re-parents the photo into the
-     * bar's own edge menu item). In v144 nothing re-measured on reparent, so
-     * the pill kept the fat width it was born with until some later
-     * title/subtitle change happened (his screenshot: capsule still huge).
-     * Recompute right after any avatar attach/detach; posted so the parent's
-     * reparent transaction has fully settled. (public: ViewGroup declares
-     * these hooks public - protected failed the v145 first build, fixed.)
-     */
-    @Override
-    public void onViewAdded(View child) {
-        super.onViewAdded(child);
-        if (child == avatarImageView) {
-            post(() -> checkActionBar(false));
-        }
-    }
-
-    @Override
-    public void onViewRemoved(View child) {
-        super.onViewRemoved(child);
-        if (child == avatarImageView) {
-            post(() -> checkActionBar(false));
-        }
-    }
-
     public boolean hasVisibleAvatar() {
-        // MeeroX: an avatar that was MOVED OUT of this container (the iOS
-        // chat-bar turns it into the bar's own right-edge menu item) must not
-        // count as a visible avatar here any more. Without the parent check,
-        // ActionBar.checkAvatarContainerWidth() kept forcing the dp(192)
-        // minimum + the dp(52+12) reservation below, so the glass pill stayed
-        // fat and off-center even though the photo was no longer inside it
-        // (his v143 screenshot: "حقل الاسم نفس القديم بلضبط").
-        return avatarImageView != null && avatarImageView.getVisibility() == VISIBLE && avatarImageView.getParent() == this;
-    }
-
-    /**
-     * MeeroX (v149, his approved pick "A" from preview-bar-v149b): the iOS
-     * chat bar keeps the 18 title EXACTLY like official Telegram Android
-     * ("خلي مثل الرسمي"), the subtitle drops to 13 and hugs the title with
-     * a -3dp line tuck (his custom Arabic font carries tall line boxes, so
-     * the v148 18/14 spread looked "طويلة"). The capsule's SMALL height
-     * comes from this packed content + the slim dp(6) padding in ActionBar
-     * (~43dp pill on his device = the ellipi reference ratio, 74% band
-     * fill). false restores the exact stock 18/14 with zero translation.
-     */
-    public void meeroApplyIosTitleMetrics(boolean ios) {
-        meeroIosMode = ios; // v151
-        if (!ios) {
-            meeroStopMarquee(); // v151
-        }
-        if (titleTextView != null) {
-            titleTextView.setTextSize(18);
-        }
-        if (subtitleTextView != null) {
-            subtitleTextView.setTextSize(ios ? 13 : 14);
-            subtitleTextView.setTranslationY(ios ? -dp(3) : 0);
-        }
-        if (animatedSubtitleTextView != null) {
-            animatedSubtitleTextView.setTextSize(dp(ios ? 13 : 14));
-            animatedSubtitleTextView.setTranslationY(ios ? -dp(3) : 0);
-        }
-        checkActionBar(false);
-        requestLayout();
-    }
-
-    /**
-     * MeeroX (v148/v149): measured height (px) of the title + visible
-     * subtitle text block. SimpleTextView.getTextHeight() is the REAL
-     * StaticLayout line height, so it already absorbs his large custom
-     * Arabic font metrics. v149: when both lines exist, subtract the
-     * dp(3) line tuck that meeroApplyIosTitleMetrics applies visually, so
-     * ActionBar's pill math matches what he actually sees.
-     */
-    public int meeroTextBlockHeight() {
-        int h = 0;
-        if (titleTextView != null) {
-            h += titleTextView.getTextHeight();
-        }
-        int subH = 0;
-        if (subtitleTextView != null && subtitleTextView.getVisibility() == VISIBLE) {
-            subH = subtitleTextView.getTextHeight();
-        } else if (animatedSubtitleTextView != null && animatedSubtitleTextView.getVisibility() == VISIBLE) {
-            subH = animatedSubtitleTextView.getTextHeight();
-        }
-        if (subH > 0) {
-            h += subH - dp(3); // v149 "-3dp" line tuck (his pick A)
-        }
-        return Math.max(h, 0);
-    }
-
-    /**
-     * MeeroX (v150, his verdict "الزجاج كبير / مفروض الطول صغير"): the
-     * VISIBLE text width (px) for the iOS pill - max of title and subtitle
-     * exact widths, measured fresh every frame by ActionBar.dispatchDraw.
-     * No avatar slot, no dp(192) floor, no width animator (his v149 group
-     * screenshot: those inflated a ~65dp text to a ~260dp glass). While the
-     * animated typing subtitle replaces the plain one, fall back to a
-     * steady dp(120) so the capsule does not throb.
-     */
-    public int meeroVisualTextWidthPx() {
-        float w = 0;
-        if (titleTextView != null) {
-            w = Math.max(w, titleTextView.getExactWidthIncludeDrawables());
-        }
-        if (subtitleTextView != null && subtitleTextView.getVisibility() == VISIBLE) {
-            w = Math.max(w, subtitleTextView.getExactWidthIncludeDrawables());
-        } else if (animatedSubtitleTextView != null && animatedSubtitleTextView.getVisibility() == VISIBLE) {
-            w = Math.max(w, dp(120));
-        }
-        return (int) w;
-    }
-
-    // =====================================================================
-    // MeeroX v151 - fixed capsule + marquee (his approved design from
-    // preview-pill-marquee-v151, cap 180dp): "الكبسولة ثابتة لا تتمدد أبداً
-    // والاسم متحرك على اليسار، دورة أو دورتين ثم يتوقف لبداية الاسم
-    // والنهاية تصير نقاط".
-    //
-    // Implementation: piggybacks SimpleTextView's PRODUCTION scrollNonFitText
-    // engine (50dp/s native marquee with edge fades - same one ActionBar and
-    // profile titles use) instead of reinventing measurement/animation:
-    //  - rest state: stock gradient ellipsis at the cut (the "نقاط" he asked).
-    //  - cycle: enable scrolling only for the views whose painted text really
-    //    overflows the fixed capsule, watch the native offset wrap -> count
-    //    TWO full laps, disable scrolling -> the view rests at the name's
-    //    beginning with the gradient fade; re-arm after 10s.
-    //  - cancelled on detach / iOS-bar off. The animated typing subtitle
-    //    never rolls.
-    // =====================================================================
-    private boolean meeroIosMode;
-    public boolean meeroIosMode() {
-        return meeroIosMode;
-    }
-
-    private boolean meeroMarqueeScheduled;
-    private boolean meeroRolling;
-    private int meeroRollLaps;
-    private float meeroLastOffset;
-    private SimpleTextView meeroRollingView;
-
-    private final Runnable meeroMarqueeKick = () -> {
-        meeroMarqueeScheduled = false;
-        meeroStartMarqueeIfNeeded();
-    };
-
-    private final Runnable meeroMarqueeWatch = new Runnable() {
-        @Override
-        public void run() {
-            if (!meeroIosMode) {
-                meeroStopMarquee();
-                return;
-            }
-            if (meeroRollingView != null) {
-                final float off = meeroRollingView.getScrollingOffsetPx();
-                if (off < meeroLastOffset - dp(2)) {
-                    meeroRollLaps++;         // native offset wrapped = one full lap
-                }
-                meeroLastOffset = off;
-            }
-            if (meeroRollLaps >= 2) {
-                meeroFinishMarqueeLaps();
-            } else {
-                postDelayed(this, 64);
-            }
-        }
-    };
-
-    private void meeroScheduleMarquee(long delayMs) {
-        if (meeroMarqueeScheduled) {
-            return;
-        }
-        meeroMarqueeScheduled = true;
-        postDelayed(meeroMarqueeKick, delayMs);
-    }
-
-    private int meeroOverflowOf(SimpleTextView tv) {
-        if (tv == null || tv.getVisibility() != VISIBLE || tv.getMeasuredWidth() <= 0) {
-            return -1;
-        }
-        return (int) (tv.getExactWidthIncludeDrawables() - tv.getMeasuredWidth());
-    }
-
-    private void meeroStartMarqueeIfNeeded() {
-        if (!meeroIosMode) {
-            return;
-        }
-        if (!isShown() || getMeasuredWidth() < dp(80)) {
-            meeroScheduleMarquee(4000);
-            return;
-        }
-        final int tOver = meeroOverflowOf(titleTextView);
-        final int sOver = subtitleTextView != null && subtitleTextView.getVisibility() == VISIBLE ? meeroOverflowOf(subtitleTextView) : -1;
-        final boolean tRoll = tOver > dp(2);
-        final boolean sRoll = sOver > dp(2);
-        if (!tRoll && !sRoll) {
-            meeroScheduleMarquee(10000);
-            return;
-        }
-        meeroRolling = true;
-        meeroRollLaps = 0;
-        meeroLastOffset = 0;
-        meeroRollingView = sOver > tOver ? subtitleTextView : titleTextView;
-        if (tRoll && titleTextView != null) {
-            titleTextView.setScrollNonFitText(true);
-        }
-        if (sRoll && subtitleTextView != null) {
-            subtitleTextView.setScrollNonFitText(true);
-        }
-        removeCallbacks(meeroMarqueeWatch);
-        postDelayed(meeroMarqueeWatch, 400);
-    }
-
-    private void meeroFinishMarqueeLaps() {
-        meeroRolling = false;
-        meeroRollLaps = 0;
-        meeroRollingView = null;
-        if (titleTextView != null) {
-            titleTextView.setScrollNonFitText(false);
-        }
-        if (subtitleTextView != null) {
-            subtitleTextView.setScrollNonFitText(false);
-        }
-        removeCallbacks(meeroMarqueeWatch);
-        if (meeroIosMode && isAttachedToWindow()) {
-            meeroScheduleMarquee(10000);
-        }
-    }
-
-    private void meeroStopMarquee() {
-        meeroRolling = false;
-        meeroRollLaps = 0;
-        meeroRollingView = null;
-        removeCallbacks(meeroMarqueeKick);
-        removeCallbacks(meeroMarqueeWatch);
-        meeroMarqueeScheduled = false;
-        if (titleTextView != null) {
-            titleTextView.setScrollNonFitText(false);
-        }
-        if (subtitleTextView != null) {
-            subtitleTextView.setScrollNonFitText(false);
-        }
-    }
-
-    /**
-     * MeeroX (v144): tap override for the photo while the iOS chat-bar
-     * layout is active (his pick: tap opens the glass tools sheet directly,
-     * the profile opens from the sheet's "View profile" item). Passing null
-     * reinstalls the exact stock click behaviour.
-     */
-    private boolean meeroAvatarClickable;
-    public void setMeeroIosAvatarTap(View.OnClickListener listener) {
-        if (avatarImageView == null) {
-            return;
-        }
-        if (listener != null) {
-            avatarImageView.setOnClickListener(listener);
-        } else if (meeroAvatarClickable) {
-            avatarImageView.setOnClickListener(v -> {
-                if (!onAvatarClick()) {
-                    openProfile(true);
-                }
-            });
-        } else {
-            avatarImageView.setOnClickListener(null);
-        }
+        return avatarImageView != null && avatarImageView.getVisibility() == VISIBLE;
     }
 
     public int getVisualWidth() {
@@ -2142,29 +1855,10 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
         if (subtitleTextView != null) {
             width = Math.max(width, subtitleTextView.getExactWidthIncludeDrawables());
         }
-        if (meeroIosMode) {
-            // MeeroX (v151, his approved design: "الكبسولة ثابتة لا تتمدد
-            // أبداً والاسم متحرك"): container caps at dp(168) - with the
-            // ActionBar's p*2 outer pad the pill is EXACTLY the approved
-            // fixed dp(180). Longer texts live inside the fixed capsule and
-            // marquee (see meeroRunMarqueeCycle); short names still hug.
-            if (animatedSubtitleTextView != null && animatedSubtitleTextView.getVisibility() == VISIBLE) {
-                width = Math.max(width, dp(120));
-            }
-            return (int) Math.min(Math.max(width + dp(16), dp(48)), dp(168));
-        }
         if (hasVisibleAvatar()) {
             width += dp(52 + 12);
         } else {
-            // MeeroX (v148, his verdict: "بكبسولة صغيرة على قد الحجم"):
-            // the content width hugs the text exactly - content + dp(16),
-            // NO minimum floor any more. The v146 150pt floor (final pill
-            // 178dp) made short names/subtitles like "عضو واحد" float
-            // inside a "طويلة" stretched capsule (his v146+ref screenshots).
-            // ActionBar adds its own p*2 = dp(12) outer pad on top, for a
-            // final ~dp(28) total horizontal padding like the reference
-            // (ellipi/iOS) pill.
-            width = width + dp(16);
+            width += dp(30);
         }
         return (int) width;
     }

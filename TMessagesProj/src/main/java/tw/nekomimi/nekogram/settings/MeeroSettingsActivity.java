@@ -147,7 +147,6 @@ public class MeeroSettingsActivity extends BaseNekoXSettingsActivity {
     // MeeroX v142: approved mock "preview-v142" - the iPhone chat header
     // (centered name/status pill + detached photo circle at the edge; tools
     // behind the photo tap / long-press glass menu).
-    private final AbstractConfigCell iosChatBarRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosChatBar, getString(R.string.MeeroIosChatBarInfo)));
     private final AbstractConfigCell iosWaveformRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosWaveform, getString(R.string.MeeroIosWaveformInfo)));
     private final AbstractConfigCell iosCodeRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosCode, getString(R.string.MeeroIosCodeInfo)));
     private final AbstractConfigCell iosSelectionRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosSelection, getString(R.string.MeeroIosSelectionInfo)));

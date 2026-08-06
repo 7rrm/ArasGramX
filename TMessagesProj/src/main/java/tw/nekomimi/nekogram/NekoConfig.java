@@ -114,7 +114,6 @@ public class NekoConfig {
     public static ConfigItem meeroIosHaptics = addConfig("meeroIosHaptics", configTypeBool, true);
     public static ConfigItem meeroIosMenuAnim = addConfig("meeroIosMenuAnim", configTypeBool, true);
     public static ConfigItem meeroIosInputPill = addConfig("meeroIosInputPill", configTypeBool, true);
-    public static ConfigItem meeroIosChatBar = addConfig("meeroIosChatBar", configTypeBool, true);
     public static ConfigItem meeroIosWaveform = addConfig("meeroIosWaveform", configTypeBool, true);
     public static ConfigItem meeroIosSelection = addConfig("meeroIosSelection", configTypeBool, true);
     public static ConfigItem meeroIosRow = addConfig("meeroIosRow", configTypeBool, true);

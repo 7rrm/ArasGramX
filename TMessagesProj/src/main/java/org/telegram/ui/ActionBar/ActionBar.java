@@ -26,7 +26,6 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.PorterDuff;
-import android.graphics.Typeface;
 import android.graphics.PorterDuffColorFilter;
 import android.graphics.Rect;
 import android.graphics.RectF;
@@ -102,18 +101,6 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
     private BlurredBackgroundDrawable glassDrawable;
     private Drawable glassDrawableBack;
     private Drawable glassDrawableMenu;
-
-    /** MeeroX (v145): optional full-width blurred strip behind the whole bar
-     * (the iPhone-style frosted backdrop). Created in setupGlass, drawn only
-     * while meeroIosFrostedStrip is on (set by ChatActivity's iOS-bar sync). */
-    private Drawable meeroGlassStrip;
-    /**
-     * MeeroX (v150, his verdict on v149's bar screenshot: "البلور خلف البار
-     * زجاجي لا أريده زجاجي / اريد غواش بسيط"): the iOS-bar backdrop is now
-     * a SIMPLE DARK VEIL (one flat translucent tone), not the blurred-glass
-     * strip. The pill and the two glass circles still draw above it.
-     */
-    private final android.graphics.Paint meeroVeilPaint = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
     private INavigationLayout.BackButtonState backButtonState = INavigationLayout.BackButtonState.BACK;
     public UnreadImageView backButtonImageView;
     private BackupImageView avatarSearchImageView;
@@ -192,11 +179,6 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
 
     SizeNotifierFrameLayout contentView;
     boolean blurredBackground;
-
-    /** MeeroX (v145): frost the WHOLE bar strip iPhone-style (a blur backdrop
-     * behind every bar piece) even though the glass bar color itself is
-     * transparent. Set by ChatActivity.meeroSyncIosChatBar(); off for stock. */
-    public boolean meeroIosFrostedStrip;
     public Paint blurScrimPaint = new Paint();
     Rect rectTmp = new Rect();
 
@@ -264,9 +246,6 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
             .setColorProvider(colorProvider)
             .setRadius(dp(23))
             .setPadding(dp(6));
-
-        // MeeroX (v150): the v145 blurred strip was retired by his verdict
-        // (simple dark veil instead - see dispatchDraw and meeroVeilPaint);
 
         if (menu != null) {
             menu.setTranslationX(-dp(10));
@@ -2367,9 +2346,7 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
 
         final boolean hasAvatar = chatAvatarContainer.hasVisibleAvatar();
         int visualWidth = chatAvatarContainer.getVisualWidth();
-        // MeeroX (v151): the fixed iOS capsule never honours the dp(192)
-        // avatar-era floor - overflow text marquees inside dp(180) instead.
-        if (hasAvatar && !chatAvatarContainer.meeroIosMode()) {
+        if (hasAvatar) {
             visualWidth = Math.max(visualWidth, dp(192));
         }
 
@@ -2440,14 +2417,6 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
         final int t = getHeight() - (getCurrentActionBarHeight() + s) / 2 - p;
         final int b = t + s + p * 2;
 
-        // MeeroX (v150): simple dark VEIL behind the bar (85% tone) instead
-        // of the v145-v149 blurred-glass strip - his verdict: "اريد غواش
-        // بسيط وليس زجاجي". Drawn first, pill + circles stay on top.
-        if (meeroIosFrostedStrip && !glassOnlyBack) {
-            meeroVeilPaint.setColor(0xD9121017);
-            canvas.drawRect(0, 0, getWidth(), getHeight(), meeroVeilPaint);
-        }
-
         if (glassDrawable != null && !glassOnlyBack) {
             final int menuWidthWithPadding = menuWidth + (hasForcedMenuWidth ? (menuWidth > 0 ? p : 0) : (int) (p * animatorHasMenuItems.getFloatValue()));
             final int rightOffset = lerp(menuWidthWithPadding, Math.max(menuWidthWithPadding, p + s), chatAvatarContainer == null ? 0f : 1f - animatorAvatarContainerHasAvatar.getFloatValue());
@@ -2457,59 +2426,19 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
             final int widthDefault = rightDefault - leftDefault;
             final int left, right;
             if (chatAvatarContainer != null) {
-                // MeeroX (v150, his verdict "الزجاج كبير / مفروض الطول صغير"):
-                // under the iOS bar the pill width is computed PER FRAME from
-                // the VISIBLE text only - never the width animator, never the
-                // avatar-slot reservation, never the dp(192) floor. His v149
-                // screenshot proved those paths still inflated the glass to
-                // ~260dp while the visible text ("عضو واحد" + loading dots)
-                // was ~65dp. Centered on the same mid as the centered title
-                // layout (meeroCx), so the text stays centred inside it.
-                final int width;
-                if (meeroIosFrostedStrip) {
-                    // v151: fixed capsule cap dp(180) (his approved pick) -
-                    // hug short names, never grow past the cap; the overflow
-                    // marquees inside it (ChatAvatarContainer runMarqueeCycle).
-                    width = Math.min(Math.max(chatAvatarContainer.meeroVisualTextWidthPx() + dp(28), dp(96)), Math.min(dp(180), widthDefault));
-                } else {
-                    width = lerp(Math.min(widthDefault, (int) animatorAvatarContainerWidth.getFactor() + p * 2), widthDefault, Math.max(searchFactor, actionModeFactor));
-                }
+                final int width = lerp(Math.min(widthDefault, (int) animatorAvatarContainerWidth.getFactor() + p * 2), widthDefault, Math.max(searchFactor, actionModeFactor));
                 left = (rightDefault + leftDefault - width) / 2;
                 right = left + width;
-                if (meeroIosFrostedStrip) {
-                    // v150: centre the container on the pill CENTRE, whatever
-                    // its laid-out width currently is (stale/loading states
-                    // included) - the per-frame pill width above would
-                    // otherwise misalign against a stale container.
-                    chatAvatarContainer.setTranslationX(left + width / 2f
-                        - chatAvatarContainer.getLeft()
-                        - chatAvatarContainer.getWidth() / 2f);
-                } else {
-                    chatAvatarContainer.setTranslationX(left
-                        - ((MarginLayoutParams)(chatAvatarContainer.getLayoutParams())).leftMargin
-                        - chatAvatarContainer.getLeftPadding()
-                        + p + dp(3));
-                }
+                chatAvatarContainer.setTranslationX(left
+                    - ((MarginLayoutParams)(chatAvatarContainer.getLayoutParams())).leftMargin
+                    - chatAvatarContainer.getLeftPadding()
+                    + p + dp(3));
             } else {
                 left = leftDefault;
                 right = rightDefault;
             }
 
-            // MeeroX (v150, his verdict "مفروض الطول يكون صغير"): pill =
-            // packed text block (18/13 tucked) + dp(2) hair padding -> on his
-            // custom-font device this lands ~42-44dp, the ellipi reference
-            // ratio (v149's dp(6) still read ~48dp "طويلة" to him;
-            // v148 dp(12) was 53dp). Clamped dp(38)..band so a title-only
-            // chat never gets a sliver-pill.
-            int meeroPillInset = 0;
-            if (meeroIosFrostedStrip) {
-                final int meeroSpan = b - t;
-                final int meeroContentH = chatAvatarContainer != null ? chatAvatarContainer.meeroTextBlockHeight() : 0;
-                int meeroPillH = meeroContentH > 0 ? meeroContentH + dp(2) : meeroSpan - dp(4);
-                meeroPillH = Math.max(dp(38), Math.min(meeroPillH, meeroSpan));
-                meeroPillInset = (meeroSpan - meeroPillH) / 2;
-            }
-            glassDrawable.setBounds(left, t + meeroPillInset, right, b - meeroPillInset);
+            glassDrawable.setBounds(left, t, right, b);
             glassDrawable.draw(canvas);
         }
         if (glassDrawableBack != null && hasBackButton) {
@@ -2563,49 +2492,11 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
         private int unreadCount = 0;
         private RectF rect = new RectF();
 
-        // ===== MeeroX (v145): compact iPhone-style badge (small light pill,
-        // dark numerals, trailing-top of the chevron) for the iOS chat bar. =====
-        private boolean meeroIosBadge;
-        private TextPaint meeroBadgeTextPaint;
-        private Paint meeroBadgeBgPaint;
-        public void setMeeroIosBadge(boolean ios) {
-            if (meeroIosBadge != ios) {
-                meeroIosBadge = ios;
-                if (ios && meeroBadgeTextPaint == null) {
-                    meeroBadgeTextPaint = new TextPaint(Paint.ANTI_ALIAS_FLAG);
-                    meeroBadgeTextPaint.setTextSize(AndroidUtilities.density * 10.5f);
-                    meeroBadgeTextPaint.setTypeface(Typeface.DEFAULT_BOLD);
-                    meeroBadgeTextPaint.setColor(0xFF1B1B1F);
-                    meeroBadgeBgPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-                    meeroBadgeBgPaint.setColor(0xF2FFFFFF);
-                }
-                // rebuild the cached layout with the newly active paint
-                final int c = unreadCount;
-                unreadCount = -1;
-                setUnread(c);
-            }
-        }
-
         @Override
         public void onDraw(Canvas canvas) {
             super.onDraw(canvas);
             if (countLayout == null || unreadCount == 0)
                 return;
-
-            if (meeroIosBadge) {
-                final int h = AndroidUtilities.dp(14.5f);
-                final int padX = AndroidUtilities.dp(4.5f);
-                final int cw = Math.max(1, countLayout.getWidth());
-                final int x0 = getMeasuredWidth() - cw - padX * 2 - AndroidUtilities.dp(9);
-                final int y0 = AndroidUtilities.dp(2);
-                rect.set(x0, y0, x0 + cw + padX * 2, y0 + h);
-                canvas.drawRoundRect(rect, h / 2f, h / 2f, meeroBadgeBgPaint);
-                canvas.save();
-                canvas.translate(x0 + padX, y0 + (h - countLayout.getHeight()) / 2f);
-                countLayout.draw(canvas);
-                canvas.restore();
-                return;
-            }
 
             Paint paint = Theme.dialogs_countPaint;
             String unreadCountString = unreadCount > 99 ? "99+" : Integer.toString(unreadCount);
@@ -2626,9 +2517,8 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
             if (count != unreadCount) {
                 unreadCount = count;
                 String countString = count > 99 ? "99+" : Integer.toString(count);
-                final TextPaint paint = meeroIosBadge && meeroBadgeTextPaint != null ? meeroBadgeTextPaint : Theme.dialogs_countTextPaint;
-                int countWidth = count == 0 ? 0 : Math.max(AndroidUtilities.dp(12), (int) Math.ceil(paint.measureText(countString)));
-                countLayout = new StaticLayout(countString, paint, countWidth, Layout.Alignment.ALIGN_CENTER, 1.0f, 0.0f, false);
+                int countWidth = count == 0 ? 0 : Math.max(AndroidUtilities.dp(12), (int) Math.ceil(Theme.dialogs_countTextPaint.measureText(countString)));
+                countLayout = new StaticLayout(countString, Theme.dialogs_countTextPaint, countWidth, Layout.Alignment.ALIGN_CENTER, 1.0f, 0.0f, false);
                 invalidate();
             }
         }
