@@ -1858,6 +1858,31 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
         }
     }
 
+    /**
+     * MeeroX (v145): the glass pill's width depends on the avatar being a
+     * child of THIS container (the iOS chat-bar re-parents the photo into the
+     * bar's own edge menu item). In v144 nothing re-measured on reparent, so
+     * the pill kept the fat width it was born with until some later
+     * title/subtitle change happened (his screenshot: capsule still huge).
+     * Recompute right after any avatar attach/detach; posted so the parent's
+     * reparent transaction has fully settled.
+     */
+    @Override
+    protected void onViewAdded(View child) {
+        super.onViewAdded(child);
+        if (child == avatarImageView) {
+            post(() -> checkActionBar(false));
+        }
+    }
+
+    @Override
+    protected void onViewRemoved(View child) {
+        super.onViewRemoved(child);
+        if (child == avatarImageView) {
+            post(() -> checkActionBar(false));
+        }
+    }
+
     public boolean hasVisibleAvatar() {
         // MeeroX: an avatar that was MOVED OUT of this container (the iOS
         // chat-bar turns it into the bar's own right-edge menu item) must not

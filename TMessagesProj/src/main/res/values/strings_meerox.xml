@@ -229,6 +229,7 @@
     <string name="MeeroIosInputPillInfo">A floating, panel-free composer: attach moves into its own glass circle at the far left, the text sits in a capsule with the emoji inside it, and the mic becomes a neutral circle that turns into a rose send button while typing. Off restores the stock Telegram bar.</string>
     <string name="meeroIosChatBar">iOS chat top bar</string>
     <string name="MeeroIosChatBarInfo">The chat header becomes the iPhone layout: a centered name/status pill, and the photo as its own circle at the edge. Call, search and mute live behind the photo tap (profile) or the long-press glass menu. Off restores the stock Android bar. Applies to chats opened after the change.</string>
+    <string name="MeeroMoreTools">More (the full menu)</string>
     <string name="meeroIosWaveform">iOS voice waveform</string>
     <string name="MeeroIosWaveformInfo">Wider, fully rounded waveform bars on a 4pt pitch, and a lighter recording indicator, matching Telegram for iOS.</string>
     <string name="MeeroSectionCategories">Categories</string>

@@ -17607,6 +17607,9 @@ public class ChatActivity extends BaseFragment implements
 
     private ActionBarMenuItem meeroBarAvatarItem;
 
+    /** MeeroX (v145): the back arrow's original tint for exact stock restore when the iOS chat bar is switched off. */
+    private android.graphics.ColorFilter meeroSavedBackArrowTint;
+
     /**
      * Applies/restores the iPhone header anatomy:
      *  - hide the call icon, search icon and the kebab FROM THE BAR (their
@@ -17659,14 +17662,23 @@ public class ChatActivity extends BaseFragment implements
                             return true;
                         });
                     }
-                    // v144 (his picks): plain TAP on the photo opens the glass
+                    // v144 (his pick): plain TAP on the photo opens the glass
                     // tools sheet directly (the profile lives inside it as
-                    // "View profile"), and the photo floats WITHOUT the glass
-                    // disc behind it - the plain iPhone circle. Long-press
-                    // keeps opening the same sheet.
+                    // "View profile"); long-press opens the same sheet.
+                    // v145 (his picks): the photo KEEPS its glass ring (he
+                    // reverted the plain-circle pick), the whole bar backdrop
+                    // frosts over iPhone-style, and the back button turns iOS:
+                    // white chevron + compact light badge.
                     meeroBarAvatarItem.setOnClickListener(v -> meeroShowIosChatBarSheet(av));
                     avatarContainer.setMeeroIosAvatarTap(v -> meeroShowIosChatBarSheet(av));
-                    actionBar.meeroHideMenuGlassButton = true;
+                    actionBar.meeroIosFrostedStrip = true;
+                    if (actionBar.backButtonImageView != null) {
+                        if (meeroSavedBackArrowTint == null) {
+                            meeroSavedBackArrowTint = actionBar.backButtonImageView.getColorFilter();
+                        }
+                        actionBar.backButtonImageView.setColorFilter(Color.WHITE);
+                        actionBar.backButtonImageView.setMeeroIosBadge(true);
+                    }
                     actionBar.invalidate();
                     avatarContainer.setOnLongClickListener(v -> {
                         meeroShowIosChatBarSheet(avatarContainer);
@@ -17683,11 +17695,16 @@ public class ChatActivity extends BaseFragment implements
                         avatarContainer.addView(av);
                         av.setOnLongClickListener(null);
                     }
-                    // v144: restore the exact stock photo state (tap = profile
-                    // again via the container, glass disc behind the menu item
-                    // comes back with the rest of the bar).
+                    // v144/v145: restore the exact stock state - tap = profile
+                    // again via the container, stock pink arrow + stock badge,
+                    // no frosted backdrop.
                     avatarContainer.setMeeroIosAvatarTap(null);
-                    actionBar.meeroHideMenuGlassButton = false;
+                    actionBar.meeroIosFrostedStrip = false;
+                    if (actionBar.backButtonImageView != null) {
+                        actionBar.backButtonImageView.setColorFilter(meeroSavedBackArrowTint);
+                        actionBar.backButtonImageView.setMeeroIosBadge(false);
+                        meeroSavedBackArrowTint = null;
+                    }
                     actionBar.invalidate();
                     avatarContainer.setOnLongClickListener(null);
                     avatarContainer.requestLayout();
@@ -17732,6 +17749,30 @@ public class ChatActivity extends BaseFragment implements
                 items.add(LocaleController.getString(R.string.ViewProfile));
                 actions.add(() -> avatarContainer.openProfile(true));
             }
+            // v145 (his report "الادوات ليس كلها"): the approved mock always
+            // promised «More (the current full menu)» - I had missed it in
+            // v142-v144. Opens the ORIGINAL kebab submenu with every tool the
+            // chat type has. The kebab is unhidden just for the anchor (a
+            // GONE menu child has no layout position to anchor the popup to),
+            // then re-hidden when the user closes that menu.
+            if (headerItem != null) {
+                items.add(LocaleController.getString(R.string.MeeroMoreTools));
+                actions.add(() -> {
+                    if (headerItem != null) {
+                        headerItem.setVisibility(View.VISIBLE);
+                        headerItem.post(() -> {
+                            if (headerItem != null) {
+                                headerItem.toggleSubMenu();
+                                headerItem.setOnMenuDismiss(processed -> {
+                                    if (meeroIosChatBarLayoutOn()) {
+                                        headerItem.setVisibility(View.GONE);
+                                    }
+                                });
+                            }
+                        });
+                    }
+                });
+            }
             tw.nekomimi.nekogram.ui.PopupBuilder builder = new tw.nekomimi.nekogram.ui.PopupBuilder(anchor);
             builder.setItems(items, -1, (i, s) -> {
                 if (i >= 0 && i < actions.size()) {
@@ -17741,6 +17782,28 @@ public class ChatActivity extends BaseFragment implements
             });
             builder.show();
         } catch (Throwable ignore) {
+        }
+    }
+
+    /**
+     * MeeroX (v145): the iPhone back badge counts UNREAD CHATS (muted
+     * excluded), not unread messages - this is why his iPhone showed "4"
+     * while our badge said "99+". Falls back to the stock message count if
+     * anything goes wrong.
+     */
+    private int meeroIosUnreadChatsCount() {
+        try {
+            int count = 0;
+            final ArrayList<TLRPC.Dialog> dialogs = getMessagesController().getAllDialogs();
+            for (int i = 0, N = dialogs == null ? 0 : dialogs.size(); i < N; i++) {
+                final TLRPC.Dialog d = dialogs.get(i);
+                if (d != null && d.folder_id == 0 && (d.unread_count > 0 || d.unread_mark) && !getMessagesController().isDialogMuted(d.id, 0)) {
+                    count++;
+                }
+            }
+            return count;
+        } catch (Throwable ignore) {
+            return getMessagesStorage().getMainUnreadCount();
         }
     }
 
@@ -19487,7 +19550,8 @@ public class ChatActivity extends BaseFragment implements
                     }
                 }
                 if (!actionBar.isSearchFieldVisible() && audioCallIconItem != null) {
-                    audioCallIconItem.setVisibility((showAudioCallAsIcon && !showSearchAsIcon) ? View.VISIBLE : View.GONE);
+                    // MeeroX: the iOS chat bar never shows bar icons - keep it gone even when this updater runs after our sync.
+                    audioCallIconItem.setVisibility((showAudioCallAsIcon && !showSearchAsIcon && !meeroIosChatBarLayoutOn()) ? View.VISIBLE : View.GONE);
                 }
                 if (headerItem != null) {
                     TLRPC.UserFull userInfo = getCurrentUserInfo();
@@ -25429,7 +25493,8 @@ public class ChatActivity extends BaseFragment implements
                                     item.setAlpha(0f);
                                     item.animate().alpha(1f).setDuration(160).setInterpolator(CubicBezierInterpolator.EASE_IN).setStartDelay(50).start();
                                 }
-                                audioCallIconItem.setVisibility(View.VISIBLE);
+                                // MeeroX: keep the icon hidden while the iOS chat bar is on.
+                                audioCallIconItem.setVisibility(meeroIosChatBarLayoutOn() ? View.GONE : View.VISIBLE);
                             }
                         } else {
                             headerItem.showSubItem(call, true);
@@ -25722,7 +25787,7 @@ public class ChatActivity extends BaseFragment implements
                 }
             } else if (id == NotificationCenter.dialogsUnreadCounterChanged) {
                 if (actionBar != null) { // NekoX
-                    actionBar.unreadBadgeSetCount(getMessagesStorage().getMainUnreadCount());
+                    actionBar.unreadBadgeSetCount(meeroIosChatBarLayoutOn() ? meeroIosUnreadChatsCount() : getMessagesStorage().getMainUnreadCount());
                 }
             }
         } else if (id == NotificationCenter.dialogTranslate) {
@@ -31311,7 +31376,8 @@ public class ChatActivity extends BaseFragment implements
             TLRPC.UserFull userFull = getMessagesController().getUserFull(currentUser.id);
             if (userFull != null && userFull.phone_calls_available) {
                 showAudioCallAsIcon = !inPreviewMode;
-                audioCallIconItem.setVisibility(View.VISIBLE);
+                // MeeroX: keep the icon hidden while the iOS chat bar is on.
+                audioCallIconItem.setVisibility(meeroIosChatBarLayoutOn() ? View.GONE : View.VISIBLE);
             } else {
                 showAudioCallAsIcon = false;
                 audioCallIconItem.setVisibility(View.GONE);
@@ -40421,7 +40487,7 @@ public class ChatActivity extends BaseFragment implements
                 }
                 // na: unread count
                 if (actionBar != null) {
-                    actionBar.unreadBadgeSetCount(getMessagesStorage().getMainUnreadCount());
+                    actionBar.unreadBadgeSetCount(meeroIosChatBarLayoutOn() ? meeroIosUnreadChatsCount() : getMessagesStorage().getMainUnreadCount());
                 }
             } else if (holder.itemView instanceof ChatActionCell) {
                 final ChatActionCell actionCell = (ChatActionCell) holder.itemView;

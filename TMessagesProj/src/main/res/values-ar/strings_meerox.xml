@@ -918,6 +918,7 @@
     <string name="MeeroIosInputPillInfo">لوحة شفافة فوق خلفية الدردشة: المشبك بدائرة زجاجية أقصى اليسار، كبسولة حقل بداخلها الإيموجي، والمايك دائرة رمادية تتحول لزر إرسال وردي عند الكتابة. إطفاءه يرجع تصميم تليكرام الرسمي.</string>
     <string name="meeroIosChatBar">البار العلوي للمحادثة (iOS)</string>
     <string name="MeeroIosChatBarInfo">شريط المحادثة يصبح مثل الآيفون: حبّة اسم وحالة بالوسط والصورة دائرة مستقلة بالطرف؛ الاتصال والبحث والكتم خلف ضغطة الصورة (الملف) أو قائمة زجاجية بالضغطة المطوّلة. إطفاؤه يرجع الشكل الرسمي. يطبَّق على المحادثات المفتوحة بعد التغيير.</string>
+    <string name="MeeroMoreTools">المزيد (القائمة الكاملة)</string>
     <string name="meeroIosWaveform">موجة الصوت بنمط iOS</string>
     <string name="MeeroIosWaveformInfo">أعمدة أعرض ومدوّرة بالكامل بتباعد 4، ومؤشر تسجيل أخف، مثل تلكرام آيفون.</string>
     <string name="MeeroSectionCategories">الأقسام</string>
