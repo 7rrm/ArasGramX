@@ -1865,10 +1865,11 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
      * the pill kept the fat width it was born with until some later
      * title/subtitle change happened (his screenshot: capsule still huge).
      * Recompute right after any avatar attach/detach; posted so the parent's
-     * reparent transaction has fully settled.
+     * reparent transaction has fully settled. (public: ViewGroup declares
+     * these hooks public - protected failed the v145 first build, fixed.)
      */
     @Override
-    protected void onViewAdded(View child) {
+    public void onViewAdded(View child) {
         super.onViewAdded(child);
         if (child == avatarImageView) {
             post(() -> checkActionBar(false));
@@ -1876,7 +1877,7 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
     }
 
     @Override
-    protected void onViewRemoved(View child) {
+    public void onViewRemoved(View child) {
         super.onViewRemoved(child);
         if (child == avatarImageView) {
             post(() -> checkActionBar(false));
