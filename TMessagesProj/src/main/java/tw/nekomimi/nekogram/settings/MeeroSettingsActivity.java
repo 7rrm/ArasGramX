@@ -180,6 +180,7 @@ public class MeeroSettingsActivity extends BaseNekoXSettingsActivity {
     private final AbstractConfigCell headerMotion = cellGroup.appendCell(new ConfigCellHeader(getString(R.string.MeeroGroupMotion)));
     private final AbstractConfigCell iosAnimRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosAnim, getString(R.string.MeeroIosAnimInfo)));
     private final AbstractConfigCell iosMenuAnimRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosMenuAnim, getString(R.string.MeeroIosMenuAnimInfo)));
+    private final AbstractConfigCell iosPopupMenuRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosPopupMenu, getString(R.string.MeeroIosPopupMenuInfo)));
     private final AbstractConfigCell iosHapticsRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosHaptics, getString(R.string.MeeroIosHapticsInfo)));
     private final AbstractConfigCell iosLoadingRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosLoading, getString(R.string.MeeroIosLoadingInfo)));
     private final AbstractConfigCell dividerMotion = cellGroup.appendCell(new ConfigCellDivider());

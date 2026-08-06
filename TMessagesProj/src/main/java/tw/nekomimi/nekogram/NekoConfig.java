@@ -113,6 +113,7 @@ public class NekoConfig {
     public static ConfigItem meeroIosShadows = addConfig("meeroIosShadows", configTypeBool, true);
     public static ConfigItem meeroIosHaptics = addConfig("meeroIosHaptics", configTypeBool, true);
     public static ConfigItem meeroIosMenuAnim = addConfig("meeroIosMenuAnim", configTypeBool, true);
+    public static ConfigItem meeroIosPopupMenu = addConfig("meeroIosPopupMenu", configTypeBool, true);
     public static ConfigItem meeroIosInputPill = addConfig("meeroIosInputPill", configTypeBool, true);
     public static ConfigItem meeroIosWaveform = addConfig("meeroIosWaveform", configTypeBool, true);
     public static ConfigItem meeroIosSelection = addConfig("meeroIosSelection", configTypeBool, true);

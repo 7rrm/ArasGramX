@@ -462,6 +462,9 @@ public class ActionBarMenuItem extends FrameLayout {
         rect = new Rect();
         location = new int[2];
         popupLayout = new ActionBarPopupWindow.ActionBarPopupWindowLayout(getContext(), R.drawable.popup_fixed_alert4, resourcesProvider, ActionBarPopupWindow.ActionBarPopupWindowLayout.FLAG_USE_SWIPEBACK);
+        // MeeroX: this layout class is shared by reactions/sheets/dialogs -
+        // only action-bar menus built here are eligible for the iOS skin.
+        popupLayout.meeroEnableIosMenuSkin();
         popupLayout.setOnTouchListener((v, event) -> {
             if (event.getActionMasked() == MotionEvent.ACTION_DOWN) {
                 if (popupWindow != null && popupWindow.isShowing()) {
@@ -2517,8 +2520,20 @@ public class ActionBarMenuItem extends FrameLayout {
 
         private Integer textColor, iconColor;
 
+        // MeeroX: marks the row as a destructive action so the iOS popup skin
+        // can render it red and split it into its own card.
+        private boolean meeroDestructive;
+
         private Item(int viewType) {
             this.viewType = viewType;
+        }
+
+        public Item setMeeroDestructive() {
+            meeroDestructive = true;
+            if (view != null) {
+                view.setTag(R.id.meero_ios_destructive, Boolean.TRUE);
+            }
+            return this;
         }
 
         private static Item asSubItem(int id, int icon, Drawable iconDrawable, CharSequence text, boolean dismiss, boolean needCheck) {
@@ -2633,6 +2648,9 @@ public class ActionBarMenuItem extends FrameLayout {
                 view = textView;
             }
             if (view != null) {
+                if (meeroDestructive) {
+                    view.setTag(R.id.meero_ios_destructive, Boolean.TRUE);
+                }
                 view.setVisibility(visibility);
                 if (overrideClickListener != null) {
                     view.setOnClickListener(overrideClickListener);

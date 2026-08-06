@@ -224,6 +224,8 @@
     <string name="MeeroIosHapticsInfo">Distinct feedback for selections, confirmations and errors instead of one buzz for everything. Needs Android 11 or newer for the full set.</string>
     <string name="meeroIosMenuAnim">Menus grow from the item</string>
     <string name="MeeroIosMenuAnimInfo">A context menu scales up out of the message or row it belongs to, instead of always unfolding from its own corner.</string>
+    <string name="meeroIosPopupMenu">iOS popup menus</string>
+    <string name="MeeroIosPopupMenuInfo">The ⋮ menu styled like iOS: rounded card, icons on the trailing edge, hairline separators, and destructive actions split into their own red card.</string>
     <string name="StyleIos">iOS</string>
     <string name="meeroIosInputPill">iOS-style composer bar</string>
     <string name="MeeroIosInputPillInfo">A floating, panel-free composer: attach moves into its own glass circle at the far left, the text sits in a capsule with the emoji inside it, and the mic becomes a neutral circle that turns into a rose send button while typing. Off restores the stock Telegram bar.</string>

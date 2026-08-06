@@ -40,7 +40,20 @@ public class ActionBarMenuSubItem extends FrameLayout {
      */
     private static boolean meeroIosRows() {
         try {
-            return tw.nekomimi.nekogram.NekoConfig.meeroIosMenuAnim.Bool();
+            return tw.nekomimi.nekogram.NekoConfig.meeroIosMenuAnim.Bool() || tw.nekomimi.nekogram.NekoConfig.meeroIosPopupMenu.Bool();
+        } catch (Throwable ignore) {
+            return false;
+        }
+    }
+
+    /**
+     * MeeroX: full iOS popup look (v153) - gates only what the popup-menu
+     * switch owns (44dp rows, trailing icon, end-side text gap). The shared
+     * row cosmetics above continue to honour the older menu-animation switch.
+     */
+    private static boolean meeroIosPopup() {
+        try {
+            return tw.nekomimi.nekogram.NekoConfig.meeroIosPopupMenu.Bool();
         } catch (Throwable ignore) {
             return false;
         }
@@ -90,6 +103,11 @@ public class ActionBarMenuSubItem extends FrameLayout {
         this.top = top;
         this.bottom = bottom;
 
+        // MeeroX: iOS context rows are 44pt tall.
+        if (meeroIosPopup()) {
+            itemHeight = 44;
+        }
+
         textColor = getThemedColor(Theme.key_actionBarDefaultSubmenuItem);
         iconColor = getThemedColor(Theme.key_actionBarDefaultSubmenuItemIcon);
         iconColorMode = PorterDuff.Mode.MULTIPLY;
@@ -115,9 +133,13 @@ public class ActionBarMenuSubItem extends FrameLayout {
         // ContextActionsContainerNode draws its glyphs at a fixed 16x16;
         // Android lets the drawable size itself, which on the solar icon set
         // comes out around 24 and leaves the row looking heavier than iOS's.
-        addView(imageView, meeroIosRows()
-                ? LayoutHelper.createFrame(20, 40, Gravity.CENTER_VERTICAL | (LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT))
-                : LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, 40, Gravity.CENTER_VERTICAL | (LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT)));
+        // v153: with the popup switch the icon moves to iOS's trailing edge.
+        if (meeroIosRows()) {
+            boolean iconOnRight = meeroIosPopup() != LocaleController.isRTL;
+            addView(imageView, LayoutHelper.createFrame(20, 40, Gravity.CENTER_VERTICAL | (iconOnRight ? Gravity.RIGHT : Gravity.LEFT)));
+        } else {
+            addView(imageView, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, 40, Gravity.CENTER_VERTICAL | (LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT)));
+        }
 
         textView = new AnimatedEmojiSpan.TextViewEmojis(context);
         textView.setLines(1);
@@ -223,6 +245,42 @@ public class ActionBarMenuSubItem extends FrameLayout {
                 rightIcon.setBackground(Theme.createRadSelectorDrawable(selectorColor, 6, 0, 0, 6));
             }
         }
+        // MeeroX: submenu rows keep a trailing chevron AND a trailing icon -
+        // both would collide on iOS's trailing edge, so these rows keep the
+        // chevron at the end and pull the glyph back to the leading side.
+        if (meeroIosPopup() && rightIcon != null && checkView == null) {
+            FrameLayout.LayoutParams iconLp = (FrameLayout.LayoutParams) imageView.getLayoutParams();
+            iconLp.gravity = Gravity.CENTER_VERTICAL | (LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT);
+            imageView.setLayoutParams(iconLp);
+            final boolean hasIcon = iconResId != 0 || imageView.getDrawable() != null;
+            textView.setPadding(checkViewLeft ? 0 : dp(hasIcon ? 43 : 0), 0, checkViewLeft ? dp(hasIcon ? 43 : 0) : 0, 0);
+            if (listener == null) {
+                setPadding(dp(16), 0, dp(16), 0);
+            }
+        }
+    }
+
+    // MeeroX: destructive rows turn iOS-red while the popup switch is on and
+    // restore the exact colours the caller gave them when it turns off.
+    private boolean meeroDestApplied;
+    private int meeroDestTextColor;
+    private int meeroDestIconColor;
+    private PorterDuff.Mode meeroDestIconMode;
+
+    public void setMeeroDestructiveLook(boolean on) {
+        if (on && !meeroDestApplied) {
+            meeroDestApplied = true;
+            meeroDestTextColor = textColor;
+            meeroDestIconColor = iconColor;
+            meeroDestIconMode = iconColorMode;
+            final int iosRed = Theme.isCurrentThemeDark() ? 0xFFFF453A : 0xFFFF3B30;
+            setTextColor(iosRed);
+            setIconColor(iosRed);
+        } else if (!on && meeroDestApplied) {
+            meeroDestApplied = false;
+            setTextColor(meeroDestTextColor);
+            setIconColor(meeroDestIconColor, meeroDestIconMode);
+        }
     }
 
     public void setTextAndIcon(CharSequence text, int icon) {
@@ -257,7 +315,13 @@ public class ActionBarMenuSubItem extends FrameLayout {
                 imageView.setImageResource(icon);
             }
             imageView.setVisibility(VISIBLE);
-            textView.setPadding(checkViewLeft ? (checkView != null ? dp(43) : 0) : dp(icon != 0 || iconDrawable != null ? 43 : 0), 0, checkViewLeft ? dp(icon != 0 || iconDrawable != null ? 43 : 0) : (checkView != null ? dp(43) : 0), 0);
+            if (meeroIosPopup() && checkView == null) {
+                // iOS: the text hugs the leading edge; the gap lives on the
+                // trailing side where the icon now sits (30pt, not 43).
+                textView.setPadding(checkViewLeft ? dp(icon != 0 || iconDrawable != null ? 30 : 0) : 0, 0, checkViewLeft ? 0 : dp(icon != 0 || iconDrawable != null ? 30 : 0), 0);
+            } else {
+                textView.setPadding(checkViewLeft ? (checkView != null ? dp(43) : 0) : dp(icon != 0 || iconDrawable != null ? 43 : 0), 0, checkViewLeft ? dp(icon != 0 || iconDrawable != null ? 43 : 0) : (checkView != null ? dp(43) : 0), 0);
+            }
         } else {
             iconResId = 0;
             imageView.setVisibility(INVISIBLE);

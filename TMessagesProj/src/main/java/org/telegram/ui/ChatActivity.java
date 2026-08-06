@@ -4930,7 +4930,7 @@ public class ChatActivity extends BaseFragment implements
             if (NaConfig.INSTANCE.getChatMenuItemClearDeleted().Bool() && NaConfig.INSTANCE.getEnableSaveDeletedMessages().Bool()) headerItem.lazilyAddSubItem(nkbtn_clearDeleted, R.drawable.msg_clear, getString(R.string.ClearDeleted));
             if (!isTopic) {
                 if (NaConfig.INSTANCE.getChatMenuItemDeleteOwnMessages().Bool() && (ChatObject.isMegagroup(currentChat) || currentChat != null && !ChatObject.isChannel(currentChat))) {
-                    headerItem.lazilyAddSubItem(nkheaderbtn_zibi, R.drawable.msg_delete, LocaleController.getString(R.string.DeleteAllFromSelf));
+                    headerItem.lazilyAddSubItem(nkheaderbtn_zibi, R.drawable.msg_delete, LocaleController.getString(R.string.DeleteAllFromSelf)).setMeeroDestructive();
                 }
                 if (ChatObject.isChannel(currentChat) && !currentChat.creator) {
                     if (!ChatObject.isNotInChat(currentChat)) {
