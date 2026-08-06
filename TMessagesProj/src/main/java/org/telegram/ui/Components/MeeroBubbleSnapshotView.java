@@ -89,7 +89,14 @@ public class MeeroBubbleSnapshotView extends FrameLayout {
             return null;
         }
         if (right <= left || bottom <= top) {
-            return null;
+            // Channel-post cells and other layouts without a bubble background
+            // report degenerate bounds here; capturing the whole cell still
+            // forms the iOS stack correctly for them instead of silently
+            // dropping to the overlapping upstream menu.
+            left = 0;
+            top = cell.getPaddingTop();
+            right = cell.getMeasuredWidth();
+            bottom = cell.getMeasuredHeight();
         }
         // The sender avatar sits outside the bubble background, so capturing
         // only the bubble sliced it in half. Grow the region to cover it.

@@ -11452,6 +11452,18 @@ public class ChatActivity extends BaseFragment implements
         }
     }
 
+    // MeeroX: the iOS message-menu switch (v155) also owns the iOS stack look -
+    // raised bubble copy above the dim, menu docked under it, tall bubbles
+    // scroll. The stack was gated on the blur switch only, which left it off
+    // for users of the fork's own scrim blur - exactly his tall-message bug.
+    private static boolean meeroIosMsgMenuOn() {
+        try {
+            return tw.nekomimi.nekogram.NekoConfig.meeroIosMsgMenu.Bool();
+        } catch (Throwable e) {
+            return false;
+        }
+    }
+
     private void dimBehindView(View view, boolean enable) {
         meeroAnimateSnapshotFade(enable);
         dimBehindView(view, enable && meeroMenuBlurEnabled(), enable);
@@ -33822,7 +33834,7 @@ public class ChatActivity extends BaseFragment implements
                 // list and long messages can be scrolled instead of shrunk.
                 meeroSnapshotView = null;
                 meeroSnapshotShown = false;
-                if (meeroMenuBlurEnabled() && !isInsideContainer && v instanceof ChatMessageCell) {
+                if ((meeroMenuBlurEnabled() || meeroIosMsgMenuOn()) && !isInsideContainer && v instanceof ChatMessageCell) {
                     final MeeroBubbleSnapshotView snap = MeeroBubbleSnapshotView.capture(contentView.getContext(), (ChatMessageCell) v);
                     if (snap != null) {
                         final boolean out = message != null && message.isOutOwner();
