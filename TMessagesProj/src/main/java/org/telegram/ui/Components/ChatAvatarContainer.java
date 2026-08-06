@@ -969,6 +969,11 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
         if (communityItem != null) {
             communityItem.setVisibility(visible && !avatarImageIsHidden && !isCentered() ? VISIBLE : GONE);
         }
+        if (meeroIosMode) {
+            // v151: (re)arm the fixed-capsule marquee after any layout -
+            // throttled by meeroMarqueeScheduled, cancelled on detachment.
+            meeroScheduleMarquee(1400);
+        }
     }
 
 
@@ -1690,6 +1695,7 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
     @Override
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
+        meeroStopMarquee(); // MeeroX v151
         if (parentFragment != null) {
             NotificationCenter.getInstance(currentAccount).removeObserver(this, NotificationCenter.didUpdateConnectionState);
             NotificationCenter.getGlobalInstance().removeObserver(this, NotificationCenter.emojiLoaded);
@@ -1906,6 +1912,10 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
      * fill). false restores the exact stock 18/14 with zero translation.
      */
     public void meeroApplyIosTitleMetrics(boolean ios) {
+        meeroIosMode = ios; // v151
+        if (!ios) {
+            meeroStopMarquee(); // v151
+        }
         if (titleTextView != null) {
             titleTextView.setTextSize(18);
         }
@@ -1968,6 +1978,137 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
         return (int) w;
     }
 
+    // =====================================================================
+    // MeeroX v151 - fixed capsule + marquee (his approved design from
+    // preview-pill-marquee-v151, cap 180dp): "الكبسولة ثابتة لا تتمدد أبداً
+    // والاسم متحرك على اليسار، دورة أو دورتين ثم يتوقف لبداية الاسم
+    // والنهاية تصير نقاط".
+    //
+    // Implementation: piggybacks SimpleTextView's PRODUCTION scrollNonFitText
+    // engine (50dp/s native marquee with edge fades - same one ActionBar and
+    // profile titles use) instead of reinventing measurement/animation:
+    //  - rest state: stock gradient ellipsis at the cut (the "نقاط" he asked).
+    //  - cycle: enable scrolling only for the views whose painted text really
+    //    overflows the fixed capsule, watch the native offset wrap -> count
+    //    TWO full laps, disable scrolling -> the view rests at the name's
+    //    beginning with the gradient fade; re-arm after 10s.
+    //  - cancelled on detach / iOS-bar off. The animated typing subtitle
+    //    never rolls.
+    // =====================================================================
+    private boolean meeroIosMode;
+    public boolean meeroIosMode() {
+        return meeroIosMode;
+    }
+
+    private boolean meeroMarqueeScheduled;
+    private boolean meeroRolling;
+    private int meeroRollLaps;
+    private float meeroLastOffset;
+    private SimpleTextView meeroRollingView;
+
+    private final Runnable meeroMarqueeKick = () -> {
+        meeroMarqueeScheduled = false;
+        meeroStartMarqueeIfNeeded();
+    };
+
+    private final Runnable meeroMarqueeWatch = new Runnable() {
+        @Override
+        public void run() {
+            if (!meeroIosMode) {
+                meeroStopMarquee();
+                return;
+            }
+            if (meeroRollingView != null) {
+                final float off = meeroRollingView.getScrollingOffsetPx();
+                if (off < meeroLastOffset - dp(2)) {
+                    meeroRollLaps++;         // native offset wrapped = one full lap
+                }
+                meeroLastOffset = off;
+            }
+            if (meeroRollLaps >= 2) {
+                meeroFinishMarqueeLaps();
+            } else {
+                postDelayed(this, 64);
+            }
+        }
+    };
+
+    private void meeroScheduleMarquee(long delayMs) {
+        if (meeroMarqueeScheduled) {
+            return;
+        }
+        meeroMarqueeScheduled = true;
+        postDelayed(meeroMarqueeKick, delayMs);
+    }
+
+    private int meeroOverflowOf(SimpleTextView tv) {
+        if (tv == null || tv.getVisibility() != VISIBLE || tv.getMeasuredWidth() <= 0) {
+            return -1;
+        }
+        return (int) (tv.getExactWidthIncludeDrawables() - tv.getMeasuredWidth());
+    }
+
+    private void meeroStartMarqueeIfNeeded() {
+        if (!meeroIosMode) {
+            return;
+        }
+        if (!isShown() || getMeasuredWidth() < dp(80)) {
+            meeroScheduleMarquee(4000);
+            return;
+        }
+        final int tOver = meeroOverflowOf(titleTextView);
+        final int sOver = subtitleTextView != null && subtitleTextView.getVisibility() == VISIBLE ? meeroOverflowOf(subtitleTextView) : -1;
+        final boolean tRoll = tOver > dp(2);
+        final boolean sRoll = sOver > dp(2);
+        if (!tRoll && !sRoll) {
+            meeroScheduleMarquee(10000);
+            return;
+        }
+        meeroRolling = true;
+        meeroRollLaps = 0;
+        meeroLastOffset = 0;
+        meeroRollingView = sOver > tOver ? subtitleTextView : titleTextView;
+        if (tRoll && titleTextView != null) {
+            titleTextView.setScrollNonFitText(true);
+        }
+        if (sRoll && subtitleTextView != null) {
+            subtitleTextView.setScrollNonFitText(true);
+        }
+        removeCallbacks(meeroMarqueeWatch);
+        postDelayed(meeroMarqueeWatch, 400);
+    }
+
+    private void meeroFinishMarqueeLaps() {
+        meeroRolling = false;
+        meeroRollLaps = 0;
+        meeroRollingView = null;
+        if (titleTextView != null) {
+            titleTextView.setScrollNonFitText(false);
+        }
+        if (subtitleTextView != null) {
+            subtitleTextView.setScrollNonFitText(false);
+        }
+        removeCallbacks(meeroMarqueeWatch);
+        if (meeroIosMode && isAttachedToWindow()) {
+            meeroScheduleMarquee(10000);
+        }
+    }
+
+    private void meeroStopMarquee() {
+        meeroRolling = false;
+        meeroRollLaps = 0;
+        meeroRollingView = null;
+        removeCallbacks(meeroMarqueeKick);
+        removeCallbacks(meeroMarqueeWatch);
+        meeroMarqueeScheduled = false;
+        if (titleTextView != null) {
+            titleTextView.setScrollNonFitText(false);
+        }
+        if (subtitleTextView != null) {
+            subtitleTextView.setScrollNonFitText(false);
+        }
+    }
+
     /**
      * MeeroX (v144): tap override for the photo while the iOS chat-bar
      * layout is active (his pick: tap opens the glass tools sheet directly,
@@ -2000,6 +2141,17 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
         }
         if (subtitleTextView != null) {
             width = Math.max(width, subtitleTextView.getExactWidthIncludeDrawables());
+        }
+        if (meeroIosMode) {
+            // MeeroX (v151, his approved design: "الكبسولة ثابتة لا تتمدد
+            // أبداً والاسم متحرك"): container caps at dp(168) - with the
+            // ActionBar's p*2 outer pad the pill is EXACTLY the approved
+            // fixed dp(180). Longer texts live inside the fixed capsule and
+            // marquee (see meeroRunMarqueeCycle); short names still hug.
+            if (animatedSubtitleTextView != null && animatedSubtitleTextView.getVisibility() == VISIBLE) {
+                width = Math.max(width, dp(120));
+            }
+            return (int) Math.min(Math.max(width + dp(16), dp(48)), dp(168));
         }
         if (hasVisibleAvatar()) {
             width += dp(52 + 12);

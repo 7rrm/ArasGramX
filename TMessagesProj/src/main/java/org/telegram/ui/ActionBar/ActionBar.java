@@ -2367,7 +2367,9 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
 
         final boolean hasAvatar = chatAvatarContainer.hasVisibleAvatar();
         int visualWidth = chatAvatarContainer.getVisualWidth();
-        if (hasAvatar) {
+        // MeeroX (v151): the fixed iOS capsule never honours the dp(192)
+        // avatar-era floor - overflow text marquees inside dp(180) instead.
+        if (hasAvatar && !chatAvatarContainer.meeroIosMode()) {
             visualWidth = Math.max(visualWidth, dp(192));
         }
 
@@ -2465,7 +2467,10 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
                 // layout (meeroCx), so the text stays centred inside it.
                 final int width;
                 if (meeroIosFrostedStrip) {
-                    width = Math.min(Math.max(chatAvatarContainer.meeroVisualTextWidthPx() + dp(28), dp(96)), widthDefault);
+                    // v151: fixed capsule cap dp(180) (his approved pick) -
+                    // hug short names, never grow past the cap; the overflow
+                    // marquees inside it (ChatAvatarContainer runMarqueeCycle).
+                    width = Math.min(Math.max(chatAvatarContainer.meeroVisualTextWidthPx() + dp(28), dp(96)), Math.min(dp(180), widthDefault));
                 } else {
                     width = lerp(Math.min(widthDefault, (int) animatorAvatarContainerWidth.getFactor() + p * 2), widthDefault, Math.max(searchFactor, actionModeFactor));
                 }

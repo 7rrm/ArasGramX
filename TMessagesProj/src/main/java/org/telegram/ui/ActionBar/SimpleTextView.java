@@ -222,6 +222,15 @@ public class SimpleTextView extends View implements Drawable.Callback {
         return fullAlpha;
     }
 
+    /**
+     * MeeroX (v151): read-only peek at the native marquee offset, used by
+     * ChatAvatarContainer's fixed-iOS-capsule lap counter (his approved
+     * preview-pill-marquee-v151: roll twice, then rest at the name start).
+     */
+    public float getScrollingOffsetPx() {
+        return scrollingOffset;
+    }
+
     public void setScrollNonFitText(boolean value) {
         if (scrollNonFitText == value) {
             return;
