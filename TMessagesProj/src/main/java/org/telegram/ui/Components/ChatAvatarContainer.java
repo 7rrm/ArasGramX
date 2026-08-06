@@ -1947,6 +1947,28 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
     }
 
     /**
+     * MeeroX (v150, his verdict "الزجاج كبير / مفروض الطول صغير"): the
+     * VISIBLE text width (px) for the iOS pill - max of title and subtitle
+     * exact widths, measured fresh every frame by ActionBar.dispatchDraw.
+     * No avatar slot, no dp(192) floor, no width animator (his v149 group
+     * screenshot: those inflated a ~65dp text to a ~260dp glass). While the
+     * animated typing subtitle replaces the plain one, fall back to a
+     * steady dp(120) so the capsule does not throb.
+     */
+    public int meeroVisualTextWidthPx() {
+        float w = 0;
+        if (titleTextView != null) {
+            w = Math.max(w, titleTextView.getExactWidthIncludeDrawables());
+        }
+        if (subtitleTextView != null && subtitleTextView.getVisibility() == VISIBLE) {
+            w = Math.max(w, subtitleTextView.getExactWidthIncludeDrawables());
+        } else if (animatedSubtitleTextView != null && animatedSubtitleTextView.getVisibility() == VISIBLE) {
+            w = Math.max(w, dp(120));
+        }
+        return (int) w;
+    }
+
+    /**
      * MeeroX (v144): tap override for the photo while the iOS chat-bar
      * layout is active (his pick: tap opens the glass tools sheet directly,
      * the profile opens from the sheet's "View profile" item). Passing null

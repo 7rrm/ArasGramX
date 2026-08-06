@@ -107,6 +107,13 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
      * (the iPhone-style frosted backdrop). Created in setupGlass, drawn only
      * while meeroIosFrostedStrip is on (set by ChatActivity's iOS-bar sync). */
     private Drawable meeroGlassStrip;
+    /**
+     * MeeroX (v150, his verdict on v149's bar screenshot: "البلور خلف البار
+     * زجاجي لا أريده زجاجي / اريد غواش بسيط"): the iOS-bar backdrop is now
+     * a SIMPLE DARK VEIL (one flat translucent tone), not the blurred-glass
+     * strip. The pill and the two glass circles still draw above it.
+     */
+    private final android.graphics.Paint meeroVeilPaint = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
     private INavigationLayout.BackButtonState backButtonState = INavigationLayout.BackButtonState.BACK;
     public UnreadImageView backButtonImageView;
     private BackupImageView avatarSearchImageView;
@@ -258,12 +265,8 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
             .setRadius(dp(23))
             .setPadding(dp(6));
 
-        // MeeroX (v145): same blur pipeline as the three pieces above - a
-        // rectangular backdrop sampled from whatever scrolls under the bar.
-        meeroGlassStrip = factory.create(this)
-            .setColorProvider(colorProvider)
-            .setRadius(0)
-            .setPadding(0);
+        // MeeroX (v150): the v145 blurred strip was retired by his verdict
+        // (simple dark veil instead - see dispatchDraw and meeroVeilPaint);
 
         if (menu != null) {
             menu.setTranslationX(-dp(10));
@@ -2435,11 +2438,12 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
         final int t = getHeight() - (getCurrentActionBarHeight() + s) / 2 - p;
         final int b = t + s + p * 2;
 
-        // MeeroX (v145): the frosted strip goes FIRST, so the pill and the
-        // two circles draw on top of it exactly like the iPhone bar.
-        if (meeroGlassStrip != null && meeroIosFrostedStrip && !glassOnlyBack) {
-            meeroGlassStrip.setBounds(0, 0, getWidth(), getHeight());
-            meeroGlassStrip.draw(canvas);
+        // MeeroX (v150): simple dark VEIL behind the bar (85% tone) instead
+        // of the v145-v149 blurred-glass strip - his verdict: "اريد غواش
+        // بسيط وليس زجاجي". Drawn first, pill + circles stay on top.
+        if (meeroIosFrostedStrip && !glassOnlyBack) {
+            meeroVeilPaint.setColor(0xD9121017);
+            canvas.drawRect(0, 0, getWidth(), getHeight(), meeroVeilPaint);
         }
 
         if (glassDrawable != null && !glassOnlyBack) {
@@ -2451,30 +2455,52 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
             final int widthDefault = rightDefault - leftDefault;
             final int left, right;
             if (chatAvatarContainer != null) {
-                final int width = lerp(Math.min(widthDefault, (int) animatorAvatarContainerWidth.getFactor() + p * 2), widthDefault, Math.max(searchFactor, actionModeFactor));
+                // MeeroX (v150, his verdict "الزجاج كبير / مفروض الطول صغير"):
+                // under the iOS bar the pill width is computed PER FRAME from
+                // the VISIBLE text only - never the width animator, never the
+                // avatar-slot reservation, never the dp(192) floor. His v149
+                // screenshot proved those paths still inflated the glass to
+                // ~260dp while the visible text ("عضو واحد" + loading dots)
+                // was ~65dp. Centered on the same mid as the centered title
+                // layout (meeroCx), so the text stays centred inside it.
+                final int width;
+                if (meeroIosFrostedStrip) {
+                    width = Math.min(Math.max(chatAvatarContainer.meeroVisualTextWidthPx() + dp(28), dp(96)), widthDefault);
+                } else {
+                    width = lerp(Math.min(widthDefault, (int) animatorAvatarContainerWidth.getFactor() + p * 2), widthDefault, Math.max(searchFactor, actionModeFactor));
+                }
                 left = (rightDefault + leftDefault - width) / 2;
                 right = left + width;
-                chatAvatarContainer.setTranslationX(left
-                    - ((MarginLayoutParams)(chatAvatarContainer.getLayoutParams())).leftMargin
-                    - chatAvatarContainer.getLeftPadding()
-                    + p + dp(3));
+                if (meeroIosFrostedStrip) {
+                    // v150: centre the container on the pill CENTRE, whatever
+                    // its laid-out width currently is (stale/loading states
+                    // included) - the per-frame pill width above would
+                    // otherwise misalign against a stale container.
+                    chatAvatarContainer.setTranslationX(left + width / 2f
+                        - chatAvatarContainer.getLeft()
+                        - chatAvatarContainer.getWidth() / 2f);
+                } else {
+                    chatAvatarContainer.setTranslationX(left
+                        - ((MarginLayoutParams)(chatAvatarContainer.getLayoutParams())).leftMargin
+                        - chatAvatarContainer.getLeftPadding()
+                        + p + dp(3));
+                }
             } else {
                 left = leftDefault;
                 right = rightDefault;
             }
 
-            // MeeroX (v149, his approved pick "A" from preview-bar-v149b):
-            // pill = packed text block (18 title / 13 tucked subtitle) +
-            // slim dp(6) total vertical padding -> ~43dp on his device
-            // (74% band fill = the ellipi reference ratio; the v148 dp(12)
-            // padding made 53dp "طويلة"). Clamped dp(38)..band so a
-            // title-only chat never gets a sliver-pill. Rings/circles and
-            // the hug-width (v148) are untouched.
+            // MeeroX (v150, his verdict "مفروض الطول يكون صغير"): pill =
+            // packed text block (18/13 tucked) + dp(2) hair padding -> on his
+            // custom-font device this lands ~42-44dp, the ellipi reference
+            // ratio (v149's dp(6) still read ~48dp "طويلة" to him;
+            // v148 dp(12) was 53dp). Clamped dp(38)..band so a title-only
+            // chat never gets a sliver-pill.
             int meeroPillInset = 0;
             if (meeroIosFrostedStrip) {
                 final int meeroSpan = b - t;
                 final int meeroContentH = chatAvatarContainer != null ? chatAvatarContainer.meeroTextBlockHeight() : 0;
-                int meeroPillH = meeroContentH > 0 ? meeroContentH + dp(6) : meeroSpan - dp(4);
+                int meeroPillH = meeroContentH > 0 ? meeroContentH + dp(2) : meeroSpan - dp(4);
                 meeroPillH = Math.max(dp(38), Math.min(meeroPillH, meeroSpan));
                 meeroPillInset = (meeroSpan - meeroPillH) / 2;
             }
