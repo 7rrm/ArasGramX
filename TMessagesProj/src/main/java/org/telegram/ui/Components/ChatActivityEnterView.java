@@ -790,8 +790,13 @@ public class ChatActivityEnterView extends FrameLayout implements
         }
         if (topView.getLayoutParams() instanceof MarginLayoutParams) {
             final MarginLayoutParams lp = (MarginLayoutParams) topView.getLayoutParams();
-            lp.leftMargin = dp(6);
-            lp.rightMargin = dp(6);
+            // v142 (user verdict, mock "preview-topbar-reply-v142"): the card
+            // must sit on the FIELD's edges, not span the whole row over the
+            // attach/mic circles (the "طاخة" he felt). 62 = container left
+            // margin (48+8) + capsule inset 6; 54 = container right margin
+            // (48, mic slot) + inset 6.
+            lp.leftMargin = dp(62);
+            lp.rightMargin = dp(54);
             topView.setLayoutParams(lp);
         }
         topView.invalidate();

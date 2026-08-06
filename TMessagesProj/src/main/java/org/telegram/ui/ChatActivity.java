@@ -4579,7 +4579,10 @@ public class ChatActivity extends BaseFragment implements
 
             @Override
             protected boolean isCentered() {
-                return isTitleCentered();
+                // MeeroX v142: the iOS chat bar also runs the centered
+                // anatomy (name/status centered in the pill, avatar detached
+                // to its own edge circle by meeroSyncIosChatBar()).
+                return isTitleCentered() || meeroIosChatBarLayoutOn();
             }
 
             @Override
@@ -17589,6 +17592,121 @@ public class ChatActivity extends BaseFragment implements
         if (prevSetUnreadCount != newUnreadMessageCount) {
             prevSetUnreadCount = newUnreadMessageCount;
             sideControlsButtonsLayout.setButtonCount(ChatActivitySideControlsButtonsLayout.BUTTON_PAGE_DOWN,  newUnreadMessageCount, true);
+        }
+    }
+
+    // ── MeeroX v142: iOS-clean chat header (approved mock
+    // "preview-topbar-reply-v142", user picked V1) ─────────────────
+    // Gate: build-time visual layout (isCentered override + avatar detach).
+    // Mirrors the icon-creation scopes above: normal chats only.
+    private boolean meeroIosChatBarLayoutOn() {
+        return tw.nekomimi.nekogram.NekoConfig.meeroIosChatBar.Bool()
+                && chatMode == 0 && threadMessageId == 0;
+    }
+
+    private boolean meeroAvatarDetached;
+
+    /**
+     * Applies/restores the iPhone header anatomy:
+     *  - hide the call icon, search icon and the kebab FROM THE BAR (their
+     *    actions stay one tap away through the profile screen or the
+     *    long-press glass sheet - nothing is removed functionally),
+     *  - move the photo out of the pill into its own right-edge circle,
+     *  - the title pill itself centers via the isCentered() override above.
+     * Runs from onResume() so toggling the switch converges the next time a
+     * chat is (re)opened; stock stays untouched whenever the switch is off.
+     */
+    private void meeroSyncIosChatBar() {
+        final boolean on = meeroIosChatBarLayoutOn();
+        try {
+            if (audioCallIconItem != null) {
+                audioCallIconItem.setVisibility(on ? View.GONE : (showAudioCallAsIcon ? View.VISIBLE : View.GONE));
+            }
+            if (searchIconItem != null) {
+                searchIconItem.setVisibility(on ? View.GONE : View.VISIBLE);
+            }
+            if (headerItem != null) {
+                headerItem.setVisibility(on ? View.GONE : View.VISIBLE);
+            }
+            if (avatarContainer != null && avatarContainer.avatarImageView != null && actionBar != null) {
+                final BackupImageView av = avatarContainer.avatarImageView;
+                if (on && !meeroAvatarDetached && av.getParent() == avatarContainer) {
+                    avatarContainer.removeView(av);
+                    actionBar.addView(av, LayoutHelper.createFrame(42, 42, Gravity.TOP | Gravity.RIGHT,
+                            0, (actionBar.getOccupyStatusBar() ? AndroidUtilities.statusBarHeight : 0) + dp(7), dp(6), 0));
+                    // The tools the clean bar no longer shows: one long-press
+                    // away, exactly like the approved mock's flow card.
+                    av.setOnLongClickListener(v -> {
+                        meeroShowIosChatBarSheet(av);
+                        return true;
+                    });
+                    avatarContainer.setOnLongClickListener(v -> {
+                        meeroShowIosChatBarSheet(avatarContainer);
+                        return true;
+                    });
+                    meeroAvatarDetached = true;
+                    avatarContainer.requestLayout();
+                    actionBar.requestLayout();
+                } else if (!on && meeroAvatarDetached) {
+                    if (av.getParent() instanceof ViewGroup) {
+                        ((ViewGroup) av.getParent()).removeView(av);
+                    }
+                    avatarContainer.addView(av);
+                    av.setOnLongClickListener(null);
+                    avatarContainer.setOnLongClickListener(null);
+                    meeroAvatarDetached = false;
+                    avatarContainer.requestLayout();
+                    actionBar.requestLayout();
+                }
+            }
+        } catch (Throwable ignore) {
+            // cosmetic header tweak - never take the chat down with it.
+        }
+    }
+
+    // The glass quick menu behind the long-press (approved mock flow card):
+    // only actions whose handlers already exist one line away in this class.
+    private void meeroShowIosChatBarSheet(View anchor) {
+        try {
+            final ArrayList<CharSequence> items = new ArrayList<>();
+            final ArrayList<Runnable> actions = new ArrayList<>();
+            if (currentUser != null && showAudioCallAsIcon) {
+                items.add(LocaleController.getString(R.string.Call));
+                actions.add(() -> {
+                    if (currentUser != null && getParentActivity() != null) {
+                        VoIPHelper.startCall(currentUser, false, userInfo != null && userInfo.video_calls_available, getParentActivity(), getMessagesController().getUserFull(currentUser.id), getAccountInstance());
+                    }
+                });
+                final TLRPC.UserFull uf = getMessagesController().getUserFull(currentUser.id);
+                if (uf != null && uf.video_calls_available) {
+                    items.add(LocaleController.getString(R.string.VideoCall));
+                    actions.add(() -> {
+                        if (currentUser != null && getParentActivity() != null) {
+                            VoIPHelper.startCall(currentUser, true, true, getParentActivity(), getMessagesController().getUserFull(currentUser.id), getAccountInstance());
+                        }
+                    });
+                }
+            }
+            if (currentEncryptedChat == null) {
+                items.add(LocaleController.getString(R.string.Search));
+                actions.add(() -> openSearchWithText(isSupportedTags() ? "" : null));
+            }
+            final boolean muted = getMessagesController().isDialogMuted(dialog_id, getTopicId());
+            items.add(LocaleController.getString(muted ? R.string.Unmute : R.string.Mute));
+            actions.add(() -> toggleMute(false));
+            if (avatarContainer != null) {
+                items.add(LocaleController.getString(R.string.Profile));
+                actions.add(() -> avatarContainer.openProfile(true));
+            }
+            tw.nekomimi.nekogram.ui.PopupBuilder builder = new tw.nekomimi.nekogram.ui.PopupBuilder(anchor);
+            builder.setItems(items, -1, (i, s) -> {
+                if (i >= 0 && i < actions.size()) {
+                    actions.get(i).run();
+                }
+                return Unit.INSTANCE;
+            });
+            builder.show();
+        } catch (Throwable ignore) {
         }
     }
 
@@ -31245,6 +31363,9 @@ public class ChatActivity extends BaseFragment implements
         super.onResume();
         // MeeroX v106: chat-lock gate - biometric/device lock on every entry.
         tw.nekomimi.nekogram.MeeroChatLock.maybePromptGate(this);
+        // MeeroX v142: converge the iOS-clean chat header (icons hidden,
+        // avatar detached) with the switch state on every (re)entry.
+        meeroSyncIosChatBar();
         cachedIsGestureNavigation = AndroidUtil.isGestureNavigation(getContext());
         checkShowBlur(false);
         activityResumeTime = System.currentTimeMillis();

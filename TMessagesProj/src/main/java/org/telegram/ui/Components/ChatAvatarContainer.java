@@ -885,9 +885,17 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
         if (isCentered()) {
             avatarLeft = getWidth() - leftPadding - avatarImageView.getMeasuredWidth() - 1;
         }
-        avatarImageView.layout(avatarLeft, 1 + viewTop, avatarLeft + avatarImageView.getMeasuredWidth(), 1 + viewTop + avatarImageView.getMeasuredHeight());
+        // MeeroX v142 (iOS chat bar): the avatar may be DETACHED from this
+        // container into the ActionBar itself (its own edge circle). Calling
+        // layout() on a view we no longer own would teleport it back into
+        // pill coordinates - skip positioning, and skip the text offset
+        // reservation, while it lives elsewhere.
+        final boolean meeroAvatarDetached = avatarImageView.getParent() != this;
+        if (!meeroAvatarDetached) {
+            avatarImageView.layout(avatarLeft, 1 + viewTop, avatarLeft + avatarImageView.getMeasuredWidth(), 1 + viewTop + avatarImageView.getMeasuredHeight());
+        }
 
-        int l = leftPadding + (avatarImageView.getVisibility() == VISIBLE && !isCentered() ? dp(glassMode ? 49.66f : 55) : (isCentered() ? 0 : dp(glassMode ? 13 : 1))) + (isCentered() ? 0 : rightAvatarPadding);
+        int l = leftPadding + (avatarImageView.getVisibility() == VISIBLE && !meeroAvatarDetached && !isCentered() ? dp(glassMode ? 49.66f : 55) : (isCentered() ? 0 : dp(glassMode ? 13 : 1))) + (isCentered() ? 0 : rightAvatarPadding);
         if (isPreviewMode() && isCentered()) {
             l += dp(AndroidUtilities.isTablet() ? 80 : 72) / 2;
         }

@@ -144,6 +144,10 @@ public class MeeroSettingsActivity extends BaseNekoXSettingsActivity {
     // bottom-bar chats popup (menuBlur above frosts the menu panel itself).
     private final AbstractConfigCell chatsMenuFogRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroChatsMenuFog, getString(R.string.MeeroChatsMenuFogInfo)));
     private final AbstractConfigCell iosInputPillRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosInputPill, getString(R.string.MeeroIosInputPillInfo)));
+    // MeeroX v142: approved mock "preview-v142" - the iPhone chat header
+    // (centered name/status pill + detached photo circle at the edge; tools
+    // behind the photo tap / long-press glass menu).
+    private final AbstractConfigCell iosChatBarRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosChatBar, getString(R.string.MeeroIosChatBarInfo)));
     private final AbstractConfigCell iosWaveformRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosWaveform, getString(R.string.MeeroIosWaveformInfo)));
     private final AbstractConfigCell iosCodeRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosCode, getString(R.string.MeeroIosCodeInfo)));
     private final AbstractConfigCell iosSelectionRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosSelection, getString(R.string.MeeroIosSelectionInfo)));
