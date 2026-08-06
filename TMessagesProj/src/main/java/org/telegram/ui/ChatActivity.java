@@ -17671,13 +17671,16 @@ public class ChatActivity extends BaseFragment implements
                     // white chevron + compact light badge.
                     meeroBarAvatarItem.setOnClickListener(v -> meeroShowIosChatBarSheet(av));
                     avatarContainer.setMeeroIosAvatarTap(v -> meeroShowIosChatBarSheet(av));
+                    avatarContainer.meeroApplyIosTitleMetrics(true); // v146: official iOS 17/12 title typography
                     actionBar.meeroIosFrostedStrip = true;
                     if (actionBar.backButtonImageView != null) {
                         if (meeroSavedBackArrowTint == null) {
                             meeroSavedBackArrowTint = actionBar.backButtonImageView.getColorFilter();
                         }
                         actionBar.backButtonImageView.setColorFilter(Color.WHITE);
-                        actionBar.backButtonImageView.setMeeroIosBadge(true);
+                        // v146 (his ask): badge goes back to EXACTLY stock -
+                        // pink pill + unread MESSAGE count ("خلي 99 عادي مثل
+                        // قبل"); only the chevron stays iOS-white.
                     }
                     actionBar.invalidate();
                     avatarContainer.setOnLongClickListener(v -> {
@@ -17695,10 +17698,11 @@ public class ChatActivity extends BaseFragment implements
                         avatarContainer.addView(av);
                         av.setOnLongClickListener(null);
                     }
-                    // v144/v145: restore the exact stock state - tap = profile
-                    // again via the container, stock pink arrow + stock badge,
-                    // no frosted backdrop.
+                    // v144/v145/v146: restore the exact stock state - tap =
+                    // profile again via the container, stock 18/14 typography,
+                    // stock pink arrow + stock badge, no frosted backdrop.
                     avatarContainer.setMeeroIosAvatarTap(null);
+                    avatarContainer.meeroApplyIosTitleMetrics(false);
                     actionBar.meeroIosFrostedStrip = false;
                     if (actionBar.backButtonImageView != null) {
                         actionBar.backButtonImageView.setColorFilter(meeroSavedBackArrowTint);
@@ -17791,21 +17795,8 @@ public class ChatActivity extends BaseFragment implements
      * while our badge said "99+". Falls back to the stock message count if
      * anything goes wrong.
      */
-    private int meeroIosUnreadChatsCount() {
-        try {
-            int count = 0;
-            final ArrayList<TLRPC.Dialog> dialogs = getMessagesController().getAllDialogs();
-            for (int i = 0, N = dialogs == null ? 0 : dialogs.size(); i < N; i++) {
-                final TLRPC.Dialog d = dialogs.get(i);
-                if (d != null && d.folder_id == 0 && (d.unread_count > 0 || d.unread_mark) && !getMessagesController().isDialogMuted(d.id, 0)) {
-                    count++;
-                }
-            }
-            return count;
-        } catch (Throwable ignore) {
-            return getMessagesStorage().getMainUnreadCount();
-        }
-    }
+    // v146: meeroIosUnreadChatsCount() removed — back badge restored to the
+    // stock unread-MESSAGE counter ("خلي 99 عادي مثل قبل").
 
     private void toggleMute(boolean instant) {
         boolean muted = getMessagesController().isDialogMuted(dialog_id, getTopicId());
@@ -25787,7 +25778,7 @@ public class ChatActivity extends BaseFragment implements
                 }
             } else if (id == NotificationCenter.dialogsUnreadCounterChanged) {
                 if (actionBar != null) { // NekoX
-                    actionBar.unreadBadgeSetCount(meeroIosChatBarLayoutOn() ? meeroIosUnreadChatsCount() : getMessagesStorage().getMainUnreadCount());
+                    actionBar.unreadBadgeSetCount(getMessagesStorage().getMainUnreadCount()); // v146: stock message count, his ask
                 }
             }
         } else if (id == NotificationCenter.dialogTranslate) {
@@ -40487,7 +40478,7 @@ public class ChatActivity extends BaseFragment implements
                 }
                 // na: unread count
                 if (actionBar != null) {
-                    actionBar.unreadBadgeSetCount(meeroIosChatBarLayoutOn() ? meeroIosUnreadChatsCount() : getMessagesStorage().getMainUnreadCount());
+                    actionBar.unreadBadgeSetCount(getMessagesStorage().getMainUnreadCount()); // v146: stock message count, his ask
                 }
             } else if (holder.itemView instanceof ChatActionCell) {
                 final ChatActionCell actionCell = (ChatActionCell) holder.itemView;

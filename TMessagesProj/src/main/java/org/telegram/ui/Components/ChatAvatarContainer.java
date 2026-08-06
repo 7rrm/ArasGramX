@@ -1896,6 +1896,26 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
     }
 
     /**
+     * MeeroX (v146): official Telegram-iOS ChatTitleComponent typography for
+     * the iOS chat bar - title 17 semibold, subtitle 12 regular (stock
+     * Android bar uses 18/14). Passing false restores the exact stock sizes.
+     * The smaller subtitle is a big part of why the iPhone pill looks slim.
+     */
+    public void meeroApplyIosTitleMetrics(boolean ios) {
+        if (titleTextView != null) {
+            titleTextView.setTextSize(ios ? 17 : 18);
+        }
+        if (subtitleTextView != null) {
+            subtitleTextView.setTextSize(ios ? 12 : 14);
+        }
+        if (animatedSubtitleTextView != null) {
+            animatedSubtitleTextView.setTextSize(dp(ios ? 12 : 14));
+        }
+        checkActionBar(false);
+        requestLayout();
+    }
+
+    /**
      * MeeroX (v144): tap override for the photo while the iOS chat-bar
      * layout is active (his pick: tap opens the glass tools sheet directly,
      * the profile opens from the sheet's "View profile" item). Passing null
@@ -1931,7 +1951,14 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
         if (hasVisibleAvatar()) {
             width += dp(52 + 12);
         } else {
-            width += dp(30);
+            // MeeroX (v146, ported from Telegram-iOS ChatTitleComponent.swift):
+            // the title pill is content + 14pt side insets (28dp total - the
+            // remaining dp(12) is added by the pill's own outer padding in
+            // ActionBar) with a minimum content width of 150pt, so the pill is
+            // a steady "iPhone size" for short names and grows with long ones
+            // (his ask: "خلي حجم ثابت مثل حجم الآيفون أما إذا كان اسم كبير خلي
+            // متحرك"). Final pill floor = dp(166) + dp(12) = 178dp = 150+28.
+            width = Math.max(width + dp(16), dp(166));
         }
         return (int) width;
     }
