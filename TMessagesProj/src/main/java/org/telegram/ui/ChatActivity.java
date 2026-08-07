@@ -1162,9 +1162,6 @@ public class ChatActivity extends BaseFragment implements
     private boolean meeroSnapshotShown;
     private float meeroSnapshotProgress;
     private ValueAnimator meeroSnapshotAnimator;
-    // MeeroX v165: true only while this chat armed FLAG_SECURE (so onPause
-    // clears exactly what it set and nothing more).
-    private boolean meeroSecureScreenApplied;
     public ActionBarMenuSubItem[] scrimPopupWindowItems;
     private ActionBarMenuSubItem menuDeleteItem;
     private final Runnable updateDeleteItemRunnable = new Runnable() {
@@ -31274,14 +31271,6 @@ public class ChatActivity extends BaseFragment implements
         super.onResume();
         // MeeroX v106: chat-lock gate - biometric/device lock on every entry.
         tw.nekomimi.nekogram.MeeroChatLock.maybePromptGate(this);
-        // MeeroX v165 (approved Pack A): screenshot/screen-record shield
-        // while a chat is open. Switch default OFF; when OFF the window
-        // flags are never touched (exact v164 behaviour).
-        if (tw.nekomimi.nekogram.NekoConfig.meeroSecureScreen.Bool() && getParentActivity() != null) {
-            meeroSecureScreenApplied = true;
-            getParentActivity().getWindow().setFlags(
-                    WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE);
-        }
         // MeeroX v142: converge the iOS-clean chat header (icons hidden,
         // avatar detached) with the switch state on every (re)entry.
         cachedIsGestureNavigation = AndroidUtil.isGestureNavigation(getContext());
@@ -31518,13 +31507,6 @@ public class ChatActivity extends BaseFragment implements
     @Override
     public void onPause() {
         super.onPause();
-        // MeeroX v165: release the screenshot shield exactly if (and only
-        // if) this chat armed it - other flags/users of the window are left
-        // as they were.
-        if (meeroSecureScreenApplied && getParentActivity() != null) {
-            meeroSecureScreenApplied = false;
-            getParentActivity().getWindow().clearFlags(WindowManager.LayoutParams.FLAG_SECURE);
-        }
         scrolling = false;
         if (scrimPopupWindow != null) {
             scrimPopupWindow.setPauseNotifications(false);

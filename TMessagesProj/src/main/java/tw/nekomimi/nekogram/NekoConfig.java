@@ -132,11 +132,6 @@ public class NekoConfig {
     //    first chat open and first chat-list swipe after launch. OFF =
     //    startup byte-identical to v163 (nothing is even scheduled).
     public static ConfigItem meeroSmoothPass = addConfig("meeroSmoothPass", configTypeBool, true);
-    // MeeroX v165 (approved Pack A): screenshot/screen-record protection
-    // inside chats (FLAG_SECURE while a chat is open). Defaults OFF - it
-    // changes a daily behaviour, so the user arms it knowingly. OFF = no
-    // window flag is ever touched (exact v164 behaviour).
-    public static ConfigItem meeroSecureScreen = addConfig("meeroSecureScreen", configTypeBool, false);
     // MeeroX v159: Auto Janitor - scheduled, size-capped cache cleaning.
     // The master switch defaults OFF: it deletes files, so it arms only by
     // explicit user choice. Media files removed here are re-downloadable

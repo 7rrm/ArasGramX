@@ -933,17 +933,10 @@
     <string name="MeeroAmoledStrokeInfo">يرسم خطاً خافتاً جداً بسماكة 1px حول فقاعات الطرف الثاني السوداء الخالصة حتى تبقى حدودها واضحة على الخلفية السوداء الحقيقية. يشتغل فقط إذا خيار «فقاعات سوداء AMOLED» شغّال.</string>
     <string name="meeroSmoothPass">حزمة السلاسة</string>
     <string name="MeeroSmoothPassInfo">يسخّن مسبقاً أول قائمة منبثقة وأول دردشة تفتحها وأول سحبة بقائمة الدردشات بعد تشغيل التطبيق. الإطفاء يرجّع التشغيل مثل السابق حرفياً.</string>
-    <string name="MeeroGroupSecurity">الأمان</string>
-    <string name="meeroSecureScreen">حماية من تصوير الشاشة</string>
-    <string name="MeeroSecureScreenInfo">يمنع لقطة الشاشة وتسجيلها طالما الدردشة مفتوحة. الإطفاء يبقي الوضع الافتراضي للنظام (التصوير مسموح).</string>
     <string name="MeeroSigWarningTitle">⚠️ تحذير: نسخة غير رسمية</string>
     <string name="MeeroSigWarningText">توقيع هذه النسخة لا يطابق بصمة MeeroX الرسمية. يمكن أن تكون نسخة مقرصنة أو معدّلة تسرق حسابك وبياناتك.\n\nبصمة هذه النسخة:\n%1$s\n\nالبصمة الرسمية:\n%2$s\n\nحمّل MeeroX فقط من قناة المطور الرسمية.</string>
     <string name="MeeroSigExit">خروج فوري</string>
     <string name="MeeroSigContinue">الاستمرار على مسؤوليتي</string>
-    <string name="MeeroCertFingerprint">بصمة الأمان</string>
-    <string name="MeeroCertOfficial">رسمية ✔ مطابقة</string>
-    <string name="MeeroCertModified">⚠ معدّلة — نسخة مقلدة</string>
-    <string name="MeeroCertCopied">نُسخت البصمة — قارنها مع البصمة الرسمية المنشورة بالقناة</string>
     <string name="MeeroGroupStorage">التخزين</string>
     <string name="meeroAutoJanitor">حارس التخزين التلقائي</string>
     <string name="MeeroAutoJanitorInfo">ينظّف الكاش القابل لإعادة التحميل تلقائياً حسب الجدولة أدناه. لا يمس الرسائل ولا قاعدة البيانات أبداً، وملفات الموسيقى مستثناة.</string>
