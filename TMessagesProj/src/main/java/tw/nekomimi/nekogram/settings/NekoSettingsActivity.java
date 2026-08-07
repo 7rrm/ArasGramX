@@ -610,7 +610,8 @@ public class NekoSettingsActivity extends BaseNekoSettingsActivity {
                     position == chatRow || position == generalRow || position == passcodeRow || position == experimentRow || position == translatorRow ||
                     position == autoReplyRow ||
                     position == activityStatsRow || position == watchRow || position == hunterRow ||
-                    position == keywordRow || position == onceGuardRow || position == lockRow ||
+                    position == keywordRow || position == mixerRow || position == foldersRow ||
+                    position == onceGuardRow || position == lockRow ||
                     position == fontsRow ||
                     position == importSettingsRow || position == exportSettingsRow || position == resetSettingsRow || position == appRestartRow ||
                     position == aboutRow) {
