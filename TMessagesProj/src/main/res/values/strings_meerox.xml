@@ -227,6 +227,8 @@
     <string name="meeroIosPopupMenu">iOS popup menus</string>
     <string name="MeeroIosPopupMenuInfo">The ⋮ menu styled like iOS: rounded card, icons on the trailing edge, hairline separators, and destructive actions split into their own red card.</string>
     <string name="meeroIosMsgMenu">iOS message context menu</string>
+    <string name="meeroIosMainMenu">iOS main menu</string>
+    <string name="MeeroIosMainMenuInfo">The main-screen menu styled like iOS: rounded card, iOS icons, hairline separators and no gap bars. OFF restores the stock menu exactly.</string>
     <string name="MeeroIosMsgMenuInfo">The long-press message menu styled like iOS: same card, trailing icons and hairlines, with delete actions in their own red card.</string>
     <string name="StyleIos">iOS</string>
     <string name="meeroIosInputPill">iOS-style composer bar</string>

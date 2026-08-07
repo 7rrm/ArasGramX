@@ -14621,6 +14621,15 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
         }
     }
 
+    // MeeroX: the iOS main-menu switch (v158) owns this menu's card and glyph set.
+    private static boolean meeroIosMainMenuOn() {
+        try {
+            return tw.nekomimi.nekogram.NekoConfig.meeroIosMainMenu.Bool();
+        } catch (Throwable e) {
+            return false;
+        }
+    }
+
     private void showItemOptions() {
         ItemOptions io = ItemOptions.makeOptions(this, optionsItem);
         io.setColors(getThemedColor(Theme.key_actionBarDefaultTitle), getThemedColor(Theme.key_actionBarDefaultTitle));
@@ -14628,6 +14637,9 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
             io.setSelectorColor(getThemedColor(Theme.key_dialogButtonSelector));
         }
         io.setDimAlpha(0x08);
+        // MeeroX: this menu owns its own iOS switch (v158, default ON; OFF = 100% stock).
+        final boolean meeroIosMenu = meeroIosMainMenuOn();
+        io.meeroSkinGate(() -> meeroIosMainMenuOn());
 
         final Activity activity = getParentActivity();
         final LaunchActivity launchActivity;
@@ -14645,7 +14657,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                     presentFragment(new CommunityEditActivity(bundle));
                 });
                 if (CommunityUtils.COLLAPSED_SUPPORT) {
-                    io.addGap();
+                    if (!meeroIosMenu) io.addGap();
                 }
             }
 
@@ -14683,7 +14695,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
             } else {
                 isCurrentThemeDark = Theme.isCurrentThemeDark();
             }
-            io.add(isCurrentThemeDark ? R.drawable.menu_day_mode_24 : R.drawable.menu_night_mode_24,
+            io.add(meeroIosMenu ? (isCurrentThemeDark ? R.drawable.ic_ios_sun_max : R.drawable.ic_ios_moon_fill) : (isCurrentThemeDark ? R.drawable.menu_day_mode_24 : R.drawable.menu_night_mode_24),
                     getString(isCurrentThemeDark ? R.string.SwitchThemeToDay : R.string.SwitchThemeToNight),
                     () -> presentFragment(new ThemeActivity(ThemeActivity.THEME_TYPE_BASIC)),
                     () -> {
@@ -14720,7 +14732,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                             presentFragment(new ThemeActivity(ThemeActivity.THEME_TYPE_NIGHT));
                         });
                     });
-            io.addGap();
+            if (!meeroIosMenu) io.addGap();
             if (hideBottomNavigationBar) {
                 io.add(R.drawable.left_status_profile, getString(R.string.MyProfile), () -> {
                     Bundle args = new Bundle();
@@ -14729,11 +14741,11 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                     presentFragment(new ProfileActivity(args));
                 });
             }
-            io.add(R.drawable.outline_groups_24, getString(R.string.NewGroup), () -> {
+            io.add(meeroIosMenu ? R.drawable.ic_ios_person_2 : R.drawable.outline_groups_24, getString(R.string.NewGroup), () -> {
                 Bundle args = new Bundle();
                 presentFragment(new GroupCreateActivity(args));
             });
-            io.add(R.drawable.outline_channel_24, getString(R.string.NewChannel), () -> {
+            io.add(meeroIosMenu ? R.drawable.ic_ios_megaphone : R.drawable.outline_channel_24, getString(R.string.NewChannel), () -> {
                 SharedPreferences channelPrefs = MessagesController.getGlobalMainSettings();
                 if (!BuildVars.DEBUG_VERSION && channelPrefs.getBoolean("channel_intro", false)) {
                     Bundle args = new Bundle();
@@ -14751,7 +14763,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                     presentFragment(new ContactsActivity(args));
                 });
             }
-            io.addGapIf(hideBottomNavigationBar);
+            io.addGapIf(hideBottomNavigationBar && !meeroIosMenu);
             if (hideBottomNavigationBar) {
                 io.add(R.drawable.menu_recent, getString(R.string.RecentChats), () -> {
                     io.dismiss();
@@ -14765,7 +14777,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                     presentFragment(new DialogsActivity(args));
                 });
             }
-            io.add(R.drawable.outline_saved_24, getString(R.string.SavedMessages), () -> {
+            io.add(meeroIosMenu ? R.drawable.ic_ios_bookmark : R.drawable.outline_saved_24, getString(R.string.SavedMessages), () -> {
                 Bundle args = new Bundle();
                 args.putLong("user_id", UserConfig.getInstance(currentAccount).getClientUserId());
                 presentFragment(new ChatActivity(args));
@@ -14786,7 +14798,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                     NotificationCenter.getInstance(currentAccount).postNotificationName(NotificationCenter.mainUserInfoChanged);
                 });
             }
-            io.addGapIf(hideBottomNavigationBar);
+            io.addGapIf(hideBottomNavigationBar && !meeroIosMenu);
             if (ApplicationLoader.applicationLoaderInstance != null) {
                 ApplicationLoader.applicationLoaderInstance.addItemOptions(io);
             }
@@ -14815,7 +14827,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                 }
             }
             if (getUserConfig().showCallsTab || hideBottomNavigationBar) {
-            io.add(R.drawable.msg_settings_old, getString(R.string.Settings), () -> {
+            io.add(meeroIosMenu ? R.drawable.ic_ios_gear : R.drawable.msg_settings_old, getString(R.string.Settings), () -> {
                 presentFragment(new SettingsActivity());
             });
         }
@@ -14835,7 +14847,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
             final boolean proxyVisible = !SharedConfig.proxyList.isEmpty();
 
             if (proxyVisible) {
-                io.addGap();
+                if (!meeroIosMenu) io.addGap();
                 io.add(proxyMenuSubItem);
             }
         }

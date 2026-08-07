@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- MeeroX: iOS-style person.2 glyph, tinted by the host -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp" android:height="24dp"
+    android:viewportWidth="24" android:viewportHeight="24">
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M9.2,4.8a3.4,3.4 0 1,0 0.01,0z
+            M9.2,13.2c-3.4,0 -5.9,2 -5.9,4.7c0,0.9 0.7,1.6 1.6,1.6h8.6c0.9,0 1.6,-0.7 1.6,-1.6c0,-2.7 -2.5,-4.7 -5.9,-4.7z
+            M16.9,6.3a2.7,2.7 0 1,0 0.01,0z
+            M17.2,13.4c2.4,0.3 4.1,1.8 4.1,3.9c0,0.8 -0.6,1.4 -1.4,1.5l-2.3,0.1c0.5,-0.6 0.8,-1.4 0.8,-2.3c0,-1.3 -0.5,-2.4 -1.2,-3.2z" />
+</vector>

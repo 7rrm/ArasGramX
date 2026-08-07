@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- MeeroX: iOS-style megaphone glyph, tinted by the host -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp" android:height="24dp"
+    android:viewportWidth="24" android:viewportHeight="24">
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M13.7,3.2c0.6,0 1,0.5 1,1.1v15.4c0,0.6 -0.4,1.1 -1,1.1c-0.3,0 -0.5,-0.1 -0.7,-0.3L7.6,16L3.7,16c-1,0 -1.7,-0.8 -1.7,-1.7L2,9.7c0,-1 0.8,-1.7 1.7,-1.7h3.9l5.4,-4.5c0.2,-0.2 0.4,-0.3 0.7,-0.3z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:fillAlpha="0.92"
+        android:pathData="M17.2,8.7c1.6,0.8 2.7,2.4 2.7,4.3s-1.1,3.5 -2.7,4.3c-0.4,0.2 -0.9,-0.1 -0.9,-0.6L16.3,9.3c0,-0.5 0.5,-0.8 0.9,-0.6z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M8.4,16.8l0.5,2.6c0.2,1 1,1.9 2,1.9c1.1,0 1.8,-0.9 1.6,-1.9l-0.4,-2.4z" />
+</vector>

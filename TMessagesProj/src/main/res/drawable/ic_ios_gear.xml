@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- MeeroX: iOS-style gearshape glyph (ring + six teeth), tinted by the host -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp" android:height="24dp"
+    android:viewportWidth="24" android:viewportHeight="24">
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.9"
+        android:pathData="M12,7.4a4.6,4.6 0 1,0 0.01,0z" />
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2.6"
+        android:strokeLineCap="round"
+        android:pathData="M12,1.8 L12,5.2 M20.5,6.9 L18.1,8.3 M20.5,17.1 L18.1,15.7 M12,18.8 L12,22.2 M3.5,17.1 L5.9,15.7 M3.5,6.9 L5.9,8.3" />
+</vector>

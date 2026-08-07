@@ -916,6 +916,8 @@
     <string name="meeroIosPopupMenu">قوائم منبثقة بنمط آيفون</string>
     <string name="MeeroIosPopupMenuInfo">قائمة ⋮ بشكل الآيفون: بطاقة مدوّرة، الأيقونة بالطرف المقابل، فواصل شعرية، وخيارات الحذف ببطاقة حمراء منفصلة.</string>
     <string name="meeroIosMsgMenu">قائمة سياق الرسالة بنمط آيفون</string>
+    <string name="meeroIosMainMenu">قائمة الرئيسية بنمط آيفون</string>
+    <string name="MeeroIosMainMenuInfo">قائمة الشاشة الرئيسية بشكل الآيفون: بطاقة مدورة، أيقونات بنمط iOS، فواصل شعرية بدون القضبان السميكة. الإطفاء يرجّع القائمة الأصلية حرفياً.</string>
     <string name="MeeroIosMsgMenuInfo">قائمة الضغطة المطولة على الرسالة بشكل الآيفون: نفس البطاقة والفواصل والأيقونات بالطرف المقابل، والحذف ببطاقة حمراء منفصلة.</string>
     <string name="StyleIos">آي أو إس</string>
     <string name="meeroIosInputPill">شريط الكتابة مثل آيفون</string>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- MeeroX: iOS-style bookmark.fill glyph, tinted by the host -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp" android:height="24dp"
+    android:viewportWidth="24" android:viewportHeight="24">
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M6,3.3c-1,0 -1.7,0.8 -1.7,1.8v15.2c0,0.5 0.6,0.9 1,0.6l6.2,-3.9l6.2,3.9c0.4,0.3 1,-0.1 1,-0.6L18.7,5.1c0,-1 -0.8,-1.8 -1.8,-1.8z" />
+</vector>

@@ -190,6 +190,14 @@ public class ItemOptions {
         return context;
     }
 
+    // MeeroX: hand this menu's iOS-skin gate to its own switch (the message menu
+    // owns meeroIosMsgMenu via init(); the dialogs main menu owns meeroIosMainMenu).
+    public void meeroSkinGate(java.util.function.BooleanSupplier gate) {
+        if (lastLayout != null) {
+            lastLayout.meeroEnableIosMenuSkin(gate);
+        }
+    }
+
     private DimView dimView;
     private ViewTreeObserver.OnPreDrawListener preDrawListener;
     // MeeroX: set in openAt when a too-tall message forced the menu to dock at
