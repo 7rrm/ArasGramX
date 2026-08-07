@@ -133,7 +133,6 @@ public class MeeroThemeMixerActivity extends BaseNekoSettingsActivity {
 
         private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
         private final RectF rect = new RectF();
-        private final Path path = new Path();
 
         MixerPreviewView(Context context) {
             super(context);

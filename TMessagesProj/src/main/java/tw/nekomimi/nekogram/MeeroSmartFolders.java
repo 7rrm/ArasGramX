@@ -10,7 +10,7 @@ import org.telegram.ui.FilterCreateActivity;
 
 import java.util.ArrayList;
 
-import android.util.LongSparseIntArray;
+import org.telegram.messenger.support.LongSparseIntArray;
 
 /**
  * MeeroX v161 (approved feature set, his pick: "الميزات كلها ماعدا الردود
