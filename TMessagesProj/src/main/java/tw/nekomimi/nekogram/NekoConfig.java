@@ -122,6 +122,16 @@ public class NekoConfig {
     public static ConfigItem meeroFlexWidth = addConfig("meeroFlexWidth", configTypeBool, true);
     public static ConfigItem meeroAmoledBubbles = addConfig("meeroAmoledBubbles", configTypeBool, true);
     public static ConfigItem meeroUnifiedRadii = addConfig("meeroUnifiedRadii", configTypeBool, true);
+    // MeeroX v164 (his two approved picks from preview-ideas-v164):
+    // 1. AMOLED bubble edge - a faint 1px hairline around pure-black
+    //    incoming bubbles so they separate from true-black backgrounds.
+    //    Defaults OFF: the full-pure-black blend stays untouched for
+    //    everyone who prefers it merged (existing v159 behaviour).
+    public static ConfigItem meeroAmoledStroke = addConfig("meeroAmoledStroke", configTypeBool, false);
+    // 2. Smooth-start pack - one-shot pre-warm of the first popup menu,
+    //    first chat open and first chat-list swipe after launch. OFF =
+    //    startup byte-identical to v163 (nothing is even scheduled).
+    public static ConfigItem meeroSmoothPass = addConfig("meeroSmoothPass", configTypeBool, true);
     // MeeroX v159: Auto Janitor - scheduled, size-capped cache cleaning.
     // The master switch defaults OFF: it deletes files, so it arms only by
     // explicit user choice. Media files removed here are re-downloadable

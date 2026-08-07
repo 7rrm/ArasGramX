@@ -743,6 +743,36 @@ public class Theme {
             return NinePatchBuilder.createNinePatchChunk(x1, x2, y1, y2, 0, 0, 0, 0, centralColorHint);
         }
 
+        // MeeroX v164 (approved pick): shared hairline paint + gate for the
+        // AMOLED bubble edge. The gate asks the stroke's own switch first,
+        // then reuses the v159 live-mode check (night theme + pure-black
+        // window background + AMOLED bubbles enabled), so the stroke can
+        // only ever appear exactly where the pure-black bubble appears.
+        private static Paint meeroStrokePaint;
+
+        private static boolean meeroAmoledStrokeOn() {
+            try {
+                if (!tw.nekomimi.nekogram.NekoConfig.meeroAmoledStroke.Bool()) {
+                    return false;
+                }
+            } catch (Throwable e) {
+                return false;
+            }
+            return meeroAmoledBubbleOn();
+        }
+
+        private Paint meeroAmoledStrokePaint() {
+            if (meeroStrokePaint == null) {
+                meeroStrokePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+                meeroStrokePaint.setStyle(Paint.Style.STROKE);
+                // One physical pixel (thin hairline) regardless of density.
+                meeroStrokePaint.setStrokeWidth(Math.max(1f, AndroidUtilities.density / 3f));
+            }
+            // 18% white - "barely there" grey; honours crossfade alpha.
+            meeroStrokePaint.setColor(Color.argb(46 * alpha / 255, 255, 255, 255));
+            return meeroStrokePaint;
+        }
+
         public void drawCached(Canvas canvas, PathDrawParams patchDrawCacheParams, Paint paintToUse) {
             this.pathDrawCacheParams = patchDrawCacheParams;
             if (crossfadeFromDrawable != null) {
@@ -832,6 +862,14 @@ public class Theme {
             }
 
             canvas.drawPath(path, p);
+            // MeeroX v164 (approved pick): a faint 1px hairline around
+            // incoming AMOLED pure-black bubbles so the bubble edge survives
+            // on true-black backgrounds. Gates on BOTH the stroke switch and
+            // the live AMOLED bubble mode; when off, zero extra draw calls
+            // happen and the v163 path is byte-identical.
+            if (!isOut && meeroAmoledStrokeOn()) {
+                canvas.drawPath(path, meeroAmoledStrokePaint());
+            }
             if (gradientShader != null && isSelected && paintToUse == null) {
                 int color = getColor(key_chat_outBubbleGradientSelectedOverlay);
                 selectedPaint.setColor(ColorUtils.setAlphaComponent(color, (int) (Color.alpha(color) * alpha / 255f)));

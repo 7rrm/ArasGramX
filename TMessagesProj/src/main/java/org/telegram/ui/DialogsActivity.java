@@ -7555,6 +7555,20 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                 viewPages[a].dialogsAdapter.notifyDataSetChanged();
             }
         }
+        // MeeroX v164 (approved pick): one-shot startup smoothness pre-warm
+        // on the first resume after launch. Every part is internally
+        // try/caught; when the meeroSmoothPass switch is OFF, warmOnce
+        // returns false before ANYTHING is scheduled (v163 startup).
+        if (tw.nekomimi.nekogram.MeeroSmoothPass.warmOnce(getParentActivity())) {
+            if (viewPages != null) {
+                for (int a = 0; a < viewPages.length; a++) {
+                    final RecyclerListView pageList = viewPages[a] != null ? viewPages[a].listView : null;
+                    if (pageList != null) {
+                        pageList.post(() -> tw.nekomimi.nekogram.MeeroSmoothPass.warmListScroll(pageList));
+                    }
+                }
+            }
+        }
         if (commentView != null) {
             commentView.onResume();
         }

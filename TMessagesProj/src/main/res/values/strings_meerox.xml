@@ -240,6 +240,10 @@
     <string name="MeeroAmoledBubblesInfo">On dark themes with a pure-black background, incoming bubbles turn true #000000 black for contrast and battery saving. OFF restores the theme colors.</string>
     <string name="meeroUnifiedRadii">Unified card corners</string>
     <string name="MeeroUnifiedRadiiInfo">Reply, quote, link and fact-check cards inside bubbles all use the same 12dp corner radius as the MeeroX iOS family. OFF restores per-card radii.</string>
+    <string name="meeroAmoledStroke">AMOLED bubble edge</string>
+    <string name="MeeroAmoledStrokeInfo">Draws a barely-there 1px outline around pure-black incoming bubbles so their borders stay visible on true-black backgrounds. Works only while AMOLED black bubbles is on.</string>
+    <string name="meeroSmoothPass">Smooth-start pack</string>
+    <string name="MeeroSmoothPassInfo">Pre-warms the first popup menu, the first chat you open and the first chat-list swipe after launching the app. OFF restores the exact previous start-up.</string>
     <string name="MeeroGroupStorage">Storage</string>
     <string name="meeroAutoJanitor">Auto cache janitor</string>
     <string name="MeeroAutoJanitorInfo">Automatically cleans re-downloadable cached media on the schedule below. Messages and the database are never touched; music files are kept.</string>

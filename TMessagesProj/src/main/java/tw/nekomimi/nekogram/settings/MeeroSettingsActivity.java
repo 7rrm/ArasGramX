@@ -154,6 +154,9 @@ public class MeeroSettingsActivity extends BaseNekoXSettingsActivity {
     // MeeroX v159: approved polish - true-black AMOLED bubbles + one corner
     // radius for every in-bubble card.
     private final AbstractConfigCell amoledBubblesRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroAmoledBubbles, getString(R.string.MeeroAmoledBubblesInfo)));
+    // MeeroX v164 (approved pick): the AMOLED bubble hairline - defaults OFF
+    // so the full-pure-black blend stays for everyone who prefers it merged.
+    private final AbstractConfigCell amoledStrokeRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroAmoledStroke, getString(R.string.MeeroAmoledStrokeInfo)));
     private final AbstractConfigCell unifiedRadiiRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroUnifiedRadii, getString(R.string.MeeroUnifiedRadiiInfo)));
     // MeeroX v92: delivery ticks - a dedicated master switch (off returns the
     // official Android ticks). MeeroX v125: the tick-shape picker row that
@@ -194,6 +197,9 @@ public class MeeroSettingsActivity extends BaseNekoXSettingsActivity {
     private final AbstractConfigCell flexWidthRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroFlexWidth, getString(R.string.MeeroFlexWidthInfo)));
     private final AbstractConfigCell iosHapticsRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosHaptics, getString(R.string.MeeroIosHapticsInfo)));
     private final AbstractConfigCell iosLoadingRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosLoading, getString(R.string.MeeroIosLoadingInfo)));
+    // MeeroX v164 (approved pick): startup smoothness pre-warm, one shot per
+    // launch - lives with the motion rows since its whole job is feel.
+    private final AbstractConfigCell smoothPassRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroSmoothPass, getString(R.string.MeeroSmoothPassInfo)));
     private final AbstractConfigCell dividerMotion = cellGroup.appendCell(new ConfigCellDivider());
 
     // Storage - the auto cache janitor (MeeroX v159, approved feature). The
