@@ -248,7 +248,7 @@
     <string name="meeroSecureScreen">Screenshot protection</string>
     <string name="MeeroSecureScreenInfo">Blocks screenshots and screen recording while a chat is open. OFF keeps the system default (screenshots allowed).</string>
     <string name="MeeroSigWarningTitle">⚠️ Warning: unofficial copy</string>
-    <string name="MeeroSigWarningText">This copy's signature does NOT match the official MeeroX fingerprint. It may be a fake or tampered build that can steal your account.\n\nThis copy:\n%1$s\n\nOfficial fingerprint:\n%2$s\n\nInstall MeeroX only from the developer's official channel.</string>
+    <string name="MeeroSigWarningText">This copy\'s signature does NOT match the official MeeroX fingerprint. It may be a fake or tampered build that can steal your account.\n\nThis copy:\n%1$s\n\nOfficial fingerprint:\n%2$s\n\nInstall MeeroX only from the developer\'s official channel.</string>
     <string name="MeeroSigExit">Exit now</string>
     <string name="MeeroSigContinue">Continue at my own risk</string>
     <string name="MeeroCertFingerprint">Security fingerprint</string>
