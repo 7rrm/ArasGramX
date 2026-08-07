@@ -50,23 +50,6 @@ public class MeeroBubbleSnapshotView extends FrameLayout {
     /** Where the captured bubble sits inside the source cell, in px. */
     private final int bubbleLeft, bubbleTop, bubbleWidth, bubbleHeight;
 
-    /**
-     * MeeroX v159: iOS tall-message mode. When the whole stack does not fit,
-     * ChatActivity switches the copy to full height and the popup container
-     * scrolls the stack itself, exactly like iOS's context-menu scroll view.
-     * The internal 42% cap + internal scroll (v157, kept for shorter stacks)
-     * is bypassed, so maxScroll becomes 0 and this view stops consuming
-     * touches, letting the container drive the gesture.
-     */
-    private boolean fullHeightMode;
-
-    public void setFullHeightMode(boolean f) {
-        if (fullHeightMode != f) {
-            fullHeightMode = f;
-            requestLayout();
-        }
-    }
-
     /** How far the content is scrolled when the bubble is taller than we allow. */
     private float scroll;
     private float maxScroll;
@@ -250,15 +233,9 @@ public class MeeroBubbleSnapshotView extends FrameLayout {
         final int scaledW = Math.max(1, (int) (bubbleWidth * fitScale));
         final int scaledH = Math.max(1, (int) (bubbleHeight * fitScale));
 
-        int limit;
-        if (fullHeightMode) {
-            // Tall-stack mode: the container scrolls, so show the full bubble.
-            limit = scaledH;
-        } else {
-            limit = (int) (AndroidUtilities.displaySize.y * MAX_SCREEN_FRACTION);
-            if (maxContentHeight > 0) {
-                limit = Math.min(limit, maxContentHeight);
-            }
+        int limit = (int) (AndroidUtilities.displaySize.y * MAX_SCREEN_FRACTION);
+        if (maxContentHeight > 0) {
+            limit = Math.min(limit, maxContentHeight);
         }
         final int specSize = MeasureSpec.getSize(heightMeasureSpec);
         if (MeasureSpec.getMode(heightMeasureSpec) == MeasureSpec.EXACTLY && specSize > 0) {

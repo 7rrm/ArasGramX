@@ -1162,8 +1162,6 @@ public class ChatActivity extends BaseFragment implements
     private boolean meeroSnapshotShown;
     private float meeroSnapshotProgress;
     private ValueAnimator meeroSnapshotAnimator;
-    // MeeroX v159: the current popup is an iOS tall stack (scrolls as one).
-    private boolean meeroTallStackActive;
     public ActionBarMenuSubItem[] scrimPopupWindowItems;
     private ActionBarMenuSubItem menuDeleteItem;
     private final Runnable updateDeleteItemRunnable = new Runnable() {
@@ -34031,7 +34029,10 @@ public class ChatActivity extends BaseFragment implements
             // MeeroX: tell the bubble copy how much room it may take before the
             // container is measured, so a long message becomes scrollable
             // instead of pushing the menu off the bottom of the screen.
-            meeroTallStackActive = false;
+            // MeeroX v160: the v159 iOS tall-stack mirror was reverted at his
+            // explicit request - he preferred this exact v157/v158 behaviour
+            // (raised bubble copy, 42% cap, internal scroll). The mode is
+            // gone from every layer, not just disabled.
             if (meeroSnapshotShown && meeroSnapshotView != null) {
                 popupLayout.measure(
                         View.MeasureSpec.makeMeasureSpec(AndroidUtilities.displaySize.x, View.MeasureSpec.AT_MOST),
@@ -34054,35 +34055,12 @@ public class ChatActivity extends BaseFragment implements
                     meeroMaxW = meeroScreenW;
                 }
 
-                // MeeroX v159: mirror Telegram-iOS for stacks that do not fit.
-                // iOS never shrinks or caps the message: the whole stack
-                // (reactions + full-height message + menu) lives in one scroll
-                // view, opened pre-scrolled to the bottom so the menu sits
-                // docked and the message runs off the top edge. ChatScrimPopup-
-                // ContainerLayout reproduces that by translating the stack
-                // inside a screen-sized window. Gated on the same approved
-                // switch as the stack itself (meeroIosMsgMenu) - no new button,
-                // and stacks that fit keep the exact v157/v158 layout.
-                int meeroKeyboard = contentView.measureKeyboardHeight();
-                int meeroVisibleTotal = contentView.getHeight() + (meeroKeyboard > dp(20) ? meeroKeyboard : 0);
-                final int meeroVisTop = (int) Math.max(chatListView.getY(), dp(24));
-                final int meeroVisBottom = meeroVisibleTotal - dp(8);
-                final int meeroVisH = meeroVisBottom - meeroVisTop;
-                final int meeroFullBubbleH = (int) (meeroSnapshotView.getBubbleHeightPx()
-                        * (meeroSnapshotView.getBubbleWidthPx() > meeroMaxW ? meeroMaxW / (float) meeroSnapshotView.getBubbleWidthPx() : 1f))
-                        + dp(10); // the snapshot row's bottom margin
-                if (meeroIosMsgMenuOn() && meeroVisH > dp(160)
-                        && meeroReactionsHeight + meeroFullBubbleH + meeroMenuHeight > meeroVisH) {
-                    meeroTallStackActive = true;
-                    meeroSnapshotView.setFullHeightMode(true);
-                    meeroSnapshotView.setMaxContentSize(meeroMaxW, 0);
-                    scrimPopupContainerLayout.setMeeroTallStack(true, () -> closeMenu(true));
-                    // Pin the window at exactly the visible strip - the stack
-                    // scrolls inside it instead of being squeezed to fit.
-                    scrimPopupContainerLayout.setMaxHeight(meeroVisH);
-                } else {
-                    meeroSnapshotView.setMaxContentSize(meeroMaxW, meeroRoom);
-                }
+                // MeeroX v160: the v159 iOS full-screen tall-stack branch
+                // (full-height bubble + container scroll) was REMOVED at his
+                // explicit order - "v157 was better". This restores the exact
+                // v157/v158 line: the room-capped copy stays and scrolls
+                // internally above the menu.
+                meeroSnapshotView.setMaxContentSize(meeroMaxW, meeroRoom);
             }
             scrimPopupContainerLayout.measure(View.MeasureSpec.makeMeasureSpec(AndroidUtilities.dp(1000), View.MeasureSpec.AT_MOST), View.MeasureSpec.makeMeasureSpec(AndroidUtilities.dp(1000), View.MeasureSpec.AT_MOST));
             scrimPopupWindow.setInputMethodMode(ActionBarPopupWindow.INPUT_METHOD_NOT_NEEDED);
@@ -34133,13 +34111,7 @@ public class ChatActivity extends BaseFragment implements
             boolean meeroPositioned = false;
             int minY = (int) (chatListView.getY() + dp(24));
             int maxY = totalHeight - height - dp(8);
-            if (meeroTallStackActive) {
-                // MeeroX v159: tall stacks fill the visible strip exactly; the
-                // container scrolls the stack inside it (iOS defaultScrollY),
-                // so the only positioning left is pinning the window itself.
-                popupY = (int) Math.max(chatListView.getY(), dp(24));
-                meeroPositioned = true;
-            } else if (height < totalHeight) {
+            if (height < totalHeight) {
                 popupY = (int) (chatListView.getY() + v.getTop() + y);
                 // MeeroX: the popup now contains the bubble copy, so the whole
                 // stack - reactions, bubble, menu - is laid out by the
@@ -34220,11 +34192,7 @@ public class ChatActivity extends BaseFragment implements
             }
             final int finalPopupX = scrimPopupX = popupX;
             final int finalPopupY = scrimPopupY = popupY;
-            if (!meeroTallStackActive) {
-                // Tall stacks already pinned their window height to the visible
-                // strip before measuring; capping again here would squeeze them.
-                scrimPopupContainerLayout.setMaxHeight(maxY + height - popupY);
-            }
+            scrimPopupContainerLayout.setMaxHeight(maxY + height - popupY);
             ReactionsContainerLayout finalReactionsLayout = reactionsLayout;
             Runnable showMenu = () -> {
                 if (scrimPopupWindow == null || fragmentView == null || scrimPopupWindow.isShowing() || !AndroidUtilities.isActivityRunning(getParentActivity())) {
