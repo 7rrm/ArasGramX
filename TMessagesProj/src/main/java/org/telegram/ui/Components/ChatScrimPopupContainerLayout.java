@@ -30,10 +30,9 @@ public class ChatScrimPopupContainerLayout extends LinearLayout {
         setOrientation(LinearLayout.VERTICAL);
     }
 
-    @Override
-    protected void onLayout(boolean changed, int l, int t, int r, int b) {
-        super.onLayout(changed, l, t, r, b);
-    }
+    // MeeroX v159: the single onLayout() lives at the bottom of this class -
+    // it now also applies the tall-stack offset. The old empty override that
+    // used to sit here was merged into it (duplicate method = build error).
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
