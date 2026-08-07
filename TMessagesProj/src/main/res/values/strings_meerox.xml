@@ -244,6 +244,17 @@
     <string name="MeeroAmoledStrokeInfo">Draws a barely-there 1px outline around pure-black incoming bubbles so their borders stay visible on true-black backgrounds. Works only while AMOLED black bubbles is on.</string>
     <string name="meeroSmoothPass">Smooth-start pack</string>
     <string name="MeeroSmoothPassInfo">Pre-warms the first popup menu, the first chat you open and the first chat-list swipe after launching the app. OFF restores the exact previous start-up.</string>
+    <string name="MeeroGroupSecurity">Security</string>
+    <string name="meeroSecureScreen">Screenshot protection</string>
+    <string name="MeeroSecureScreenInfo">Blocks screenshots and screen recording while a chat is open. OFF keeps the system default (screenshots allowed).</string>
+    <string name="MeeroSigWarningTitle">⚠️ Warning: unofficial copy</string>
+    <string name="MeeroSigWarningText">This copy's signature does NOT match the official MeeroX fingerprint. It may be a fake or tampered build that can steal your account.\n\nThis copy:\n%1$s\n\nOfficial fingerprint:\n%2$s\n\nInstall MeeroX only from the developer's official channel.</string>
+    <string name="MeeroSigExit">Exit now</string>
+    <string name="MeeroSigContinue">Continue at my own risk</string>
+    <string name="MeeroCertFingerprint">Security fingerprint</string>
+    <string name="MeeroCertOfficial">Official ✔ matches</string>
+    <string name="MeeroCertModified">⚠ Modified — fake build</string>
+    <string name="MeeroCertCopied">Fingerprint copied — compare it with the official one on the channel</string>
     <string name="MeeroGroupStorage">Storage</string>
     <string name="meeroAutoJanitor">Auto cache janitor</string>
     <string name="MeeroAutoJanitorInfo">Automatically cleans re-downloadable cached media on the schedule below. Messages and the database are never touched; music files are kept.</string>

@@ -7555,6 +7555,10 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                 viewPages[a].dialogsAdapter.notifyDataSetChanged();
             }
         }
+        // MeeroX v165 (approved Pack A): one-shot-per-process self-integrity
+        // check. On an official build it is one boolean compare and stays
+        // invisible; on a re-signed clone it shows the red warning.
+        tw.nekomimi.nekogram.MeeroSignatureGuard.checkAndWarn(this);
         // MeeroX v164 (approved pick): one-shot startup smoothness pre-warm
         // on the first resume after launch. Every part is internally
         // try/caught; when the meeroSmoothPass switch is OFF, warmOnce

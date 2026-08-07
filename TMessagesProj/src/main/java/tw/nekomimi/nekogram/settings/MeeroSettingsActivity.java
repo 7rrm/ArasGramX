@@ -227,6 +227,15 @@ public class MeeroSettingsActivity extends BaseNekoXSettingsActivity {
     private final AbstractConfigCell iosIntroRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosIntro, getString(R.string.MeeroIosIntroInfo)));
     private final AbstractConfigCell dividerSound = cellGroup.appendCell(new ConfigCellDivider());
 
+    // MeeroX v165 (approved Pack A): security section - the screenshot
+    // shield switch (default OFF) plus the release signing fingerprint
+    // (read-only; tap copies the full SHA-256 for comparison with the
+    // official one published on the author's channel).
+    private final AbstractConfigCell headerSecurity = cellGroup.appendCell(new ConfigCellHeader(getString(R.string.MeeroGroupSecurity)));
+    private final AbstractConfigCell secureScreenRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroSecureScreen, getString(R.string.MeeroSecureScreenInfo)));
+    private final AbstractConfigCell certFingerprintRow = cellGroup.appendCell(new tw.nekomimi.nekogram.config.cell.ConfigCellCustom("meeroCertFingerprint", tw.nekomimi.nekogram.config.cell.ConfigCellCustom.CUSTOM_ITEM_CertFingerprint, true));
+    private final AbstractConfigCell dividerSecurity = cellGroup.appendCell(new ConfigCellDivider());
+
     private ListAdapter listAdapter;
 
     public MeeroSettingsActivity() {
@@ -521,7 +530,26 @@ public class MeeroSettingsActivity extends BaseNekoXSettingsActivity {
             if (viewType == CellGroup.ITEM_TYPE_TEXT_CHECK_ICON) {
                 return new TextCell(mContext, 23, false, true, MeeroGlassTheme.cells());
             }
+            // MeeroX v165: the security fingerprint row.
+            if (viewType == tw.nekomimi.nekogram.config.cell.ConfigCellCustom.CUSTOM_ITEM_CertFingerprint) {
+                return new org.telegram.ui.Cells.TextDetailSettingsCell(mContext);
+            }
             return super.createDefaultViewByType(viewType);
+        }
+
+        @Override
+        protected void onBindCustomViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
+            if (holder.getItemViewType() == tw.nekomimi.nekogram.config.cell.ConfigCellCustom.CUSTOM_ITEM_CertFingerprint) {
+                final org.telegram.ui.Cells.TextDetailSettingsCell cell =
+                        (org.telegram.ui.Cells.TextDetailSettingsCell) holder.itemView;
+                final boolean official = getContext() != null
+                        && tw.nekomimi.nekogram.MeeroSignatureGuard.isOfficial(getContext());
+                cell.setMultilineDetail(true);
+                cell.setTextAndValue(getString(R.string.MeeroCertFingerprint),
+                        getString(official ? R.string.MeeroCertOfficial : R.string.MeeroCertModified), false);
+                return;
+            }
+            super.onBindCustomViewHolder(holder, position);
         }
 
         @Override
@@ -530,5 +558,26 @@ public class MeeroSettingsActivity extends BaseNekoXSettingsActivity {
             // value chips and the entrance stagger (see onBindMeeroGlass)
             onBindMeeroGlass(holder, position);
         }
+    }
+
+    // MeeroX v165: tapping the security fingerprint row copies the full
+    // SHA-256 so the user can compare it against the official fingerprint
+    // published on the author's channel (read-only row, no state change).
+    @Override
+    protected void onCustomCellClick(View view, int position, float x, float y) {
+        final AbstractConfigCell a = cellGroup.rows.get(position);
+        if (a instanceof tw.nekomimi.nekogram.config.cell.ConfigCellCustom
+                && ((tw.nekomimi.nekogram.config.cell.ConfigCellCustom) a).getType()
+                == tw.nekomimi.nekogram.config.cell.ConfigCellCustom.CUSTOM_ITEM_CertFingerprint) {
+            final String fp = getContext() == null ? null
+                    : tw.nekomimi.nekogram.MeeroSignatureGuard.currentFingerprint(getContext());
+            if (fp != null) {
+                AndroidUtilities.addToClipboard(fp);
+                android.widget.Toast.makeText(getContext(),
+                        getString(R.string.MeeroCertCopied), android.widget.Toast.LENGTH_LONG).show();
+            }
+            return;
+        }
+        super.onCustomCellClick(view, position, x, y);
     }
 }
