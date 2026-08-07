@@ -3845,6 +3845,11 @@ public class ChatActivityEnterView extends FrameLayout implements
             if ((messageSendPreview != null && messageSendPreview.isShowing()) || (runningAnimationAudio != null && runningAnimationAudio.isRunning()) || moveToSendStateRunnable != null) {
                 return;
             }
+            // MeeroX v159: iOS-weight tick on send, tied to the existing
+            // iOS-haptics switch (no new one).
+            if (tw.nekomimi.nekogram.MeeroHaptics.enabled()) {
+                tw.nekomimi.nekogram.MeeroHaptics.perform(view, tw.nekomimi.nekogram.MeeroHaptics.MEDIUM);
+            }
             sendMessage();
         });
         sendButton.setOnLongClickListener(this::onSendLongClick);

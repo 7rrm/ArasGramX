@@ -174,6 +174,15 @@ public class ItemOptions {
         }
     }
 
+    // MeeroX v159: iOS-paced popup entrance (approved swift-menus switch).
+    private static boolean meeroSwiftMenusOn() {
+        try {
+            return tw.nekomimi.nekogram.NekoConfig.meeroSwiftMenus.Bool();
+        } catch (Throwable e) {
+            return false;
+        }
+    }
+
     public ItemOptions setBlur(boolean blur, boolean blurForMenu) {
         this.blur = blur;
         this.blurForMenu = blurForMenu || meeroMenuBlurEnabled();
@@ -1460,7 +1469,8 @@ public class ItemOptions {
         actionBarPopupWindow.setOutsideTouchable(true);
         actionBarPopupWindow.setFocusable(!dontFocus);
         actionBarPopupWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-        actionBarPopupWindow.setAnimationStyle(R.style.PopupContextAnimation);
+        // MeeroX v159: iOS-paced entrance when the swift-menus switch is on.
+        actionBarPopupWindow.setAnimationStyle(meeroSwiftMenusOn() ? R.style.MeeroPopupContextAnimation : R.style.PopupContextAnimation);
         if (allowShowingOnTopOfKeyboard) {
             actionBarPopupWindow.setInputMethodMode(ActionBarPopupWindow.INPUT_METHOD_NOT_NEEDED);
             actionBarPopupWindow.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_UNSPECIFIED);

@@ -316,6 +316,24 @@ public class ActionBarPopupWindow extends PopupWindow {
         private final Paint meeroSepPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         private HashMap<ActionBarMenuSubItem, int[]> meeroSavedSel;
         private java.util.function.BooleanSupplier meeroCfgOverride;
+        // MeeroX v159: hairline settle-fade clock (-1 = not settled yet).
+        private long meeroSepSettledAt = -1;
+
+        private static boolean meeroSepFadeOn() {
+            try {
+                return tw.nekomimi.nekogram.NekoConfig.meeroSepFade.Bool();
+            } catch (Throwable ignore) {
+                return false;
+            }
+        }
+
+        private static boolean meeroFlexWidthOn() {
+            try {
+                return tw.nekomimi.nekogram.NekoConfig.meeroFlexWidth.Bool();
+            } catch (Throwable ignore) {
+                return false;
+            }
+        }
 
         public void meeroEnableIosMenuSkin() {
             meeroSkinEligible = true;
@@ -410,7 +428,9 @@ public class ActionBarPopupWindow extends PopupWindow {
                 meeroStockDrawable = null;
                 backgroundDrawable.getPadding(bgPaddings);
             }
-            final int mw = on ? dp(252) : 0;
+            // MeeroX v159: flexible width lets short menus follow their
+            // content with a smaller floor instead of the fixed 252dp.
+            final int mw = on ? (meeroFlexWidthOn() ? dp(200) : dp(252)) : 0;
             if (getMinimumWidth() != mw) {
                 setMinimumWidth(mw);
             }
@@ -798,7 +818,28 @@ public class ActionBarPopupWindow extends PopupWindow {
                 final int contentTop = linearLayout.getTop();
                 final boolean rtl = getLayoutDirection() == View.LAYOUT_DIRECTION_RTL;
                 final int leadInset = bgPaddings.left + dp(16);
-                meeroSepPaint.setColor(meeroSepColor());
+                // MeeroX v159: instead of snapping in at settle, the hairlines
+                // fade in over 120ms (iOS settle feel). meeroSepFade OFF =
+                // the previous instant appearance, same timing as v153-v158.
+                int meeroSepAlphaNow = 255;
+                if (meeroSepFadeOn()) {
+                    final long now = System.currentTimeMillis();
+                    if (meeroSepSettledAt < 0) {
+                        meeroSepSettledAt = now;
+                    }
+                    final float ft = Math.min(1f, (now - meeroSepSettledAt) / 120f);
+                    meeroSepAlphaNow = (int) (255 * ft);
+                    if (ft < 1f) {
+                        postInvalidateOnAnimation();
+                    }
+                } else {
+                    meeroSepSettledAt = -1;
+                }
+                if (meeroSepAlphaNow > 0) {
+                final int meeroSepBase = meeroSepColor();
+                meeroSepPaint.setColor(meeroSepBase);
+                // Compose the color's own alpha with the fade progress.
+                meeroSepPaint.setAlpha((meeroSepBase >>> 24) * meeroSepAlphaNow / 255);
                 final int n = linearLayout.getChildCount();
                 for (int i = 0; i < n; i++) {
                     View v = linearLayout.getChildAt(i);
@@ -819,6 +860,9 @@ public class ActionBarPopupWindow extends PopupWindow {
                     }
                     prevVisible = v;
                 }
+                }
+            } else {
+                meeroSepSettledAt = -1;
             }
             if (reactionsEnterProgress != 1f) {
                 canvas.saveLayerAlpha((float) AndroidUtilities.rectTmp2.left, (float) AndroidUtilities.rectTmp2.top, AndroidUtilities.rectTmp2.right, AndroidUtilities.rectTmp2.bottom, (int) (255 * reactionsEnterProgress), Canvas.ALL_SAVE_FLAG);
@@ -1123,6 +1167,25 @@ public class ActionBarPopupWindow extends PopupWindow {
         }
     }
 
+    // MeeroX v159: unify popup open/close on ~180ms with an ease-out curve
+    // (iOS pacing), instead of the inherited per-item cascade timing.
+    private static boolean meeroSwiftMenus() {
+        try {
+            return tw.nekomimi.nekogram.NekoConfig.meeroSwiftMenus.Bool();
+        } catch (Throwable ignore) {
+            return false;
+        }
+    }
+
+    private static void meeroApplySwiftTiming(AnimatorSet set, int stockDuration) {
+        if (meeroSwiftMenus()) {
+            set.setDuration(180);
+            set.setInterpolator(org.telegram.ui.Components.CubicBezierInterpolator.EASE_OUT_QUINT);
+        } else {
+            set.setDuration(stockDuration);
+        }
+    }
+
     public static AnimatorSet startAnimation(ActionBarPopupWindowLayout content) {
         content.startAnimationPending = true;
         content.setTranslationY(0);
@@ -1184,7 +1247,7 @@ public class ActionBarPopupWindow extends PopupWindow {
                 ObjectAnimator.ofInt(content, "backAlpha", 0, 255),
                 childtranslations
         );
-        windowAnimatorSet.setDuration(150 + 16 * visibleCount);
+        meeroApplySwiftTiming(windowAnimatorSet, 150 + 16 * visibleCount);
         windowAnimatorSet.addListener(new AnimatorListenerAdapter() {
             @Override
             public void onAnimationEnd(Animator animation) {
@@ -1269,7 +1332,7 @@ public class ActionBarPopupWindow extends PopupWindow {
             windowAnimatorSet.playTogether(
                     ObjectAnimator.ofFloat(content, "backScaleY", 0.0f, finalScaleY),
                     ObjectAnimator.ofInt(content, "backAlpha", 0, 255));
-            windowAnimatorSet.setDuration(150 + 16 * visibleCount);
+            meeroApplySwiftTiming(windowAnimatorSet, 150 + 16 * visibleCount);
             windowAnimatorSet.addListener(new AnimatorListenerAdapter() {
                 @Override
                 public void onAnimationEnd(Animator animation) {

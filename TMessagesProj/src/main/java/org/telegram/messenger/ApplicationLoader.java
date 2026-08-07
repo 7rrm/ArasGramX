@@ -394,6 +394,11 @@ public class ApplicationLoader extends Application {
         // MeeroX v106: chat-lock generic-notification watcher (the gate
         // itself hooks ChatActivity directly).
         tw.nekomimi.nekogram.MeeroChatLock.start();
+
+        // MeeroX v159: auto cache janitor - scheduled/limit-driven cleaning.
+        // The master switch defaults OFF, so start() runs a cheap check that
+        // exits immediately for users who never armed it.
+        tw.nekomimi.nekogram.MeeroJanitor.start();
     }
 
     // Local Push Service, TFoss implementation

@@ -1162,6 +1162,8 @@ public class ChatActivity extends BaseFragment implements
     private boolean meeroSnapshotShown;
     private float meeroSnapshotProgress;
     private ValueAnimator meeroSnapshotAnimator;
+    // MeeroX v159: the current popup is an iOS tall stack (scrolls as one).
+    private boolean meeroTallStackActive;
     public ActionBarMenuSubItem[] scrimPopupWindowItems;
     private ActionBarMenuSubItem menuDeleteItem;
     private final Runnable updateDeleteItemRunnable = new Runnable() {
@@ -11464,6 +11466,15 @@ public class ChatActivity extends BaseFragment implements
         }
     }
 
+    // MeeroX v159: the approved iOS-speed menu switch (opens/closes ~180ms).
+    private static boolean meeroSwiftMenusOn() {
+        try {
+            return tw.nekomimi.nekogram.NekoConfig.meeroSwiftMenus.Bool();
+        } catch (Throwable e) {
+            return false;
+        }
+    }
+
     private void dimBehindView(View view, boolean enable) {
         meeroAnimateSnapshotFade(enable);
         dimBehindView(view, enable && meeroMenuBlurEnabled(), enable);
@@ -11498,7 +11509,9 @@ public class ChatActivity extends BaseFragment implements
             // 150ms matches the dismiss exactly, and EASE_OUT spends most of
             // that time in the visible part of the curve, so the bubble is
             // seen easing back rather than snapping.
-            meeroSnapshotAnimator.setDuration(150);
+            // MeeroX v159: with iOS-speed menus the dismiss is 180ms, so the
+            // fade follows it one-to-one.
+            meeroSnapshotAnimator.setDuration(meeroSwiftMenusOn() ? 180 : 150);
             meeroSnapshotAnimator.setInterpolator(CubicBezierInterpolator.EASE_OUT);
             meeroSnapshotAnimator.addUpdateListener(a -> {
                 meeroSnapshotProgress = (float) a.getAnimatedValue();
@@ -11522,7 +11535,7 @@ public class ChatActivity extends BaseFragment implements
         }
         meeroSnapshotProgress = 0f;
         meeroSnapshotAnimator = ValueAnimator.ofFloat(0f, 1f);
-        meeroSnapshotAnimator.setDuration(160);
+        meeroSnapshotAnimator.setDuration(meeroSwiftMenusOn() ? 180 : 160);
         meeroSnapshotAnimator.setInterpolator(CubicBezierInterpolator.EASE_OUT_QUINT);
         meeroSnapshotAnimator.addUpdateListener(a -> {
             meeroSnapshotProgress = (float) a.getAnimatedValue();
@@ -34005,11 +34018,12 @@ public class ChatActivity extends BaseFragment implements
                 }
             };
             scrimPopupWindow.setPauseNotifications(true);
-            scrimPopupWindow.setDismissAnimationDuration(220);
+            // MeeroX v159: iOS-speed menus unify on ~180ms.
+            scrimPopupWindow.setDismissAnimationDuration(meeroSwiftMenusOn() ? 180 : 220);
             scrimPopupWindow.setOutsideTouchable(true);
             scrimPopupWindow.setClippingEnabled(true);
             if (!isReactionsAvailable || reactionsLayout == null || !ReactionsContainerLayout.allowSmoothEnterTransition()) {
-                scrimPopupWindow.setAnimationStyle(R.style.PopupContextAnimation);
+                scrimPopupWindow.setAnimationStyle(meeroSwiftMenusOn() ? R.style.MeeroPopupContextAnimation : R.style.PopupContextAnimation);
             } else {
                 scrimPopupWindow.setAnimationStyle(0);
             }
@@ -34017,6 +34031,7 @@ public class ChatActivity extends BaseFragment implements
             // MeeroX: tell the bubble copy how much room it may take before the
             // container is measured, so a long message becomes scrollable
             // instead of pushing the menu off the bottom of the screen.
+            meeroTallStackActive = false;
             if (meeroSnapshotShown && meeroSnapshotView != null) {
                 popupLayout.measure(
                         View.MeasureSpec.makeMeasureSpec(AndroidUtilities.displaySize.x, View.MeasureSpec.AT_MOST),
@@ -34038,7 +34053,36 @@ public class ChatActivity extends BaseFragment implements
                 if (meeroMaxW > meeroScreenW) {
                     meeroMaxW = meeroScreenW;
                 }
-                meeroSnapshotView.setMaxContentSize(meeroMaxW, meeroRoom);
+
+                // MeeroX v159: mirror Telegram-iOS for stacks that do not fit.
+                // iOS never shrinks or caps the message: the whole stack
+                // (reactions + full-height message + menu) lives in one scroll
+                // view, opened pre-scrolled to the bottom so the menu sits
+                // docked and the message runs off the top edge. ChatScrimPopup-
+                // ContainerLayout reproduces that by translating the stack
+                // inside a screen-sized window. Gated on the same approved
+                // switch as the stack itself (meeroIosMsgMenu) - no new button,
+                // and stacks that fit keep the exact v157/v158 layout.
+                int meeroKeyboard = contentView.measureKeyboardHeight();
+                int meeroVisibleTotal = contentView.getHeight() + (meeroKeyboard > dp(20) ? meeroKeyboard : 0);
+                final int meeroVisTop = (int) Math.max(chatListView.getY(), dp(24));
+                final int meeroVisBottom = meeroVisibleTotal - dp(8);
+                final int meeroVisH = meeroVisBottom - meeroVisTop;
+                final int meeroFullBubbleH = (int) (meeroSnapshotView.getBubbleHeightPx()
+                        * (meeroSnapshotView.getBubbleWidthPx() > meeroMaxW ? meeroMaxW / (float) meeroSnapshotView.getBubbleWidthPx() : 1f))
+                        + dp(10); // the snapshot row's bottom margin
+                if (meeroIosMsgMenuOn() && meeroVisH > dp(160)
+                        && meeroReactionsHeight + meeroFullBubbleH + meeroMenuHeight > meeroVisH) {
+                    meeroTallStackActive = true;
+                    meeroSnapshotView.setFullHeightMode(true);
+                    meeroSnapshotView.setMaxContentSize(meeroMaxW, 0);
+                    scrimPopupContainerLayout.setMeeroTallStack(true, () -> closeMenu(true));
+                    // Pin the window at exactly the visible strip - the stack
+                    // scrolls inside it instead of being squeezed to fit.
+                    scrimPopupContainerLayout.setMaxHeight(meeroVisH);
+                } else {
+                    meeroSnapshotView.setMaxContentSize(meeroMaxW, meeroRoom);
+                }
             }
             scrimPopupContainerLayout.measure(View.MeasureSpec.makeMeasureSpec(AndroidUtilities.dp(1000), View.MeasureSpec.AT_MOST), View.MeasureSpec.makeMeasureSpec(AndroidUtilities.dp(1000), View.MeasureSpec.AT_MOST));
             scrimPopupWindow.setInputMethodMode(ActionBarPopupWindow.INPUT_METHOD_NOT_NEEDED);
@@ -34089,7 +34133,13 @@ public class ChatActivity extends BaseFragment implements
             boolean meeroPositioned = false;
             int minY = (int) (chatListView.getY() + dp(24));
             int maxY = totalHeight - height - dp(8);
-            if (height < totalHeight) {
+            if (meeroTallStackActive) {
+                // MeeroX v159: tall stacks fill the visible strip exactly; the
+                // container scrolls the stack inside it (iOS defaultScrollY),
+                // so the only positioning left is pinning the window itself.
+                popupY = (int) Math.max(chatListView.getY(), dp(24));
+                meeroPositioned = true;
+            } else if (height < totalHeight) {
                 popupY = (int) (chatListView.getY() + v.getTop() + y);
                 // MeeroX: the popup now contains the bubble copy, so the whole
                 // stack - reactions, bubble, menu - is laid out by the
@@ -34170,13 +34220,22 @@ public class ChatActivity extends BaseFragment implements
             }
             final int finalPopupX = scrimPopupX = popupX;
             final int finalPopupY = scrimPopupY = popupY;
-            scrimPopupContainerLayout.setMaxHeight(maxY + height - popupY);
+            if (!meeroTallStackActive) {
+                // Tall stacks already pinned their window height to the visible
+                // strip before measuring; capping again here would squeeze them.
+                scrimPopupContainerLayout.setMaxHeight(maxY + height - popupY);
+            }
             ReactionsContainerLayout finalReactionsLayout = reactionsLayout;
             Runnable showMenu = () -> {
                 if (scrimPopupWindow == null || fragmentView == null || scrimPopupWindow.isShowing() || !AndroidUtilities.isActivityRunning(getParentActivity())) {
                     return;
                 }
                 scrimPopupWindow.showAtLocation(chatListView, Gravity.LEFT | Gravity.TOP, finalPopupX, finalPopupY);
+                // MeeroX v159: a light iOS-weight tick when the message menu
+                // opens - tied to the existing iOS-haptics switch (no new one).
+                if (tw.nekomimi.nekogram.MeeroHaptics.enabled()) {
+                    tw.nekomimi.nekogram.MeeroHaptics.perform(v, tw.nekomimi.nekogram.MeeroHaptics.MEDIUM);
+                }
                 if (isReactionsAvailableFinal && finalReactionsLayout != null) {
                     finalReactionsLayout.startEnterAnimation(true);
                 }

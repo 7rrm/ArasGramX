@@ -627,11 +627,27 @@ public class ReplyMessageLine {
     }
 
     public void drawBackground(Canvas canvas, RectF rect, float leftRad, float rightRad, float bottomRad, float alpha, boolean hasQuote, boolean emojiOnly) {
-        radii[0] = radii[1] = Math.max(AndroidUtilities.dp((int) Math.floor(SharedConfig.bubbleRadius / 3f)), AndroidUtilities.dp(leftRad));
-        radii[2] = radii[3] = AndroidUtilities.dp(rightRad);
-        radii[4] = radii[5] = AndroidUtilities.dp(bottomRad);
-        radii[6] = radii[7] = Math.max(AndroidUtilities.dp((int) Math.floor(SharedConfig.bubbleRadius / 3f)), AndroidUtilities.dp(bottomRad));
+        if (meeroUnifiedRadii()) {
+            // MeeroX v159 (approved): one 12dp corner for every in-bubble card
+            // (reply, quote, link, fact-check...) so the whole family matches
+            // the MeeroX iOS cards instead of mixing per-card radii.
+            final int r = AndroidUtilities.dp(12);
+            radii[0] = radii[1] = radii[2] = radii[3] = radii[4] = radii[5] = radii[6] = radii[7] = r;
+        } else {
+            radii[0] = radii[1] = Math.max(AndroidUtilities.dp((int) Math.floor(SharedConfig.bubbleRadius / 3f)), AndroidUtilities.dp(leftRad));
+            radii[2] = radii[3] = AndroidUtilities.dp(rightRad);
+            radii[4] = radii[5] = AndroidUtilities.dp(bottomRad);
+            radii[6] = radii[7] = Math.max(AndroidUtilities.dp((int) Math.floor(SharedConfig.bubbleRadius / 3f)), AndroidUtilities.dp(bottomRad));
+        }
         drawBackground(canvas, rect, alpha, hasQuote, emojiOnly);
+    }
+
+    private static boolean meeroUnifiedRadii() {
+        try {
+            return tw.nekomimi.nekogram.NekoConfig.meeroUnifiedRadii.Bool();
+        } catch (Throwable e) {
+            return false;
+        }
     }
 
     private static class IconCoords {

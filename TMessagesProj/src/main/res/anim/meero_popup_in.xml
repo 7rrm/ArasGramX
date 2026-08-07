@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!-- MeeroX v159: iOS-paced popup entrance for the approved swift-menus
+     switch. Same ingredient list as popup_context_in (alpha + scale in)
+     but on iOS timing: ~180ms, decelerating, no overshoot. -->
+
+<set xmlns:android="http://schemas.android.com/apk/res/android"
+     android:shareInterpolator="false">
+
+    <alpha android:fromAlpha="0.0"
+        android:toAlpha="1.0"
+        android:duration="120"/>
+
+    <scale android:fromXScale="92%"
+        android:fromYScale="92%"
+        android:toXScale="100%"
+        android:toYScale="100%"
+        android:pivotX="100%"
+        android:pivotY="100%"
+        android:duration="180"
+        android:interpolator="@android:anim/decelerate_interpolator"/>
+</set>

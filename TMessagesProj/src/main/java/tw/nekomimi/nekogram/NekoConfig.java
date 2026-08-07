@@ -116,6 +116,26 @@ public class NekoConfig {
     public static ConfigItem meeroIosPopupMenu = addConfig("meeroIosPopupMenu", configTypeBool, true);
     public static ConfigItem meeroIosMsgMenu = addConfig("meeroIosMsgMenu", configTypeBool, true);
     public static ConfigItem meeroIosMainMenu = addConfig("meeroIosMainMenu", configTypeBool, true);
+    // MeeroX v159: the approved polish bundle (each off = exact v158 look).
+    public static ConfigItem meeroSwiftMenus = addConfig("meeroSwiftMenus", configTypeBool, true);
+    public static ConfigItem meeroSepFade = addConfig("meeroSepFade", configTypeBool, true);
+    public static ConfigItem meeroFlexWidth = addConfig("meeroFlexWidth", configTypeBool, true);
+    public static ConfigItem meeroAmoledBubbles = addConfig("meeroAmoledBubbles", configTypeBool, true);
+    public static ConfigItem meeroUnifiedRadii = addConfig("meeroUnifiedRadii", configTypeBool, true);
+    // MeeroX v159: Auto Janitor - scheduled, size-capped cache cleaning.
+    // The master switch defaults OFF: it deletes files, so it arms only by
+    // explicit user choice. Media files removed here are re-downloadable
+    // cloud copies; messages and the database are never touched.
+    public static ConfigItem meeroAutoJanitor = addConfig("meeroAutoJanitor", configTypeBool, false);
+    // Index into {1, 2, 4, 8, 16} GB - default 8 GB.
+    public static ConfigItem meeroJanitorLimit = addConfig("meeroJanitorLimit", configTypeInt, 3);
+    // Index into {7, 14, 30} days - default 14.
+    public static ConfigItem meeroJanitorAge = addConfig("meeroJanitorAge", configTypeInt, 1);
+    // 0 = daily, 1 = weekly, 2 = only when over the limit. Default weekly.
+    public static ConfigItem meeroJanitorMode = addConfig("meeroJanitorMode", configTypeInt, 1);
+    public static ConfigItem meeroJanitorLastRun = addConfig("meeroJanitorLastRun", configTypeLong, 0L);
+    // Bytes freed by the last automatic pass, shown as the "freed X" report.
+    public static ConfigItem meeroJanitorFreed = addConfig("meeroJanitorFreed", configTypeLong, 0L);
     public static ConfigItem meeroIosInputPill = addConfig("meeroIosInputPill", configTypeBool, true);
     public static ConfigItem meeroIosWaveform = addConfig("meeroIosWaveform", configTypeBool, true);
     public static ConfigItem meeroIosSelection = addConfig("meeroIosSelection", configTypeBool, true);

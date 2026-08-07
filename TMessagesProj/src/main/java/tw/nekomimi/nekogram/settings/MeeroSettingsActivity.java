@@ -41,6 +41,7 @@ import java.util.ArrayList;
 import tw.nekomimi.nekogram.MeeroBubbleStyles;
 import tw.nekomimi.nekogram.MeeroGlassSupport;
 import tw.nekomimi.nekogram.MeeroGlassTheme;
+import tw.nekomimi.nekogram.MeeroJanitor;
 import tw.nekomimi.nekogram.MeeroTickStyles;
 import tw.nekomimi.nekogram.NekoConfig;
 import tw.nekomimi.nekogram.ui.cells.HeaderCell;
@@ -150,6 +151,10 @@ public class MeeroSettingsActivity extends BaseNekoXSettingsActivity {
     private final AbstractConfigCell iosWaveformRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosWaveform, getString(R.string.MeeroIosWaveformInfo)));
     private final AbstractConfigCell iosCodeRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosCode, getString(R.string.MeeroIosCodeInfo)));
     private final AbstractConfigCell iosSelectionRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosSelection, getString(R.string.MeeroIosSelectionInfo)));
+    // MeeroX v159: approved polish - true-black AMOLED bubbles + one corner
+    // radius for every in-bubble card.
+    private final AbstractConfigCell amoledBubblesRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroAmoledBubbles, getString(R.string.MeeroAmoledBubblesInfo)));
+    private final AbstractConfigCell unifiedRadiiRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroUnifiedRadii, getString(R.string.MeeroUnifiedRadiiInfo)));
     // MeeroX v92: delivery ticks - a dedicated master switch (off returns the
     // official Android ticks). MeeroX v125: the tick-shape picker row that
     // used to sit beneath it was merged into the single combined row above
@@ -183,9 +188,32 @@ public class MeeroSettingsActivity extends BaseNekoXSettingsActivity {
     private final AbstractConfigCell iosPopupMenuRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosPopupMenu, getString(R.string.MeeroIosPopupMenuInfo)));
     private final AbstractConfigCell iosMsgMenuRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosMsgMenu, getString(R.string.MeeroIosMsgMenuInfo)));
     private final AbstractConfigCell iosMainMenuRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosMainMenu, getString(R.string.MeeroIosMainMenuInfo)));
+    // MeeroX v159: approved polish bundle for the menus themselves.
+    private final AbstractConfigCell swiftMenusRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroSwiftMenus, getString(R.string.MeeroSwiftMenusInfo)));
+    private final AbstractConfigCell sepFadeRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroSepFade, getString(R.string.MeeroSepFadeInfo)));
+    private final AbstractConfigCell flexWidthRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroFlexWidth, getString(R.string.MeeroFlexWidthInfo)));
     private final AbstractConfigCell iosHapticsRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosHaptics, getString(R.string.MeeroIosHapticsInfo)));
     private final AbstractConfigCell iosLoadingRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosLoading, getString(R.string.MeeroIosLoadingInfo)));
     private final AbstractConfigCell dividerMotion = cellGroup.appendCell(new ConfigCellDivider());
+
+    // Storage - the auto cache janitor (MeeroX v159, approved feature). The
+    // master switch defaults OFF; the three pickers only shape what an armed
+    // janitor does. It deletes re-downloadable cloud-media copies only -
+    // never messages, never the database, never music.
+    private final AbstractConfigCell headerStorage = cellGroup.appendCell(new ConfigCellHeader(getString(R.string.MeeroGroupStorage)));
+    private final AbstractConfigCell autoJanitorRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroAutoJanitor, getString(R.string.MeeroAutoJanitorInfo)));
+    private final AbstractConfigCell janitorLimitRow = cellGroup.appendCell(new ConfigCellSelectBox(null, NekoConfig.meeroJanitorLimit, MeeroJanitor.limitTitles(), null));
+    private final AbstractConfigCell janitorAgeRow = cellGroup.appendCell(new ConfigCellSelectBox(null, NekoConfig.meeroJanitorAge, new String[]{
+            getString(R.string.JanitorDays7),
+            getString(R.string.JanitorDays14),
+            getString(R.string.JanitorDays30),
+    }, null));
+    private final AbstractConfigCell janitorModeRow = cellGroup.appendCell(new ConfigCellSelectBox(null, NekoConfig.meeroJanitorMode, new String[]{
+            getString(R.string.JanitorModeDaily),
+            getString(R.string.JanitorModeWeekly),
+            getString(R.string.JanitorModeLimit),
+    }, null));
+    private final AbstractConfigCell dividerStorage = cellGroup.appendCell(new ConfigCellDivider());
 
     // Sound and launch.
     private final AbstractConfigCell headerSound = cellGroup.appendCell(new ConfigCellHeader(getString(R.string.MeeroGroupSound)));

@@ -7300,6 +7300,25 @@ public class Theme {
         return currentNightTheme;
     }
 
+    // MeeroX v159 (approved): AMOLED pure-black bubble mode is active only
+    // on night themes whose window background is already true black, so
+    // ordinary dark themes keep their themed bubble colors exactly.
+    public static boolean meeroAmoledBubbleOn() {
+        try {
+            if (!tw.nekomimi.nekogram.NekoConfig.meeroAmoledBubbles.Bool()) {
+                return false;
+            }
+        } catch (Throwable e) {
+            return false;
+        }
+        if (!isCurrentThemeNight()) {
+            return false;
+        }
+        final int idx = currentColors.indexOfKey(key_windowBackgroundWhite);
+        final int bg = idx >= 0 ? currentColors.valueAt(idx) : getDefaultColor(key_windowBackgroundWhite);
+        return bg == 0xFF000000;
+    }
+
     public static boolean isCurrentThemeNight() {
         return currentTheme == currentNightTheme;
     }
@@ -10012,6 +10031,13 @@ public class Theme {
         }
         if (NaConfig.INSTANCE.getHideDividers().Bool() && key_divider == key) {
             return 0x00ffffff;
+        }
+        // MeeroX v159 (approved): AMOLED pure-black incoming bubbles on
+        // night themes whose background is true black - contrast + battery
+        // on OLED panels. Selected state keeps a hair of lift so selection
+        // stays visible. OFF = theme colors, byte-for-byte.
+        if ((key == key_chat_inBubble || key == key_chat_inBubbleSelected) && meeroAmoledBubbleOn()) {
+            return key == key_chat_inBubbleSelected ? 0xFF1D1D22 : 0xFF000000;
         }
         if (serviceBitmapShader != null && (key_chat_serviceText == key || key_chat_serviceLink == key || key_chat_serviceIcon == key
                 || key_chat_stickerReplyLine == key || key_chat_stickerReplyNameText == key || key_chat_stickerReplyMessageText == key)) {
