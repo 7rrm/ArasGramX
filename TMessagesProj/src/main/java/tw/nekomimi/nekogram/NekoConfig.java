@@ -136,6 +136,11 @@ public class NekoConfig {
     public static ConfigItem meeroJanitorLastRun = addConfig("meeroJanitorLastRun", configTypeLong, 0L);
     // Bytes freed by the last automatic pass, shown as the "freed X" report.
     public static ConfigItem meeroJanitorFreed = addConfig("meeroJanitorFreed", configTypeLong, 0L);
+    // MeeroX v161: Theme Mixer composition state (indices into
+    // MeeroThemeMixer.accents()/backgrounds() + the incoming-bubble choice).
+    public static ConfigItem meeroMixerAccent = addConfig("meeroMixerAccent", configTypeInt, 1);
+    public static ConfigItem meeroMixerBg = addConfig("meeroMixerBg", configTypeInt, 0);
+    public static ConfigItem meeroMixerInBubble = addConfig("meeroMixerInBubble", configTypeInt, 0);
     public static ConfigItem meeroIosInputPill = addConfig("meeroIosInputPill", configTypeBool, true);
     public static ConfigItem meeroIosWaveform = addConfig("meeroIosWaveform", configTypeBool, true);
     public static ConfigItem meeroIosSelection = addConfig("meeroIosSelection", configTypeBool, true);

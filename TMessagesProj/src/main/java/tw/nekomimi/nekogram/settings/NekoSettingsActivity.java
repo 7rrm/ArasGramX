@@ -94,6 +94,9 @@ public class NekoSettingsActivity extends BaseNekoSettingsActivity {
     private int hunterRow;
     /** MeeroX v105: keyword alert + view-once guard entries. */
     private int keywordRow;
+    /** MeeroX v161: theme mixer + smart folders entries (his approved picks). */
+    private int mixerRow;
+    private int foldersRow;
     private int onceGuardRow;
     /** MeeroX v106: chat lock entry. */
     private int lockRow;
@@ -135,6 +138,8 @@ public class NekoSettingsActivity extends BaseNekoSettingsActivity {
         watchRow = addRow();
         hunterRow = addRow();
         keywordRow = addRow();
+        mixerRow = addRow();
+        foldersRow = addRow();
         onceGuardRow = addRow();
         lockRow = addRow();
         generalRow = addRow();
@@ -457,6 +462,10 @@ public class NekoSettingsActivity extends BaseNekoSettingsActivity {
             presentFragment(new MeeroDeleteHunterActivity());
         } else if (position == keywordRow) {
             presentFragment(new MeeroKeywordAlertActivity());
+        } else if (position == mixerRow) {
+            presentFragment(new MeeroThemeMixerActivity());
+        } else if (position == foldersRow) {
+            presentFragment(new MeeroSmartFoldersActivity());
         } else if (position == onceGuardRow) {
             // MeeroX v109: legal/religious consent first (user-requested) -
             // "موافق" opens the screen and is remembered; any declined entry
@@ -552,6 +561,10 @@ public class NekoSettingsActivity extends BaseNekoSettingsActivity {
                         textCell.setTextAndIcon(getString(R.string.MeeroHunterTitle), R.drawable.baseline_delete_forever_24, true);
                     } else if (position == keywordRow) {
                         textCell.setTextAndIcon(getString(R.string.MeeroKeywordTitle), R.drawable.msg_search_solar, true);
+                    } else if (position == mixerRow) {
+                        textCell.setTextAndIcon(getString(R.string.MixerHubTitle), R.drawable.filter_palette_solar, true);
+                    } else if (position == foldersRow) {
+                        textCell.setTextAndIcon(getString(R.string.SmartFoldersHubTitle), R.drawable.files_folder_solar, true);
                     } else if (position == onceGuardRow) {
                         textCell.setTextAndIcon(getString(R.string.MeeroOnceTitle), R.drawable.msg_download_solar, true);
                     } else if (position == lockRow) {

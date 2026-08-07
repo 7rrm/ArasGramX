@@ -253,6 +253,50 @@
     <string name="JanitorDays14">14 days</string>
     <string name="JanitorDays30">30 days</string>
     <string name="JanitorReport">Storage janitor freed %1$s of cache</string>
+    <string name="MixerHubTitle">Theme Mixer (MeeroX)</string>
+    <string name="SmartFoldersHubTitle">Smart Folders (MeeroX)</string>
+    <string name="MixerTitle">Theme Mixer</string>
+    <string name="MixerHeader">Compose your theme by feel</string>
+    <string name="MixerAccent">Accent color</string>
+    <string name="MixerBackground">Background</string>
+    <string name="MixerInBubble">Incoming bubble</string>
+    <string name="MixerApply">Mix &amp; apply this theme</string>
+    <string name="MixerRestore">Back to your other themes</string>
+    <string name="MixerApplied">Mixed theme applied — it is now listed with your themes and can be shared as a file.</string>
+    <string name="MixerFailed">Could not generate the theme file. Please try again.</string>
+    <string name="MixerInfo">Pick accent, background and the incoming-bubble color; the preview above updates live. Applying creates a real theme file named "MeeroX Mix" through Telegram\'s official pipeline — it appears with your other themes, syncs nowhere private, and going back is one tap from Telegram\'s theme screen. Your chat wallpaper is never touched.</string>
+    <string name="MixerAccentBlue">iOS Blue</string>
+    <string name="MixerAccentRose">Meero Rose</string>
+    <string name="MixerAccentViolet">Violet</string>
+    <string name="MixerAccentMint">Mint Green</string>
+    <string name="MixerAccentOrange">Orange</string>
+    <string name="MixerAccentSky">Sky</string>
+    <string name="MixerAccentRed">Red</string>
+    <string name="MixerAccentGold">Gold</string>
+    <string name="MixerBgAmoled">AMOLED Black</string>
+    <string name="MixerBgGraphite">Graphite Dark</string>
+    <string name="MixerBgMidnight">Midnight Blue</string>
+    <string name="MixerBgPaper">Paper White</string>
+    <string name="MixerInBubbleFollow">Follow background style</string>
+    <string name="MixerInBubbleBlack">Pure AMOLED black</string>
+    <string name="MixerInBubbleGraphite">Graphite (iOS gray)</string>
+    <string name="MixerInBubbleTinted">Tinted by my accent</string>
+    <string name="SmartFoldersTitle">Smart Folders</string>
+    <string name="SmartFoldersHeader">One-tap folders, built from rules</string>
+    <string name="SmartFoldersInfo">Each preset creates a real synced Telegram folder composed of rules (type, unread, muted). It appears in your chats list immediately, syncs to every device, and can be edited or removed from Telegram\'s regular Folders settings. Count-based rules (e.g. \"unread more than 5\") cannot live in the server engine, so they are approximated by \"unread\".</string>
+    <string name="SmartFolderCreate">Create folder</string>
+    <string name="SmartFolderExists">This smart folder already exists in your folders list.</string>
+    <string name="SmartFolderDone">Created ✓ — manage it from Settings → Folders</string>
+    <string name="SmartFolderUnreadChannels">Unread channels</string>
+    <string name="SmartFolderUnreadChannelsRule">Rule: type = channel + has unread + not muted</string>
+    <string name="SmartFolderBots">Bots &amp; services</string>
+    <string name="SmartFolderBotsRule">Rule: type = bot (archived excluded)</string>
+    <string name="SmartFolderUnreadChats">Unread chats</string>
+    <string name="SmartFolderUnreadChatsRule">Rule: contacts + non-contacts + groups with unread</string>
+    <string name="SmartFolderFamily">Family &amp; contacts</string>
+    <string name="SmartFolderFamilyRule">Rule: type = contact (archived excluded)</string>
+    <string name="SmartFolderActiveGroups">Active groups</string>
+    <string name="SmartFolderActiveGroupsRule">Rule: type = group + not muted</string>
     <string name="StyleIos">iOS</string>
     <string name="meeroIosInputPill">iOS-style composer bar</string>
     <string name="MeeroIosInputPillInfo">A floating, panel-free composer: attach moves into its own glass circle at the far left, the text sits in a capsule with the emoji inside it, and the mic becomes a neutral circle that turns into a rose send button while typing. Off restores the stock Telegram bar.</string>

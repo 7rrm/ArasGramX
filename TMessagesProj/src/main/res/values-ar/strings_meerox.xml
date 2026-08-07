@@ -942,6 +942,50 @@
     <string name="JanitorDays14">14 يوم</string>
     <string name="JanitorDays30">30 يوم</string>
     <string name="JanitorReport">حارس التخزين حرّر %1$s من الكاش</string>
+    <string name="MixerHubTitle">صانع الثيمات (ميرو)</string>
+    <string name="SmartFoldersHubTitle">المجلدات الذكية (ميرو)</string>
+    <string name="MixerTitle">صانع الثيمات</string>
+    <string name="MixerHeader">كوّن ثيمك على ذوقك</string>
+    <string name="MixerAccent">اللون المميز</string>
+    <string name="MixerBackground">الخلفية</string>
+    <string name="MixerInBubble">فقاعة الطرف الثاني</string>
+    <string name="MixerApply">اخلط وطبّق هذا الثيم</string>
+    <string name="MixerRestore">ارجع لثيماتك الأخرى</string>
+    <string name="MixerApplied">انطبق الثيم المخلوط — صار مدرجاً مع ثيماتك وتقدر تشاركه كملف.</string>
+    <string name="MixerFailed">ما قدرنا نولّد ملف الثيم، جرّب مرة ثانية.</string>
+    <string name="MixerInfo">اختار اللون المميز والخلفية ولون فقاعة الطرف الثاني؛ المعاينة فوق تتحدث مباشرة. التطبيق يولّد ملف ثيم حقيقي باسم "MeeroX Mix" عبر القناة الرسمية لتيليجرام — يظهر مع ثيماتك الأخرى، والرجوع لثيمك السابق ضغطة من شاشة ثيمات تيليجرام. خلفية محادثتك الحالية لا تتغير.</string>
+    <string name="MixerAccentBlue">أزرق آيفون</string>
+    <string name="MixerAccentRose">وردة ميرو</string>
+    <string name="MixerAccentViolet">بنفسجي</string>
+    <string name="MixerAccentMint">أخضر نعناعي</string>
+    <string name="MixerAccentOrange">برتقالي</string>
+    <string name="MixerAccentSky">سماوي</string>
+    <string name="MixerAccentRed">أحمر</string>
+    <string name="MixerAccentGold">ذهبي</string>
+    <string name="MixerBgAmoled">أسود AMOLED</string>
+    <string name="MixerBgGraphite">فحمي غامق</string>
+    <string name="MixerBgMidnight">كحلي منتصف الليل</string>
+    <string name="MixerBgPaper">أبيض ورقي</string>
+    <string name="MixerInBubbleFollow">يتبع نمط الخلفية</string>
+    <string name="MixerInBubbleBlack">أسود AMOLED خالص</string>
+    <string name="MixerInBubbleGraphite">فحمي (رمادي آيفون)</string>
+    <string name="MixerInBubbleTinted">مخلوط بلوني المميز</string>
+    <string name="SmartFoldersTitle">المجلدات الذكية</string>
+    <string name="SmartFoldersHeader">مجلدات بلمسة وحدة، مبنية بقواعد</string>
+    <string name="SmartFoldersInfo">كل قالب ينشئ مجلد تيليجرام حقيقي متزامن مركّب من قواعد (النوع، غير المقروء، المكتوم). يظهر بقائمة محادثاتك فوراً، يتزامن لكل أجهزتك، وتقدر تعدله أو تحذفه من إعدادات «المجلدات» الرسمية. القواعد العددية (مثلاً «غير مقروء أكثر من 5») ما يدعمها محرك السيرفر، فاستبدلناها بـ«غير مقروء».</string>
+    <string name="SmartFolderCreate">إنشاء المجلد</string>
+    <string name="SmartFolderExists">هذا المجلد الذكي موجود أصلاً بقائمة مجلداتك.</string>
+    <string name="SmartFolderDone">مُنشأ ✓ — دبّره من الإعدادات ← المجلدات</string>
+    <string name="SmartFolderUnreadChannels">قنوات غير مقروءة</string>
+    <string name="SmartFolderUnreadChannelsRule">القاعدة: نوع=قناة + بها غير مقروء + بدون كتم</string>
+    <string name="SmartFolderBots">البوتات والخدمات</string>
+    <string name="SmartFolderBotsRule">القاعدة: نوع=بوت (باستثناء المؤرشف)</string>
+    <string name="SmartFolderUnreadChats">محادثات غير مقروءة</string>
+    <string name="SmartFolderUnreadChatsRule">القاعدة: جهات اتصال + غير معروفين + مجموعات بها غير مقروء</string>
+    <string name="SmartFolderFamily">العائلة وجهات الاتصال</string>
+    <string name="SmartFolderFamilyRule">القاعدة: نوع=جهة اتصال (باستثناء المؤرشف)</string>
+    <string name="SmartFolderActiveGroups">مجموعات نشطة</string>
+    <string name="SmartFolderActiveGroupsRule">القاعدة: نوع=مجموعة + بدون كتم</string>
     <string name="StyleIos">آي أو إس</string>
     <string name="meeroIosInputPill">شريط الكتابة مثل آيفون</string>
     <string name="MeeroIosInputPillInfo">لوحة شفافة فوق خلفية الدردشة: المشبك بدائرة زجاجية أقصى اليسار، كبسولة حقل بداخلها الإيموجي، والمايك دائرة رمادية تتحول لزر إرسال وردي عند الكتابة. إطفاءه يرجع تصميم تليكرام الرسمي.</string>
