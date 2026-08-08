@@ -4,13 +4,14 @@
     android:height="108dp"
     android:viewportWidth="512"
     android:viewportHeight="512">
+  <!-- v171: clean flat letter M, darkgreen whites; diagonals UNDER stems -->
   <group android:scaleX="0.6713793" android:scaleY="0.6713793" android:translateX="84.1269" android:translateY="84.1269">
     <group>
       <clip-path android:pathData="M0 0H512V512H0V0Z"/>
-      <path android:pathData="M172,162.06L172,349.95A43.485,43.485 0 0 1,258.97,349.95L258.97,162.06A43.485,43.485 0 0 1,172,162.06z" android:fillColor="#E6FFFFFF"/>
-      <path android:pathData="M340,162.06L340,349.95A43.485,43.485 0 0 1,426.97,349.95L426.97,162.06A43.485,43.485 0 0 1,340,162.06z" android:fillColor="#E6FFFFFF"/>
-      <path android:pathData="M172,162.06L256,349.95A43.485,43.485 0 0 1,335.397,314.454L251.397,126.564A43.485,43.485 0 0 1,172,162.06z" android:fillColor="#FFFFFF"/>
-      <path android:pathData="M340,162.06L256,349.95A43.485,43.485 0 0 1,335.397,385.446L419.397,197.556A43.485,43.485 0 0 1,340,162.06z" android:fillColor="#FFFFFF"/>
+      <path android:pathData="M94.7 172L232.7 318L279.3 274L141.3 128Z" android:fillColor="#FFFFFF"/>
+      <path android:pathData="M370.7 128L232.7 274L279.3 318L417.3 172Z" android:fillColor="#FFFFFF"/>
+      <path android:pathData="M86 150H150V362H86Z" android:fillColor="#E6FFFFFF"/>
+      <path android:pathData="M362 150H426V362H362Z" android:fillColor="#E6FFFFFF"/>
     </group>
   </group>
 </vector>

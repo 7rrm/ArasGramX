@@ -4,17 +4,18 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
+  <!-- v171: clean flat letter M, classic blue gradient stems (bat-capsule shape removed) -->
   <group android:scaleX="0.14161907" android:scaleY="0.14161907" android:translateX="17.745518" android:translateY="17.745518">
     <group>
       <clip-path android:pathData="M0,0h512v512h-512z"/>
       <path
-          android:pathData="M172,162.06L172,349.95A43.485,43.485 0 0 1,258.97,349.95L258.97,162.06A43.485,43.485 0 0 1,172,162.06z">
+          android:pathData="M86 150H150V362H86Z">
       <aapt:attr name="android:fillColor">
         <gradient
-            android:startX="215.49"
-            android:startY="130.66"
-            android:endX="215.49"
-            android:endY="333.79"
+            android:startX="118"
+            android:startY="150"
+            android:endX="118"
+            android:endY="362"
             android:type="linear">
             <item android:offset="0" android:color="#FF0095FF"/>
             <item android:offset="0.36" android:color="#FF008AFF"/>
@@ -24,13 +25,13 @@
       </aapt:attr>
       </path>
       <path
-          android:pathData="M340,162.06L340,349.95A43.485,43.485 0 0 1,426.97,349.95L426.97,162.06A43.485,43.485 0 0 1,340,162.06z">
+          android:pathData="M362 150H426V362H362Z">
       <aapt:attr name="android:fillColor">
         <gradient
-            android:startX="383.49"
-            android:startY="118.57"
-            android:endX="383.49"
-            android:endY="305.2"
+            android:startX="394"
+            android:startY="150"
+            android:endX="394"
+            android:endY="362"
             android:type="linear">
             <item android:offset="0" android:color="#FF0095FF"/>
             <item android:offset="0.04" android:color="#FF0094FF"/>
@@ -40,8 +41,8 @@
         </gradient>
       </aapt:attr>
       </path>
-      <path android:pathData="M172,162.06L256,349.95A43.485,43.485 0 0 1,335.397,314.454L251.397,126.564A43.485,43.485 0 0 1,172,162.06z" android:fillColor="#0095ff"/>
-      <path android:pathData="M340,162.06L256,349.95A43.485,43.485 0 0 1,335.397,385.446L419.397,197.556A43.485,43.485 0 0 1,340,162.06z" android:fillColor="#0095ff"/>
+      <path android:pathData="M94.7 172L232.7 318L279.3 274L141.3 128Z" android:fillColor="#0095ff"/>
+      <path android:pathData="M370.7 128L232.7 274L279.3 318L417.3 172Z" android:fillColor="#0095ff"/>
     </group>
   </group>
 </vector>
