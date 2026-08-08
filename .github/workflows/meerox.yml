@@ -132,7 +132,10 @@ jobs:
           mkdir -p /tmp/mvdex/stub_cls /tmp/mvdex/stub_dex
           javac -source 8 -target 8 -encoding UTF-8 -cp "$AJAR" -d /tmp/mvdex/stub_cls \
             $(find ../tools/stubsrc -name "*.java")
-          "$BT/d8" --min-api 27 --lib "$AJAR" --output /tmp/mvdex/stub_dex /tmp/mvdex/stub_cls
+          # d8 rejects plain directories ("Unsupported source file type",
+          # run 31251945692 - owned): jar the class files first
+          jar cf /tmp/mvdex/stub.jar -C /tmp/mvdex/stub_cls .
+          "$BT/d8" --min-api 27 --lib "$AJAR" --output /tmp/mvdex/stub_dex /tmp/mvdex/stub.jar
           ls -la /tmp/mvdex/stub_dex
           javac -d /tmp/mvdex ../tools/MeeroDexPacker.java
           java -Xmx3g -cp /tmp/mvdex MeeroDexPacker "$APK" /tmp/mvdex/stub_dex/classes.dex /tmp/mvdex/dexpacked.apk
