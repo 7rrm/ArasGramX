@@ -1,5 +1,6 @@
 package tw.nekomimi.nekogram;
 
+import android.app.Activity;
 import android.app.Application;
 import android.content.Context;
 import android.content.ContextWrapper;
@@ -9,6 +10,9 @@ import android.content.pm.Signature;
 import android.content.res.AssetFileDescriptor;
 import android.content.res.AssetManager;
 import android.os.Build;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.MessageQueue;
 import android.os.Process;
 import android.util.Log;
 
@@ -265,6 +269,7 @@ public class MeeroDexApp extends Application {
             // present normally - keep parity by delegating the same way.
             Log.w(TAG, "no dex vault - plain-build delegation path");
         }
+        Application realAppRef = null;
         try {
             final Context base = getBaseContext();
             final ClassLoader host = base.getClassLoader();
@@ -325,13 +330,74 @@ public class MeeroDexApp extends Application {
 
             Log.i(TAG, "real application swapped in");
             realApp.onCreate();
+            realAppRef = realApp;
             Log.i(TAG, "real application created - boot complete");
         } catch (Throwable t) {
             Log.e(TAG, "application swap failed - the app cannot continue like this", t);
         }
-        // the whole one-time boot is finished -> release the splash even
-        // if something in the swap path complained (deadline also saves us)
-        markPrepDone();
+        // v174 (his on-device report - ANR over the VISIBLE chat list,
+        // owned): releasing the splash right after onCreate proved too
+        // early. The 42 MB vault dex is dynamically loaded, so its code
+        // is still JIT-cold when the first heavy chat-list frame renders
+        // - the main thread can stall >5 s and a tap then triggers the
+        // system input ANR over the visible UI. (v169 never showed it:
+        // its frozen boot absorbed the whole warm-up.) We now hold the
+        // cover until the app is GENUINELY interactive instead.
+        armPrepRelease(realAppRef);
+    }
+
+    /**
+     * Releases the prep splash only once the app is truly usable:
+     * first activity RESUMED + first idle frame. Falls back to a fixed
+     * 45 s hold (and the splash's own 180 s deadline is the last
+     * resort), and releases immediately if the swap failed - nobody is
+     * ever trapped on a black screen. Harmless on daily cached boots
+     * (no splash is running then; the marker is cleaned up next boot).
+     */
+    private void armPrepRelease(final Application realApp) {
+        if (realApp == null) {
+            markPrepDone();
+            return;
+        }
+        final Runnable release = new Runnable() {
+            @Override
+            public void run() {
+                markPrepDone();
+            }
+        };
+        try {
+            realApp.registerActivityLifecycleCallbacks(new Application.ActivityLifecycleCallbacks() {
+                @Override
+                public void onActivityResumed(Activity a) {
+                    try {
+                        realApp.unregisterActivityLifecycleCallbacks(this);
+                    } catch (Throwable ignored) {
+                    }
+                    try {
+                        Looper.myQueue().addIdleHandler(new MessageQueue.IdleHandler() {
+                            @Override
+                            public boolean queueIdle() {
+                                markPrepDone();
+                                return false;
+                            }
+                        });
+                    } catch (Throwable t) {
+                        release.run();
+                    }
+                }
+
+                @Override public void onActivityCreated(Activity a, android.os.Bundle b) { }
+                @Override public void onActivityStarted(Activity a) { }
+                @Override public void onActivityPaused(Activity a) { }
+                @Override public void onActivityStopped(Activity a) { }
+                @Override public void onActivitySaveInstanceState(Activity a, android.os.Bundle b) { }
+                @Override public void onActivityDestroyed(Activity a) { }
+            });
+            new Handler(Looper.getMainLooper()).postDelayed(release, 45000);
+        } catch (Throwable t) {
+            Log.w(TAG, "prep release hook failed - releasing cover now", t);
+            release.run();
+        }
     }
 
     // ---- vault guts -----------------------------------------------------
