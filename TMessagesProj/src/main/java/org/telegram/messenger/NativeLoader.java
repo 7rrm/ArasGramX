@@ -116,6 +116,14 @@ public class NativeLoader {
         }
 
         try {
+            // MeeroX vault (v167): the 24 MB native heart ships only as an
+            // encrypted blob (assets/meero_vault/core.enc). Decrypt+load it
+            // from the app's private dir; false = plain build or anomaly,
+            // so the stock loadLibrary path below stays completely intact.
+            if (tw.nekomimi.nekogram.MeeroVault.tryLoad(context)) {
+                nativeLoaded = true;
+                return;
+            }
             try {
                 System.loadLibrary(LIB_NAME);
                 nativeLoaded = true;

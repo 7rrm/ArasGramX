@@ -113,6 +113,35 @@ jobs:
           echo "Task: $TASK / ABI: $NATIVE_TARGET"
           ./gradlew $TASK --stacktrace 2>&1 | tee build.log
 
+      - name: Pack native core into MeeroVault
+        # v167: encrypt libtmessages.49.so into assets/meero_vault/core.enc
+        # (his WiFi-app packer scheme, done with first-party source). The
+        # packer self-tests the blob before writing; it exits non-zero on
+        # any anomaly so a broken pack can never ship silently.
+        if: success()
+        working-directory: TMessagesProj
+        run: |
+          set -e
+          BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
+          APK=$(find build/outputs/apk -name "*arm64-v8a*.apk" | head -1)
+          [ -n "$APK" ] || { echo "no arm64 apk found"; exit 1; }
+          echo "packing: $APK (build-tools: $BT)"
+          mkdir -p /tmp/mvpack
+          javac -d /tmp/mvpack ../tools/MeeroVaultPacker.java
+          KS_PASS=$(grep '^KEYSTORE_PASS=' ../local.properties | cut -d= -f2-)
+          KS_ALIAS=$(grep '^ALIAS_NAME=' ../local.properties | cut -d= -f2-)
+          KS_KEY=$(grep '^ALIAS_PASS=' ../local.properties | cut -d= -f2-)
+          java -Xmx2g -cp /tmp/mvpack MeeroVaultPacker "$APK" packed.apk
+          "$BT/zipalign" -f -P 16 -p 4 packed.apk aligned.apk
+          "$BT/apksigner" sign --ks release.keystore --ks-key-alias "$KS_ALIAS" \
+            --ks-pass "pass:$KS_PASS" --key-pass "pass:$KS_KEY" \
+            --out "$APK" aligned.apk
+          "$BT/apksigner" verify --print-certs "$APK" | head -3
+          echo "--- vault check ---"
+          unzip -l "$APK" | grep -E "meero_vault|meerovault|tmessages" || true
+          rm -f packed.apk aligned.apk
+          echo "MeeroVault pack OK"
+
       - name: Collect APKs
         if: success()
         run: |

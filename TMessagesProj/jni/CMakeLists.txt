@@ -644,3 +644,14 @@ target_link_libraries(${NATIVE_LIB}
 
 #include(AndroidNdkModules)
 #android_ndk_import_module_cpufeatures()
+
+# ---------------------------------------------------------------------------
+# MeeroX v167 - libmeerovault: the tiny PLAIN carrier of the shuffled vault
+# seed (+ passive anti-debug). Independent from ${NATIVE_LIB} so the big
+# native heart can ship encrypted while this one loads the normal way.
+# ---------------------------------------------------------------------------
+add_library(meerovault SHARED meerovault/meerovault.c)
+set_target_properties(meerovault PROPERTIES C_STANDARD 11)
+target_compile_options(meerovault PRIVATE -O2)
+target_link_options(meerovault PRIVATE "-Wl,-z,max-page-size=16384")
+target_link_libraries(meerovault log)
