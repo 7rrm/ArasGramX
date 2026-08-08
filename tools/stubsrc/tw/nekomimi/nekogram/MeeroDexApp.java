@@ -1,6 +1,5 @@
 package tw.nekomimi.nekogram;
 
-import android.app.Activity;
 import android.app.Application;
 import android.content.Context;
 import android.content.ContextWrapper;
@@ -10,9 +9,6 @@ import android.content.pm.Signature;
 import android.content.res.AssetFileDescriptor;
 import android.content.res.AssetManager;
 import android.os.Build;
-import android.os.Handler;
-import android.os.Looper;
-import android.os.MessageQueue;
 import android.os.Process;
 import android.util.Log;
 
@@ -90,9 +86,10 @@ public class MeeroDexApp extends Application {
 
     private static volatile boolean vaultReady;
     private static byte[] seedCache;
-    // v175: device-paced prep timing (see armPrepRelease)
+    // v175/v176/v177: device-paced prep timing (see armPrepRelease)
     private static long bootStartMs;
     private static long decryptMs;
+    private static boolean bootWasCached;
     private File markerDir;
 
     private static native byte[] seedNative(); // served by libmeerovault.so
@@ -174,6 +171,7 @@ public class MeeroDexApp extends Application {
 
         final boolean cached = stamp.exists() && vault.exists()
                 && vault.length() > 1000000 && apkStamp.equals(readText(stamp));
+        bootWasCached = cached;
         if (!cached) {
             if (seedEnsure() == null) {
                 throw new IllegalStateException("seed lib unavailable");
@@ -360,89 +358,41 @@ public class MeeroDexApp extends Application {
     }
 
     /**
-     * v175 (his v174 report - ANR over the chat list even though WAIT
-     * recovers within seconds, owned): the "first idle frame" signal
-     * fires a few seconds BEFORE the heavy first chat-list render on a
-     * big account, so the v174 cover still lifted too early. One boot
-     * after each update the dynamically-loaded vault has no saved ART
-     * profile (profiles are keyed to the dex checksum - every update is
-     * a brand-new cold file), while daily boots reuse the recorded
-     * profile and are warm from frame one; that is why this exists only
-     * once per update.
-     *
-     * New rule: release the cover at max(first resumed + idle,
-     * bootStart + device-paced minimum hold). The decrypt duration is
-     * the device-speed ruler: hold = clamp(2.5 x decryptMs, 15..45 s).
-     * Meanwhile warmClassesAsync() pre-verifies the heavy launch-path
-     * classes on a background thread, so the interface behind the cover
-     * is genuinely warm. Hard 60 s fallback + splash's own 180 s
-     * deadline + instant release on swap failure = never trapped.
+     * v177 (his v176 report - splash visible thanks to the heartbeat,
+     * but it sat on "…" and the app "never entered", owned): every
+     * event-chain release signal we tried (onCreate end, first resumed,
+     * first idle, double idle) misfired on his heavy account across
+     * three versions, and the 60 s safety rode the BLOCKED main looper,
+     * so it could not save him either. Determinism now beats cleverness:
+     * a plain daemon thread sleeps the device-paced hold and then drops
+     * .done - wall-clock guaranteed, zero dependence on signals from an
+     * app that is busy booting, zero dependence on the main looper.
+     * hold = clamp(2.5 x decryptMs, 20..50 s): decrypt time is the
+     * device-speed ruler, so low-end phones automatically hold longer.
+     * Daily cached boots do not even start the watcher.
      */
     private void armPrepRelease(final Application realApp) {
         if (realApp == null) {
             markPrepDone();
             return;
         }
-        final long minHold = Math.max(15000L, Math.min(45000L, (long) (decryptMs * 2.5d)));
-        final long releaseAt = bootStartMs + minHold;
-        final Handler ui = new Handler(Looper.getMainLooper());
-        final Runnable release = new Runnable() {
+        if (bootWasCached) {
+            return; // no splash is running on warm daily boots
+        }
+        final long holdMs = Math.max(20000L, Math.min(50000L, (long) (decryptMs * 2.5d)));
+        Log.i(TAG, "prep cover hold = " + holdMs + " ms (device-paced, wall-clock)");
+        final Thread w = new Thread(new Runnable() {
             @Override
             public void run() {
+                try {
+                    Thread.sleep(holdMs);
+                } catch (Throwable ignored) {
+                }
                 markPrepDone();
             }
-        };
-        try {
-            realApp.registerActivityLifecycleCallbacks(new Application.ActivityLifecycleCallbacks() {
-                @Override
-                public void onActivityResumed(Activity a) {
-                    try {
-                        realApp.unregisterActivityLifecycleCallbacks(this);
-                    } catch (Throwable ignored) {
-                    }
-                    try {
-                        // v176: require TWO consecutive idle turns before
-                        // trusting the signal. The first idle merely sits
-                        // between the chat list's async load passes (that
-                        // is exactly how the v174 cover lifted early and
-                        // the ANR surfaced over the chat rows, owned); a
-                        // second idle in a row is the far steadier sign
-                        // that first content is really on screen.
-                        Looper.myQueue().addIdleHandler(new MessageQueue.IdleHandler() {
-                            @Override
-                            public boolean queueIdle() {
-                                Looper.myQueue().addIdleHandler(new MessageQueue.IdleHandler() {
-                                    @Override
-                                    public boolean queueIdle() {
-                                        final long left = releaseAt - System.currentTimeMillis();
-                                        if (left <= 0) {
-                                            markPrepDone();
-                                        } else {
-                                            ui.postDelayed(release, left);
-                                        }
-                                        return false;
-                                    }
-                                });
-                                return false;
-                            }
-                        });
-                    } catch (Throwable t) {
-                        release.run();
-                    }
-                }
-
-                @Override public void onActivityCreated(Activity a, android.os.Bundle b) { }
-                @Override public void onActivityStarted(Activity a) { }
-                @Override public void onActivityPaused(Activity a) { }
-                @Override public void onActivityStopped(Activity a) { }
-                @Override public void onActivitySaveInstanceState(Activity a, android.os.Bundle b) { }
-                @Override public void onActivityDestroyed(Activity a) { }
-            });
-            ui.postDelayed(release, 60000); // hard fallback beyond any sane hold
-        } catch (Throwable t) {
-            Log.w(TAG, "prep release hook failed - releasing cover now", t);
-            release.run();
-        }
+        }, "meerorelease");
+        w.setDaemon(true);
+        w.start();
     }
 
 
