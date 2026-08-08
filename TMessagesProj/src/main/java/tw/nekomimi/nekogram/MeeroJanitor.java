@@ -1,5 +1,7 @@
 package tw.nekomimi.nekogram;
 
+import tw.nekomimi.nekogram.MeeroStrings;
+
 import android.widget.Toast;
 
 import org.telegram.messenger.AndroidUtilities;
@@ -212,7 +214,7 @@ public class MeeroJanitor {
                 AndroidUtilities.runOnUIThread(() -> {
                     try {
                         Toast.makeText(ApplicationLoader.applicationContext,
-                                LocaleController.formatString("JanitorReport", R.string.JanitorReport, size),
+                                MeeroStrings.f("JanitorReport", size),
                                 Toast.LENGTH_LONG).show();
                     } catch (Throwable ignore) {
                     }
