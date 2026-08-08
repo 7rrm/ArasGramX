@@ -45,6 +45,13 @@ public class MeeroBootActivity extends Activity {
     private TextView subView;
     private boolean ar;
     private long bornAt;
+    // v173: never look frozen again. If the exact decrypt length is not
+    // readable on this ROM (openFd quirk -> main process writes no .prep
+    // values), the bar switches to a pulsing indeterminate mode instead
+    // of sitting at a dead 0%. The moment real values arrive we go
+    // determinate and show them, exactly like v171/v172.
+    private boolean sawData;
+    private boolean indet;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -88,6 +95,7 @@ public class MeeroBootActivity extends Activity {
         bar.setProgress(0);
         try {
             bar.setProgressTintList(ColorStateList.valueOf(ROSE));
+            bar.setIndeterminateTintList(ColorStateList.valueOf(ROSE));
             bar.setProgressBackgroundTintList(ColorStateList.valueOf(0xFF2A2A2E));
         } catch (Throwable ignored) {
         }
@@ -143,6 +151,11 @@ public class MeeroBootActivity extends Activity {
                 }
                 final String p = readSmall(new File(dir, ".prep"));
                 if (p.length() > 0) {
+                    sawData = true;
+                    if (indet) {
+                        bar.setIndeterminate(false);
+                        indet = false;
+                    }
                     int v;
                     try {
                         v = Integer.parseInt(p.trim());
@@ -156,6 +169,13 @@ public class MeeroBootActivity extends Activity {
                         // decrypt done; ART + first-run init still working
                         subView.setText(ar ? "تشغيل الواجهة…" : "Starting the interface…");
                     }
+                } else if (!sawData && !indet
+                        && System.currentTimeMillis() - bornAt > 800) {
+                    // v173: no length info on this ROM -> live pulse instead
+                    // of a frozen-looking 0% (his on-device report, owned).
+                    indet = true;
+                    bar.setIndeterminate(true);
+                    pctView.setText("…");
                 }
             } catch (Throwable ignored) {
             }
