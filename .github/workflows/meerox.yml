@@ -132,9 +132,12 @@ jobs:
           KS_ALIAS=$(grep '^ALIAS_NAME=' ../local.properties | cut -d= -f2-)
           KS_KEY=$(grep '^ALIAS_PASS=' ../local.properties | cut -d= -f2-)
           java -Xmx2g -cp /tmp/mvpack MeeroVaultPacker "$APK" packed.apk
-          "$BT/zipalign" -f -P 16 -p 4 packed.apk aligned.apk
+          # -P 16 = 16KB-page align for uncompressed .so (covers 4K too,
+          # and MUST NOT be combined with legacy -p on build-tools >= 35)
+          "$BT/zipalign" -f -v -P 16 4 packed.apk aligned.apk
           "$BT/apksigner" sign --ks release.keystore --ks-key-alias "$KS_ALIAS" \
             --ks-pass "pass:$KS_PASS" --key-pass "pass:$KS_KEY" \
+            --min-sdk-version 27 \
             --out "$APK" aligned.apk
           "$BT/apksigner" verify --print-certs "$APK" | head -3
           echo "--- vault check ---"
