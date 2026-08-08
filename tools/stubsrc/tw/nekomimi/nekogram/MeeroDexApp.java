@@ -127,6 +127,11 @@ public class MeeroDexApp extends Application {
             if (!tmp.renameTo(vault)) {
                 throw new IllegalStateException("vault rename failed");
             }
+            // API 34+ rule (this exact oversight crashed v168 on his
+            // device - owned): a dynamically loaded dex file MUST be
+            // read-only or DexClassLoader throws SecurityException.
+            //noinspection ResultOfMethodCallIgnored
+            vault.setReadOnly();
             writeText(stamp, apkStamp);
             Log.i(TAG, "dex vault decrypted (" + vault.length() + " bytes)");
         } else {
@@ -138,7 +143,35 @@ public class MeeroDexApp extends Application {
 
         // 1. load the archive & prepend its elements into the host loader
         final ClassLoader host = base.getClassLoader();
-        final DexClassLoader extra = new DexClassLoader(vault.getAbsolutePath(), null, null, host);
+        ClassLoader extra = null;
+        Throwable fileErr = null;
+        try {
+            extra = new DexClassLoader(vault.getAbsolutePath(), null, null, host);
+        } catch (Throwable t) {
+            fileErr = t;
+            Log.w(TAG, "file-based dex load failed, trying in-memory", t);
+        }
+        if (extra == null) {
+            // Belt & braces for exotic ARTs: in-memory dex has no
+            // writable-file rule at all. Costs the decrypt per cold boot
+            // (no oat reuse) but always works on API 27+.
+            java.nio.ByteBuffer buf = null;
+            try {
+                buf = java.nio.ByteBuffer.allocateDirect((int) vault.length());
+                final FileInputStream fis = new FileInputStream(vault);
+                final byte[] tmp = new byte[1024 * 1024];
+                int n;
+                while ((n = fis.read(tmp)) >= 0) {
+                    buf.put(tmp, 0, n);
+                }
+                fis.close();
+                buf.flip();
+                extra = new dalvik.system.InMemoryDexClassLoader(buf, host);
+                Log.i(TAG, "in-memory dex load ok");
+            } catch (Throwable t2) {
+                throw new IllegalStateException("dex load failed (file+memory)", fileErr);
+            }
+        }
         final Object pathList = fieldOf(host, "pathList");
         final Object hostElements = fieldOf(pathList, "dexElements");
         final Object extraElements = fieldOf(fieldOf(extra, "pathList"), "dexElements");
