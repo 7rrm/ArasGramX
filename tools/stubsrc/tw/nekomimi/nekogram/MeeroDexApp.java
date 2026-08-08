@@ -90,6 +90,9 @@ public class MeeroDexApp extends Application {
 
     private static volatile boolean vaultReady;
     private static byte[] seedCache;
+    // v175: device-paced prep timing (see armPrepRelease)
+    private static long bootStartMs;
+    private static long decryptMs;
     private File markerDir;
 
     private static native byte[] seedNative(); // served by libmeerovault.so
@@ -139,6 +142,7 @@ public class MeeroDexApp extends Application {
         if (vaultReady) {
             return;
         }
+        bootStartMs = System.currentTimeMillis();
 
         // 0. plain build? (no blob -> completely stock boot)
         InputStream in;
@@ -177,7 +181,10 @@ public class MeeroDexApp extends Application {
             maybeLaunchPrep(base, dir);
             final File tmp = new File(dir, "vault.tmp");
             try {
+                final long d0 = System.currentTimeMillis();
                 decrypt(in, fingerprintOf(base), tmp, dir, blobTotal);
+                decryptMs = System.currentTimeMillis() - d0;
+                Log.i(TAG, "vault decrypt took " + decryptMs + " ms (device pace ruler)");
             } catch (Throwable t) {
                 //noinspection ResultOfMethodCallIgnored
                 tmp.delete();
@@ -331,6 +338,10 @@ public class MeeroDexApp extends Application {
             Log.i(TAG, "real application swapped in");
             realApp.onCreate();
             realAppRef = realApp;
+            // v175: warm class VERIFICATION of the heavy launch path on a
+            // background thread while the prep cover is still up (load
+            // only, NO static init - zero side effects by construction).
+            warmClassesAsync(host);
             Log.i(TAG, "real application created - boot complete");
         } catch (Throwable t) {
             Log.e(TAG, "application swap failed - the app cannot continue like this", t);
@@ -347,18 +358,32 @@ public class MeeroDexApp extends Application {
     }
 
     /**
-     * Releases the prep splash only once the app is truly usable:
-     * first activity RESUMED + first idle frame. Falls back to a fixed
-     * 45 s hold (and the splash's own 180 s deadline is the last
-     * resort), and releases immediately if the swap failed - nobody is
-     * ever trapped on a black screen. Harmless on daily cached boots
-     * (no splash is running then; the marker is cleaned up next boot).
+     * v175 (his v174 report - ANR over the chat list even though WAIT
+     * recovers within seconds, owned): the "first idle frame" signal
+     * fires a few seconds BEFORE the heavy first chat-list render on a
+     * big account, so the v174 cover still lifted too early. One boot
+     * after each update the dynamically-loaded vault has no saved ART
+     * profile (profiles are keyed to the dex checksum - every update is
+     * a brand-new cold file), while daily boots reuse the recorded
+     * profile and are warm from frame one; that is why this exists only
+     * once per update.
+     *
+     * New rule: release the cover at max(first resumed + idle,
+     * bootStart + device-paced minimum hold). The decrypt duration is
+     * the device-speed ruler: hold = clamp(2.5 x decryptMs, 15..45 s).
+     * Meanwhile warmClassesAsync() pre-verifies the heavy launch-path
+     * classes on a background thread, so the interface behind the cover
+     * is genuinely warm. Hard 60 s fallback + splash's own 180 s
+     * deadline + instant release on swap failure = never trapped.
      */
     private void armPrepRelease(final Application realApp) {
         if (realApp == null) {
             markPrepDone();
             return;
         }
+        final long minHold = Math.max(15000L, Math.min(45000L, (long) (decryptMs * 2.5d)));
+        final long releaseAt = bootStartMs + minHold;
+        final Handler ui = new Handler(Looper.getMainLooper());
         final Runnable release = new Runnable() {
             @Override
             public void run() {
@@ -377,7 +402,12 @@ public class MeeroDexApp extends Application {
                         Looper.myQueue().addIdleHandler(new MessageQueue.IdleHandler() {
                             @Override
                             public boolean queueIdle() {
-                                markPrepDone();
+                                final long left = releaseAt - System.currentTimeMillis();
+                                if (left <= 0) {
+                                    markPrepDone();
+                                } else {
+                                    ui.postDelayed(release, left);
+                                }
                                 return false;
                             }
                         });
@@ -393,11 +423,69 @@ public class MeeroDexApp extends Application {
                 @Override public void onActivitySaveInstanceState(Activity a, android.os.Bundle b) { }
                 @Override public void onActivityDestroyed(Activity a) { }
             });
-            new Handler(Looper.getMainLooper()).postDelayed(release, 45000);
+            ui.postDelayed(release, 60000); // hard fallback beyond any sane hold
         } catch (Throwable t) {
             Log.w(TAG, "prep release hook failed - releasing cover now", t);
             release.run();
         }
+    }
+
+    /**
+     * v175: background class-verification warm-up for the launch path.
+     * Load-only (initialize = false): triggers ART's verifier without
+     * running a single static initializer, hence zero behavioural side
+     * effects. Unknown/renamed names are simply skipped. Runs at the
+     * lowest priority while the prep cover absorbs the once-per-update
+     * cold-profile window.
+     */
+    private static void warmClassesAsync(final ClassLoader cl) {
+        final String[] warm = {
+                "org.telegram.ui.LaunchActivity",
+                "org.telegram.ui.DialogsActivity",
+                "org.telegram.ui.ChatActivity",
+                "org.telegram.ui.ActionBar.ActionBarLayout",
+                "org.telegram.ui.ActionBar.BaseFragment",
+                "org.telegram.ui.ActionBar.Theme",
+                "org.telegram.ui.Components.RecyclerListView",
+                "org.telegram.ui.Components.LayoutHelper",
+                "org.telegram.messenger.MessagesController",
+                "org.telegram.messenger.MessagesStorage",
+                "org.telegram.messenger.UserConfig",
+                "org.telegram.messenger.NotificationCenter",
+                "org.telegram.messenger.AndroidUtilities",
+                "org.telegram.messenger.LocaleController",
+                "org.telegram.messenger.FileLoader",
+                "org.telegram.messenger.FileLog",
+                "org.telegram.messenger.SendMessagesHelper",
+                "org.telegram.messenger.MediaController",
+                "org.telegram.messenger.ContactsController",
+                "org.telegram.messenger.ImageLoader",
+                "org.telegram.messenger.MessageObject",
+                "org.telegram.messenger.Utilities",
+                "org.telegram.messenger.Emoji",
+                "org.telegram.tgnet.TLRPC",
+                "org.telegram.tgnet.ConnectionsManager"
+        };
+        final Thread t = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Process.setThreadPriority(Process.THREAD_PRIORITY_LOWEST);
+                } catch (Throwable ignored) {
+                }
+                int ok = 0;
+                for (final String cn : warm) {
+                    try {
+                        Class.forName(cn, false, cl);
+                        ok++;
+                    } catch (Throwable ignored) {
+                    }
+                }
+                Log.i(TAG, "background warm done (" + ok + "/" + warm.length + " classes)");
+            }
+        }, "meerowarm");
+        t.setPriority(Thread.MIN_PRIORITY);
+        t.start();
     }
 
     // ---- vault guts -----------------------------------------------------
