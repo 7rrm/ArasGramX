@@ -48,12 +48,19 @@ public class LauncherIconController {
         AQUA("AquaIcon", R.drawable.icon_4_background_sa, R.mipmap.icon_foreground_sa, R.string.AppIconAqua),
         PREMIUM("PremiumIcon", R.drawable.icon_3_background_sa, R.mipmap.icon_3_foreground_sa, R.string.AppIconPremium),
         TURBO("TurboIcon", R.drawable.icon_5_background_sa, R.mipmap.icon_5_foreground_sa, R.string.AppIconTurbo),
-        NOX("NoxIcon", R.mipmap.icon_2_background_sa, R.mipmap.icon_foreground_sa, R.string.AppIconNox);
+        NOX("NoxIcon", R.mipmap.icon_2_background_sa, R.mipmap.icon_foreground_sa, R.string.AppIconNox),
+        // MeeroX v171 - the four M designs he ordered; titles live in the
+        // encrypted string vault (titleKey) so even icon names leave no trace
+        MBOLD("MeeroMBoldIcon", R.color.meero_icon_dark_bg, R.drawable.meero_m_bold_foreground, "MeeroIconMBold"),
+        MMARKER("MeeroMMarkerIcon", R.color.meero_icon_blue_bg, R.drawable.meero_m_marker_foreground, "MeeroIconMMarker"),
+        MTILE("MeeroMTileIcon", R.color.meero_icon_blue_bg, R.drawable.meero_m_tile_foreground, "MeeroIconMTile"),
+        MDUO("MeeroMDuoIcon", R.color.meero_icon_dark_bg, R.drawable.meero_m_duo_foreground, "MeeroIconMDuo");
 
         public final String key;
         public final int background;
         public final int foreground;
         public final int title;
+        public final String titleKey;
         public final boolean premium;
 
         private ComponentName componentName;
@@ -74,7 +81,25 @@ public class LauncherIconController {
             this.background = background;
             this.foreground = foreground;
             this.title = title;
+            this.titleKey = null;
             this.premium = premium;
+        }
+
+        LauncherIcon(String key, int background, int foreground, String titleKey) {
+            this.key = key;
+            this.background = background;
+            this.foreground = foreground;
+            this.title = 0;
+            this.titleKey = titleKey;
+            this.premium = false;
+        }
+
+        /** title of the picker row - vault strings for the new M icons,
+         *  resource strings for legacy entries. */
+        public String getTitle() {
+            return titleKey != null
+                    ? tw.nekomimi.nekogram.MeeroStrings.s(titleKey)
+                    : org.telegram.messenger.LocaleController.getString(title);
         }
 
         public boolean isNekoX() {

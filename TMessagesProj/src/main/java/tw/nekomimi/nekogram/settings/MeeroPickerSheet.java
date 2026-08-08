@@ -1,5 +1,7 @@
 package tw.nekomimi.nekogram.settings;
 
+import tw.nekomimi.nekogram.MeeroStrings;
+
 import static org.telegram.messenger.LocaleController.getString;
 
 import android.content.Context;
@@ -132,8 +134,8 @@ public final class MeeroPickerSheet {
             tv.setPadding(dp(10), dp(7), dp(10), dp(7));
             seg.addView(tv, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
         }
-        segL.setText(getString(R.string.MeeroPickerTabBubbles));
-        segR.setText(getString(R.string.MeeroPickerTabTicks));
+        segL.setText(MeeroStrings.s("MeeroPickerTabBubbles"));
+        segR.setText(MeeroStrings.s("MeeroPickerTabTicks"));
         LinearLayout.LayoutParams slp = new LinearLayout.LayoutParams(dp(230), LinearLayout.LayoutParams.WRAP_CONTENT);
         slp.gravity = Gravity.CENTER_HORIZONTAL;
         slp.bottomMargin = dp(10);
@@ -151,7 +153,7 @@ public final class MeeroPickerSheet {
         subtitle.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 12.5f);
         subtitle.setTextColor(colSub);
         subtitle.setGravity(Gravity.CENTER);
-        subtitle.setText(getString(R.string.MeeroPickerLiveHint));
+        subtitle.setText(MeeroStrings.s("MeeroPickerLiveHint"));
         LinearLayout.LayoutParams subp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         subp.topMargin = dp(2);
         subp.bottomMargin = dp(12);
@@ -183,7 +185,7 @@ public final class MeeroPickerSheet {
         hint.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 11);
         hint.setTextColor(colSub);
         hint.setGravity(Gravity.CENTER);
-        hint.setText(getString(R.string.MeeroPickerSwipeHint));
+        hint.setText(MeeroStrings.s("MeeroPickerSwipeHint"));
         LinearLayout.LayoutParams hil = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         hil.topMargin = dp(8);
         root.addView(hint, hil);
@@ -196,7 +198,7 @@ public final class MeeroPickerSheet {
             segR.setTextColor(!bubbles ? colInk : colSub);
             segL.getPaint().setFakeBoldText(bubbles);
             segR.getPaint().setFakeBoldText(!bubbles);
-            title.setText(getString(bubbles ? R.string.MeeroBubbleStyle : R.string.MeeroTickStyle));
+            title.setText((bubbles ? MeeroStrings.s("MeeroBubbleStyle") : MeeroStrings.s("MeeroTickStyle")));
         };
 
         // Single-element holder: the card-tap lambda calls back into this
@@ -340,7 +342,7 @@ public final class MeeroPickerSheet {
         MiniMessageView(Context context, int style) {
             super(context);
             this.style = style;
-            this.text = getString(R.string.MeeroPickerCardMsg);
+            this.text = MeeroStrings.s("MeeroPickerCardMsg");
             this.colOut = Theme.getColor(Theme.key_chat_outBubble);
             this.colTime = Theme.getColor(Theme.key_chat_outTimeText);
             textPaint.setColor(Theme.getColor(Theme.key_chat_messageTextOut));
@@ -451,9 +453,9 @@ public final class MeeroPickerSheet {
             for (int i = 0; i < 3; i++) {
                 msgs[i] = new Msg();
             }
-            msgs[0].outgoing = false; msgs[0].text = getString(R.string.MeeroHeroMsg1); msgs[0].time = "10:24";
-            msgs[1].outgoing = true;  msgs[1].text = getString(R.string.MeeroHeroMsg2); msgs[1].time = "10:25";
-            msgs[2].outgoing = false; msgs[2].text = getString(R.string.MeeroHeroMsg3); msgs[2].time = "10:26";
+            msgs[0].outgoing = false; msgs[0].text = MeeroStrings.s("MeeroHeroMsg1"); msgs[0].time = "10:24";
+            msgs[1].outgoing = true;  msgs[1].text = MeeroStrings.s("MeeroHeroMsg2"); msgs[1].time = "10:25";
+            msgs[2].outgoing = false; msgs[2].text = MeeroStrings.s("MeeroHeroMsg3"); msgs[2].time = "10:26";
         }
 
         void refresh(int newMode, int sel) {

@@ -1,5 +1,7 @@
 package tw.nekomimi.nekogram;
 
+import tw.nekomimi.nekogram.MeeroStrings;
+
 import android.text.TextUtils;
 
 import org.json.JSONArray;
@@ -194,7 +196,7 @@ public final class MeeroAutoReply {
             }
         }
         if (TextUtils.isEmpty(template)) {
-            template = LocaleController.getString(R.string.MeeroAutoReplyDefaultText);
+            template = MeeroStrings.s("MeeroAutoReplyDefaultText");
         }
         String firstName = "";
         if (user != null && !TextUtils.isEmpty(user.first_name)) {

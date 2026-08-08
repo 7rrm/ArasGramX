@@ -1,5 +1,7 @@
 package tw.nekomimi.nekogram.settings;
 
+import tw.nekomimi.nekogram.MeeroStrings;
+
 import static org.telegram.messenger.LocaleController.getString;
 
 import android.content.Context;
@@ -51,7 +53,7 @@ public class MeeroLockAuditActivity extends BaseNekoSettingsActivity {
 
     @Override
     protected String getActionBarTitle() {
-        return getString(R.string.MeeroLockAudit);
+        return MeeroStrings.s("MeeroLockAudit");
     }
 
     @Override
@@ -82,9 +84,9 @@ public class MeeroLockAuditActivity extends BaseNekoSettingsActivity {
 
     private String placeOf(JSONObject o) {
         int p = o.optInt("p", MeeroChatLock.AUDIT_CHAT);
-        if (p == MeeroChatLock.AUDIT_VAULT) return getString(R.string.MeeroAuditVault);
-        if (p == MeeroChatLock.AUDIT_SETTINGS) return getString(R.string.MeeroAuditSettings);
-        return getString(R.string.MeeroAuditChat);
+        if (p == MeeroChatLock.AUDIT_VAULT) return MeeroStrings.s("MeeroAuditVault");
+        if (p == MeeroChatLock.AUDIT_SETTINGS) return MeeroStrings.s("MeeroAuditSettings");
+        return MeeroStrings.s("MeeroAuditChat");
     }
 
     private String detailOf(JSONObject o) {
@@ -93,7 +95,7 @@ public class MeeroLockAuditActivity extends BaseNekoSettingsActivity {
         CharSequence when = t > 0
                 ? DateUtils.getRelativeTimeSpanString(t, System.currentTimeMillis(), DateUtils.MINUTE_IN_MILLIS)
                 : "";
-        String result = getString(ok ? R.string.MeeroAuditSuccess : R.string.MeeroAuditFailed);
+        String result = (ok ? MeeroStrings.s("MeeroAuditSuccess") : MeeroStrings.s("MeeroAuditFailed"));
         return when + " · " + result;
     }
 
@@ -103,12 +105,12 @@ public class MeeroLockAuditActivity extends BaseNekoSettingsActivity {
             Context context = getParentActivity();
             if (context == null) return;
             new AlertDialog.Builder(context)
-                    .setTitle(getString(R.string.MeeroLockAuditClear))
-                    .setMessage(getString(R.string.MeeroLockAuditClearConfirm))
+                    .setTitle(MeeroStrings.s("MeeroLockAuditClear"))
+                    .setMessage(MeeroStrings.s("MeeroLockAuditClearConfirm"))
                     .setPositiveButton(getString(R.string.OK), (dialog, which) -> {
                         MeeroChatLock.clearAudit();
                         BulletinFactory.of(this)
-                                .createSimpleBulletin(R.raw.contact_check, getString(R.string.MeeroLockAuditCleared))
+                                .createSimpleBulletin(R.raw.contact_check, MeeroStrings.s("MeeroLockAuditCleared"))
                                 .show();
                         updateRows();
                         if (listAdapter != null) {
@@ -138,9 +140,9 @@ public class MeeroLockAuditActivity extends BaseNekoSettingsActivity {
                 case TYPE_TEXT:
                     TextCell textCell = (TextCell) holder.itemView;
                     if (position == emptyRow) {
-                        textCell.setTextAndValue(getString(R.string.MeeroLockAuditEmpty), "", false);
+                        textCell.setTextAndValue(MeeroStrings.s("MeeroLockAuditEmpty"), "", false);
                     } else if (position == clearRow) {
-                        textCell.setTextAndValue(getString(R.string.MeeroLockAuditClear), "", true);
+                        textCell.setTextAndValue(MeeroStrings.s("MeeroLockAuditClear"), "", true);
                     }
                     break;
                 case TYPE_DETAIL_SETTINGS:
@@ -156,7 +158,7 @@ public class MeeroLockAuditActivity extends BaseNekoSettingsActivity {
                     TextInfoPrivacyCell cell = (TextInfoPrivacyCell) holder.itemView;
                     cell.setBackground(Theme.getThemedDrawable(mContext, R.drawable.greydivider, Theme.key_windowBackgroundGrayShadow));
                     if (position == infoRow) {
-                        cell.setText(getString(R.string.MeeroLockAuditInfo));
+                        cell.setText(MeeroStrings.s("MeeroLockAuditInfo"));
                     }
                     break;
             }

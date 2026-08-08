@@ -1,5 +1,7 @@
 package org.telegram.ui;
 
+import tw.nekomimi.nekogram.MeeroStrings;
+
 import static org.telegram.messenger.AndroidUtilities.dp;
 import static org.telegram.messenger.AndroidUtilities.lerp;
 import static org.telegram.messenger.LocaleController.getString;
@@ -1552,11 +1554,11 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
         // MessagesStorage.readAllDialogs path - behind a confirmation, because
         // zeroed unread badges cannot be restored.
         o.addGap();
-        o.add(R.drawable.ios_chat_readall, getString(R.string.MeeroReadAllChats), () -> {
+        o.add(R.drawable.ios_chat_readall, MeeroStrings.s("MeeroReadAllChats"), () -> {
             o.dismiss();
             new AlertDialog.Builder(getParentActivity())
-                    .setTitle(getString(R.string.MeeroReadAllChats))
-                    .setMessage(getString(R.string.MeeroReadAllConfirm))
+                    .setTitle(MeeroStrings.s("MeeroReadAllChats"))
+                    .setMessage(MeeroStrings.s("MeeroReadAllConfirm"))
                     .setPositiveButton(getString(R.string.OK), (dialog, which) ->
                             getMessagesStorage().readAllDialogs(-1))
                     .setNegativeButton(getString(R.string.Cancel), null)
@@ -1567,7 +1569,7 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
         if (tw.nekomimi.nekogram.MeeroChatLock.hasHiddenDialogs()) {
             o.addGap();
             o.add(R.drawable.baseline_lock_base_24,
-                    getString(R.string.MeeroHiddenChats) + " (" + tw.nekomimi.nekogram.MeeroChatLock.getLockedIds().size() + ")",
+                    MeeroStrings.s("MeeroHiddenChats") + " (" + tw.nekomimi.nekogram.MeeroChatLock.getLockedIds().size() + ")",
                     () -> presentFragment(new MeeroLockedVaultActivity()));
         }
         // MeeroX v107: frosted fog behind this popup (user request). The

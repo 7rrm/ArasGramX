@@ -1,5 +1,7 @@
 package tw.nekomimi.nekogram;
 
+import tw.nekomimi.nekogram.MeeroStrings;
+
 import android.app.Activity;
 import android.app.Application;
 import android.app.NotificationChannel;
@@ -353,9 +355,9 @@ public final class MeeroChatLock {
             final ViewGroup content = (ViewGroup) fv;
             if (getMethod() == METHOD_CODE8 && hasCode()) {
                 attachCodeLockCover(content,
-                        LocaleController.getString(R.string.MeeroChatLockTitle),
-                        LocaleController.getString(R.string.MeeroGateCodeHint),
-                        LocaleController.getString(R.string.MeeroChatLockCodeWrong),
+                        MeeroStrings.s("MeeroChatLockTitle"),
+                        MeeroStrings.s("MeeroGateCodeHint"),
+                        MeeroStrings.s("MeeroChatLockCodeWrong"),
                         () -> {
                             try {
                                 fragment.finishFragment();
@@ -380,8 +382,8 @@ public final class MeeroChatLock {
                         });
             } else {
                 attachGateCover(content,
-                        LocaleController.getString(R.string.MeeroChatLockTitle),
-                        LocaleController.getString(R.string.MeeroChatLockGateSubtitle),
+                        MeeroStrings.s("MeeroChatLockTitle"),
+                        MeeroStrings.s("MeeroChatLockGateSubtitle"),
                         () -> maybePromptLockSettings(fragment));
             }
         } catch (Throwable t) {
@@ -393,8 +395,8 @@ public final class MeeroChatLock {
         if (promptingLockSettings) return;
         promptingLockSettings = true;
         authenticateSystem(fragment.getParentActivity(),
-                LocaleController.getString(R.string.MeeroChatLockTitle),
-                LocaleController.getString(R.string.MeeroChatLockGateSubtitle),
+                MeeroStrings.s("MeeroChatLockTitle"),
+                MeeroStrings.s("MeeroChatLockGateSubtitle"),
                 () -> {
                     promptingLockSettings = false;
                     lockSettingsUnlocked = true;
@@ -427,8 +429,8 @@ public final class MeeroChatLock {
             }
             promptingLockSettings = true;
             authenticateSystem(act,
-                    LocaleController.getString(R.string.MeeroChatLockTitle),
-                    LocaleController.getString(R.string.MeeroChatLockGateSubtitle),
+                    MeeroStrings.s("MeeroChatLockTitle"),
+                    MeeroStrings.s("MeeroChatLockGateSubtitle"),
                     () -> {
                         promptingLockSettings = false;
                         lockSettingsUnlocked = true;
@@ -564,12 +566,12 @@ public final class MeeroChatLock {
 
     /** v107: gate title/hint follow the active unlock method. */
     public static CharSequence gateTitle() {
-        return LocaleController.getString(R.string.MeeroChatLockGateTitle);
+        return MeeroStrings.s("MeeroChatLockGateTitle");
     }
 
     public static CharSequence gateHint() {
-        return LocaleController.getString(getMethod() == METHOD_CODE8
-                ? R.string.MeeroGateCodeHint : R.string.MeeroChatLockGateHint);
+        return (getMethod() == METHOD_CODE8
+                ? MeeroStrings.s("MeeroGateCodeHint") : MeeroStrings.s("MeeroChatLockGateHint"));
     }
 
     /** Opaque, theme-colored cover with a lock glyph, added on top of the
@@ -747,8 +749,8 @@ public final class MeeroChatLock {
             final ViewGroup content = (ViewGroup) fv;
             if (getMethod() == METHOD_CODE8 && hasCode()) {
                 attachCodeLockCover(content, gateTitle(),
-                        LocaleController.getString(R.string.MeeroChatLockEnterCodeHint),
-                        LocaleController.getString(R.string.MeeroChatLockCodeWrong),
+                        MeeroStrings.s("MeeroChatLockEnterCodeHint"),
+                        MeeroStrings.s("MeeroChatLockCodeWrong"),
                         () -> {
                             try {
                                 chat.finishFragment();
@@ -789,9 +791,9 @@ public final class MeeroChatLock {
             final ViewGroup content = (ViewGroup) fv;
             if (getMethod() == METHOD_CODE8 && hasCode()) {
                 attachCodeLockCover(content,
-                        LocaleController.getString(R.string.MeeroVaultTitle),
-                        LocaleController.getString(R.string.MeeroVaultGateHint),
-                        LocaleController.getString(R.string.MeeroChatLockCodeWrong),
+                        MeeroStrings.s("MeeroVaultTitle"),
+                        MeeroStrings.s("MeeroVaultGateHint"),
+                        MeeroStrings.s("MeeroChatLockCodeWrong"),
                         () -> {
                             try {
                                 fragment.finishFragment();
@@ -816,8 +818,8 @@ public final class MeeroChatLock {
                         });
             } else {
                 attachGateCover(content,
-                        LocaleController.getString(R.string.MeeroVaultTitle),
-                        LocaleController.getString(R.string.MeeroVaultGateHint),
+                        MeeroStrings.s("MeeroVaultTitle"),
+                        MeeroStrings.s("MeeroVaultGateHint"),
                         () -> maybePromptVault(fragment));
             }
         } catch (Throwable t) {
@@ -857,8 +859,8 @@ public final class MeeroChatLock {
         if (promptingDialogId == dialogId) return;
         promptingDialogId = dialogId;
         authenticateSystem(chat.getParentActivity(),
-                LocaleController.getString(R.string.MeeroChatLockGateTitle),
-                LocaleController.getString(R.string.MeeroChatLockGateSubtitle),
+                MeeroStrings.s("MeeroChatLockGateTitle"),
+                MeeroStrings.s("MeeroChatLockGateSubtitle"),
                 () -> {
                     promptingDialogId = Long.MIN_VALUE;
                     markUnlocked(dialogId);
@@ -875,8 +877,8 @@ public final class MeeroChatLock {
         if (promptingVault) return;
         promptingVault = true;
         authenticateSystem(fragment.getParentActivity(),
-                LocaleController.getString(R.string.MeeroVaultTitle),
-                LocaleController.getString(R.string.MeeroVaultGateHint),
+                MeeroStrings.s("MeeroVaultTitle"),
+                MeeroStrings.s("MeeroVaultGateHint"),
                 () -> {
                     promptingVault = false;
                     markVaultUnlocked();
@@ -912,8 +914,8 @@ public final class MeeroChatLock {
             }
             promptingDialogId = dialogId;
             authenticateSystem(act,
-                    LocaleController.getString(R.string.MeeroChatLockGateTitle),
-                    LocaleController.getString(R.string.MeeroChatLockGateSubtitle),
+                    MeeroStrings.s("MeeroChatLockGateTitle"),
+                    MeeroStrings.s("MeeroChatLockGateSubtitle"),
                     () -> {
                         promptingDialogId = Long.MIN_VALUE;
                         markUnlocked(dialogId);
@@ -960,8 +962,8 @@ public final class MeeroChatLock {
             }
             promptingVault = true;
             authenticateSystem(act,
-                    LocaleController.getString(R.string.MeeroVaultTitle),
-                    LocaleController.getString(R.string.MeeroVaultGateHint),
+                    MeeroStrings.s("MeeroVaultTitle"),
+                    MeeroStrings.s("MeeroVaultGateHint"),
                     () -> {
                         promptingVault = false;
                         markVaultUnlocked();
@@ -1071,7 +1073,7 @@ public final class MeeroChatLock {
             NotificationManager manager = (NotificationManager) ctx.getSystemService(Context.NOTIFICATION_SERVICE);
             if (Build.VERSION.SDK_INT >= 26) {
                 NotificationChannel channel = new NotificationChannel(CHANNEL_ID,
-                        LocaleController.getString(R.string.MeeroChatLockTitle), NotificationManager.IMPORTANCE_DEFAULT);
+                        MeeroStrings.s("MeeroChatLockTitle"), NotificationManager.IMPORTANCE_DEFAULT);
                 manager.createNotificationChannel(channel);
             }
             Intent intent = new Intent(ctx, LaunchActivity.class);
@@ -1081,8 +1083,8 @@ public final class MeeroChatLock {
                     PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
             NotificationCompat.Builder builder = new NotificationCompat.Builder(ctx, CHANNEL_ID)
                     .setSmallIcon(R.drawable.nagram_notification)
-                    .setContentTitle(LocaleController.getString(R.string.MeeroChatLockGateTitle))
-                    .setContentText(LocaleController.getString(R.string.MeeroChatLockNewMessage))
+                    .setContentTitle(MeeroStrings.s("MeeroChatLockGateTitle"))
+                    .setContentText(MeeroStrings.s("MeeroChatLockNewMessage"))
                     .setAutoCancel(true)
                     .setContentIntent(pendingIntent);
             NotificationManagerCompat.from(ctx).notify(("l:" + System.currentTimeMillis()).hashCode(), builder.build());

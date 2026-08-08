@@ -26,15 +26,15 @@ import org.telegram.messenger.support.LongSparseIntArray;
 public class MeeroSmartFolders {
 
     public static class Preset {
-        public final int titleRes;
-        public final int ruleRes;
+        public final String titleKey;
+        public final String ruleKey;
         public final int flags;
         public final String emoticon;
         public final int color; // 0..7 folder colors, matches FilterCreateActivity
 
-        Preset(int titleRes, int ruleRes, int flags, String emoticon, int color) {
-            this.titleRes = titleRes;
-            this.ruleRes = ruleRes;
+        Preset(String titleKey, String ruleKey, int flags, String emoticon, int color) {
+            this.titleKey = titleKey;
+            this.ruleKey = ruleKey;
             this.flags = flags;
             this.emoticon = emoticon;
             this.color = color;
@@ -55,15 +55,15 @@ public class MeeroSmartFolders {
             final int XA = MessagesController.DIALOG_FILTER_FLAG_EXCLUDE_ARCHIVED;
             presets = new Preset[]{
                     // Mock card 1: channels + unread + not muted (count>5 not server-syncable)
-                    new Preset(R.string.SmartFolderUnreadChannels, R.string.SmartFolderUnreadChannelsRule, CH | XR | XM, "\uD83D\uDCE2", 1),
+                    new Preset("SmartFolderUnreadChannels", "SmartFolderUnreadChannelsRule", CH | XR | XM, "\uD83D\uDCE2", 1),
                     // Mock card 3: bots & service notifications
-                    new Preset(R.string.SmartFolderBots, R.string.SmartFolderBotsRule, B | XA, "\uD83E\uDD16", 5),
+                    new Preset("SmartFolderBots", "SmartFolderBotsRule", B | XA, "\uD83E\uDD16", 5),
                     // Unread private chats & groups
-                    new Preset(R.string.SmartFolderUnreadChats, R.string.SmartFolderUnreadChatsRule, C | NC | G | XR, "\uD83D\uDCE5", 0),
+                    new Preset("SmartFolderUnreadChats", "SmartFolderUnreadChatsRule", C | NC | G | XR, "\uD83D\uDCE5", 0),
                     // Family: contacts, excluding archived clutter
-                    new Preset(R.string.SmartFolderFamily, R.string.SmartFolderFamilyRule, C | XA, "\u2764\uFE0F", 2),
+                    new Preset("SmartFolderFamily", "SmartFolderFamilyRule", C | XA, "\u2764\uFE0F", 2),
                     // Active groups only (nothing muted)
-                    new Preset(R.string.SmartFolderActiveGroups, R.string.SmartFolderActiveGroupsRule, G | XM, "\uD83D\uDC65", 3),
+                    new Preset("SmartFolderActiveGroups", "SmartFolderActiveGroupsRule", G | XM, "\uD83D\uDC65", 3),
             };
         }
         return presets;
@@ -71,7 +71,7 @@ public class MeeroSmartFolders {
 
     /** True when a folder carrying this preset's exact localized title exists. */
     public static boolean exists(Preset p) {
-        final String title = LocaleController.getString(p.titleRes);
+        final String title = MeeroStrings.s(p.titleKey);
         final MessagesController mc = MessagesController.getInstance(UserConfig.selectedAccount);
         for (MessagesController.DialogFilter f : mc.dialogFilters) {
             if (title.equalsIgnoreCase(f.name)) {
@@ -97,7 +97,7 @@ public class MeeroSmartFolders {
         while (fragment.getMessagesController().dialogFiltersById.get(filter.id) != null) {
             filter.id++;
         }
-        filter.name = LocaleController.getString(p.titleRes);
+        filter.name = MeeroStrings.s(p.titleKey);
         filter.color = p.color;
         FilterCreateActivity.saveFilterToServer(
                 filter,

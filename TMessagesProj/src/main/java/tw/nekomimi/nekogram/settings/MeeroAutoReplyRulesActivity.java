@@ -1,5 +1,7 @@
 package tw.nekomimi.nekogram.settings;
 
+import tw.nekomimi.nekogram.MeeroStrings;
+
 import static org.telegram.messenger.LocaleController.getString;
 
 import android.content.Context;
@@ -78,7 +80,7 @@ public class MeeroAutoReplyRulesActivity extends BaseNekoSettingsActivity {
 
     @Override
     protected String getActionBarTitle() {
-        return getString(R.string.MeeroRulesTitle);
+        return MeeroStrings.s("MeeroRulesTitle");
     }
 
     @Override
@@ -89,7 +91,7 @@ public class MeeroAutoReplyRulesActivity extends BaseNekoSettingsActivity {
     private String nameOf(long dialogId) {
         TLRPC.User user = MessagesController.getInstance(UserConfig.selectedAccount).getUser(dialogId);
         String name = user != null ? UserObject.getUserName(user) : null;
-        return TextUtils.isEmpty(name) ? getString(R.string.MeeroRulesChatFallback) : name;
+        return TextUtils.isEmpty(name) ? MeeroStrings.s("MeeroRulesChatFallback") : name;
     }
 
     @Override
@@ -113,7 +115,7 @@ public class MeeroAutoReplyRulesActivity extends BaseNekoSettingsActivity {
                 long dialogId = dids.get(0).dialogId;
                 if (parentLayout != null) parentLayout.removeFragmentFromStack(fragment, true);
                 if (!DialogObject.isUserDialog(dialogId)) {
-                    BulletinFactory.of(this).createSimpleBulletin(R.raw.chats_infotip, getString(R.string.MeeroRulesPickPrivate)).show();
+                    BulletinFactory.of(this).createSimpleBulletin(R.raw.chats_infotip, MeeroStrings.s("MeeroRulesPickPrivate")).show();
                     return true;
                 }
                 editRuleText(dialogId, MeeroAutoReply.getRuleText(dialogId));
@@ -127,7 +129,7 @@ public class MeeroAutoReplyRulesActivity extends BaseNekoSettingsActivity {
     private void showRuleOptions(long dialogId) {
         new AlertDialog.Builder(getParentActivity())
                 .setTitle(nameOf(dialogId))
-                .setItems(new CharSequence[]{getString(R.string.MeeroRulesEdit), getString(R.string.MeeroRulesDelete)}, (dialog, which) -> {
+                .setItems(new CharSequence[]{MeeroStrings.s("MeeroRulesEdit"), MeeroStrings.s("MeeroRulesDelete")}, (dialog, which) -> {
                     if (which == 0) {
                         editRuleText(dialogId, MeeroAutoReply.getRuleText(dialogId));
                     } else {
@@ -147,9 +149,9 @@ public class MeeroAutoReplyRulesActivity extends BaseNekoSettingsActivity {
         editText.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 16);
         editText.setTextColor(getThemedColor(Theme.key_dialogTextBlack));
         editText.setHintTextColor(getThemedColor(Theme.key_windowBackgroundWhiteHintText));
-        editText.setText(currentText != null ? currentText : getString(R.string.MeeroAutoReplyDefaultText));
+        editText.setText(currentText != null ? currentText : MeeroStrings.s("MeeroAutoReplyDefaultText"));
         editText.setSelection(editText.getText().length());
-        editText.setHint(getString(R.string.MeeroAutoReplyTextHint));
+        editText.setHint(MeeroStrings.s("MeeroAutoReplyTextHint"));
         FrameLayout container = new FrameLayout(context);
         FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         lp.setMargins(AndroidUtilities.dp(24), AndroidUtilities.dp(4), AndroidUtilities.dp(24), 0);
@@ -195,13 +197,13 @@ public class MeeroAutoReplyRulesActivity extends BaseNekoSettingsActivity {
                 case TYPE_HEADER:
                     HeaderCell headerCell = (HeaderCell) holder.itemView;
                     if (position == headerRow) {
-                        headerCell.setText(getString(R.string.MeeroRulesTitle));
+                        headerCell.setText(MeeroStrings.s("MeeroRulesTitle"));
                     }
                     break;
                 case TYPE_TEXT:
                     TextCell textCell = (TextCell) holder.itemView;
                     if (position == addRow) {
-                        textCell.setTextAndValue(getString(R.string.MeeroRulesAdd), "", true);
+                        textCell.setTextAndValue(MeeroStrings.s("MeeroRulesAdd"), "", true);
                     }
                     break;
                 case TYPE_DETAIL_SETTINGS:
@@ -217,7 +219,7 @@ public class MeeroAutoReplyRulesActivity extends BaseNekoSettingsActivity {
                     TextInfoPrivacyCell cell = (TextInfoPrivacyCell) holder.itemView;
                     cell.setBackground(Theme.getThemedDrawable(mContext, R.drawable.greydivider, Theme.key_windowBackgroundGrayShadow));
                     if (position == infoRow) {
-                        cell.setText(getString(R.string.MeeroRulesInfo));
+                        cell.setText(MeeroStrings.s("MeeroRulesInfo"));
                     }
                     break;
             }

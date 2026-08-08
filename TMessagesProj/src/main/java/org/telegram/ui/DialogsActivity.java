@@ -8,6 +8,8 @@
 
 package org.telegram.ui;
 
+import tw.nekomimi.nekogram.MeeroStrings;
+
 import static org.telegram.messenger.AndroidUtilities.dp;
 import static org.telegram.messenger.AndroidUtilities.dpf2;
 import static org.telegram.messenger.AndroidUtilities.lerp;
@@ -3487,8 +3489,8 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                 // The English text is the same either way; only the Arabic
                 // differs, which is why the stock string looked right until it
                 // was read on an Arabic device.
-                meeroEditItem.setText(LocaleController.getString(R.string.MeeroHeaderEdit));
-                meeroEditItem.setContentDescription(LocaleController.getString(R.string.MeeroHeaderEdit));
+                meeroEditItem.setText(MeeroStrings.s("MeeroHeaderEdit"));
+                meeroEditItem.setContentDescription(MeeroStrings.s("MeeroHeaderEdit"));
                 // ActionBar lays its children out from its own top edge, and
                 // that edge sits behind the status bar. Gravity.TOP therefore
                 // pushed the button up over the clock and battery. Centre it
@@ -15160,7 +15162,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
         // being searched.
         final String hint = topics
                 ? getString(R.string.SearchTopics)
-                : getString(FragmentSearchField.meeroIosSearch() ? R.string.MeeroSearchHint : R.string.SearchChats);
+                : (FragmentSearchField.meeroIosSearch() ? MeeroStrings.s("MeeroSearchHint") : getString(R.string.SearchChats));
 
         fragmentSearchField.editText.setContentDescription(hint);
         fragmentSearchField.editText.setHint(hint);

@@ -1,5 +1,7 @@
 package org.telegram.ui.Stories;
 
+import tw.nekomimi.nekogram.MeeroStrings;
+
 import static org.telegram.messenger.AndroidUtilities.dp;
 import static org.telegram.messenger.AndroidUtilities.lerp;
 import static org.telegram.messenger.LocaleController.getString;
@@ -2230,7 +2232,7 @@ public class PeerStoriesView extends SizeNotifierFrameLayout implements Notifica
                         // no-save flag - that is the feature. Hidden when the
                         // MeeroX switch is off, keeping the stock behaviour.
                         if (NekoConfig.meeroStoryDownload.Bool() && currentStory != null && currentStory.storyItem != null && !(currentStory.storyItem instanceof TL_stories.TL_storyItemDeleted) && !(currentStory.storyItem instanceof TL_stories.TL_storyItemSkipped) && !unsupported) {
-                            ActionBarMenuItem.addItem(popupLayout, R.drawable.msg_gallery, getString(R.string.MeeroStoryDownload), false, resourcesProvider).setOnClickListener(v -> {
+                            ActionBarMenuItem.addItem(popupLayout, R.drawable.msg_gallery, MeeroStrings.s("MeeroStoryDownload"), false, resourcesProvider).setOnClickListener(v -> {
                                 try {
                                     final TL_stories.StoryItem storyItemForSave = currentStory.storyItem;
                                     storyItemForSave.dialogId = dialogId;
@@ -2244,7 +2246,7 @@ public class PeerStoriesView extends SizeNotifierFrameLayout implements Notifica
                                                     AndroidUtilities.runOnUIThread(() -> {
                                                         if (uri != null) {
                                                             BulletinFactory.of(storyContainer, resourcesProvider)
-                                                                    .createSimpleBulletin(R.raw.ic_save_to_gallery, getString(R.string.MeeroStorySaved)).show();
+                                                                    .createSimpleBulletin(R.raw.ic_save_to_gallery, MeeroStrings.s("MeeroStorySaved")).show();
                                                         } else {
                                                             BulletinFactory.of(storyContainer, resourcesProvider)
                                                                     .createSimpleBulletin(R.raw.error, getString(R.string.UnknownError)).show();

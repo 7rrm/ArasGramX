@@ -1,5 +1,7 @@
 package tw.nekomimi.nekogram;
 
+import tw.nekomimi.nekogram.MeeroStrings;
+
 import androidx.core.graphics.ColorUtils;
 
 import org.telegram.messenger.ApplicationLoader;
@@ -32,23 +34,23 @@ import java.util.Map;
 public class MeeroThemeMixer {
 
     public static class Accent {
-        public final int nameRes;
+        public final String nameKey;
         public final int color;
 
-        Accent(int nameRes, int color) {
-            this.nameRes = nameRes;
+        Accent(String nameKey, int color) {
+            this.nameKey = nameKey;
             this.color = color;
         }
     }
 
     public static class Background {
-        public final int nameRes;
+        public final String nameKey;
         public final int bg;      // windowBackgroundWhite
         public final int elev;    // elevated cards / panels
         public final boolean light;
 
-        Background(int nameRes, int bg, int elev, boolean light) {
-            this.nameRes = nameRes;
+        Background(String nameKey, int bg, int elev, boolean light) {
+            this.nameKey = nameKey;
             this.bg = bg;
             this.elev = elev;
             this.light = light;
@@ -61,14 +63,14 @@ public class MeeroThemeMixer {
     public static synchronized Accent[] accents() {
         if (accents == null) {
             accents = new Accent[]{
-                    new Accent(R.string.MixerAccentBlue, 0xFF0A84FF),
-                    new Accent(R.string.MixerAccentRose, 0xFFFF4E8A),
-                    new Accent(R.string.MixerAccentViolet, 0xFFBF5AF2),
-                    new Accent(R.string.MixerAccentMint, 0xFF30D158),
-                    new Accent(R.string.MixerAccentOrange, 0xFFFF9F0A),
-                    new Accent(R.string.MixerAccentSky, 0xFF40C8E0),
-                    new Accent(R.string.MixerAccentRed, 0xFFFF453A),
-                    new Accent(R.string.MixerAccentGold, 0xFFE7B416),
+                    new Accent("MixerAccentBlue", 0xFF0A84FF),
+                    new Accent("MixerAccentRose", 0xFFFF4E8A),
+                    new Accent("MixerAccentViolet", 0xFFBF5AF2),
+                    new Accent("MixerAccentMint", 0xFF30D158),
+                    new Accent("MixerAccentOrange", 0xFFFF9F0A),
+                    new Accent("MixerAccentSky", 0xFF40C8E0),
+                    new Accent("MixerAccentRed", 0xFFFF453A),
+                    new Accent("MixerAccentGold", 0xFFE7B416),
             };
         }
         return accents;
@@ -77,10 +79,10 @@ public class MeeroThemeMixer {
     public static synchronized Background[] backgrounds() {
         if (backgrounds == null) {
             backgrounds = new Background[]{
-                    new Background(R.string.MixerBgAmoled, 0xFF000000, 0xFF1C1C1E, false),
-                    new Background(R.string.MixerBgGraphite, 0xFF141418, 0xFF1F1F25, false),
-                    new Background(R.string.MixerBgMidnight, 0xFF0E1626, 0xFF182640, false),
-                    new Background(R.string.MixerBgPaper, 0xFFF2F2F7, 0xFFFFFFFF, true),
+                    new Background("MixerBgAmoled", 0xFF000000, 0xFF1C1C1E, false),
+                    new Background("MixerBgGraphite", 0xFF141418, 0xFF1F1F25, false),
+                    new Background("MixerBgMidnight", 0xFF0E1626, 0xFF182640, false),
+                    new Background("MixerBgPaper", 0xFFF2F2F7, 0xFFFFFFFF, true),
             };
         }
         return backgrounds;
@@ -117,22 +119,22 @@ public class MeeroThemeMixer {
 
     public static String[] accentNames() {
         final String[] out = new String[accents().length];
-        for (int i = 0; i < out.length; i++) out[i] = LocaleController.getString(accents()[i].nameRes);
+        for (int i = 0; i < out.length; i++) out[i] = MeeroStrings.s(accents()[i].nameKey);
         return out;
     }
 
     public static String[] backgroundNames() {
         final String[] out = new String[backgrounds().length];
-        for (int i = 0; i < out.length; i++) out[i] = LocaleController.getString(backgrounds()[i].nameRes);
+        for (int i = 0; i < out.length; i++) out[i] = MeeroStrings.s(backgrounds()[i].nameKey);
         return out;
     }
 
     public static String[] inBubbleNames() {
         return new String[]{
-                LocaleController.getString(R.string.MixerInBubbleFollow),
-                LocaleController.getString(R.string.MixerInBubbleBlack),
-                LocaleController.getString(R.string.MixerInBubbleGraphite),
-                LocaleController.getString(R.string.MixerInBubbleTinted),
+                MeeroStrings.s("MixerInBubbleFollow"),
+                MeeroStrings.s("MixerInBubbleBlack"),
+                MeeroStrings.s("MixerInBubbleGraphite"),
+                MeeroStrings.s("MixerInBubbleTinted"),
         };
     }
 

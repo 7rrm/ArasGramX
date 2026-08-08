@@ -1,5 +1,7 @@
 package tw.nekomimi.nekogram.settings;
 
+import tw.nekomimi.nekogram.MeeroStrings;
+
 import static org.telegram.messenger.LocaleController.getString;
 
 import android.content.Context;
@@ -120,7 +122,7 @@ public class MeeroLockedVaultActivity extends BaseNekoSettingsActivity {
 
     @Override
     protected String getActionBarTitle() {
-        return getString(R.string.MeeroVaultTitle);
+        return MeeroStrings.s("MeeroVaultTitle");
     }
 
     @Override
@@ -138,16 +140,16 @@ public class MeeroLockedVaultActivity extends BaseNekoSettingsActivity {
             TLRPC.Chat chat = mc.getChat(-dialogId);
             if (chat != null && !TextUtils.isEmpty(chat.title)) return chat.title;
         }
-        return getString(R.string.MeeroRulesChatFallback);
+        return MeeroStrings.s("MeeroRulesChatFallback");
     }
 
     private String subtitleOf(long dialogId) {
         TLRPC.Dialog dialog = MessagesController.getInstance(UserConfig.selectedAccount).dialogs_dict.get(dialogId);
         int unread = dialog != null ? dialog.unread_count : 0;
         if (unread > 0) {
-            return LocaleController.formatString(R.string.MeeroVaultUnread, unread);
+            return MeeroStrings.f("MeeroVaultUnread", unread);
         }
-        return getString(R.string.MeeroChatLockRowDetail);
+        return MeeroStrings.s("MeeroChatLockRowDetail");
     }
 
     @Override
@@ -240,8 +242,8 @@ public class MeeroLockedVaultActivity extends BaseNekoSettingsActivity {
         }
 
         void bind(int count) {
-            countView.setText(LocaleController.formatString(R.string.MeeroVaultCount, count));
-            subView.setText(getString(R.string.MeeroVaultBrandSub));
+            countView.setText(MeeroStrings.f("MeeroVaultCount", count));
+            subView.setText(MeeroStrings.s("MeeroVaultBrandSub"));
         }
     }
 
@@ -263,7 +265,7 @@ public class MeeroLockedVaultActivity extends BaseNekoSettingsActivity {
             column.addView(badge, new LinearLayout.LayoutParams(AndroidUtilities.dp(60), AndroidUtilities.dp(60)));
 
             TextView title = new TextView(context);
-            title.setText(getString(R.string.MeeroVaultEmpty));
+            title.setText(MeeroStrings.s("MeeroVaultEmpty"));
             title.setTextColor(getThemedColor(Theme.key_windowBackgroundWhiteBlackText));
             title.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 16);
             title.setTypeface(AndroidUtilities.bold());
@@ -274,7 +276,7 @@ public class MeeroLockedVaultActivity extends BaseNekoSettingsActivity {
             column.addView(title, titleLp);
 
             TextView hint = new TextView(context);
-            hint.setText(getString(R.string.MeeroVaultEmptyHint));
+            hint.setText(MeeroStrings.s("MeeroVaultEmptyHint"));
             hint.setTextColor(getThemedColor(Theme.key_windowBackgroundWhiteGrayText));
             hint.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 13.5f);
             hint.setGravity(Gravity.CENTER);
@@ -349,7 +351,7 @@ public class MeeroLockedVaultActivity extends BaseNekoSettingsActivity {
                     TextInfoPrivacyCell cell = (TextInfoPrivacyCell) holder.itemView;
                     cell.setBackground(Theme.getThemedDrawable(mContext, R.drawable.greydivider, Theme.key_windowBackgroundGrayShadow));
                     if (position == infoRow) {
-                        cell.setText(getString(R.string.MeeroVaultInfo));
+                        cell.setText(MeeroStrings.s("MeeroVaultInfo"));
                     }
                     break;
             }

@@ -68,6 +68,15 @@ public final class MeeroDexPacker {
     private static final String BLOB = "assets/meero_vault/dex.enc";
     private static final byte[] MAGIC = {'M', 'V', 'D', 'X', '0', '0', '0', '1'};
 
+    // v171 wall A ((integrity seal)): an entry inside the ENCRYPTED archive
+    // holding SHA-256(stub classes.dex) || SHA-256(meerovault.so). The boot
+    // stub re-hashes its own loader bytes every cold start and dies quietly
+    // on mismatch - a patched/copycat loader can never boot (and the seal
+    // itself is unforgeable without seed + signing fingerprint, being
+    // inside the AES-GCM container).
+    private static final String META_ENTRY = "vault_meta";
+    private static final String VAULT_LIB_ENTRY = "lib/arm64-v8a/libmeerovault.so";
+
     public static void main(String[] args) throws Exception {
         if (args.length != 3) {
             System.err.println("usage: MeeroDexPacker <input.apk> <stub-classes.dex> <output.apk>");
@@ -87,9 +96,10 @@ public final class MeeroDexPacker {
             return;
         }
 
-        // ---- gather the real classesN.dex --------------------------------
+        // ---- gather the real classesN.dex + the seed library --------------
         final List<String> dexNames = new ArrayList<String>();
         final List<byte[]> dexBytes = new ArrayList<byte[]>();
+        byte[] vaultLib = null;
         try (ZipFile zf = new ZipFile(in)) {
             final Enumeration<? extends ZipEntry> en = zf.entries();
             while (en.hasMoreElements()) {
@@ -97,9 +107,23 @@ public final class MeeroDexPacker {
                 if (isDexEntry(e.getName())) {
                     dexNames.add(e.getName());
                     dexBytes.add(readAll(zf.getInputStream(e), e.getSize()));
+                } else if (VAULT_LIB_ENTRY.equals(e.getName())) {
+                    vaultLib = readAll(zf.getInputStream(e), e.getSize());
                 }
             }
         }
+        if (vaultLib == null || vaultLib.length < 1000) {
+            fail("meerovault library missing in " + in + " - refusing to seal");
+            return;
+        }
+        final MessageDigest metasha = MessageDigest.getInstance("SHA-256");
+        final byte[] stubHash = metasha.digest(stub);
+        metasha.reset();
+        final byte[] libHash = metasha.digest(vaultLib);
+        final byte[] meta = new byte[64];
+        System.arraycopy(stubHash, 0, meta, 0, 32);
+        System.arraycopy(libHash, 0, meta, 32, 32);
+        log("seal: stub " + stub.length + " B + vault lib " + vaultLib.length + " B hashed into " + META_ENTRY);
         if (dexNames.isEmpty()) {
             fail("no classesN.dex found in " + in);
             return;
@@ -121,6 +145,11 @@ public final class MeeroDexPacker {
         // ---- build the vault archive (the future vault.apk) --------------
         final ByteArrayOutputStream archiveBuf = new ByteArrayOutputStream(64 * 1024 * 1024);
         try (ZipOutputStream az = new ZipOutputStream(archiveBuf)) {
+            // integrity seal first: the boot stub reads it before anything else
+            final ZipEntry me = new ZipEntry(META_ENTRY);
+            az.putNextEntry(stored(me, meta));
+            az.write(meta);
+            az.closeEntry();
             for (int idx : order) {
                 final byte[] d = dexBytes.get(idx);
                 plainDigest.update(d);
@@ -165,6 +194,7 @@ public final class MeeroDexPacker {
 
         final MessageDigest roundDigest = MessageDigest.getInstance("SHA-256");
         int roundDexCount = 0;
+        byte[] roundMeta = null;
         try (ZipInputStream rz = new ZipInputStream(new ByteArrayInputStream(round))) {
             final byte[] bb = new byte[256 * 1024];
             ZipEntry e;
@@ -179,6 +209,16 @@ public final class MeeroDexPacker {
                         roundDigest.update(bb, 0, rn);
                     }
                     roundDexCount++;
+                } else if (META_ENTRY.equals(e.getName())) {
+                    final ByteArrayOutputStream mb = new ByteArrayOutputStream(64);
+                    while (true) {
+                        final int rn = rz.read(bb);
+                        if (rn < 0) {
+                            break;
+                        }
+                        mb.write(bb, 0, rn);
+                    }
+                    roundMeta = mb.toByteArray();
                 }
             }
         }
@@ -186,7 +226,12 @@ public final class MeeroDexPacker {
             fail("self-test FAILED: round-trip mismatch - refusing to pack");
             return;
         }
-        log("self-test ok: blob(" + blob.length + " B) decrypts to all " + dexNames.size() + " dex files byte-exact");
+        if (roundMeta == null || !Arrays.equals(roundMeta, meta)) {
+            fail("self-test FAILED: integrity seal mismatch - refusing to pack");
+            return;
+        }
+        log("self-test ok: blob(" + blob.length + " B) decrypts to all " + dexNames.size()
+                + " dex files byte-exact + seal intact");
 
         // ---- rewrite the APK ----------------------------------------------
         try (ZipFile zf = new ZipFile(in);

@@ -1,5 +1,7 @@
 package tw.nekomimi.nekogram.settings;
 
+import tw.nekomimi.nekogram.MeeroStrings;
+
 import static org.telegram.messenger.LocaleController.getString;
 
 import android.content.Context;
@@ -50,7 +52,7 @@ public class MeeroOnceGuardActivity extends BaseNekoSettingsActivity {
 
     @Override
     protected String getActionBarTitle() {
-        return getString(R.string.MeeroOnceTitle);
+        return MeeroStrings.s("MeeroOnceTitle");
     }
 
     @Override
@@ -77,7 +79,7 @@ public class MeeroOnceGuardActivity extends BaseNekoSettingsActivity {
             ((TextCheckCell) view).setChecked(NekoConfig.meeroOnceGuard.Bool());
         } else if (position == infoRow) {
             // v111: usage-guide popup instead of the long footer.
-            tw.nekomimi.nekogram.MeeroUsageGuide.show(this, R.string.MeeroOnceInfo);
+            tw.nekomimi.nekogram.MeeroUsageGuide.show(this, "MeeroOnceInfo");
         }
     }
 
@@ -99,22 +101,22 @@ public class MeeroOnceGuardActivity extends BaseNekoSettingsActivity {
                 case TYPE_CHECK:
                     TextCheckCell checkCell = (TextCheckCell) holder.itemView;
                     if (position == masterRow) {
-                        checkCell.setTextAndCheck(getString(R.string.MeeroOnceMaster), NekoConfig.meeroOnceGuard.Bool(), true);
+                        checkCell.setTextAndCheck(MeeroStrings.s("MeeroOnceMaster"), NekoConfig.meeroOnceGuard.Bool(), true);
                     }
                     break;
                 case TYPE_HEADER:
                     HeaderCell headerCell = (HeaderCell) holder.itemView;
                     if (position == countHeaderRow) {
-                        headerCell.setText(getString(R.string.MeeroOnceCountHeader));
+                        headerCell.setText(MeeroStrings.s("MeeroOnceCountHeader"));
                     }
                     break;
                 case TYPE_TEXT:
                     TextCell textCell = (TextCell) holder.itemView;
                     if (position == countRow) {
-                        textCell.setTextAndValue(getString(R.string.MeeroOnceCount), String.valueOf(NekoConfig.meeroOnceSavedCount.Int()), true);
+                        textCell.setTextAndValue(MeeroStrings.s("MeeroOnceCount"), String.valueOf(NekoConfig.meeroOnceSavedCount.Int()), true);
                     } else if (position == infoRow) {
                         // v111: usage-guide button instead of the long footer.
-                        textCell.setTextAndValue(getString(R.string.MeeroUsageGuide), "", true);
+                        textCell.setTextAndValue(MeeroStrings.s("MeeroUsageGuide"), "", true);
                     }
                     break;
             }

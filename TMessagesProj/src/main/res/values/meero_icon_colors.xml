@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- MeeroX v171 - backgrounds for the four new M launcher icons -->
+    <color name="meero_icon_dark_bg">#0D0D11</color>
+    <color name="meero_icon_blue_bg">#229ED9</color>
+</resources>

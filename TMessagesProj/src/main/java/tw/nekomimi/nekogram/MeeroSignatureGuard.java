@@ -1,5 +1,7 @@
 package tw.nekomimi.nekogram;
 
+import tw.nekomimi.nekogram.MeeroStrings;
+
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.pm.PackageInfo;
@@ -106,11 +108,10 @@ public final class MeeroSignatureGuard {
             // Telegram's own Builder has no setCancelable - apply the two
             // flags on the shown dialog itself instead.
             final AlertDialog dlg = new AlertDialog.Builder(ctx)
-                    .setTitle(LocaleController.getString(R.string.MeeroSigWarningTitle))
-                    .setMessage(LocaleController.formatString(R.string.MeeroSigWarningText,
-                            current == null ? "?" : current, OFFICIAL_FINGERPRINT))
-                    .setPositiveButton(LocaleController.getString(R.string.MeeroSigExit), (d, w) -> host.finishAffinity())
-                    .setNegativeButton(LocaleController.getString(R.string.MeeroSigContinue), null)
+                    .setTitle(MeeroStrings.s("MeeroSigWarningTitle"))
+                    .setMessage(MeeroStrings.f("MeeroSigWarningText", current == null ? "?" : current, OFFICIAL_FINGERPRINT))
+                    .setPositiveButton(MeeroStrings.s("MeeroSigExit"), (d, w) -> host.finishAffinity())
+                    .setNegativeButton(MeeroStrings.s("MeeroSigContinue"), null)
                     .show();
             dlg.setCancelable(false);
             dlg.setCanceledOnTouchOutside(false);

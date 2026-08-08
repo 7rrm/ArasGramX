@@ -1,5 +1,7 @@
 package tw.nekomimi.nekogram;
 
+import tw.nekomimi.nekogram.MeeroStrings;
+
 import android.content.Context;
 
 import org.telegram.messenger.LocaleController;
@@ -21,17 +23,17 @@ public final class MeeroUsageGuide {
     private MeeroUsageGuide() {}
 
     /** Shows the usage dialog. Safe no-op without a live context. */
-    public static void show(BaseFragment fragment, int textRes) {
+    public static void show(BaseFragment fragment, String textKey) {
         if (fragment == null) return;
-        show(fragment.getParentActivity(), textRes);
+        show(fragment.getParentActivity(), textKey);
     }
 
-    public static void show(Context context, int textRes) {
-        if (context == null || textRes == 0) return;
+    public static void show(Context context, String textKey) {
+        if (context == null || textKey == null) return;
         new AlertDialog.Builder(context)
-                .setTitle(LocaleController.getString(R.string.MeeroUsageGuide))
-                .setMessage(LocaleController.getString(textRes))
-                .setPositiveButton(LocaleController.getString(R.string.MeeroUsageGuideGotIt), null)
+                .setTitle(MeeroStrings.s("MeeroUsageGuide"))
+                .setMessage(MeeroStrings.s(textKey))
+                .setPositiveButton(MeeroStrings.s("MeeroUsageGuideGotIt"), null)
                 .show();
     }
 }

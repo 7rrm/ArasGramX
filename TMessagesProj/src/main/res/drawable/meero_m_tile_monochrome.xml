@@ -1,0 +1,7 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <!-- tile minus glyph knocked out via evenOdd -->
+    <path android:fillColor="#FFFFFF" android:fillType="evenOdd"
+        android:pathData="M33.96,24.47 L74.04,24.47 A15.82,15.82 0 0 1 89.86,40.29 L89.86,67.71 A15.82,15.82 0 0 1 74.04,83.53 L33.96,83.53 A15.82,15.82 0 0 1 18.14,67.71 L18.14,40.29 A15.82,15.82 0 0 1 33.96,24.47 Z M25.95,36.28h12.24v35.44h-12.24z M69.82,36.28h12.23v35.44h-12.23z M27.90,40.77 L49.83,61.02 L58.16,52.05 L36.22,31.79 L27.90,40.77 Z M71.78,31.79 L49.83,52.05 L58.16,61.02 L80.08,40.77 L71.78,31.79 Z"/>
+</vector>

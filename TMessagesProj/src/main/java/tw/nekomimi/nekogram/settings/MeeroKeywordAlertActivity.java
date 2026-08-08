@@ -1,5 +1,7 @@
 package tw.nekomimi.nekogram.settings;
 
+import tw.nekomimi.nekogram.MeeroStrings;
+
 import static org.telegram.messenger.LocaleController.getString;
 
 import android.content.Context;
@@ -83,7 +85,7 @@ public class MeeroKeywordAlertActivity extends BaseNekoSettingsActivity {
 
     @Override
     protected String getActionBarTitle() {
-        return getString(R.string.MeeroKeywordTitle);
+        return MeeroStrings.s("MeeroKeywordTitle");
     }
 
     @Override
@@ -99,7 +101,7 @@ public class MeeroKeywordAlertActivity extends BaseNekoSettingsActivity {
     }
 
     private String titleOf(long dialogId) {
-        if (dialogId == 0) return getString(R.string.MeeroKeywordAll);
+        if (dialogId == 0) return MeeroStrings.s("MeeroKeywordAll");
         MessagesController mc = MessagesController.getInstance(UserConfig.selectedAccount);
         if (DialogObject.isUserDialog(dialogId)) {
             TLRPC.User user = mc.getUser(dialogId);
@@ -109,7 +111,7 @@ public class MeeroKeywordAlertActivity extends BaseNekoSettingsActivity {
             TLRPC.Chat chat = mc.getChat(-dialogId);
             if (chat != null && !TextUtils.isEmpty(chat.title)) return chat.title;
         }
-        return getString(R.string.MeeroRulesChatFallback);
+        return MeeroStrings.s("MeeroRulesChatFallback");
     }
 
     @Override
@@ -119,7 +121,7 @@ public class MeeroKeywordAlertActivity extends BaseNekoSettingsActivity {
             ((TextCheckCell) view).setChecked(NekoConfig.meeroKeywordAlert.Bool());
         } else if (position == infoRow) {
             // v111: usage-guide popup instead of the long footer.
-            tw.nekomimi.nekogram.MeeroUsageGuide.show(this, R.string.MeeroKeywordInfo);
+            tw.nekomimi.nekogram.MeeroUsageGuide.show(this, "MeeroKeywordInfo");
         } else if (position == addRow) {
             showAddKindDialog();
         } else if (position >= entryStartRow && position < entryEndRow) {
@@ -132,8 +134,8 @@ public class MeeroKeywordAlertActivity extends BaseNekoSettingsActivity {
         Context context = getParentActivity();
         if (context == null) return;
         new AlertDialog.Builder(context)
-                .setTitle(getString(R.string.MeeroKeywordAdd))
-                .setItems(new CharSequence[]{getString(R.string.MeeroKeywordAddChat), getString(R.string.MeeroKeywordAddAll)}, (dialog, which) -> {
+                .setTitle(MeeroStrings.s("MeeroKeywordAdd"))
+                .setItems(new CharSequence[]{MeeroStrings.s("MeeroKeywordAddChat"), MeeroStrings.s("MeeroKeywordAddAll")}, (dialog, which) -> {
                     if (which == 0) {
                         pickChat();
                     } else {
@@ -179,7 +181,7 @@ public class MeeroKeywordAlertActivity extends BaseNekoSettingsActivity {
         editText.setHintTextColor(getThemedColor(Theme.key_windowBackgroundWhiteHintText));
         editText.setText(prefill);
         editText.setSelection(editText.getText().length());
-        editText.setHint(getString(R.string.MeeroKeywordWordsHint));
+        editText.setHint(MeeroStrings.s("MeeroKeywordWordsHint"));
         FrameLayout container = new FrameLayout(context);
         FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         lp.setMargins(AndroidUtilities.dp(24), AndroidUtilities.dp(4), AndroidUtilities.dp(24), 0);
@@ -204,7 +206,7 @@ public class MeeroKeywordAlertActivity extends BaseNekoSettingsActivity {
     private void showEntryOptions(final MeeroKeywordAlert.Entry entry) {
         new AlertDialog.Builder(getParentActivity())
                 .setTitle(titleOf(entry.dialogId))
-                .setItems(new CharSequence[]{getString(R.string.MeeroKeywordEdit), getString(R.string.Delete)}, (dialog, which) -> {
+                .setItems(new CharSequence[]{MeeroStrings.s("MeeroKeywordEdit"), getString(R.string.Delete)}, (dialog, which) -> {
                     if (which == 0) {
                         showWordsEditor(entry.dialogId, entry.words);
                     } else {
@@ -235,24 +237,24 @@ public class MeeroKeywordAlertActivity extends BaseNekoSettingsActivity {
                 case TYPE_CHECK:
                     TextCheckCell checkCell = (TextCheckCell) holder.itemView;
                     if (position == masterRow) {
-                        checkCell.setTextAndCheck(getString(R.string.MeeroKeywordMaster), NekoConfig.meeroKeywordAlert.Bool(), true);
+                        checkCell.setTextAndCheck(MeeroStrings.s("MeeroKeywordMaster"), NekoConfig.meeroKeywordAlert.Bool(), true);
                     }
                     break;
                 case TYPE_HEADER:
                     HeaderCell headerCell = (HeaderCell) holder.itemView;
                     if (position == headerRow) {
-                        headerCell.setText(getString(R.string.MeeroKeywordHeader));
+                        headerCell.setText(MeeroStrings.s("MeeroKeywordHeader"));
                     }
                     break;
                 case TYPE_TEXT:
                     TextCell textCell = (TextCell) holder.itemView;
                     if (position == addRow) {
-                        textCell.setTextAndValue(getString(R.string.MeeroKeywordAdd), "", true);
+                        textCell.setTextAndValue(MeeroStrings.s("MeeroKeywordAdd"), "", true);
                     } else if (position == emptyRow) {
-                        textCell.setTextAndValue(getString(R.string.MeeroKeywordEmpty), "", true);
+                        textCell.setTextAndValue(MeeroStrings.s("MeeroKeywordEmpty"), "", true);
                     } else if (position == infoRow) {
                         // v111: usage-guide button instead of the long footer.
-                        textCell.setTextAndValue(getString(R.string.MeeroUsageGuide), "", true);
+                        textCell.setTextAndValue(MeeroStrings.s("MeeroUsageGuide"), "", true);
                     }
                     break;
                 case TYPE_DETAIL_SETTINGS:

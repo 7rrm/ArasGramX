@@ -1,5 +1,7 @@
 package tw.nekomimi.nekogram.settings;
 
+import tw.nekomimi.nekogram.MeeroStrings;
+
 import static org.telegram.messenger.AndroidUtilities.dp;
 import static org.telegram.messenger.LocaleController.getString;
 
@@ -200,7 +202,7 @@ public class NekoGeneralSettingsActivity extends BaseNekoXSettingsActivity {
             getString(R.string.Default),
             getString(R.string.StyleModern),
             getString(R.string.StyleMaterialDesign3),
-            getString(R.string.StyleIos)
+            MeeroStrings.s("StyleIos")
     }, null));
     private final AbstractConfigCell sliderStyleRow = cellGroup.appendCell(new ConfigCellSelectBox("SliderStyle", NaConfig.INSTANCE.getSliderStyle(), new String[]{
             getString(R.string.Default),
@@ -221,8 +223,8 @@ public class NekoGeneralSettingsActivity extends BaseNekoXSettingsActivity {
     private final AbstractConfigCell notificationIconRow = cellGroup.appendCell(new ConfigCellSelectBox(null, NaConfig.INSTANCE.getNotificationIcon(), new String[]{
             getString(R.string.MapPreviewProviderTelegram),
             getString(R.string.NagramX),
-            getString(R.string.MeeroIconAlt),
-            getString(R.string.MeeroIconStyle2)
+            MeeroStrings.s("MeeroIconAlt"),
+            MeeroStrings.s("MeeroIconStyle2")
     }, null));
     private final AbstractConfigCell tabletModeRow = cellGroup.appendCell(new ConfigCellSelectBox(null, NekoConfig.tabletMode, new String[]{
             getString(R.string.TabletModeDefault),

@@ -1,5 +1,7 @@
 package tw.nekomimi.nekogram.settings;
 
+import tw.nekomimi.nekogram.MeeroStrings;
+
 import static org.telegram.messenger.LocaleController.getString;
 
 import android.app.Activity;
@@ -68,7 +70,7 @@ public class MeeroFontsActivity extends BaseNekoSettingsActivity {
 
     @Override
     protected String getActionBarTitle() {
-        return getString(R.string.MeeroFontSection);
+        return MeeroStrings.s("MeeroFontSection");
     }
 
     @Override
@@ -93,7 +95,7 @@ public class MeeroFontsActivity extends BaseNekoSettingsActivity {
             if (o.id.startsWith(MeeroFonts.CUSTOM_PREFIX) && getParentActivity() != null) {
                 AlertDialog.Builder b = new AlertDialog.Builder(getParentActivity());
                 b.setTitle(o.title);
-                b.setMessage(getString(R.string.MeeroFontDeleteConfirm));
+                b.setMessage(MeeroStrings.s("MeeroFontDeleteConfirm"));
                 b.setPositiveButton(getString(R.string.Delete), (d, w) -> {
                     MeeroFonts.deleteCustom(o.id);
                     AndroidUtilities.clearTypefaceCache();
@@ -118,7 +120,7 @@ public class MeeroFontsActivity extends BaseNekoSettingsActivity {
             i.setType("*/*");
             i.addCategory(Intent.CATEGORY_OPENABLE);
             startActivityForResult(
-                    Intent.createChooser(i, getString(R.string.MeeroFontPick)), PICK_FONT);
+                    Intent.createChooser(i, MeeroStrings.s("MeeroFontPick")), PICK_FONT);
         } catch (Throwable e) {
             FileLog.e(e);
         }
@@ -165,7 +167,7 @@ public class MeeroFontsActivity extends BaseNekoSettingsActivity {
             if (getParentActivity() != null) {
                 AlertDialog.Builder b = new AlertDialog.Builder(getParentActivity());
                 b.setTitle("MeeroX");
-                b.setMessage(getString(R.string.MeeroFontBadFormat));
+                b.setMessage(MeeroStrings.s("MeeroFontBadFormat"));
                 b.setPositiveButton(getString(R.string.OK), null);
                 showDialog(b.create());
             }
@@ -204,7 +206,7 @@ public class MeeroFontsActivity extends BaseNekoSettingsActivity {
                 cell.setTypeface(tf != null ? tf : Typeface.DEFAULT);
             } else if (type == TYPE_SETTINGS) {
                 TextSettingsCell cell = (TextSettingsCell) holder.itemView;
-                cell.setText(getString(R.string.MeeroFontAdd), false);
+                cell.setText(MeeroStrings.s("MeeroFontAdd"), false);
                 cell.getTextView().setTypeface(Typeface.DEFAULT);
             }
         }

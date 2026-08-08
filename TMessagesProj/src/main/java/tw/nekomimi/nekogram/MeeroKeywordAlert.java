@@ -1,5 +1,7 @@
 package tw.nekomimi.nekogram;
 
+import tw.nekomimi.nekogram.MeeroStrings;
+
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -146,7 +148,7 @@ public final class MeeroKeywordAlert {
                 if (c != null && !TextUtils.isEmpty(c.title)) return c.title;
             }
         } catch (Throwable ignore) {}
-        return LocaleController.getString(R.string.MeeroHunterSomeone);
+        return MeeroStrings.s("MeeroHunterSomeone");
     }
 
     private static void notifyHit(String who, String chat, String fullText) {
@@ -155,7 +157,7 @@ public final class MeeroKeywordAlert {
             NotificationManager manager = (NotificationManager) ctx.getSystemService(Context.NOTIFICATION_SERVICE);
             if (Build.VERSION.SDK_INT >= 26) {
                 NotificationChannel channel = new NotificationChannel(CHANNEL_ID,
-                        LocaleController.getString(R.string.MeeroKeywordTitle), NotificationManager.IMPORTANCE_DEFAULT);
+                        MeeroStrings.s("MeeroKeywordTitle"), NotificationManager.IMPORTANCE_DEFAULT);
                 manager.createNotificationChannel(channel);
             }
             Intent intent = new Intent(ctx, LaunchActivity.class);
@@ -168,7 +170,7 @@ public final class MeeroKeywordAlert {
             String body = chat.equals(who) ? who + ": " + snippet : chat + " • " + who + ": " + snippet;
             NotificationCompat.Builder builder = new NotificationCompat.Builder(ctx, CHANNEL_ID)
                     .setSmallIcon(R.drawable.nagram_notification)
-                    .setContentTitle(LocaleController.getString(R.string.MeeroKeywordTitle))
+                    .setContentTitle(MeeroStrings.s("MeeroKeywordTitle"))
                     .setContentText(body)
                     .setAutoCancel(true)
                     .setContentIntent(pendingIntent);

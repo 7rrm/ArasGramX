@@ -1,5 +1,7 @@
 package tw.nekomimi.nekogram;
 
+import tw.nekomimi.nekogram.MeeroStrings;
+
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -169,7 +171,7 @@ public final class MeeroDeleteHunter {
 
     private static String textOf(TLRPC.Message msg) {
         if (!TextUtils.isEmpty(msg.message)) return msg.message;
-        return LocaleController.getString(R.string.MeeroHunterMedia);
+        return MeeroStrings.s("MeeroHunterMedia");
     }
 
     // ---------------- log + notify (UI thread) ----------------
@@ -180,7 +182,7 @@ public final class MeeroDeleteHunter {
             String name = user != null ? UserObject.getUserName(user) : null;
             if (!TextUtils.isEmpty(name)) return name;
         } catch (Throwable ignore) {}
-        return LocaleController.getString(R.string.MeeroHunterSomeone);
+        return MeeroStrings.s("MeeroHunterSomeone");
     }
 
     private static synchronized void addLog(int account, long senderId, String kind, String oldValue, String newValue) {
@@ -206,8 +208,8 @@ public final class MeeroDeleteHunter {
     }
 
     public static String kindText(String kind) {
-        if ("edit".equals(kind)) return LocaleController.getString(R.string.MeeroHunterEditedMsg);
-        return LocaleController.getString(R.string.MeeroHunterDeletedMsg);
+        if ("edit".equals(kind)) return MeeroStrings.s("MeeroHunterEditedMsg");
+        return MeeroStrings.s("MeeroHunterDeletedMsg");
     }
 
     private static void notifyEvent(String who, String kind) {
@@ -216,7 +218,7 @@ public final class MeeroDeleteHunter {
             NotificationManager manager = (NotificationManager) ctx.getSystemService(Context.NOTIFICATION_SERVICE);
             if (Build.VERSION.SDK_INT >= 26) {
                 NotificationChannel channel = new NotificationChannel(CHANNEL_ID,
-                        LocaleController.getString(R.string.MeeroHunterTitle), NotificationManager.IMPORTANCE_DEFAULT);
+                        MeeroStrings.s("MeeroHunterTitle"), NotificationManager.IMPORTANCE_DEFAULT);
                 manager.createNotificationChannel(channel);
             }
             Intent intent = new Intent(ctx, LaunchActivity.class);
@@ -226,7 +228,7 @@ public final class MeeroDeleteHunter {
                     PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
             NotificationCompat.Builder builder = new NotificationCompat.Builder(ctx, CHANNEL_ID)
                     .setSmallIcon(R.drawable.nagram_notification)
-                    .setContentTitle(LocaleController.getString(R.string.MeeroHunterTitle))
+                    .setContentTitle(MeeroStrings.s("MeeroHunterTitle"))
                     .setContentText(who + " " + kindText(kind))
                     .setAutoCancel(true)
                     .setContentIntent(pendingIntent);

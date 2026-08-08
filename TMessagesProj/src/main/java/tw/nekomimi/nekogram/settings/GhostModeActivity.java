@@ -1,5 +1,7 @@
 package tw.nekomimi.nekogram.settings;
 
+import tw.nekomimi.nekogram.MeeroStrings;
+
 import static org.telegram.messenger.LocaleController.getString;
 import static org.telegram.ui.LaunchActivity.getLastFragment;
 
@@ -130,7 +132,7 @@ public class GhostModeActivity extends BaseNekoSettingsActivity {
             names[i] = getSwipeActionName(actions[i]) + (actions[i] == current ? "  ✓" : "");
         }
         new AlertDialog.Builder(getParentActivity())
-                .setTitle(getString(R.string.MeeroSwipeAction))
+                .setTitle(MeeroStrings.s("MeeroSwipeAction"))
                 .setItems(names, (dialog, which) -> {
                     SharedConfig.updateChatListSwipeSetting(actions[which]);
                     listAdapter.notifyItemChanged(swipeActionRow);
@@ -202,13 +204,13 @@ public class GhostModeActivity extends BaseNekoSettingsActivity {
             // MeeroX v97: the feature rides on the "Read" swipe action; warn
             // right away if the user enables it while swiping does something else.
             if (nowOn && SharedConfig.getChatSwipeAction(UserConfig.selectedAccount) != SwipeGestureSettingsView.SWIPE_GESTURE_READ) {
-                BulletinFactory.of(getLastFragment()).createSimpleBulletin(R.raw.chats_infotip, getString(R.string.MeeroGhostSwipeReadNeedRead)).show();
+                BulletinFactory.of(getLastFragment()).createSimpleBulletin(R.raw.chats_infotip, MeeroStrings.s("MeeroGhostSwipeReadNeedRead")).show();
             }
         } else if (position == swipeActionRow) {
             showSwipeActionDialog();
         } else if (position == ghostSwipeReadNoticeRow) {
             // v111: the full swipe-read explanation now lives in this popup.
-            tw.nekomimi.nekogram.MeeroUsageGuide.show(this, R.string.MeeroGhostSwipeReadInfo);
+            tw.nekomimi.nekogram.MeeroUsageGuide.show(this, "MeeroGhostSwipeReadInfo");
         } else if (position == markReadAfterSendRow) {
             NekoConfig.markReadAfterSend.toggleConfigBool();
             ((TextCheckCell) view).setChecked(NekoConfig.markReadAfterSend.Bool());
@@ -372,17 +374,17 @@ public class GhostModeActivity extends BaseNekoSettingsActivity {
                 case TYPE_TEXT:
                     TextCell textCell = (TextCell) holder.itemView;
                     if (position == swipeActionRow) {
-                        textCell.setTextAndValue(getString(R.string.MeeroSwipeAction), getSwipeActionName(SharedConfig.getChatSwipeAction(UserConfig.selectedAccount)), true);
+                        textCell.setTextAndValue(MeeroStrings.s("MeeroSwipeAction"), getSwipeActionName(SharedConfig.getChatSwipeAction(UserConfig.selectedAccount)), true);
                     } else if (position == ghostSwipeReadNoticeRow) {
                         // v111: usage-guide button instead of the long footer.
-                        textCell.setTextAndValue(getString(R.string.MeeroUsageGuide), "", true);
+                        textCell.setTextAndValue(MeeroStrings.s("MeeroUsageGuide"), "", true);
                     }
                     break;
                 case TYPE_CHECKBOX2:
                     CheckBoxCell checkBoxCell = (CheckBoxCell) holder.itemView;
                     if (position == ghostSwipeReadRow) {
                         // MeeroX v95 standalone row: no lock item, always enabled.
-                        checkBoxCell.setText(getString(R.string.meeroGhostSwipeRead), "", NekoConfig.meeroGhostSwipeRead.Bool(), true, true);
+                        checkBoxCell.setText(MeeroStrings.s("meeroGhostSwipeRead"), "", NekoConfig.meeroGhostSwipeRead.Bool(), true, true);
                         checkBoxCell.setEnabled(true);
                         checkBoxCell.setPad(1);
                         break;

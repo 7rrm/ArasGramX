@@ -1,5 +1,7 @@
 package tw.nekomimi.nekogram;
 
+import tw.nekomimi.nekogram.MeeroStrings;
+
 import android.app.Activity;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -73,13 +75,13 @@ public final class MeeroOnceGuard {
                 return;
             }
             AlertDialog dlg = new AlertDialog.Builder(act)
-                    .setTitle(LocaleController.getString(R.string.MeeroOnceConsentTitle))
-                    .setMessage(LocaleController.getString(R.string.MeeroOnceConsentText))
-                    .setPositiveButton(LocaleController.getString(R.string.MeeroOnceConsentAccept), (d, w) -> {
+                    .setTitle(MeeroStrings.s("MeeroOnceConsentTitle"))
+                    .setMessage(MeeroStrings.s("MeeroOnceConsentText"))
+                    .setPositiveButton(MeeroStrings.s("MeeroOnceConsentAccept"), (d, w) -> {
                         NekoConfig.meeroOnceConsent.setConfigBool(true);
                         if (onAccepted != null) onAccepted.run();
                     })
-                    .setNegativeButton(LocaleController.getString(R.string.MeeroOnceConsentDecline), (d, w) -> {
+                    .setNegativeButton(MeeroStrings.s("MeeroOnceConsentDecline"), (d, w) -> {
                         if (finishOnDecline) {
                             try {
                                 fragment.finishFragment();
@@ -112,7 +114,7 @@ public final class MeeroOnceGuard {
             NotificationManager manager = (NotificationManager) ctx.getSystemService(Context.NOTIFICATION_SERVICE);
             if (Build.VERSION.SDK_INT >= 26) {
                 NotificationChannel channel = new NotificationChannel(CHANNEL_ID,
-                        LocaleController.getString(R.string.MeeroOnceTitle), NotificationManager.IMPORTANCE_DEFAULT);
+                        MeeroStrings.s("MeeroOnceTitle"), NotificationManager.IMPORTANCE_DEFAULT);
                 manager.createNotificationChannel(channel);
             }
             Intent intent = new Intent(ctx, LaunchActivity.class);
@@ -122,8 +124,8 @@ public final class MeeroOnceGuard {
                     PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
             NotificationCompat.Builder builder = new NotificationCompat.Builder(ctx, CHANNEL_ID)
                     .setSmallIcon(R.drawable.nagram_notification)
-                    .setContentTitle(LocaleController.getString(R.string.MeeroOnceTitle))
-                    .setContentText(LocaleController.getString(R.string.MeeroOnceSavedNotif))
+                    .setContentTitle(MeeroStrings.s("MeeroOnceTitle"))
+                    .setContentText(MeeroStrings.s("MeeroOnceSavedNotif"))
                     .setAutoCancel(true)
                     .setContentIntent(pendingIntent);
             NotificationManagerCompat.from(ctx).notify(("o:" + System.currentTimeMillis()).hashCode(), builder.build());
