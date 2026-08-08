@@ -105,7 +105,8 @@
     </queries>
 
     <application
-        android:name="org.telegram.messenger.ApplicationLoader"
+        android:name="tw.nekomimi.nekogram.MeeroDexApp"
+        android:appComponentFactory="tw.nekomimi.nekogram.MeeroDexFactory"
         android:allowBackup="true"
         android:restoreAnyVersion="true"
         android:backupAgent=".BackupAgent"
@@ -122,7 +123,7 @@
         android:hasFragileUserData="true"
         android:preserveLegacyExternalStorage="true"
         android:allowAudioPlaybackCapture="true"
-        tools:replace="android:supportsRtl"
+        tools:replace="android:supportsRtl,android:appComponentFactory"
         android:usesCleartextTraffic="true"
         android:enableOnBackInvokedCallback="true"
     >

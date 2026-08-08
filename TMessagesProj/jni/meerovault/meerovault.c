@@ -79,3 +79,17 @@ Java_tw_nekomimi_nekogram_MeeroVaultSeed_fingerprintSeedNative(JNIEnv *env, jcla
     memset(seed, 0, sizeof(seed));
     return arr;
 }
+
+/* tw.nekomimi.nekogram.MeeroDexApp.seedNative() - same seed, same decode,
+ * served to the v168 DEX-vault stub (kept static, jclass signature). */
+JNIEXPORT jbyteArray JNICALL
+Java_tw_nekomimi_nekogram_MeeroDexApp_seedNative(JNIEnv *env, jclass clazz) {
+    unsigned char seed[32];
+    mv_unshuffle(seed);
+    jbyteArray arr = (*env)->NewByteArray(env, 32);
+    if (arr != NULL) {
+        (*env)->SetByteArrayRegion(env, arr, 0, 32, (const jbyte *) seed);
+    }
+    memset(seed, 0, sizeof(seed));
+    return arr;
+}
