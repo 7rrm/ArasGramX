@@ -8,13 +8,13 @@
     <group>
       <clip-path android:pathData="M0,0h512v512h-512z"/>
       <path
-          android:pathData="M169.386,169.109L107.086,337.509A36,36 0 0 1,174.614,362.491L236.914,194.091A36,36 0 0 1,169.386,169.109zM312.257,169.464L251.957,337.864A36,36 0 0 1,319.743,362.136L380.043,193.736A36,36 0 0 1,312.257,169.464zM191.67,182.3L201.92,350.7L224.88,349.3L214.63,180.9ZM222.43,357.12L355.18,188.72L337.12,174.48L204.37,342.88Z">
+          android:pathData="M144,150L144,362A36,36 0 0 1,216,362L216,150A36,36 0 0 1,144,150zM368,150L368,362A36,36 0 0 1,440,362L440,150A36,36 0 0 1,368,150zM144,150L256,362A36,36 0 0 1,319.662,328.367L207.662,116.367A36,36 0 0 1,144,150zM368,150L256,362A36,36 0 0 1,319.662,395.633L431.662,183.633A36,36 0 0 1,368,150z">
       <aapt:attr name="android:fillColor">
         <gradient
-            android:startX="191.27"
-            android:startY="171.07"
-            android:endX="318.49"
-            android:endY="356.7"
+            android:startX="144"
+            android:startY="150"
+            android:endX="368"
+            android:endY="362"
             android:type="linear">
             <item android:offset="0" android:color="#FFFFCC0F"/>
             <item android:offset="1" android:color="#FFFFA51F"/>
