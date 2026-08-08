@@ -509,6 +509,32 @@ public final class MeeroStrings {
         return isArabic() && v[1] != null ? v[1] : (v[0] != null ? v[0] : v[1]);
     }
 
+    /**
+     * v176: title resolver for the generic config-cell machinery. Those
+     * cells resolve LocaleController.getString(key) with a RUNTIME key
+     * (the config item name), which goes through getIdentifier() - dead
+     * since v171 removed the XML resources - so the cells silently fell
+     * back to displaying the raw English key (his screenshot report:
+     * meeroGlassSwitches & friends, owned). Order here: vault map ->
+     * upstream resource (Neko/Telegram keys still live in resources) ->
+     * the key itself, matching the cells' historical last resort.
+     */
+    public static String title(String key) {
+        final String[] v = MAP.get(key);
+        if (v != null) {
+            return isArabic() && v[1] != null ? v[1] : (v[0] != null ? v[0] : v[1]);
+        }
+        try {
+            final String up = org.telegram.messenger.LocaleController.nullable(
+                    org.telegram.messenger.LocaleController.getString(key));
+            if (up != null) {
+                return up;
+            }
+        } catch (Throwable ignored) {
+        }
+        return key;
+    }
+
     /** Drop-in for getString(R.string.X, ...) / LocaleController.formatString(R.string.X, ...). */
     public static String f(String key, Object... args) {
         final String raw = s(key);

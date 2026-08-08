@@ -2,6 +2,8 @@ package tw.nekomimi.nekogram.config.cell;
 
 import static org.telegram.messenger.LocaleController.getString;
 
+import tw.nekomimi.nekogram.MeeroStrings;
+
 import androidx.recyclerview.widget.RecyclerView;
 
 import org.telegram.ui.Cells.TextCheckCell;
@@ -26,7 +28,7 @@ public class ConfigCellTextCheck extends AbstractConfigCell implements WithBindC
 
     public ConfigCellTextCheck(ConfigItem bind, String subtitle, CharSequence customTitle) {
         this.bindConfig = bind;
-        CharSequence resolvedTitle = customTitle == null ? getString(bindConfig.getKey()) : customTitle;
+        CharSequence resolvedTitle = customTitle == null ? MeeroStrings.title(bindConfig.getKey()) : customTitle;
         // MeeroX: a config key with no string resource used to crash the row
         // bind with an NPE mid-scroll (v114-dbg report: meeroChatsMenuFog
         // shipped in v107 without its title string). Falling back to the key

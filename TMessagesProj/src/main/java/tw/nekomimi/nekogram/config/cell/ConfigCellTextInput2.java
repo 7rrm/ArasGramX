@@ -2,6 +2,8 @@ package tw.nekomimi.nekogram.config.cell;
 
 import static org.telegram.messenger.LocaleController.getString;
 
+import tw.nekomimi.nekogram.MeeroStrings;
+
 import android.content.Context;
 import android.text.TextUtils;
 import android.widget.LinearLayout;
@@ -40,7 +42,7 @@ public class ConfigCellTextInput2 extends AbstractConfigCell implements WithBind
         this.bindConfig = bind;
         this.hint = Objects.requireNonNullElse(hint, "");
         if (customTitle == null) {
-            title = getString(bindConfig.getKey());
+            title = MeeroStrings.title(bindConfig.getKey());
         } else {
             title = customTitle;
         }
@@ -97,7 +99,7 @@ public class ConfigCellTextInput2 extends AbstractConfigCell implements WithBind
         }
 
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
-        builder.setTitle(getString(bindConfig.getKey()));
+        builder.setTitle(MeeroStrings.title(bindConfig.getKey()));
         LinearLayout linearLayout = new LinearLayout(context);
         linearLayout.setOrientation(LinearLayout.VERTICAL);
 

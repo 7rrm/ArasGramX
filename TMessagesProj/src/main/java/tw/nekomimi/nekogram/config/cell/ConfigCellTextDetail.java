@@ -3,6 +3,8 @@ package tw.nekomimi.nekogram.config.cell;
 import static org.telegram.messenger.AndroidUtilities.dp;
 import static org.telegram.messenger.LocaleController.getString;
 
+import tw.nekomimi.nekogram.MeeroStrings;
+
 import android.content.Context;
 import android.text.TextUtils;
 import android.util.TypedValue;
@@ -58,7 +60,7 @@ public class ConfigCellTextDetail extends AbstractConfigCell implements WithBind
 
     public ConfigCellTextDetail(ConfigItem bind, RecyclerListView.OnItemClickListener onItemClickListener, String hint, boolean isKey, String customTitle, Function<String, String> detailValueFormatter, String inputHint, Function<String, String> inputChecker, BiPredicate<String, String> invalidInputChecker) {
         this.bindConfig = bind;
-        this.title = !TextUtils.isEmpty(customTitle) ? customTitle : getString(bindConfig.getKey());
+        this.title = !TextUtils.isEmpty(customTitle) ? customTitle : MeeroStrings.title(bindConfig.getKey());
         this.hint = hint == null ? "" : hint;
         this.onItemClickListener = onItemClickListener;
         this.isKey = isKey;

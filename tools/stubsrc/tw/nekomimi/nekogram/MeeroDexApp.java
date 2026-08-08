@@ -338,10 +338,12 @@ public class MeeroDexApp extends Application {
             Log.i(TAG, "real application swapped in");
             realApp.onCreate();
             realAppRef = realApp;
-            // v175: warm class VERIFICATION of the heavy launch path on a
-            // background thread while the prep cover is still up (load
-            // only, NO static init - zero side effects by construction).
-            warmClassesAsync(host);
+            // v176: warmClassesAsync REMOVED (owned). The v175 background
+            // verifier contended with the main thread for exactly the JIT/
+            // CPU resources it was meant to pre-warm, right inside the
+            // sensitive first-frame window - on his device the contention
+            // risk outweighed the unproven benefit, so the simpler v174
+            // boot flow stands (paced hold below kept, it is honest).
             Log.i(TAG, "real application created - boot complete");
         } catch (Throwable t) {
             Log.e(TAG, "application swap failed - the app cannot continue like this", t);
@@ -399,15 +401,28 @@ public class MeeroDexApp extends Application {
                     } catch (Throwable ignored) {
                     }
                     try {
+                        // v176: require TWO consecutive idle turns before
+                        // trusting the signal. The first idle merely sits
+                        // between the chat list's async load passes (that
+                        // is exactly how the v174 cover lifted early and
+                        // the ANR surfaced over the chat rows, owned); a
+                        // second idle in a row is the far steadier sign
+                        // that first content is really on screen.
                         Looper.myQueue().addIdleHandler(new MessageQueue.IdleHandler() {
                             @Override
                             public boolean queueIdle() {
-                                final long left = releaseAt - System.currentTimeMillis();
-                                if (left <= 0) {
-                                    markPrepDone();
-                                } else {
-                                    ui.postDelayed(release, left);
-                                }
+                                Looper.myQueue().addIdleHandler(new MessageQueue.IdleHandler() {
+                                    @Override
+                                    public boolean queueIdle() {
+                                        final long left = releaseAt - System.currentTimeMillis();
+                                        if (left <= 0) {
+                                            markPrepDone();
+                                        } else {
+                                            ui.postDelayed(release, left);
+                                        }
+                                        return false;
+                                    }
+                                });
                                 return false;
                             }
                         });
@@ -430,63 +445,7 @@ public class MeeroDexApp extends Application {
         }
     }
 
-    /**
-     * v175: background class-verification warm-up for the launch path.
-     * Load-only (initialize = false): triggers ART's verifier without
-     * running a single static initializer, hence zero behavioural side
-     * effects. Unknown/renamed names are simply skipped. Runs at the
-     * lowest priority while the prep cover absorbs the once-per-update
-     * cold-profile window.
-     */
-    private static void warmClassesAsync(final ClassLoader cl) {
-        final String[] warm = {
-                "org.telegram.ui.LaunchActivity",
-                "org.telegram.ui.DialogsActivity",
-                "org.telegram.ui.ChatActivity",
-                "org.telegram.ui.ActionBar.ActionBarLayout",
-                "org.telegram.ui.ActionBar.BaseFragment",
-                "org.telegram.ui.ActionBar.Theme",
-                "org.telegram.ui.Components.RecyclerListView",
-                "org.telegram.ui.Components.LayoutHelper",
-                "org.telegram.messenger.MessagesController",
-                "org.telegram.messenger.MessagesStorage",
-                "org.telegram.messenger.UserConfig",
-                "org.telegram.messenger.NotificationCenter",
-                "org.telegram.messenger.AndroidUtilities",
-                "org.telegram.messenger.LocaleController",
-                "org.telegram.messenger.FileLoader",
-                "org.telegram.messenger.FileLog",
-                "org.telegram.messenger.SendMessagesHelper",
-                "org.telegram.messenger.MediaController",
-                "org.telegram.messenger.ContactsController",
-                "org.telegram.messenger.ImageLoader",
-                "org.telegram.messenger.MessageObject",
-                "org.telegram.messenger.Utilities",
-                "org.telegram.messenger.Emoji",
-                "org.telegram.tgnet.TLRPC",
-                "org.telegram.tgnet.ConnectionsManager"
-        };
-        final Thread t = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    Process.setThreadPriority(Process.THREAD_PRIORITY_LOWEST);
-                } catch (Throwable ignored) {
-                }
-                int ok = 0;
-                for (final String cn : warm) {
-                    try {
-                        Class.forName(cn, false, cl);
-                        ok++;
-                    } catch (Throwable ignored) {
-                    }
-                }
-                Log.i(TAG, "background warm done (" + ok + "/" + warm.length + " classes)");
-            }
-        }, "meerowarm");
-        t.setPriority(Thread.MIN_PRIORITY);
-        t.start();
-    }
+
 
     // ---- vault guts -----------------------------------------------------
 
@@ -704,10 +663,43 @@ public class MeeroDexApp extends Application {
             }
             final Intent i = new Intent(base, MeeroBootActivity.class);
             i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_NO_ANIMATION);
-            base.startActivity(i);
-            Log.i(TAG, "prep splash shown in :meeroboot");
+            startPrepActivity(base, i);
+            // v176 (owned - his report: on the v175 boot the splash never
+            // showed at all). A single startActivity fired mid-boot-load
+            // can be dropped or deferred by the system, and the main
+            // thread is about to be blocked by the decrypt, so retries
+            // cannot ride a Handler - they ride this tiny helper thread.
+            // REORDER_TO_FRONT makes a retry a no-op when the splash
+            // already fronts, so double-dispatch is impossible.
+            final Intent retryIntent = new Intent(i)
+                    .addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+            final Context app = base.getApplicationContext() != null
+                    ? base.getApplicationContext() : base;
+            final Thread hb = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    for (int k = 0; k < 2; k++) {
+                        try {
+                            Thread.sleep(k == 0 ? 600 : 1500);
+                        } catch (Throwable ignored) {
+                        }
+                        startPrepActivity(app, retryIntent);
+                    }
+                }
+            }, "meeroprep-hb");
+            hb.setDaemon(true);
+            hb.start();
+            Log.i(TAG, "prep splash shown in :meeroboot (heartbeat armed)");
         } catch (Throwable t) {
             Log.w(TAG, "prep splash unavailable - silent v169-style boot", t);
+        }
+    }
+
+    private static void startPrepActivity(Context ctx, Intent i) {
+        try {
+            ctx.startActivity(i);
+        } catch (Throwable t) {
+            Log.w(TAG, "prep splash start attempt failed", t);
         }
     }
 
