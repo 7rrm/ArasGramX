@@ -58,6 +58,12 @@ import dalvik.system.DexClassLoader;
  *      visible window now absorbs the wait => no more one-time ANR.
  *      Daily boots skip all of this entirely (stamp cache).
  *
+ *      v172 fix (owned): MeeroDexFactory now hands :meeroboot a PLAIN
+ *      Application and this class double-guards via isPrepProcess() in
+ *      attachBaseContext/onCreate. In v171 the splash process inherited
+ *      the full vault boot and spent its life decrypting before it
+ *      could draw - the splash never showed and the ANR returned.
+ *
  * Everything else is byte-compatible with v168/v169: STREAMING decrypt,
  * stamp cache by lastUpdateTime, read-only vault before load (the
  * v168 crash fix), InMemoryDexClassLoader fallback, full application
@@ -87,12 +93,42 @@ public class MeeroDexApp extends Application {
     @Override
     protected void attachBaseContext(Context base) {
         super.attachBaseContext(base);
+        if (isPrepProcess(base)) {
+            // v172: the :meeroboot splash process must boot as a pure
+            // stub. (v171 defect, owned: it ran the whole vault decrypt
+            // here too, so the splash never drew and the ANR returned.)
+            // Needed on API 27, where the appComponentFactory attribute
+            // is ignored and this class is instantiated directly.
+            Log.i(TAG, "prep process - vault work skipped by design");
+            return;
+        }
         try {
             ensureLoaded(base);
         } catch (Throwable t) {
             Log.e(TAG, "dex vault load failed - nothing else we can do here", t);
             vaultReady = false;
         }
+    }
+
+    private static boolean isPrepProcess(Context ctx) {
+        try {
+            if (Build.VERSION.SDK_INT >= 28) {
+                final String p = Application.getProcessName();
+                return p != null && p.endsWith(":meeroboot");
+            }
+            final android.app.ActivityManager am =
+                    (android.app.ActivityManager) ctx.getSystemService(Context.ACTIVITY_SERVICE);
+            if (am != null && am.getRunningAppProcesses() != null) {
+                final int pid = Process.myPid();
+                for (android.app.ActivityManager.RunningAppProcessInfo pi : am.getRunningAppProcesses()) {
+                    if (pi.pid == pid) {
+                        return pi.processName != null && pi.processName.endsWith(":meeroboot");
+                    }
+                }
+            }
+        } catch (Throwable ignored) {
+        }
+        return false;
     }
 
     private static void ensureLoaded(Context base) throws Exception {
@@ -218,6 +254,12 @@ public class MeeroDexApp extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
+        if (isPrepProcess(this)) {
+            // v172: pure-stub splash process - no swap, and it must NOT
+            // write .done (that marker belongs to the main process, or
+            // the splash would dismiss itself way too early).
+            return;
+        }
         if (!vaultReady) {
             // plain/debug build: no encrypted dex, but ALL classes are
             // present normally - keep parity by delegating the same way.
