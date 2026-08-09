@@ -714,9 +714,16 @@ public class MeeroDexApp extends Application {
      * of the workaround he proved on-device (close, reopen; the cached
      * vault makes the second pass fast and warm).
      */
+    private static int phaseSeq; // v179: makes every beat UNIQUE content
+
     private static void writePhase(File dir, int code) {
         try {
-            writeText(new File(dir, ".phase"), code + ";" + Process.myPid());
+            // v179 (owned): v178 beats repeated identical text, and the
+            // splash watchdog measures content CHANGE - so identical
+            // beats read as silence and healthy boots got killed in a
+            // loop. A sequence field turns every beat into proof of life.
+            writeText(new File(dir, ".phase"),
+                    code + ";" + Process.myPid() + ";" + (phaseSeq++));
         } catch (Throwable ignored) {
         }
     }

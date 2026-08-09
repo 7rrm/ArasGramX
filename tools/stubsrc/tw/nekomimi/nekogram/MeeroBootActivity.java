@@ -179,7 +179,7 @@ public class MeeroBootActivity extends Activity {
                     parsePhase(ph);
                 }
                 if (!healed && now - bornAt > 25000 && now - lastChangeAt > 35000) {
-                    selfHeal();
+                    selfHeal(dir);
                     return;
                 }
                 if (p.length() > 0) {
@@ -240,8 +240,38 @@ public class MeeroBootActivity extends Activity {
         }
     }
 
-    private void selfHeal() {
+    /**
+     * v179: ONE self-heal per install, never a loop. (Owned: v178's
+     * identical-text heartbeats blinded this very watchdog into killing
+     * HEALTHY slow boots, and every kill restarted an uncached boot -
+     * the flicker loop he filmed.) If the marker says this install was
+     * already healed once, the cover simply steps aside instead of
+     * healing again: the user lands on his proven manual escape route
+     * (the system screen) rather than being trapped on black forever.
+     */
+    private void selfHeal(File dir) {
+        // cap is keyed to THIS install's stamp, so every update earns
+        // exactly one fresh heal chance
+        String stampStr = "";
+        try {
+            stampStr = String.valueOf(getPackageManager()
+                    .getPackageInfo(getPackageName(), 0).lastUpdateTime);
+        } catch (Throwable ignored) {
+        }
+        String heal = "";
+        try {
+            heal = readSmall(new File(dir, ".heal"));
+        } catch (Throwable ignored) {
+        }
+        if (heal.length() > 0 && heal.equals(stampStr)) {
+            // already healed once for this install -> step aside into
+            // his proven manual route instead of looping on black
+            healed = true;
+            finishNoAnim();
+            return;
+        }
         healed = true;
+        writeSmall(new File(dir, ".heal"), stampStr);
         try {
             subView.setText(ar
                     ? "معالجة ذاتية لعائق بسيط… ثوانٍ وتدخل تلقائياً"
@@ -270,6 +300,22 @@ public class MeeroBootActivity extends Activity {
                 finishNoAnim(); // the cached vault makes the relaunch fast
             }
         }, 1500);
+    }
+
+    private static void writeSmall(File f, String s) {
+        java.io.FileOutputStream fos = null;
+        try {
+            fos = new java.io.FileOutputStream(f);
+            fos.write(s.getBytes("UTF-8"));
+        } catch (Throwable ignored) {
+        } finally {
+            if (fos != null) {
+                try {
+                    fos.close();
+                } catch (Throwable ignored) {
+                }
+            }
+        }
     }
 
     @Override
