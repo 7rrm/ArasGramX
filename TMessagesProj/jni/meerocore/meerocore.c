@@ -1444,6 +1444,1188 @@ JNIEXPORT jstring JNICALL MC_CLASS(nArResolveText)(JNIEnv *env, jclass c, jlong 
     return r;
 }
 
+/*
+ * ============================================================================
+ * MeeroX v185 (batch 2C) - organization & radar hearts: the smart-folder
+ * preset design (garbled table), the delete-hunter log + key machine, the
+ * watch list + snapshot differ + change log + message-notify throttle, and
+ * the activity-stats decision layer (local-day bounds, dry-chat policy,
+ * hourly assembly). Same law as 2B: Java keeps the Telegram handshake and
+ * the screens; every decided thing lives here. Hunter/watch stores persist
+ * as opaque seed-sealed blobs (dom 'D' / 'W'); legacy JSON is imported once
+ * and its plaintext dropped. Failures answer safe values, the v182/v184
+ * Java paths stay as the degraded fallback.
+ * ============================================================================
+ */
+
+/* ---- Smart Folders: static design table ------------------------------------
+ * Flag values mirror MessagesController.DIALOG_FILTER_FLAG_* exactly
+ * (0x01 contacts, 0x02 non-contacts, 0x04 groups, 0x08 channels, 0x10 bots,
+ * 0x20 exclude-muted, 0x40 exclude-read, 0x80 exclude-archived); parity
+ * locked by the 2C vector suite against the old Java table. Nothing here is
+ * persisted - the table IS the design, so it is garbled like the emoji. */
+
+static const unsigned char SF_T1[] = {0xf4,0xca,0xc6,0xd5,0xd3,0xe1,0xc8,0xcb,0xc3,0xc2,0xd5,0xf2,0xc9,0xd5,0xc2,0xc6,0xc3,0xe4,0xcf,0xc6,0xc9,0xc9,0xc2,0xcb,0xd4,0xa7};
+static const unsigned char SF_R1[] = {0xf4,0xca,0xc6,0xd5,0xd3,0xe1,0xc8,0xcb,0xc3,0xc2,0xd5,0xf2,0xc9,0xd5,0xc2,0xc6,0xc3,0xe4,0xcf,0xc6,0xc9,0xc9,0xc2,0xcb,0xd4,0xf5,0xd2,0xcb,0xc2,0xa7};
+static const unsigned char SF_T2[] = {0xf4,0xca,0xc6,0xd5,0xd3,0xe1,0xc8,0xcb,0xc3,0xc2,0xd5,0xe5,0xc8,0xd3,0xd4,0xa7};
+static const unsigned char SF_R2[] = {0xf4,0xca,0xc6,0xd5,0xd3,0xe1,0xc8,0xcb,0xc3,0xc2,0xd5,0xe5,0xc8,0xd3,0xd4,0xf5,0xd2,0xcb,0xc2,0xa7};
+static const unsigned char SF_T3[] = {0xf4,0xca,0xc6,0xd5,0xd3,0xe1,0xc8,0xcb,0xc3,0xc2,0xd5,0xf2,0xc9,0xd5,0xc2,0xc6,0xc3,0xe4,0xcf,0xc6,0xd3,0xd4,0xa7};
+static const unsigned char SF_R3[] = {0xf4,0xca,0xc6,0xd5,0xd3,0xe1,0xc8,0xcb,0xc3,0xc2,0xd5,0xf2,0xc9,0xd5,0xc2,0xc6,0xc3,0xe4,0xcf,0xc6,0xd3,0xd4,0xf5,0xd2,0xcb,0xc2,0xa7};
+static const unsigned char SF_T4[] = {0xf4,0xca,0xc6,0xd5,0xd3,0xe1,0xc8,0xcb,0xc3,0xc2,0xd5,0xe1,0xc6,0xca,0xce,0xcb,0xde,0xa7};
+static const unsigned char SF_R4[] = {0xf4,0xca,0xc6,0xd5,0xd3,0xe1,0xc8,0xcb,0xc3,0xc2,0xd5,0xe1,0xc6,0xca,0xce,0xcb,0xde,0xf5,0xd2,0xcb,0xc2,0xa7};
+static const unsigned char SF_T5[] = {0xf4,0xca,0xc6,0xd5,0xd3,0xe1,0xc8,0xcb,0xc3,0xc2,0xd5,0xe6,0xc4,0xd3,0xce,0xd1,0xc2,0xe0,0xd5,0xc8,0xd2,0xd7,0xd4,0xa7};
+static const unsigned char SF_R5[] = {0xf4,0xca,0xc6,0xd5,0xd3,0xe1,0xc8,0xcb,0xc3,0xc2,0xd5,0xe6,0xc4,0xd3,0xce,0xd1,0xc2,0xe0,0xd5,0xc8,0xd2,0xd7,0xd4,0xf5,0xd2,0xcb,0xc2,0xa7};
+static const unsigned char SF_E1[] = {0x57,0x38,0x34,0x05,0xa7};
+static const unsigned char SF_E2[] = {0x57,0x38,0x03,0x31,0xa7};
+static const unsigned char SF_E3[] = {0x57,0x38,0x34,0x02,0xa7};
+static const unsigned char SF_E4[] = {0x45,0x3a,0x03,0x48,0x1f,0x28,0xa7};
+static const unsigned char SF_E5[] = {0x57,0x38,0x36,0x02,0xa7};
+
+typedef struct { const unsigned char *tk, *rk, *emo; int flags; int color; } mc_sf_p;
+
+static const mc_sf_p MC_SF[5] = {
+    { SF_T1, SF_R1, SF_E1, 0x68, 1 }, /* channels + unread + not muted    */
+    { SF_T2, SF_R2, SF_E2, 0x90, 5 }, /* bots, archived clutter excluded  */
+    { SF_T3, SF_R3, SF_E3, 0x47, 0 }, /* unread private chats & groups    */
+    { SF_T4, SF_R4, SF_E4, 0x81, 2 }, /* contacts, no archived clutter    */
+    { SF_T5, SF_R5, SF_E5, 0x24, 3 }, /* active (non-muted) groups        */
+};
+
+/* Java equalsIgnoreCase parity for our titles: ASCII letters fold, every
+ * other byte compares exactly (the localized titles are Arabic - no case). */
+static int mc_sf_title_eq(const char *a, const char *b) {
+    if (a == NULL || b == NULL) return 0;
+    for (;; a++, b++) {
+        unsigned char x = (unsigned char) *a, y = (unsigned char) *b;
+        if (x >= 'A' && x <= 'Z') x = (unsigned char) (x | 0x20);
+        if (y >= 'A' && y <= 'Z') y = (unsigned char) (y | 0x20);
+        if (x != y) return 0;
+        if (x == 0) return 1;
+    }
+}
+
+/* ---- shared: next tab-separated field (in place, unescaped by caller) ---- */
+
+static char *mc_nextf(char **p) {
+    char *s = *p;
+    char *t = strchr(s, '\t');
+    if (t != NULL) {
+        *t = 0;
+        *p = t + 1;
+    } else {
+        *p = s + strlen(s);
+    }
+    return s;
+}
+
+/* ---- Java String.hashCode parity (UTF-16 code units, 31*x+unit, wrap) ---- */
+
+static jint mc_hash16(const char *s) {
+    uint32_t h = 0;
+    const unsigned char *p = (const unsigned char *) (s == NULL ? "" : s);
+    while (*p) {
+        uint32_t cp;
+        int n;
+        if (*p < 0x80) { cp = *p; n = 1; }
+        else if ((*p & 0xE0) == 0xC0) { cp = ((uint32_t) (p[0] & 0x1F) << 6) | (uint32_t) (p[1] & 0x3F); n = 2; }
+        else if ((*p & 0xF0) == 0xE0) { cp = ((uint32_t) (p[0] & 0x0F) << 12) | ((uint32_t) (p[1] & 0x3F) << 6) | (uint32_t) (p[2] & 0x3F); n = 3; }
+        else if ((*p & 0xF8) == 0xF0) { cp = ((uint32_t) (p[0] & 0x07) << 18) | ((uint32_t) (p[1] & 0x3F) << 12) | ((uint32_t) (p[2] & 0x3F) << 6) | (uint32_t) (p[3] & 0x3F); n = 4; }
+        else { cp = *p; n = 1; }
+        if (cp > 0xFFFF) { /* surrogate pair like Java sees it */
+            uint32_t u = cp - 0x10000;
+            h = h * 31u + (0xD800u + (u >> 10));
+            h = h * 31u + (0xDC00u + (u & 0x3FFu));
+        } else {
+            h = h * 31u + cp;
+        }
+        p += n;
+    }
+    return (jint) h;
+}
+
+/* ---- Delete Hunter (dom 'D'): ring log + key machine ----------------------- */
+
+typedef struct { jlong t, id; char *kind, *who, *oldv, *newv; } mc_dh_item;
+
+static mc_dh_item *DH_LOG;
+static int DH_LEN, DH_CAP, DH_LOADED;
+
+static void mc_dh_free_item(mc_dh_item *it) {
+    free(it->kind);
+    free(it->who);
+    free(it->oldv);
+    free(it->newv);
+    it->kind = it->who = it->oldv = it->newv = NULL;
+}
+
+static void mc_dh_reset(void) {
+    for (int i = 0; i < DH_LEN; i++) mc_dh_free_item(&DH_LOG[i]);
+    free(DH_LOG);
+    DH_LOG = NULL;
+    DH_LEN = 0;
+    DH_CAP = 0;
+}
+
+/* head = runtime insert (newest first, cap 150 like the old JSON head-put);
+ * head = 0 is the legacy-import path (preserve order, stop at the cap). */
+static void mc_dh_push(jlong t, jlong id, const char *kind, const char *who,
+                       const char *oldv, const char *newv, int head) {
+    if (!head && DH_LEN >= 150) return;
+    if (head && DH_LEN >= 150) {
+        mc_dh_free_item(&DH_LOG[DH_LEN - 1]);
+        DH_LEN--;
+    }
+    if (!mc_grow((void **) &DH_LOG, &DH_CAP, DH_LEN + 1, sizeof(mc_dh_item))) return;
+    mc_dh_item it;
+    it.t = t;
+    it.id = id;
+    it.kind = mc_dup(kind == NULL ? "" : kind);
+    it.who = mc_dup(who == NULL ? "" : who);
+    it.oldv = mc_dup(oldv == NULL ? "" : oldv);
+    it.newv = mc_dup(newv == NULL ? "" : newv);
+    if (head) {
+        if (DH_LEN > 0) memmove(DH_LOG + 1, DH_LOG, (size_t) DH_LEN * sizeof(mc_dh_item));
+        DH_LOG[0] = it;
+    } else {
+        DH_LOG[DH_LEN] = it;
+    }
+    DH_LEN++;
+}
+
+/* entry key: t_id_kind_javaHash(old) - the old screen-key format verbatim */
+static char *mc_dh_key(jlong t, jlong id, const char *kind, const char *oldv) {
+    char buf[128];
+    snprintf(buf, sizeof(buf), "%lld_%lld_%s_%d", (long long) t, (long long) id,
+             kind == NULL ? "" : kind, (int) mc_hash16(oldv));
+    return mc_dup(buf);
+}
+
+static int mc_dh_load(const unsigned char seed[32], const char *blob) {
+    mc_dh_reset();
+    DH_LOADED = 1;
+    size_t n;
+    unsigned char *raw = mc_unseal(seed, 'D', blob, &n);
+    if (raw == NULL) return 0;
+    char *p = (char *) raw;
+    while (*p) {
+        char *nl = strchr(p, '\n');
+        if (nl != NULL) *nl = 0;
+        if (p[0] == 'L' && p[1] == '\t') {
+            char *cur = p + 2;
+            jlong t = (jlong) strtoll(mc_nextf(&cur), NULL, 10);
+            jlong id = (jlong) strtoll(mc_nextf(&cur), NULL, 10);
+            char *kind = mc_nextf(&cur);
+            char *who = mc_nextf(&cur);
+            char *oldv = mc_nextf(&cur);
+            char *newv = mc_nextf(&cur);
+            mc_unesc(kind);
+            mc_unesc(who);
+            mc_unesc(oldv);
+            mc_unesc(newv);
+            mc_dh_push(t, id, kind, who, oldv, newv, 0);
+        }
+        if (nl == NULL) break;
+        p = nl + 1;
+    }
+    memset(raw, 0, n);
+    free(raw);
+    return 1;
+}
+
+static char *mc_dh_blob(const unsigned char seed[32]) {
+    mc_sb s;
+    memset(&s, 0, sizeof(s));
+    char num[32];
+    for (int i = 0; i < DH_LEN; i++) {
+        mc_dh_item *it = &DH_LOG[i];
+        char *k = mc_esc(it->kind == NULL ? "" : it->kind);
+        char *w = mc_esc(it->who == NULL ? "" : it->who);
+        char *o = mc_esc(it->oldv == NULL ? "" : it->oldv);
+        char *nw = mc_esc(it->newv == NULL ? "" : it->newv);
+        if (k == NULL || w == NULL || o == NULL || nw == NULL) {
+            free(k); free(w); free(o); free(nw);
+            continue;
+        }
+        mc_sb_s(&s, "L\t");
+        snprintf(num, sizeof(num), "%lld", (long long) it->t);
+        mc_sb_s(&s, num);
+        mc_sb_c(&s, '\t');
+        snprintf(num, sizeof(num), "%lld", (long long) it->id);
+        mc_sb_s(&s, num);
+        mc_sb_c(&s, '\t');
+        mc_sb_s(&s, k);
+        mc_sb_c(&s, '\t');
+        mc_sb_s(&s, w);
+        mc_sb_c(&s, '\t');
+        mc_sb_s(&s, o);
+        mc_sb_c(&s, '\t');
+        mc_sb_s(&s, nw);
+        mc_sb_c(&s, '\n');
+        free(k); free(w); free(o); free(nw);
+    }
+    if (s.b == NULL) {
+        s.b = mc_dup("");
+        s.len = 0;
+        s.cap = 1;
+    }
+    char *blob = mc_seal(seed, 'D', (const unsigned char *) (s.b == NULL ? "" : s.b), s.len);
+    if (s.b != NULL) {
+        memset(s.b, 0, s.cap);
+        free(s.b);
+    }
+    return blob;
+}
+
+/* one entry as an escaped TSV line: t \t id \t kind \t who \t old \t new */
+static char *mc_dh_line(int idx) {
+    if (idx < 0 || idx >= DH_LEN) return NULL;
+    mc_dh_item *it = &DH_LOG[idx];
+    mc_sb s;
+    memset(&s, 0, sizeof(s));
+    char num[32];
+    snprintf(num, sizeof(num), "%lld", (long long) it->t);
+    mc_sb_s(&s, num);
+    mc_sb_c(&s, '\t');
+    snprintf(num, sizeof(num), "%lld", (long long) it->id);
+    mc_sb_s(&s, num);
+    char *k = mc_esc(it->kind == NULL ? "" : it->kind);
+    char *w = mc_esc(it->who == NULL ? "" : it->who);
+    char *o = mc_esc(it->oldv == NULL ? "" : it->oldv);
+    char *nw = mc_esc(it->newv == NULL ? "" : it->newv);
+    if (k != NULL) { mc_sb_c(&s, '\t'); mc_sb_s(&s, k); }
+    if (w != NULL) { mc_sb_c(&s, '\t'); mc_sb_s(&s, w); }
+    if (o != NULL) { mc_sb_c(&s, '\t'); mc_sb_s(&s, o); }
+    if (nw != NULL) { mc_sb_c(&s, '\t'); mc_sb_s(&s, nw); }
+    free(k); free(w); free(o); free(nw);
+    if (s.b == NULL) return mc_dup("");
+    return s.b;
+}
+
+/* remove every entry whose key sits in the '\n'-joined set; returns count */
+static int mc_dh_remove(const char *keys) {
+    if (keys == NULL || *keys == 0) return 0;
+    int removed = 0;
+    for (int i = 0; i < DH_LEN;) {
+        mc_dh_item *it = &DH_LOG[i];
+        char *key = mc_dh_key(it->t, it->id, it->kind, it->oldv);
+        int hit = 0;
+        if (key != NULL) {
+            size_t kl = strlen(key);
+            const char *p = keys;
+            for (;;) {
+                const char *nl = strchr(p, '\n');
+                size_t ln = nl == NULL ? strlen(p) : (size_t) (nl - p);
+                if (ln == kl && memcmp(p, key, kl) == 0) { hit = 1; break; }
+                if (nl == NULL) break;
+                p = nl + 1;
+            }
+            free(key);
+        }
+        if (hit) {
+            mc_dh_free_item(it);
+            for (int j = i; j + 1 < DH_LEN; j++) DH_LOG[j] = DH_LOG[j + 1];
+            DH_LEN--;
+            removed++;
+        } else {
+            i++;
+        }
+    }
+    return removed;
+}
+
+/* ---- Watch (dom 'W'): list + snapshots + change log + msg throttle -------- */
+
+typedef struct { jlong id; int on; } mc_we;
+
+static mc_we *W_ENTS;
+static int W_EL, W_EC;
+
+typedef struct {
+    jlong id;
+    unsigned mask; /* 1 name, 2 user, 4 photo, 8 bio, 16 bday */
+    char *name, *user, *bio, *bday;
+    jlong photo;
+} mc_ws;
+
+static mc_ws *W_SNAP;
+static int W_SL, W_SC;
+
+typedef struct {
+    jlong t, id;
+    char *who, *what, *oldv, *newv, *oldp, *newp;
+} mc_wl_item;
+
+static mc_wl_item *W_LOG;
+static int W_LL, W_LC, W_LOADED;
+static mc_mark W_MARK[256];
+
+static int mc_w_find(jlong id) {
+    for (int i = 0; i < W_EL; i++) {
+        if (W_ENTS[i].id == id) return i;
+    }
+    return -1;
+}
+
+static void mc_ws_free(mc_ws *r) {
+    free(r->name);
+    free(r->user);
+    free(r->bio);
+    free(r->bday);
+    r->name = r->user = r->bio = r->bday = NULL;
+}
+
+static mc_ws *mc_w_snap_get(jlong id, int create) {
+    for (int i = 0; i < W_SL; i++) {
+        if (W_SNAP[i].id == id) return &W_SNAP[i];
+    }
+    if (!create) return NULL;
+    if (!mc_grow((void **) &W_SNAP, &W_SC, W_SL + 1, sizeof(mc_ws))) return NULL;
+    mc_ws *r = &W_SNAP[W_SL++];
+    memset(r, 0, sizeof(*r));
+    r->id = id;
+    return r;
+}
+
+static void mc_ws_set_str(char **slot, unsigned *mask, unsigned bit, const char *v) {
+    free(*slot);
+    *slot = mc_dup(v == NULL ? "" : v);
+    *mask |= bit;
+}
+
+/* returns dup (caller frees) */
+static int mc_w_add(jlong id) {
+    if (mc_w_find(id) >= 0) return 0;
+    if (!mc_grow((void **) &W_ENTS, &W_EC, W_EL + 1, sizeof(mc_we))) return 0;
+    W_ENTS[W_EL].id = id;
+    W_ENTS[W_EL].on = 1;
+    W_EL++;
+    return 1;
+}
+
+static void mc_w_remove(jlong id) {
+    int i = mc_w_find(id);
+    if (i >= 0) {
+        for (int j = i; j + 1 < W_EL; j++) W_ENTS[j] = W_ENTS[j + 1];
+        W_EL--;
+    }
+    for (int k = 0; k < W_SL;) {
+        if (W_SNAP[k].id == id) {
+            mc_ws_free(&W_SNAP[k]);
+            for (int j = k; j + 1 < W_SL; j++) W_SNAP[j] = W_SNAP[j + 1];
+            W_SL--;
+        } else {
+            k++;
+        }
+    }
+}
+
+/* diff: baseline (no record at all) merges silently, flags 0 - the old
+ * snap==null path. Bits: 1 name, 2 username, 4 photo. Pack carries the OLD
+ * values so Java can log them; the record itself is already merged when the
+ * pack arrives. */
+static char *mc_w_diff_user(jlong id, const char *name, const char *user, jlong photo) {
+    mc_ws *r = mc_w_snap_get(id, 1);
+    mc_sb s;
+    memset(&s, 0, sizeof(s));
+    char num[32];
+    if (r == NULL) {
+        mc_sb_s(&s, "0\t\t\t0");
+        return s.b == NULL ? mc_dup("0\t\t\t0") : s.b;
+    }
+    if (r->mask == 0) { /* fresh record: silent baseline (Java snap==null) */
+        mc_ws_set_str(&r->name, &r->mask, 1, name);
+        mc_ws_set_str(&r->user, &r->mask, 2, user);
+        r->photo = photo;
+        r->mask |= 4;
+        mc_sb_s(&s, "0\t\t\t0");
+        return s.b == NULL ? mc_dup("0\t\t\t0") : s.b;
+    }
+    int flags = 0;
+    const char *on = r->name == NULL ? "" : r->name;
+    const char *ou = r->user == NULL ? "" : r->user;
+    if (strcmp(name == NULL ? "" : name, on) != 0) flags |= 1;
+    if (strcmp(user == NULL ? "" : user, ou) != 0) flags |= 2;
+    if (photo != r->photo) flags |= 4;
+    snprintf(num, sizeof(num), "%d", flags);
+    mc_sb_s(&s, num);
+    char *e1 = mc_esc(on);
+    char *e2 = mc_esc(ou);
+    mc_sb_c(&s, '\t');
+    if (e1 != NULL) mc_sb_s(&s, e1);
+    mc_sb_c(&s, '\t');
+    if (e2 != NULL) mc_sb_s(&s, e2);
+    mc_sb_c(&s, '\t');
+    snprintf(num, sizeof(num), "%lld", (long long) r->photo);
+    mc_sb_s(&s, num);
+    free(e1);
+    free(e2);
+    if (flags & 1) mc_ws_set_str(&r->name, &r->mask, 1, name);
+    if (flags & 2) mc_ws_set_str(&r->user, &r->mask, 2, user);
+    if (flags & 4) r->photo = photo;
+    return s.b == NULL ? mc_dup("0\t\t\t0") : s.b;
+}
+
+/* bio/bday carry their own baseline flags (Java snap.has("bio")/has("bday"));
+ * who for these log rows is the snapshotted name, "" when unknown. */
+static char *mc_w_diff_full(jlong id, const char *bio, const char *bday) {
+    mc_ws *r = mc_w_snap_get(id, 1);
+    mc_sb s;
+    memset(&s, 0, sizeof(s));
+    char num[32];
+    if (r == NULL) return mc_dup("0\t\t\t");
+    int flags = 0;
+    const char *ob = (r->mask & 8) && r->bio != NULL ? r->bio : "";
+    const char *od = (r->mask & 16) && r->bday != NULL ? r->bday : "";
+    if ((r->mask & 8) && strcmp(bio == NULL ? "" : bio, r->bio == NULL ? "" : r->bio) != 0) flags |= 1;
+    if ((r->mask & 16) && strcmp(bday == NULL ? "" : bday, r->bday == NULL ? "" : r->bday) != 0) flags |= 2;
+    snprintf(num, sizeof(num), "%d", flags);
+    mc_sb_s(&s, num);
+    char *e1 = mc_esc(ob);
+    char *e2 = mc_esc(od);
+    char *e3 = mc_esc((r->mask & 1) && r->name != NULL ? r->name : "");
+    mc_sb_c(&s, '\t');
+    if (e1 != NULL) mc_sb_s(&s, e1);
+    mc_sb_c(&s, '\t');
+    if (e2 != NULL) mc_sb_s(&s, e2);
+    mc_sb_c(&s, '\t');
+    if (e3 != NULL) mc_sb_s(&s, e3);
+    free(e1);
+    free(e2);
+    free(e3);
+    if (!(r->mask & 8) || (flags & 1)) mc_ws_set_str(&r->bio, &r->mask, 8, bio);
+    if (!(r->mask & 16) || (flags & 2)) mc_ws_set_str(&r->bday, &r->mask, 16, bday);
+    return s.b == NULL ? mc_dup("0\t\t\t") : s.b;
+}
+
+static void mc_wl_free_item(mc_wl_item *it) {
+    free(it->who);
+    free(it->what);
+    free(it->oldv);
+    free(it->newv);
+    free(it->oldp);
+    free(it->newp);
+    it->who = it->what = it->oldv = it->newv = it->oldp = it->newp = NULL;
+}
+
+static void mc_wl_push(jlong t, jlong id, const char *what, const char *who,
+                       const char *oldv, const char *newv, const char *oldp,
+                       const char *newp, int head) {
+    if (!head && W_LL >= 150) return;
+    if (head && W_LL >= 150) {
+        mc_wl_free_item(&W_LOG[W_LL - 1]);
+        W_LL--;
+    }
+    if (!mc_grow((void **) &W_LOG, &W_LC, W_LL + 1, sizeof(mc_wl_item))) return;
+    mc_wl_item it;
+    it.t = t;
+    it.id = id;
+    it.who = mc_dup(who == NULL ? "" : who);
+    it.what = mc_dup(what == NULL ? "" : what);
+    it.oldv = mc_dup(oldv == NULL ? "" : oldv);
+    it.newv = mc_dup(newv == NULL ? "" : newv);
+    it.oldp = mc_dup(oldp == NULL ? "" : oldp);
+    it.newp = mc_dup(newp == NULL ? "" : newp);
+    if (head) {
+        if (W_LL > 0) memmove(W_LOG + 1, W_LOG, (size_t) W_LL * sizeof(mc_wl_item));
+        W_LOG[0] = it;
+    } else {
+        W_LOG[W_LL] = it;
+    }
+    W_LL++;
+}
+
+/* entry as escaped TSV: t \t id \t what \t who \t old \t new \t oldp \t newp */
+static char *mc_wl_line(int idx) {
+    if (idx < 0 || idx >= W_LL) return NULL;
+    mc_wl_item *it = &W_LOG[idx];
+    mc_sb s;
+    memset(&s, 0, sizeof(s));
+    char num[32];
+    snprintf(num, sizeof(num), "%lld", (long long) it->t);
+    mc_sb_s(&s, num);
+    mc_sb_c(&s, '\t');
+    snprintf(num, sizeof(num), "%lld", (long long) it->id);
+    mc_sb_s(&s, num);
+    const char *raw[6] = { it->what, it->who, it->oldv, it->newv, it->oldp, it->newp };
+    for (int i = 0; i < 6; i++) {
+        char *e = mc_esc(raw[i] == NULL ? "" : raw[i]);
+        mc_sb_c(&s, '\t');
+        if (e != NULL) mc_sb_s(&s, e);
+        free(e);
+    }
+    if (s.b == NULL) return mc_dup("");
+    return s.b;
+}
+
+static void mc_w_reset_all(void) {
+    free(W_ENTS);
+    W_ENTS = NULL;
+    W_EL = 0;
+    W_EC = 0;
+    for (int i = 0; i < W_SL; i++) mc_ws_free(&W_SNAP[i]);
+    free(W_SNAP);
+    W_SNAP = NULL;
+    W_SL = 0;
+    W_SC = 0;
+    for (int i = 0; i < W_LL; i++) mc_wl_free_item(&W_LOG[i]);
+    free(W_LOG);
+    W_LOG = NULL;
+    W_LL = 0;
+    W_LC = 0;
+}
+
+static int mc_w_load(const unsigned char seed[32], const char *blob) {
+    mc_w_reset_all();
+    W_LOADED = 1;
+    size_t n;
+    unsigned char *raw = mc_unseal(seed, 'W', blob, &n);
+    if (raw == NULL) return 0;
+    char *p = (char *) raw;
+    while (*p) {
+        char *nl = strchr(p, '\n');
+        if (nl != NULL) *nl = 0;
+        if (p[0] == 'E' && p[1] == '\t') {
+            char *cur = p + 2;
+            jlong id = (jlong) strtoll(mc_nextf(&cur), NULL, 10);
+            int on = atoi(mc_nextf(&cur));
+            if (mc_w_add(id)) W_ENTS[mc_w_find(id)].on = on ? 1 : 0;
+        } else if (p[0] == 'S' && p[1] == '\t') {
+            char *cur = p + 2;
+            jlong id = (jlong) strtoll(mc_nextf(&cur), NULL, 10);
+            unsigned mask = (unsigned) atoi(mc_nextf(&cur));
+            char *name = mc_nextf(&cur);
+            char *user = mc_nextf(&cur);
+            jlong photo = (jlong) strtoll(mc_nextf(&cur), NULL, 10);
+            char *bio = mc_nextf(&cur);
+            char *bday = mc_nextf(&cur);
+            mc_unesc(name);
+            mc_unesc(user);
+            mc_unesc(bio);
+            mc_unesc(bday);
+            mc_ws *r = mc_w_snap_get(id, 1);
+            if (r != NULL) {
+                mc_ws_set_str(&r->name, &r->mask, 1, name);
+                mc_ws_set_str(&r->user, &r->mask, 2, user);
+                r->photo = photo;
+                mc_ws_set_str(&r->bio, &r->mask, 8, bio);
+                mc_ws_set_str(&r->bday, &r->mask, 16, bday);
+                r->mask = mask; /* presence bits are authoritative */
+            }
+        } else if (p[0] == 'L' && p[1] == '\t') {
+            char *cur = p + 2;
+            jlong t = (jlong) strtoll(mc_nextf(&cur), NULL, 10);
+            jlong id = (jlong) strtoll(mc_nextf(&cur), NULL, 10);
+            char *what = mc_nextf(&cur);
+            char *who = mc_nextf(&cur);
+            char *oldv = mc_nextf(&cur);
+            char *newv = mc_nextf(&cur);
+            char *oldp = mc_nextf(&cur);
+            char *newp = mc_nextf(&cur);
+            mc_unesc(what);
+            mc_unesc(who);
+            mc_unesc(oldv);
+            mc_unesc(newv);
+            mc_unesc(oldp);
+            mc_unesc(newp);
+            mc_wl_push(t, id, what, who, oldv, newv, oldp, newp, 0);
+        }
+        if (nl == NULL) break;
+        p = nl + 1;
+    }
+    memset(raw, 0, n);
+    free(raw);
+    return 1;
+}
+
+static char *mc_w_blob(const unsigned char seed[32]) {
+    mc_sb s;
+    memset(&s, 0, sizeof(s));
+    char num[32];
+    for (int i = 0; i < W_EL; i++) {
+        mc_sb_s(&s, "E\t");
+        snprintf(num, sizeof(num), "%lld", (long long) W_ENTS[i].id);
+        mc_sb_s(&s, num);
+        mc_sb_c(&s, '\t');
+        mc_sb_c(&s, W_ENTS[i].on ? '1' : '0');
+        mc_sb_c(&s, '\n');
+    }
+    for (int i = 0; i < W_SL; i++) {
+        mc_ws *r = &W_SNAP[i];
+        char *en = mc_esc(r->name == NULL ? "" : r->name);
+        char *eu = mc_esc(r->user == NULL ? "" : r->user);
+        char *eb = mc_esc(r->bio == NULL ? "" : r->bio);
+        char *ed = mc_esc(r->bday == NULL ? "" : r->bday);
+        if (en == NULL || eu == NULL || eb == NULL || ed == NULL) {
+            free(en); free(eu); free(eb); free(ed);
+            continue;
+        }
+        mc_sb_s(&s, "S\t");
+        snprintf(num, sizeof(num), "%lld", (long long) r->id);
+        mc_sb_s(&s, num);
+        mc_sb_c(&s, '\t');
+        snprintf(num, sizeof(num), "%u", r->mask);
+        mc_sb_s(&s, num);
+        mc_sb_c(&s, '\t');
+        mc_sb_s(&s, en);
+        mc_sb_c(&s, '\t');
+        mc_sb_s(&s, eu);
+        mc_sb_c(&s, '\t');
+        snprintf(num, sizeof(num), "%lld", (long long) r->photo);
+        mc_sb_s(&s, num);
+        mc_sb_c(&s, '\t');
+        mc_sb_s(&s, eb);
+        mc_sb_c(&s, '\t');
+        mc_sb_s(&s, ed);
+        mc_sb_c(&s, '\n');
+        free(en); free(eu); free(eb); free(ed);
+    }
+    for (int i = 0; i < W_LL; i++) {
+        char *line = mc_wl_line(i);
+        if (line == NULL) continue;
+        mc_sb_c(&s, 'L');
+        mc_sb_c(&s, '\t');
+        mc_sb_s(&s, line);
+        mc_sb_c(&s, '\n');
+        free(line);
+    }
+    if (s.b == NULL) {
+        s.b = mc_dup("");
+        s.len = 0;
+        s.cap = 1;
+    }
+    char *blob = mc_seal(seed, 'W', (const unsigned char *) (s.b == NULL ? "" : s.b), s.len);
+    if (s.b != NULL) {
+        memset(s.b, 0, s.cap);
+        free(s.b);
+    }
+    return blob;
+}
+
+/* instant-alert switch gate + per-person 5 s throttle; the mark lands on
+ * pass, so a spam burst notifies once (the LOG is never throttled). */
+static int mc_w_msg_pass(jlong id, jlong nowMs, int enabled) {
+    if (!enabled) return 0;
+    jlong last = mc_mark_get(W_MARK, 256, id);
+    if (last != 0 && nowMs - last < 5000) return 0;
+    mc_mark_put(W_MARK, 256, id, nowMs);
+    return 1;
+}
+
+/* ---- Activity Stats: decision layer (bounds, dry policy, hourly) ---------- */
+
+static int AS_H[24];
+static int AS_H_HAS;
+
+typedef struct { jlong id, sec; int dry; } mc_as_d;
+
+static mc_as_d *AS_D;
+static int AS_DL, AS_DC;
+
+static void mc_as_reset(void) {
+    memset(AS_H, 0, sizeof(AS_H));
+    AS_H_HAS = 0;
+    free(AS_D);
+    AS_D = NULL;
+    AS_DL = 0;
+    AS_DC = 0;
+}
+
+/* Java: seen.add(uid) consumes the dedup slot BEFORE the out check - the
+ * first row for a dialog wins, even when it is an outgoing one. */
+static void mc_as_dry_feed(jlong uid, jlong sec, jint out) {
+    for (int i = 0; i < AS_DL; i++) {
+        if (AS_D[i].id == uid) return;
+    }
+    if (!mc_grow((void **) &AS_D, &AS_DC, AS_DL + 1, sizeof(mc_as_d))) return;
+    AS_D[AS_DL].id = uid;
+    AS_D[AS_DL].sec = sec;
+    AS_D[AS_DL].dry = out == 0 ? 1 : 0;
+    AS_DL++;
+}
+
+static int mc_as_dry_cmp(const void *a, const void *b) {
+    const mc_as_d *x = (const mc_as_d *) a, *y = (const mc_as_d *) b;
+    if (x->dry != y->dry) return y->dry - x->dry;         /* dry rows first    */
+    if (x->sec > y->sec) return -1;                        /* freshest first    */
+    if (x->sec < y->sec) return 1;
+    return 0;
+}
+
+static void mc_as_dry_sort(void) {
+    qsort(AS_D, (size_t) AS_DL, sizeof(mc_as_d), mc_as_dry_cmp);
+}
+
+/* "midnightLocal\tweek(7d)\tmonth(30d)" in epoch seconds; mktime handles
+ * the local zone exactly like the old Calendar code. */
+static char *mc_as_bounds(jlong nowMs) {
+    time_t t = (time_t) (nowMs / 1000);
+    struct tm tmv;
+    memset(&tmv, 0, sizeof(tmv));
+    if (localtime_r(&t, &tmv) == NULL) return NULL;
+    tmv.tm_hour = 0;
+    tmv.tm_min = 0;
+    tmv.tm_sec = 0;
+    time_t mid = mktime(&tmv);
+    jlong nowSec = nowMs / 1000;
+    char buf[96];
+    snprintf(buf, sizeof(buf), "%lld\t%lld\t%lld", (long long) mid,
+             (long long) (nowSec - 7LL * 86400LL), (long long) (nowSec - 30LL * 86400LL));
+    return mc_dup(buf);
+}
+
+/* ================= JNI surface (thin locked wrappers) ====================== */
+
+static jstring mc_js(JNIEnv *env, char *malloced) {
+    if (malloced == NULL) return NULL;
+    jstring r = (*env)->NewStringUTF(env, malloced);
+    memset(malloced, 0, strlen(malloced));
+    free(malloced);
+    return r;
+}
+
+JNIEXPORT jint JNICALL MC_CLASS(nSfCount)(JNIEnv *env, jclass c) {
+    (void) env; (void) c;
+    return 5;
+}
+
+JNIEXPORT jstring JNICALL MC_CLASS(nSfTitleKeyAt)(JNIEnv *env, jclass c, jint idx) {
+    (void) c;
+    char buf[64];
+    if (idx < 0 || idx > 4) return NULL;
+    mc_unemo(buf, MC_SF[idx].tk);
+    return mc_js(env, mc_dup(buf));
+}
+
+JNIEXPORT jstring JNICALL MC_CLASS(nSfRuleKeyAt)(JNIEnv *env, jclass c, jint idx) {
+    (void) c;
+    char buf[64];
+    if (idx < 0 || idx > 4) return NULL;
+    mc_unemo(buf, MC_SF[idx].rk);
+    return mc_js(env, mc_dup(buf));
+}
+
+JNIEXPORT jstring JNICALL MC_CLASS(nSfEmoticonAt)(JNIEnv *env, jclass c, jint idx) {
+    (void) c;
+    char buf[16];
+    if (idx < 0 || idx > 4) return NULL;
+    mc_unemo(buf, MC_SF[idx].emo);
+    return mc_js(env, mc_dup(buf));
+}
+
+JNIEXPORT jint JNICALL MC_CLASS(nSfFlagsAt)(JNIEnv *env, jclass c, jint idx) {
+    (void) env; (void) c;
+    if (idx < 0 || idx > 4) return 0;
+    return (jint) MC_SF[idx].flags;
+}
+
+JNIEXPORT jint JNICALL MC_CLASS(nSfColorAt)(JNIEnv *env, jclass c, jint idx) {
+    (void) env; (void) c;
+    if (idx < 0 || idx > 4) return 0;
+    return (jint) MC_SF[idx].color;
+}
+
+JNIEXPORT jboolean JNICALL MC_CLASS(nSfTitleEq)(JNIEnv *env, jclass c, jstring a, jstring b) {
+    (void) c;
+    char *x = mc_utf(env, a);
+    char *y = mc_utf(env, b);
+    jboolean r = (x != NULL && y != NULL && mc_sf_title_eq(x, y)) ? JNI_TRUE : JNI_FALSE;
+    free(x);
+    free(y);
+    return r;
+}
+
+/* ---- delete hunter ---- */
+
+JNIEXPORT jint JNICALL MC_CLASS(nDhLoad)(JNIEnv *env, jclass c, jstring blob) {
+    (void) c;
+    pthread_mutex_lock(&mc_mu);
+    unsigned char seed[32];
+    int ok = mc_seed(env, seed);
+    char *b = ok ? mc_utf(env, blob) : NULL;
+    jint r = ok ? (jint) mc_dh_load(seed, b) : 0;
+    free(b);
+    memset(seed, 0, 32);
+    pthread_mutex_unlock(&mc_mu);
+    return r;
+}
+
+JNIEXPORT jstring JNICALL MC_CLASS(nDhBlob)(JNIEnv *env, jclass c) {
+    (void) c;
+    pthread_mutex_lock(&mc_mu);
+    unsigned char seed[32];
+    if (!mc_seed(env, seed)) {
+        pthread_mutex_unlock(&mc_mu);
+        return NULL;
+    }
+    char *b = mc_dh_blob(seed);
+    memset(seed, 0, 32);
+    pthread_mutex_unlock(&mc_mu);
+    return mc_js(env, b);
+}
+
+/* head=0 import keeps legacy order; head=1 is the runtime newest-first put */
+JNIEXPORT void JNICALL MC_CLASS(nDhAdd)(JNIEnv *env, jclass c, jlong t, jlong id,
+                                        jstring kind, jstring who, jstring oldv,
+                                        jstring newv, jint head) {
+    (void) c;
+    char *k = mc_utf(env, kind);
+    char *w = mc_utf(env, who);
+    char *o = mc_utf(env, oldv);
+    char *nw = mc_utf(env, newv);
+    pthread_mutex_lock(&mc_mu);
+    mc_dh_push(t, id, k, w, o, nw, head);
+    pthread_mutex_unlock(&mc_mu);
+    free(k); free(w); free(o); free(nw);
+}
+
+JNIEXPORT jint JNICALL MC_CLASS(nDhCount)(JNIEnv *env, jclass c) {
+    (void) env; (void) c;
+    pthread_mutex_lock(&mc_mu);
+    jint r = DH_LEN;
+    pthread_mutex_unlock(&mc_mu);
+    return r;
+}
+
+JNIEXPORT jstring JNICALL MC_CLASS(nDhAt)(JNIEnv *env, jclass c, jint idx) {
+    (void) c;
+    pthread_mutex_lock(&mc_mu);
+    char *line = mc_dh_line(idx);
+    pthread_mutex_unlock(&mc_mu);
+    return mc_js(env, line);
+}
+
+JNIEXPORT void JNICALL MC_CLASS(nDhClear)(JNIEnv *env, jclass c) {
+    (void) env; (void) c;
+    pthread_mutex_lock(&mc_mu);
+    mc_dh_reset();
+    pthread_mutex_unlock(&mc_mu);
+}
+
+JNIEXPORT jstring JNICALL MC_CLASS(nDhKey)(JNIEnv *env, jclass c, jlong t, jlong id,
+                                           jstring kind, jstring oldv) {
+    (void) c;
+    char *k = mc_utf(env, kind);
+    char *o = mc_utf(env, oldv);
+    pthread_mutex_lock(&mc_mu);
+    char *key = mc_dh_key(t, id, k, o);
+    pthread_mutex_unlock(&mc_mu);
+    free(k);
+    free(o);
+    return mc_js(env, key);
+}
+
+JNIEXPORT jint JNICALL MC_CLASS(nDhRemove)(JNIEnv *env, jclass c, jstring keys) {
+    (void) c;
+    char *ks = mc_utf(env, keys);
+    pthread_mutex_lock(&mc_mu);
+    jint r = (jint) mc_dh_remove(ks);
+    pthread_mutex_unlock(&mc_mu);
+    free(ks);
+    return r;
+}
+
+/* gate 2 of the Java captureCheck (master switch stays a Java config read):
+ * real content, not outgoing, sender known and not us. */
+JNIEXPORT jboolean JNICALL MC_CLASS(nDhCapture)(JNIEnv *env, jclass c, jint out,
+                                                jint hasAction, jlong fromUid, jlong selfId) {
+    (void) env; (void) c;
+    if (out != 0 || hasAction != 0) return JNI_FALSE;
+    if (fromUid == 0 || fromUid == selfId) return JNI_FALSE;
+    return JNI_TRUE;
+}
+
+/* ---- watch ---- */
+
+JNIEXPORT jint JNICALL MC_CLASS(nWLoad)(JNIEnv *env, jclass c, jstring blob) {
+    (void) c;
+    pthread_mutex_lock(&mc_mu);
+    unsigned char seed[32];
+    int ok = mc_seed(env, seed);
+    char *b = ok ? mc_utf(env, blob) : NULL;
+    jint r = ok ? (jint) mc_w_load(seed, b) : 0;
+    free(b);
+    memset(seed, 0, 32);
+    pthread_mutex_unlock(&mc_mu);
+    return r;
+}
+
+JNIEXPORT jstring JNICALL MC_CLASS(nWBlob)(JNIEnv *env, jclass c) {
+    (void) c;
+    pthread_mutex_lock(&mc_mu);
+    unsigned char seed[32];
+    if (!mc_seed(env, seed)) {
+        pthread_mutex_unlock(&mc_mu);
+        return NULL;
+    }
+    char *b = mc_w_blob(seed);
+    memset(seed, 0, 32);
+    pthread_mutex_unlock(&mc_mu);
+    return mc_js(env, b);
+}
+
+JNIEXPORT jboolean JNICALL MC_CLASS(nWAdd)(JNIEnv *env, jclass c, jlong id) {
+    (void) env; (void) c;
+    pthread_mutex_lock(&mc_mu);
+    jboolean r = mc_w_add(id) ? JNI_TRUE : JNI_FALSE;
+    pthread_mutex_unlock(&mc_mu);
+    return r;
+}
+
+JNIEXPORT void JNICALL MC_CLASS(nWRemove)(JNIEnv *env, jclass c, jlong id) {
+    (void) env; (void) c;
+    pthread_mutex_lock(&mc_mu);
+    mc_w_remove(id);
+    pthread_mutex_unlock(&mc_mu);
+}
+
+JNIEXPORT void JNICALL MC_CLASS(nWSetOn)(JNIEnv *env, jclass c, jlong id, jint on) {
+    (void) env; (void) c;
+    pthread_mutex_lock(&mc_mu);
+    int i = mc_w_find(id);
+    if (i >= 0) W_ENTS[i].on = on != 0 ? 1 : 0;
+    pthread_mutex_unlock(&mc_mu);
+}
+
+JNIEXPORT jboolean JNICALL MC_CLASS(nWIsWatched)(JNIEnv *env, jclass c, jlong id) {
+    (void) env; (void) c;
+    pthread_mutex_lock(&mc_mu);
+    jboolean r = mc_w_find(id) >= 0 ? JNI_TRUE : JNI_FALSE;
+    pthread_mutex_unlock(&mc_mu);
+    return r;
+}
+
+JNIEXPORT jboolean JNICALL MC_CLASS(nWIsOn)(JNIEnv *env, jclass c, jlong id) {
+    (void) env; (void) c;
+    pthread_mutex_lock(&mc_mu);
+    int i = mc_w_find(id);
+    jboolean r = (i >= 0 && W_ENTS[i].on) ? JNI_TRUE : JNI_FALSE;
+    pthread_mutex_unlock(&mc_mu);
+    return r;
+}
+
+JNIEXPORT jint JNICALL MC_CLASS(nWCount)(JNIEnv *env, jclass c) {
+    (void) env; (void) c;
+    pthread_mutex_lock(&mc_mu);
+    jint r = W_EL;
+    pthread_mutex_unlock(&mc_mu);
+    return r;
+}
+
+JNIEXPORT jlong JNICALL MC_CLASS(nWEntryIdAt)(JNIEnv *env, jclass c, jint idx) {
+    (void) env; (void) c;
+    pthread_mutex_lock(&mc_mu);
+    jlong r = (idx < 0 || idx >= W_EL) ? 0 : W_ENTS[idx].id;
+    pthread_mutex_unlock(&mc_mu);
+    return r;
+}
+
+JNIEXPORT jboolean JNICALL MC_CLASS(nWEntryOnAt)(JNIEnv *env, jclass c, jint idx) {
+    (void) env; (void) c;
+    pthread_mutex_lock(&mc_mu);
+    jboolean r = (idx < 0 || idx >= W_EL) ? JNI_FALSE : (W_ENTS[idx].on ? JNI_TRUE : JNI_FALSE);
+    pthread_mutex_unlock(&mc_mu);
+    return r;
+}
+
+/* legacy snapshot import: mask presence bits authoritative (has() parity) */
+JNIEXPORT void JNICALL MC_CLASS(nWSnapImport)(JNIEnv *env, jclass c, jlong id, jint mask,
+                                              jstring name, jstring user, jlong photo,
+                                              jstring bio, jstring bday) {
+    (void) c;
+    char *n = mc_utf(env, name);
+    char *u = mc_utf(env, user);
+    char *b = mc_utf(env, bio);
+    char *d = mc_utf(env, bday);
+    pthread_mutex_lock(&mc_mu);
+    mc_ws *r = mc_w_snap_get(id, 1);
+    if (r != NULL) {
+        mc_ws_set_str(&r->name, &r->mask, 1, n);
+        mc_ws_set_str(&r->user, &r->mask, 2, u);
+        r->photo = photo;
+        mc_ws_set_str(&r->bio, &r->mask, 8, b);
+        mc_ws_set_str(&r->bday, &r->mask, 16, d);
+        r->mask = (unsigned) mask;
+    }
+    pthread_mutex_unlock(&mc_mu);
+    free(n); free(u); free(b); free(d);
+}
+
+/* pack: flags \t oldName \t oldUser \t oldPhotoId (record already merged) */
+JNIEXPORT jstring JNICALL MC_CLASS(nWDiffUser)(JNIEnv *env, jclass c, jlong id,
+                                               jstring name, jstring user, jlong photo) {
+    (void) c;
+    char *n = mc_utf(env, name);
+    char *u = mc_utf(env, user);
+    pthread_mutex_lock(&mc_mu);
+    char *pack = mc_w_diff_user(id, n, u, photo);
+    pthread_mutex_unlock(&mc_mu);
+    free(n);
+    free(u);
+    return mc_js(env, pack);
+}
+
+/* pack: flags \t oldBio \t oldBday \t whoName (record already merged) */
+JNIEXPORT jstring JNICALL MC_CLASS(nWDiffFull)(JNIEnv *env, jclass c, jlong id,
+                                               jstring bio, jstring bday) {
+    (void) c;
+    char *b = mc_utf(env, bio);
+    char *d = mc_utf(env, bday);
+    pthread_mutex_lock(&mc_mu);
+    char *pack = mc_w_diff_full(id, b, d);
+    pthread_mutex_unlock(&mc_mu);
+    free(b);
+    free(d);
+    return mc_js(env, pack);
+}
+
+/* head=1 runtime put; head=0 legacy import (order kept, cap enforced) */
+JNIEXPORT void JNICALL MC_CLASS(nWLogAdd)(JNIEnv *env, jclass c, jlong t, jlong id,
+                                          jstring what, jstring who, jstring oldv,
+                                          jstring newv, jstring oldp, jstring newp, jint head) {
+    (void) c;
+    char *wt = mc_utf(env, what);
+    char *wo = mc_utf(env, who);
+    char *ov = mc_utf(env, oldv);
+    char *nv = mc_utf(env, newv);
+    char *op = mc_utf(env, oldp);
+    char *np = mc_utf(env, newp);
+    pthread_mutex_lock(&mc_mu);
+    mc_wl_push(t, id, wt, wo, ov, nv, op, np, head);
+    pthread_mutex_unlock(&mc_mu);
+    free(wt); free(wo); free(ov); free(nv); free(op); free(np);
+}
+
+JNIEXPORT jint JNICALL MC_CLASS(nWLogCount)(JNIEnv *env, jclass c) {
+    (void) env; (void) c;
+    pthread_mutex_lock(&mc_mu);
+    jint r = W_LL;
+    pthread_mutex_unlock(&mc_mu);
+    return r;
+}
+
+JNIEXPORT jstring JNICALL MC_CLASS(nWLogAt)(JNIEnv *env, jclass c, jint idx) {
+    (void) c;
+    pthread_mutex_lock(&mc_mu);
+    char *line = mc_wl_line(idx);
+    pthread_mutex_unlock(&mc_mu);
+    return mc_js(env, line);
+}
+
+JNIEXPORT void JNICALL MC_CLASS(nWLogClear)(JNIEnv *env, jclass c) {
+    (void) env; (void) c;
+    pthread_mutex_lock(&mc_mu);
+    for (int i = 0; i < W_LL; i++) mc_wl_free_item(&W_LOG[i]);
+    free(W_LOG);
+    W_LOG = NULL;
+    W_LL = 0;
+    W_LC = 0;
+    pthread_mutex_unlock(&mc_mu);
+}
+
+JNIEXPORT jboolean JNICALL MC_CLASS(nWMsgNotifyPass)(JNIEnv *env, jclass c, jlong id,
+                                                     jlong nowMs, jint enabled) {
+    (void) env; (void) c;
+    pthread_mutex_lock(&mc_mu);
+    jboolean r = mc_w_msg_pass(id, nowMs, enabled) ? JNI_TRUE : JNI_FALSE;
+    pthread_mutex_unlock(&mc_mu);
+    return r;
+}
+
+/* ---- activity stats decisions ---- */
+
+JNIEXPORT void JNICALL MC_CLASS(nAsReset)(JNIEnv *env, jclass c) {
+    (void) env; (void) c;
+    pthread_mutex_lock(&mc_mu);
+    mc_as_reset();
+    pthread_mutex_unlock(&mc_mu);
+}
+
+/* "midnightLocal\tweek\tmonth" epoch seconds (device-local midnight) */
+JNIEXPORT jstring JNICALL MC_CLASS(nAsBounds)(JNIEnv *env, jclass c, jlong nowMs) {
+    (void) c;
+    pthread_mutex_lock(&mc_mu);
+    char *b = mc_as_bounds(nowMs);
+    pthread_mutex_unlock(&mc_mu);
+    return mc_js(env, b);
+}
+
+JNIEXPORT void JNICALL MC_CLASS(nAsSetHour)(JNIEnv *env, jclass c, jint h, jint count) {
+    (void) env; (void) c;
+    pthread_mutex_lock(&mc_mu);
+    if (h >= 0 && h < 24) {
+        AS_H[h] = (int) count;
+        if (count > 0) AS_H_HAS = 1;
+    }
+    pthread_mutex_unlock(&mc_mu);
+}
+
+JNIEXPORT jint JNICALL MC_CLASS(nAsHourAt)(JNIEnv *env, jclass c, jint h) {
+    (void) env; (void) c;
+    if (h < 0 || h > 23) return 0;
+    pthread_mutex_lock(&mc_mu);
+    jint r = AS_H[h];
+    pthread_mutex_unlock(&mc_mu);
+    return r;
+}
+
+JNIEXPORT jboolean JNICALL MC_CLASS(nAsHasHourly)(JNIEnv *env, jclass c) {
+    (void) env; (void) c;
+    pthread_mutex_lock(&mc_mu);
+    jboolean r = AS_H_HAS ? JNI_TRUE : JNI_FALSE;
+    pthread_mutex_unlock(&mc_mu);
+    return r;
+}
+
+JNIEXPORT void JNICALL MC_CLASS(nAsDryFeed)(JNIEnv *env, jclass c, jlong uid,
+                                            jlong lastSec, jint out) {
+    (void) env; (void) c;
+    pthread_mutex_lock(&mc_mu);
+    mc_as_dry_feed(uid, lastSec, out);
+    pthread_mutex_unlock(&mc_mu);
+}
+
+/* sorts dry-first/freshest-first, then reports the dry (owed-reply) count */
+JNIEXPORT jint JNICALL MC_CLASS(nAsDryCount)(JNIEnv *env, jclass c) {
+    (void) env; (void) c;
+    pthread_mutex_lock(&mc_mu);
+    mc_as_dry_sort();
+    int r = 0;
+    for (int i = 0; i < AS_DL; i++) {
+        if (AS_D[i].dry) r++;
+    }
+    pthread_mutex_unlock(&mc_mu);
+    return r;
+}
+
+/* top rows only (max 5): the freshest waits. i beyond the dry run = 0/0 */
+JNIEXPORT jlong JNICALL MC_CLASS(nAsDryTopIdAt)(JNIEnv *env, jclass c, jint idx) {
+    (void) env; (void) c;
+    pthread_mutex_lock(&mc_mu);
+    jlong r = 0;
+    int drySeen = 0, pos = 0;
+    for (int i = 0; i < AS_DL && drySeen < 5; i++) {
+        if (!AS_D[i].dry) break; /* sorted: dry rows lead */
+        if (pos++ == idx) { r = AS_D[i].id; }
+        drySeen++;
+    }
+    pthread_mutex_unlock(&mc_mu);
+    return r;
+}
+
+JNIEXPORT jlong JNICALL MC_CLASS(nAsDryTopSecAt)(JNIEnv *env, jclass c, jint idx) {
+    (void) env; (void) c;
+    pthread_mutex_lock(&mc_mu);
+    jlong r = 0;
+    int drySeen = 0, pos = 0;
+    for (int i = 0; i < AS_DL && drySeen < 5; i++) {
+        if (!AS_D[i].dry) break;
+        if (pos++ == idx) { r = AS_D[i].sec; }
+        drySeen++;
+    }
+    pthread_mutex_unlock(&mc_mu);
+    return r;
+}
+
 JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved) {
     (void) vm; (void) reserved;
     return JNI_VERSION_1_6;

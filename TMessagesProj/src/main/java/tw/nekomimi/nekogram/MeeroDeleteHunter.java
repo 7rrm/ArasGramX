@@ -38,12 +38,22 @@ import java.util.ArrayList;
  * capped at 150). Own messages and service messages are never captured.
  * Off by default? No - passive notification feature, master switch lives on
  * the screen; while off the behavior is exactly stock.
+ *
+ * v185 (batch 2C): the hunter log is the most sensitive store on the device
+ * (a forensic record of what people tried to erase), so its heart moved
+ * into libmeerocore: the 150-cap newest-first ring, the removal key machine
+ * (Java-hashCode parity computed on UTF-16 units) and the capture gate run
+ * natively, and the log persists as an opaque seed-sealed blob - a prefs
+ * dump no longer shows whoever deleted what. Legacy JSON is imported once
+ * and its plaintext dropped. Java keeps the Ayu handshake, name lookups and
+ * the system notification, plus the byte-identical legacy fallback.
  */
 public final class MeeroDeleteHunter {
 
     private MeeroDeleteHunter() {}
 
     private static final String CHANNEL_ID = "meero_hunter";
+    private static volatile boolean nativeLoaded;
 
     public static final class LogItem {
         public long t;
@@ -69,6 +79,28 @@ public final class MeeroDeleteHunter {
     }
 
     public static synchronized ArrayList<LogItem> getLog() {
+        if (MeeroCore.ready()) {
+            ensureNativeLoaded();
+            ArrayList<LogItem> out = new ArrayList<>();
+            int n = MeeroCore.nDhCount();
+            for (int i = 0; i < n; i++) {
+                String line = MeeroCore.nDhAt(i);
+                if (line == null) continue;
+                String[] f = line.split("\t", -1);
+                if (f.length < 6) continue;
+                LogItem li = new LogItem();
+                try {
+                    li.t = Long.parseLong(f[0]);
+                    li.id = Long.parseLong(f[1]);
+                } catch (Throwable ignore) { continue; }
+                li.kind = unesc(f[2]);
+                li.who = unesc(f[3]);
+                li.oldValue = unesc(f[4]);
+                li.newValue = unesc(f[5]);
+                out.add(li);
+            }
+            return out;
+        }
         ArrayList<LogItem> out = new ArrayList<>();
         JSONArray array = readLog();
         for (int i = 0; i < array.length(); i++) {
@@ -87,20 +119,44 @@ public final class MeeroDeleteHunter {
     }
 
     public static synchronized void clearLog() {
+        if (MeeroCore.ready()) {
+            ensureNativeLoaded();
+            MeeroCore.nDhClear();
+            persistNative();
+            return;
+        }
         writeLog(new JSONArray());
     }
 
     // v104: multi-select removal. Keys are stable across sessions: a deleted
     // entry is identified by its time + sender + kind + original-text hash,
     // NOT by its position (new events may arrive while the user is picking).
+    // v185: the key is minted natively (UTF-16 hashCode parity).
     public static String keyOf(LogItem li) {
         if (li == null) return "";
+        if (MeeroCore.ready()) {
+            ensureNativeLoaded();
+            String k = MeeroCore.nDhKey(li.t, li.id, li.kind, li.oldValue);
+            if (k != null) return k;
+        }
         return li.t + "_" + li.id + "_" + li.kind + "_" + li.oldValue.hashCode();
     }
 
     /** Removes every log entry whose key is in the set. Returns the count. */
     public static synchronized int removeFromLog(java.util.HashSet<String> keys) {
         if (keys == null || keys.isEmpty()) return 0;
+        if (MeeroCore.ready()) {
+            ensureNativeLoaded();
+            StringBuilder sb = new StringBuilder();
+            for (String k : keys) {
+                if (k == null || k.isEmpty()) continue;
+                if (sb.length() > 0) sb.append('\n');
+                sb.append(k);
+            }
+            int removed = MeeroCore.nDhRemove(sb.toString());
+            persistNative();
+            return removed;
+        }
         JSONArray array = readLog();
         JSONArray out = new JSONArray();
         int removed = 0;
@@ -151,10 +207,16 @@ public final class MeeroDeleteHunter {
     /** Gates: master switch, content message, not own/outgoing message. */
     private static boolean captureCheck(int account, TLRPC.Message msg) {
         if (!NekoConfig.meeroDeleteHunter.Bool()) return false;
-        if (msg == null || msg.action != null) return false;
+        if (msg == null) return false;
+        long self = UserConfig.getInstance(account).getClientUserId();
+        if (MeeroCore.ready()) {
+            // v185 (batch 2C): the capture decision lives in libmeerocore
+            return MeeroCore.nDhCapture(msg.out ? 1 : 0, msg.action != null ? 1 : 0,
+                    msg.from_id == null ? 0 : msg.from_id.user_id, self);
+        }
+        if (msg.action != null) return false;
         if (msg.out) return false; // only the OTHER side's messages
         if (msg.from_id == null) return false;
-        long self = UserConfig.getInstance(account).getClientUserId();
         return msg.from_id.user_id != self;
     }
 
@@ -187,6 +249,16 @@ public final class MeeroDeleteHunter {
 
     private static synchronized void addLog(int account, long senderId, String kind, String oldValue, String newValue) {
         String who = nameOf(account, senderId);
+        if (MeeroCore.ready()) {
+            // v185 (batch 2C): head insert + 150 cap + sealed persistence,
+            // all inside libmeerocore
+            ensureNativeLoaded();
+            MeeroCore.nDhAdd(System.currentTimeMillis() / 1000L, senderId, kind, who,
+                    oldValue == null ? "" : oldValue, newValue == null ? "" : newValue, 1);
+            persistNative();
+            notifyEvent(who, kind);
+            return;
+        }
         try {
             JSONObject o = new JSONObject();
             o.put("t", System.currentTimeMillis() / 1000L);
@@ -205,6 +277,60 @@ public final class MeeroDeleteHunter {
             writeLog(out);
         } catch (Throwable ignore) {}
         notifyEvent(who, kind);
+    }
+
+    // --- v185 (batch 2C): native store lifecycle ---------------------------
+
+    /** One-shot per process: decrypt the sealed hunter log into native
+     *  memory. On a fresh/tampered blob the legacy JSON key is imported once
+     *  (newest-first order preserved), the sealed store is written, and the
+     *  plaintext key is dropped. */
+    private static synchronized void ensureNativeLoaded() {
+        if (nativeLoaded || !MeeroCore.ready()) return;
+        nativeLoaded = true;
+        String blob = NekoConfig.meeroDeleteStore.String();
+        int r = MeeroCore.nDhLoad(TextUtils.isEmpty(blob) ? null : blob);
+        if (r != 1) {
+            JSONArray array = readLog();
+            for (int i = 0; i < array.length(); i++) {
+                JSONObject o = array.optJSONObject(i);
+                if (o == null) continue;
+                MeeroCore.nDhAdd(o.optLong("t"), o.optLong("id"),
+                        o.optString("kind", ""), o.optString("who", ""),
+                        o.optString("old", ""), o.optString("new", ""), 0);
+            }
+            persistNative();
+        }
+        if (!TextUtils.isEmpty(NekoConfig.meeroDeleteLog.String())) {
+            NekoConfig.meeroDeleteLog.setConfigString("");
+        }
+    }
+
+    private static void persistNative() {
+        if (!MeeroCore.ready()) return;
+        String blob = MeeroCore.nDhBlob();
+        if (!TextUtils.isEmpty(blob)) {
+            NekoConfig.meeroDeleteStore.setConfigString(blob);
+        }
+    }
+
+    /** Inverts the native TSV escaping (%25 %09 %0A %0D) left to right. */
+    private static String unesc(String s) {
+        if (s == null || s.indexOf('%') < 0) return s == null ? "" : s;
+        StringBuilder out = new StringBuilder(s.length());
+        for (int i = 0; i < s.length();) {
+            char c = s.charAt(i);
+            if (c == '%' && i + 2 < s.length()) {
+                String h = s.substring(i + 1, i + 3);
+                if ("25".equals(h)) { out.append('%'); i += 3; continue; }
+                if ("09".equals(h)) { out.append('\t'); i += 3; continue; }
+                if ("0A".equalsIgnoreCase(h)) { out.append('\n'); i += 3; continue; }
+                if ("0D".equalsIgnoreCase(h)) { out.append('\r'); i += 3; continue; }
+            }
+            out.append(c);
+            i++;
+        }
+        return out.toString();
     }
 
     public static String kindText(String kind) {

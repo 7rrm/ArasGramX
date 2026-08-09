@@ -49,12 +49,23 @@ import java.util.concurrent.ConcurrentHashMap;
  * changed or sent under the user's name. Engine attaches in
  * Application.onCreate to every account slot (v100 timing-safe pattern);
  * the master switch is checked per event.
+ *
+ * v185 (batch 2C): the watcher's three brains moved into libmeerocore - the
+ * watch list, the snapshot differ (baseline-vs-change machine for name /
+ * username / photo / bio / birthday, with the exact silent-baseline rules)
+ * and the 150-cap change log, all persisted as one opaque seed-sealed blob;
+ * the message-tracking instant-alert throttle runs natively too. A prefs
+ * dump no longer reveals who is watched or what changed. Legacy JSON keys
+ * are imported once (order + has() presence semantics preserved) and their
+ * plaintext dropped. Java keeps observers, periodic refresh, photo caching,
+ * detail strings and system notifications, plus legacy fallbacks.
  */
 public final class MeeroWatch {
 
     private MeeroWatch() {}
 
     private static final String CHANNEL_ID = "meero_watch";
+    private static volatile boolean nativeLoaded;
 
     // v111: message tracking - one notification per person per 5 seconds at
     // most; the LOG still records every single message.
@@ -118,6 +129,18 @@ public final class MeeroWatch {
     // ---------------- public list API ----------------
 
     public static synchronized ArrayList<Entry> getEntries() {
+        if (MeeroCore.ready()) {
+            ensureNativeLoaded();
+            ArrayList<Entry> out = new ArrayList<>();
+            int n = MeeroCore.nWCount();
+            for (int i = 0; i < n; i++) {
+                Entry e = new Entry();
+                e.id = MeeroCore.nWEntryIdAt(i);
+                e.on = MeeroCore.nWEntryOnAt(i);
+                out.add(e);
+            }
+            return out;
+        }
         ArrayList<Entry> out = new ArrayList<>();
         JSONArray array = readList();
         for (int i = 0; i < array.length(); i++) {
@@ -132,16 +155,28 @@ public final class MeeroWatch {
     }
 
     public static int count() {
+        if (MeeroCore.ready()) {
+            ensureNativeLoaded();
+            return MeeroCore.nWCount();
+        }
         return getEntries().size();
     }
 
     public static boolean isWatched(long id) {
+        if (MeeroCore.ready()) {
+            ensureNativeLoaded();
+            return MeeroCore.nWIsWatched(id);
+        }
         ArrayList<Entry> entries = getEntries();
         for (Entry e : entries) if (e.id == id) return true;
         return false;
     }
 
     private static boolean isOn(long id) {
+        if (MeeroCore.ready()) {
+            ensureNativeLoaded();
+            return MeeroCore.nWIsOn(id);
+        }
         ArrayList<Entry> entries = getEntries();
         for (Entry e : entries) if (e.id == id) return e.on;
         return false;
@@ -149,6 +184,12 @@ public final class MeeroWatch {
 
     /** Returns false when the id is already watched. */
     public static synchronized boolean add(long id) {
+        if (MeeroCore.ready()) {
+            ensureNativeLoaded();
+            boolean added = MeeroCore.nWAdd(id);
+            persistNative();
+            return added;
+        }
         if (isWatched(id)) return false;
         JSONArray array = readList();
         try {
@@ -162,6 +203,12 @@ public final class MeeroWatch {
     }
 
     public static synchronized void remove(long id) {
+        if (MeeroCore.ready()) {
+            ensureNativeLoaded();
+            MeeroCore.nWRemove(id);
+            persistNative();
+            return;
+        }
         JSONArray array = readList();
         JSONArray out = new JSONArray();
         for (int i = 0; i < array.length(); i++) {
@@ -176,6 +223,12 @@ public final class MeeroWatch {
     }
 
     public static synchronized void setOn(long id, boolean on) {
+        if (MeeroCore.ready()) {
+            ensureNativeLoaded();
+            MeeroCore.nWSetOn(id, on ? 1 : 0);
+            persistNative();
+            return;
+        }
         JSONArray array = readList();
         for (int i = 0; i < array.length(); i++) {
             JSONObject o = array.optJSONObject(i);
@@ -189,6 +242,30 @@ public final class MeeroWatch {
     // ---------------- public log API ----------------
 
     public static synchronized ArrayList<LogItem> getLog() {
+        if (MeeroCore.ready()) {
+            ensureNativeLoaded();
+            ArrayList<LogItem> out = new ArrayList<>();
+            int n = MeeroCore.nWLogCount();
+            for (int i = 0; i < n; i++) {
+                String line = MeeroCore.nWLogAt(i);
+                if (line == null) continue;
+                String[] f = line.split("\t", -1);
+                if (f.length < 8) continue;
+                LogItem li = new LogItem();
+                try {
+                    li.t = Long.parseLong(f[0]);
+                    li.id = Long.parseLong(f[1]);
+                } catch (Throwable ignore) { continue; }
+                li.what = unesc(f[2]);
+                li.who = unesc(f[3]);
+                li.oldValue = unesc(f[4]);
+                li.newValue = unesc(f[5]);
+                li.oldPath = unesc(f[6]);
+                li.newPath = unesc(f[7]);
+                out.add(li);
+            }
+            return out;
+        }
         ArrayList<LogItem> out = new ArrayList<>();
         JSONArray array = readLog();
         for (int i = 0; i < array.length(); i++) {
@@ -209,6 +286,12 @@ public final class MeeroWatch {
     }
 
     public static synchronized void clearLog() {
+        if (MeeroCore.ready()) {
+            ensureNativeLoaded();
+            MeeroCore.nWLogClear();
+            persistNative();
+            return;
+        }
         writeLog(new JSONArray());
     }
 
@@ -409,6 +492,11 @@ public final class MeeroWatch {
     /** Instant alert switch + per-person 5s throttle; the log itself is
      *  never throttled. */
     private static boolean msgNotifyAllowed(long userId) {
+        if (MeeroCore.ready()) {
+            // v185 (batch 2C): switch gate + throttle stamp inside libmeerocore
+            return MeeroCore.nWMsgNotifyPass(userId, System.currentTimeMillis(),
+                    NekoConfig.meeroWatchMsgNotify.Bool() ? 1 : 0);
+        }
         if (!NekoConfig.meeroWatchMsgNotify.Bool()) return false;
         long now = System.currentTimeMillis();
         Long last = lastMsgNotifyAt.get(userId);
@@ -449,6 +537,43 @@ public final class MeeroWatch {
         String username = user.username == null ? "" : user.username;
         long photoId = user.photo != null ? user.photo.photo_id : 0;
 
+        if (MeeroCore.ready()) {
+            // v185 (batch 2C): baseline-vs-change machine inside libmeerocore;
+            // pack = flags \t oldName \t oldUser \t oldPhotoId (already merged)
+            ensureNativeLoaded();
+            String pack = MeeroCore.nWDiffUser(id, name, username, photoId);
+            if (pack == null) return;
+            String[] f = pack.split("\t", -1);
+            int flags = 0;
+            long oldPhoto = 0;
+            try {
+                flags = Integer.parseInt(f[0]);
+                oldPhoto = Long.parseLong(f[3]);
+            } catch (Throwable ignore) {}
+            if (flags == 0) {
+                // silent baseline - still cache the very first photo
+                cachePhoto(account, user, id, photoId, 0);
+                persistNative();
+                return;
+            }
+            String oldName = unesc(f.length > 1 ? f[1] : "");
+            String oldUsername = unesc(f.length > 2 ? f[2] : "");
+            // notify=true per changed field, exactly like the legacy path
+            // (each field posts its own alert with its own "what").
+            if ((flags & 1) != 0) {
+                addLog(account, id, name, "name", oldName, name, null, null);
+            }
+            if ((flags & 2) != 0) {
+                addLog(account, id, name, "username", oldUsername, username, null, null);
+            }
+            if ((flags & 4) != 0) {
+                addLog(account, id, name, "photo", "", "", photoFilePath(id, oldPhoto), photoFilePath(id, photoId));
+                cachePhoto(account, user, id, photoId, 0);
+            }
+            persistNative(); // the snapshot merge lives native - flush it
+            return;
+        }
+
         JSONObject snap = readData().optJSONObject(Long.toString(id));
         if (snap == null) {
             // baseline - store silently, cache the photo for future "old" views
@@ -484,6 +609,36 @@ public final class MeeroWatch {
         if (userFull.birthday != null) {
             bday = userFull.birthday.day + "/" + userFull.birthday.month + "/" + userFull.birthday.year;
         }
+
+        if (MeeroCore.ready()) {
+            // v185 (batch 2C): per-field silent baselines + change log, native
+            // pack = flags \t oldBio \t oldBday \t whoName (already merged)
+            ensureNativeLoaded();
+            String pack = MeeroCore.nWDiffFull(uid, bio, bday);
+            if (pack == null) return;
+            String[] f = pack.split("\t", -1);
+            int flags = 0;
+            try {
+                flags = Integer.parseInt(f[0]);
+            } catch (Throwable ignore) {}
+            if (flags == 0) {
+                persistNative(); // a silent baseline merge still changed the snap
+                return;
+            }
+            String oldBio = unesc(f.length > 1 ? f[1] : "");
+            String oldBday = unesc(f.length > 2 ? f[2] : "");
+            String who = unesc(f.length > 3 ? f[3] : "");
+            // notify=true per changed field (legacy parity)
+            if ((flags & 1) != 0) {
+                addLog(account, uid, who, "bio", oldBio, bio, null, null);
+            }
+            if ((flags & 2) != 0) {
+                addLog(account, uid, who, "bday", oldBday, bday, null, null);
+            }
+            persistNative();
+            return;
+        }
+
         JSONObject snap = readData().optJSONObject(Long.toString(uid));
         if (snap == null || !snap.has("bio")) {
             mergeSnap(uid, "bio", bio); // silent baseline
@@ -527,6 +682,19 @@ public final class MeeroWatch {
     private static synchronized void addLog(int account, long id, String who, String what,
                                            String oldValue, String newValue, String oldPath, String newPath,
                                            boolean notify) {
+        if (MeeroCore.ready()) {
+            // v185 (batch 2C): head insert + 150 cap + sealed store, native
+            ensureNativeLoaded();
+            MeeroCore.nWLogAdd(System.currentTimeMillis() / 1000L, id, what,
+                    who == null ? "" : who, oldValue == null ? "" : oldValue,
+                    newValue == null ? "" : newValue,
+                    oldPath == null ? "" : oldPath, newPath == null ? "" : newPath, 1);
+            persistNative();
+            if (notify) {
+                notifyChange(who, what);
+            }
+            return;
+        }
         try {
             JSONObject o = new JSONObject();
             o.put("t", System.currentTimeMillis() / 1000L);
@@ -635,5 +803,99 @@ public final class MeeroWatch {
         } catch (Throwable t) {
             if (BuildVars.LOGS_ENABLED) FileLog.e(t);
         }
+    }
+
+    // --- v185 (batch 2C): native store lifecycle ---------------------------
+
+    /** One-shot per process: decrypt the sealed watch store (list + snaps +
+     *  log) into native memory. On a fresh/tampered blob the three legacy
+     *  JSON keys are imported once - entries, snapshots with their has()
+     *  presence bits, and the log in newest-first order - then sealed, and
+     *  the plaintext keys are dropped. */
+    private static synchronized void ensureNativeLoaded() {
+        if (nativeLoaded || !MeeroCore.ready()) return;
+        nativeLoaded = true;
+        String blob = NekoConfig.meeroWatchStore.String();
+        int r = MeeroCore.nWLoad(TextUtils.isEmpty(blob) ? null : blob);
+        if (r != 1) {
+            importLegacyToNative();
+            persistNative();
+        }
+        if (!TextUtils.isEmpty(NekoConfig.meeroWatchList.String())) {
+            NekoConfig.meeroWatchList.setConfigString("");
+        }
+        if (!TextUtils.isEmpty(NekoConfig.meeroWatchData.String())) {
+            NekoConfig.meeroWatchData.setConfigString("");
+        }
+        if (!TextUtils.isEmpty(NekoConfig.meeroWatchLog.String())) {
+            NekoConfig.meeroWatchLog.setConfigString("");
+        }
+    }
+
+    private static void importLegacyToNative() {
+        JSONArray array = readList();
+        for (int i = 0; i < array.length(); i++) {
+            JSONObject o = array.optJSONObject(i);
+            if (o == null) continue;
+            long id = o.optLong("id");
+            if (MeeroCore.nWAdd(id)) {
+                MeeroCore.nWSetOn(id, o.optBoolean("on", true) ? 1 : 0);
+            }
+        }
+        JSONObject data = readData();
+        java.util.Iterator<String> it = data.keys();
+        while (it.hasNext()) {
+            String key = it.next();
+            JSONObject snap = data.optJSONObject(key);
+            if (snap == null) continue;
+            long id;
+            try {
+                id = Long.parseLong(key);
+            } catch (Throwable ignore) { continue; }
+            int mask = 0;
+            if (snap.has("name")) mask |= 1;
+            if (snap.has("user")) mask |= 2;
+            if (snap.has("photo")) mask |= 4;
+            if (snap.has("bio")) mask |= 8;
+            if (snap.has("bday")) mask |= 16;
+            MeeroCore.nWSnapImport(id, mask, snap.optString("name", ""),
+                    snap.optString("user", ""), snap.optLong("photo", 0),
+                    snap.optString("bio", ""), snap.optString("bday", ""));
+        }
+        JSONArray log = readLog();
+        for (int i = 0; i < log.length(); i++) {
+            JSONObject o = log.optJSONObject(i);
+            if (o == null) continue;
+            MeeroCore.nWLogAdd(o.optLong("t"), o.optLong("id"), o.optString("what", ""),
+                    o.optString("who", ""), o.optString("old", ""), o.optString("new", ""),
+                    o.optString("oldPath", ""), o.optString("newPath", ""), 0);
+        }
+    }
+
+    private static void persistNative() {
+        if (!MeeroCore.ready()) return;
+        String blob = MeeroCore.nWBlob();
+        if (!TextUtils.isEmpty(blob)) {
+            NekoConfig.meeroWatchStore.setConfigString(blob);
+        }
+    }
+
+    /** Inverts the native TSV escaping (%25 %09 %0A %0D) left to right. */
+    private static String unesc(String s) {
+        if (s == null || s.indexOf('%') < 0) return s == null ? "" : s;
+        StringBuilder out = new StringBuilder(s.length());
+        for (int i = 0; i < s.length();) {
+            char c = s.charAt(i);
+            if (c == '%' && i + 2 < s.length()) {
+                String h = s.substring(i + 1, i + 3);
+                if ("25".equals(h)) { out.append('%'); i += 3; continue; }
+                if ("09".equals(h)) { out.append('\t'); i += 3; continue; }
+                if ("0A".equalsIgnoreCase(h)) { out.append('\n'); i += 3; continue; }
+                if ("0D".equalsIgnoreCase(h)) { out.append('\r'); i += 3; continue; }
+            }
+            out.append(c);
+            i++;
+        }
+        return out.toString();
     }
 }

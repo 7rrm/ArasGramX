@@ -186,6 +186,12 @@ public class NekoConfig {
     public static ConfigItem meeroWatchLog = addConfig("meeroWatchLog", configTypeString, ""); // v102: JSON change log (newest first, cap 150)
     public static ConfigItem meeroDeleteHunter = addConfig("meeroDeleteHunter", configTypeBool, true); // v103: notify+log on delete/edit by others
     public static ConfigItem meeroDeleteLog = addConfig("meeroDeleteLog", configTypeString, ""); // v103: JSON hunter log (newest first, cap 150)
+    // --- v185 (batch 2C): seed-sealed native stores for the radar group.
+    // Opaque MAC-ed ciphertext blobs authored by libmeerocore; Java never
+    // parses them. Legacy JSON keys above stay as the degraded fallback and
+    // are imported+cleared on first native run. ---
+    public static ConfigItem meeroDeleteStore = addConfig("meeroDeleteStore", configTypeString, "");
+    public static ConfigItem meeroWatchStore = addConfig("meeroWatchStore", configTypeString, "");
     public static ConfigItem meeroAutoReplyPoolOn = addConfig("meeroAutoReplyPoolOn", configTypeBool, false); // v103: random reply texts
     public static ConfigItem meeroAutoReplyPool = addConfig("meeroAutoReplyPool", configTypeString, ""); // v103: JSON array of reply texts
     public static ConfigItem meeroAutoReplyRandomEmoji = addConfig("meeroAutoReplyRandomEmoji", configTypeBool, false); // v103: random emoji suffix

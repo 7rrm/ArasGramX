@@ -143,4 +143,105 @@ public final class MeeroCore {
 
     public static native String nArResolveText(long dialogId, int poolOn, int nightActive, String general,
                                                String night, String defaultText, String firstName, int emojiOn, long nowMs);
+
+    /* ---------------- organization & radar group (MeeroX v185, batch 2C) ---
+     * Smart folders: static design table, never persisted. Delete hunter and
+     * watch persist as opaque seed-sealed blobs authored by nDhBlob / nWBlob
+     * only; Java never parses them (import runs once, plaintext keys die).
+     * Activity stats stay SQL-fed; native owns the decision layer. */
+    public static native int nSfCount();
+
+    public static native String nSfTitleKeyAt(int index);
+
+    public static native String nSfRuleKeyAt(int index);
+
+    public static native String nSfEmoticonAt(int index);
+
+    public static native int nSfFlagsAt(int index);
+
+    public static native int nSfColorAt(int index);
+
+    public static native boolean nSfTitleEq(String a, String b);
+
+    public static native int nDhLoad(String blob);
+
+    public static native String nDhBlob();
+
+    /* head=1 runtime newest-first put; head=0 legacy import (order kept). */
+    public static native void nDhAdd(long tSec, long id, String kind, String who,
+                                     String oldValue, String newValue, int head);
+
+    public static native int nDhCount();
+
+    /* escaped TSV: t \t id \t kind \t who \t old \t new */
+    public static native String nDhAt(int index);
+
+    public static native void nDhClear();
+
+    public static native String nDhKey(long tSec, long id, String kind, String oldValue);
+
+    public static native int nDhRemove(String keysTsv);
+
+    public static native boolean nDhCapture(int out, int hasAction, long fromUid, long selfId);
+
+    public static native int nWLoad(String blob);
+
+    public static native String nWBlob();
+
+    public static native boolean nWAdd(long id);
+
+    public static native void nWRemove(long id);
+
+    public static native void nWSetOn(long id, int on);
+
+    public static native boolean nWIsWatched(long id);
+
+    public static native boolean nWIsOn(long id);
+
+    public static native int nWCount();
+
+    public static native long nWEntryIdAt(int index);
+
+    public static native boolean nWEntryOnAt(int index);
+
+    public static native void nWSnapImport(long id, int mask, String name, String user,
+                                           long photoId, String bio, String bday);
+
+    /* pack: flags \t oldName \t oldUser \t oldPhotoId (record pre-merged) */
+    public static native String nWDiffUser(long id, String name, String user, long photoId);
+
+    /* pack: flags \t oldBio \t oldBday \t whoName (record pre-merged) */
+    public static native String nWDiffFull(long id, String bio, String bday);
+
+    public static native void nWLogAdd(long tSec, long id, String what, String who,
+                                       String oldValue, String newValue, String oldPath,
+                                       String newPath, int head);
+
+    public static native int nWLogCount();
+
+    /* escaped TSV: t \t id \t what \t who \t old \t new \t oldPath \t newPath */
+    public static native String nWLogAt(int index);
+
+    public static native void nWLogClear();
+
+    public static native boolean nWMsgNotifyPass(long id, long nowMs, int enabled);
+
+    public static native void nAsReset();
+
+    /* "midnightLocal\tweek\tmonth" epoch seconds */
+    public static native String nAsBounds(long nowMs);
+
+    public static native void nAsSetHour(int hour, int count);
+
+    public static native int nAsHourAt(int hour);
+
+    public static native boolean nAsHasHourly();
+
+    public static native void nAsDryFeed(long uid, long lastSec, int out);
+
+    public static native int nAsDryCount();
+
+    public static native long nAsDryTopIdAt(int index);
+
+    public static native long nAsDryTopSecAt(int index);
 }

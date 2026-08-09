@@ -22,6 +22,14 @@ import org.telegram.messenger.support.LongSparseIntArray;
  * flags, not counts - "unread >= 5" from the mock is therefore delivered as
  * "unread" (exclude_read); the count rule cannot be synced server-side and
  * is documented as a v2 idea.
+ *
+ * v185 (batch 2C): the preset DESIGN (the compound flag rules, emoticons
+ * and colors) plus the exists-match moved into libmeerocore - the table is
+ * garbled there and served field by field, so a Java dump shows neither the
+ * rule combinations nor the keys. The creation pipeline below stays Java:
+ * it is a pure Telegram API handshake. Legacy table kept as the degraded
+ * fallback for builds without the lib (identical values, locked by the 2C
+ * vector suite).
  */
 public class MeeroSmartFolders {
 
@@ -45,6 +53,19 @@ public class MeeroSmartFolders {
 
     public static synchronized Preset[] presets() {
         if (presets == null) {
+            if (MeeroCore.ready()) {
+                // v185 (batch 2C): the design table lives inside libmeerocore
+                // (garbled); Java just snapshots it once.
+                int n = MeeroCore.nSfCount();
+                Preset[] out = new Preset[n];
+                for (int i = 0; i < n; i++) {
+                    out[i] = new Preset(MeeroCore.nSfTitleKeyAt(i), MeeroCore.nSfRuleKeyAt(i),
+                            MeeroCore.nSfFlagsAt(i), MeeroCore.nSfEmoticonAt(i),
+                            MeeroCore.nSfColorAt(i));
+                }
+                presets = out;
+                return presets;
+            }
             final int C = MessagesController.DIALOG_FILTER_FLAG_CONTACTS;
             final int NC = MessagesController.DIALOG_FILTER_FLAG_NON_CONTACTS;
             final int G = MessagesController.DIALOG_FILTER_FLAG_GROUPS;
@@ -73,8 +94,11 @@ public class MeeroSmartFolders {
     public static boolean exists(Preset p) {
         final String title = MeeroStrings.s(p.titleKey);
         final MessagesController mc = MessagesController.getInstance(UserConfig.selectedAccount);
+        final boolean nativeCore = MeeroCore.ready();
         for (MessagesController.DialogFilter f : mc.dialogFilters) {
-            if (title.equalsIgnoreCase(f.name)) {
+            // v185 (batch 2C): the match itself runs natively when the lib is
+            // up (ASCII fold + exact elsewhere - identical for our titles).
+            if (nativeCore ? MeeroCore.nSfTitleEq(title, f.name) : title.equalsIgnoreCase(f.name)) {
                 return true;
             }
         }
