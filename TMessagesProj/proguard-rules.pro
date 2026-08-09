@@ -278,6 +278,7 @@
 # (2) JNI seed bridge stays name-exact (libmeerovault exports
 #     Java_tw_nekomimi_nekogram_MeeroVaultSeed_fingerprintSeedNative)
 -keep class tw.nekomimi.nekogram.MeeroVaultSeed { *; }
+-keep class tw.nekomimi.nekogram.MeeroCore { *; }   # v183 batch 2A: JNI-bound shell
 #
 # (3) renamed code collapses into one opaque package
 -repackageclasses 'm'

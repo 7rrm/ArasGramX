@@ -16,59 +16,23 @@ import org.telegram.messenger.FileLog;
  * is exactly how "add another account" failed. Id 6, which NagramX ships, does
  * not carry that cap.
  *
- * Rather than pick one and hope it keeps working, the keys are kept as a list.
- * When auth.sendCode comes back with an error that points at the credential
- * rather than the phone number, the next key in the list is selected and the
- * request can simply be retried. The choice is remembered, so a user who has
- * been moved onto a working key stays there.
+ * v183 (batch 2A): the whole engine - the pool table, which errors deserve a
+ * rotation, duplicate skipping, the next-index walk - moved into
+ * libmeerocore.so. Java keeps only the rotation STATE (which slot is active)
+ * in local prefs and asks the native engine one question at a time. When the
+ * lib somehow cannot load, behaviour degrades to the single build-provided
+ * credential with no rotation - same class of fallback as MeeroVault.
  *
  * A user-supplied key from NekoXConfig always wins - this only governs which
  * built-in credential is used when there is no custom one.
  */
 public class MeeroApiKeys {
 
-    /**
-     * Built-in credentials, tried in order.
-     *
-     * The first entry is whatever the build was compiled with, so a build-time
-     * override through TELEGRAM_APP_ID still takes precedence.
-     *
-     * Ordering matters. Id 6 is what NagramX and NagramXF ship, which means
-     * every build of those forks - and this one - competes for the same quota;
-     * Telegram throttles it hard and answers new sign-ins with an internal
-     * error before any code is sent. Id 11535358 belongs to Nagram, a fork
-     * with its own registered credential rather than a shared public one, so
-     * it carries far less traffic and is tried first. Id 4 is the official
-     * Android client's and is rate-limited per device - the first sign-in on a
-     * device works and the next is refused - so it sits last as a fallback
-     * only.
-     */
-    private static final int[] IDS = {
-            BuildConfig.APP_ID,
-            11535358,
-            2040,
-            6,
-            4,
-    };
-
-    private static final String[] HASHES = {
-            BuildConfig.APP_HASH,
-            "33d372962fadb01df47e6ceed4e33cd6",
-            "b18441a1ff607e10a989891a5462e627",
-            "eb06d4abfb49dc3eeb1aeb98ae0f581e",
-            "014b35b6184100b085b0d0572f9b5103",
-    };
-
     private static final String PREFS = "meerox_api";
     private static final String KEY_INDEX = "api_index";
     /**
-     * Bumped whenever the pool changes.
-     *
-     * A saved index points at a position in the old list, so reordering the
-     * entries would leave anyone who had already rotated stuck on whichever
-     * key now happens to sit there - including the throttled ones this
-     * reordering was meant to move away from. Changing the generation resets
-     * the choice once, and the automatic failover takes it from there.
+     * Bumped whenever the pool changes. A saved index points at a position in
+     * the old list, so rebuilding the table must reset the saved choice once.
      */
     private static final String KEY_GENERATION = "api_generation";
     private static final int GENERATION = 2;
@@ -79,12 +43,32 @@ public class MeeroApiKeys {
         return ApplicationLoader.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
     }
 
+    private static int count() {
+        if (MeeroCore.ready()) {
+            try {
+                final int n = MeeroCore.nKeyCount();
+                if (n > 0) return n;
+            } catch (Throwable ignored) {
+            }
+        }
+        return 1; // degraded: only the build key
+    }
+
+    private static void ensureInstalled() {
+        if (MeeroCore.ready()) {
+            try {
+                /* slot 0 of the native table is the build key, unknown to C */
+                MeeroCore.nInstallKey0(BuildConfig.APP_ID, BuildConfig.APP_HASH);
+            } catch (Throwable ignored) {
+            }
+        }
+    }
+
     private static int index() {
         if (index < 0) {
             try {
                 final SharedPreferences p = prefs();
                 if (p.getInt(KEY_GENERATION, 0) != GENERATION) {
-                    // The pool was rebuilt; start again from the top.
                     index = 0;
                     p.edit().putInt(KEY_INDEX, 0).putInt(KEY_GENERATION, GENERATION).apply();
                 } else {
@@ -93,42 +77,53 @@ public class MeeroApiKeys {
             } catch (Throwable e) {
                 index = 0;
             }
-            if (index < 0 || index >= IDS.length) {
+            if (index < 0 || index >= count()) {
                 index = 0;
             }
         }
         return index;
     }
 
-    /** Duplicate entries are skipped, since IDS[0] may equal one of the rest. */
-    private static boolean isDuplicate(int candidate) {
-        for (int i = 0; i < candidate; i++) {
-            if (IDS[i] == IDS[candidate]) {
-                return true;
+    public static int currentId() {
+        ensureInstalled();
+        if (MeeroCore.ready()) {
+            try {
+                return MeeroCore.nKeyId(index());
+            } catch (Throwable ignored) {
             }
         }
-        return false;
-    }
-
-    public static int currentId() {
-        return IDS[index()];
+        return BuildConfig.APP_ID;
     }
 
     public static String currentHash() {
-        return HASHES[index()];
+        ensureInstalled();
+        if (MeeroCore.ready()) {
+            try {
+                final String h = MeeroCore.nKeyHash(index());
+                if (h != null) return h;
+            } catch (Throwable ignored) {
+            }
+        }
+        return BuildConfig.APP_HASH;
     }
 
     /**
-     * Moves to the next usable credential.
+     * Moves to the next usable credential (decision made natively).
      *
      * @return true when another one was available
      */
     public static boolean advance() {
-        int next = index() + 1;
-        while (next < IDS.length && isDuplicate(next)) {
-            next++;
+        ensureInstalled();
+        if (!MeeroCore.ready()) {
+            return false;
         }
-        if (next >= IDS.length) {
+        final int next;
+        try {
+            next = MeeroCore.nKeyAdvance(index());
+        } catch (Throwable t) {
+            return false;
+        }
+        if (next < 0) {
             return false;
         }
         index = next;
@@ -136,7 +131,7 @@ public class MeeroApiKeys {
             prefs().edit().putInt(KEY_INDEX, index).putInt(KEY_GENERATION, GENERATION).apply();
         } catch (Throwable ignore) {
         }
-        FileLog.d("MeeroX: switching to api id " + IDS[index]);
+        FileLog.d("MeeroX: switching to api id " + currentId());
         return true;
     }
 
@@ -151,15 +146,17 @@ public class MeeroApiKeys {
 
     /**
      * Whether an auth.sendCode failure blames the credential rather than the
-     * phone number.
-     *
-     * Only these are worth retrying on another key. A wrong or banned number
-     * fails the same way whichever credential asks, and rotating through the
-     * pool for those would just burn every key's rate limit.
+     * phone number (marker set lives natively).
      */
     public static boolean isKeyError(String errorText) {
         if (errorText == null) {
             return false;
+        }
+        if (MeeroCore.ready()) {
+            try {
+                return MeeroCore.nIsKeyError(errorText);
+            } catch (Throwable ignored) {
+            }
         }
         return errorText.contains("API_ID_INVALID")
                 || errorText.contains("API_ID_PUBLISHED_FLOOD")
@@ -170,6 +167,6 @@ public class MeeroApiKeys {
 
     /** A short description of the active key, for the settings screen. */
     public static String describe() {
-        return "api_id " + currentId() + " (" + (index() + 1) + "/" + IDS.length + ")";
+        return "api_id " + currentId() + " (" + (index() + 1) + "/" + count() + ")";
     }
 }

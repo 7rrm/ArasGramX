@@ -232,13 +232,23 @@ public final class MeeroChatLock {
         }
     }
 
-    /** Stores the code as a salted SHA-256 hash. The raw code is never kept. */
+    /** Stores the code as a salted hash. The raw code is never kept.
+     *  v183: the hash itself becomes seed-bound ("v2:"), derived natively
+     *  inside libmeerocore - so a stolen hash db cannot be cracked offline. */
     public static synchronized boolean setCode(String code) {
         if (code == null || code.length() != 8) return false;
         try {
             byte[] salt = new byte[16];
             new SecureRandom().nextBytes(salt);
             String saltB64 = Base64.encodeToString(salt, Base64.NO_WRAP);
+            final byte[] v2 = MeeroCore.ready()
+                    ? MeeroCore.nLockDerive(saltB64, code)
+                    : MeeroCore.javaV2Derive(saltB64, code);
+            if (v2 != null) {
+                NekoConfig.meeroChatLockCodeSalt.setConfigString(saltB64);
+                NekoConfig.meeroChatLockCodeHash.setConfigString("v2:" + Base64.encodeToString(v2, Base64.NO_WRAP));
+                return true;
+            }
             String hash = digest(saltB64, code);
             if (hash == null) return false;
             NekoConfig.meeroChatLockCodeSalt.setConfigString(saltB64);
@@ -252,8 +262,34 @@ public final class MeeroChatLock {
 
     public static boolean verifyCode(String code) {
         if (code == null || code.length() != 8 || !hasCode()) return false;
-        String actual = digest(NekoConfig.meeroChatLockCodeSalt.String(), code);
-        return NekoConfig.meeroChatLockCodeHash.String().equals(actual);
+        final String stored = NekoConfig.meeroChatLockCodeHash.String();
+        final String saltB64 = NekoConfig.meeroChatLockCodeSalt.String();
+        final boolean legacy = !stored.startsWith("v2:");
+        if (MeeroCore.ready()) {
+            try {
+                final byte[] expected = legacy
+                        ? MeeroCore.nLegacyDigest(saltB64, code)
+                        : MeeroCore.nLockDerive(saltB64, code);
+                final byte[] actual = Base64.decode(legacy ? stored : stored.substring(3), Base64.NO_WRAP);
+                final boolean ok = expected != null && MeeroCore.nConstEq(expected, actual);
+                if (ok && legacy) {
+                    /* silent upgrade: first successful legacy verify rewrites
+                     * the hash seed-bound, old hash never seen again */
+                    final byte[] nv = MeeroCore.nLockDerive(saltB64, code);
+                    if (nv != null) {
+                        NekoConfig.meeroChatLockCodeHash.setConfigString("v2:" + Base64.encodeToString(nv, Base64.NO_WRAP));
+                    }
+                }
+                return ok;
+            } catch (Throwable t) {
+                /* fall through to the java path */
+            }
+        }
+        if (legacy) {
+            return stored.equals(digest(saltB64, code));
+        }
+        final byte[] v2 = MeeroCore.javaV2Derive(saltB64, code);
+        return v2 != null && stored.substring(3).equals(Base64.encodeToString(v2, Base64.NO_WRAP));
     }
 
     // ---------------- hiding locked chats from lists/search (v107) ----------------
@@ -514,6 +550,19 @@ public final class MeeroChatLock {
             o.put("t", System.currentTimeMillis());
             o.put("p", place);
             o.put("ok", success);
+            /* v183 (batch 2A): tamper-evident chain - each entry carries the
+             * native HMAC of (previous entry | this entry); the audit screen
+             * verifies the whole chain (wiring lands in a later batch). */
+            if (MeeroCore.ready()) {
+                try {
+                    final JSONObject prev = old.optJSONObject(0);
+                    final String mac = MeeroCore.nAuditMac(prev != null ? prev.toString() : "", o.toString());
+                    if (mac != null) {
+                        o.put("s", mac);
+                    }
+                } catch (Throwable ignored) {
+                }
+            }
             JSONArray out = new JSONArray();
             out.put(o);
             for (int i = 0; i < old.length() && out.length() < AUDIT_LIMIT; i++) {

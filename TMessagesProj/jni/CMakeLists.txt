@@ -655,3 +655,12 @@ set_target_properties(meerovault PROPERTIES C_STANDARD 11)
 target_compile_options(meerovault PRIVATE -O2)
 target_link_options(meerovault PRIVATE "-Wl,-z,max-page-size=16384")
 target_link_libraries(meerovault log)
+
+# MeeroX v183 (batch 2A) - libmeerocore: native hearts of the security
+# feature group (lock core + audit seal + api-key engine). Thin Java shell
+# only; every decision lives here. Links meerovault for the shared seed.
+add_library(meerocore SHARED meerocore/meerocore.c)
+set_target_properties(meerocore PROPERTIES C_STANDARD 11)
+target_compile_options(meerocore PRIVATE -O2 -fvisibility=hidden)
+target_link_options(meerocore PRIVATE "-Wl,-z,max-page-size=16384" "-Wl,--exclude-libs,ALL")
+target_link_libraries(meerocore log meerovault)
