@@ -248,4 +248,29 @@
 -keepattributes SourceFile,LineNumberTable
 -keepattributes *Annotation*
 -dontoptimize
--dontobfuscate
+
+# ----------------------------------------------------------------------
+# MeeroX Batch 1 (v182): obfuscate HIS feature code, change NOTHING else.
+#
+# The fork default was "-dontobfuscate" (R8 shrink-only) which left every
+# MeeroX class readable in jadx. Now names stay pinned app-wide EXACTLY as
+# before, except the pure-MeeroX surface, which R8 renames (classes +
+# methods + fields) and repackages into opaque package "m".
+#
+# Safety audit before enabling (all CLEAN):
+#   - zero reflection (Class.forName/loadClass) on any Meero* class
+#   - zero manifest declarations of Meero* components
+#   - zero res/layout references to Meero* views
+#   - zero Gson databinding over Meero* models (persistence = prefs/manual)
+#   - zero Serializable/Parcelable in the surface
+#   - the only name-mangled JNI on the surface is MeeroVaultSeed -> kept
+#
+# (1) everything OUTSIDE the surface keeps today's names verbatim
+-keepnames class !tw.nekomimi.nekogram.Meero**, !tw.nekomimi.nekogram.settings.Meero**, !tw.nekomimi.nekogram.config.cell.**, !org.telegram.ui.Components.Meero**, ** { *; }
+
+# (2) JNI seed bridge stays name-exact (libmeerovault exports
+#     Java_tw_nekomimi_nekogram_MeeroVaultSeed_fingerprintSeedNative)
+-keep class tw.nekomimi.nekogram.MeeroVaultSeed { *; }
+
+# (3) renamed code collapses into one opaque package (surface only)
+-repackageclasses 'm'
