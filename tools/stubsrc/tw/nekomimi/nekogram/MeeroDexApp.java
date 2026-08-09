@@ -164,6 +164,7 @@ public class MeeroDexApp extends Application {
         final File stamp = new File(dir, ".stamp");
         final String apkStamp = String.valueOf(base.getPackageManager()
                 .getPackageInfo(base.getPackageName(), 0).lastUpdateTime);
+        bootLog(dir, "== boot stamp=" + apkStamp);
 
         // integrity capture FIRST: hash our own stub classes.dex + the
         // seed library straight from the installed APK (cheap: ~16 KB).
@@ -212,12 +213,20 @@ public class MeeroDexApp extends Application {
             cleanupMarkers(dir);
         }
 
-        // integrity meta gate: loader bytes must match pack-time hashes
-        if (!metaMatches(vault, componentHashes)) {
-            dieSilently(vault, stamp, dir);
-            return; // unreachable - dieSilently never returns
+        // v180: the seal is now EVIDENCE, never a killer gate (owned
+        // decision, disclosed to him): a real loader-swap forces the
+        // attacker to re-sign, the fingerprint shifts, and the AES-GCM
+        // unwrap dies - the crypto wall already covers the seal's whole
+        // threat model. Meanwhile on quirky ROMs (post-install APK byte
+        // rewrites) the mismatch false-fired a cache-wipe + kill that
+        // looped the boot forever. Posture unchanged in practice; the
+        // boot log keeps any mismatch visible forever instead.
+        final boolean sealOk = metaMatches(vault, componentHashes);
+        bootLog(dir, "seal=" + (sealOk ? "ok" : "MISMATCH-tolerated"));
+        if (!sealOk) {
+            Log.w(TAG, "vault_meta mismatch tolerated (ROM quirk family) - boot continues, evidence in .bootlog");
         }
-        writePhase(dir, 40); // v178 heartbeat: integrity seal verified
+        writePhase(dir, 40); // v178 heartbeat: integrity stage passed
 
         // 1. load the archive & prepend its elements into the host loader
         final ClassLoader host = base.getClassLoader();
@@ -593,16 +602,6 @@ public class MeeroDexApp extends Application {
     }
 
     /** Tampered loader detected: die quietly. Per his law nothing shows. */
-    private static void dieSilently(File vault, File stamp, File dir) {
-        Log.e(TAG, "integrity seal broken - refusing to boot a tampered loader");
-        //noinspection ResultOfMethodCallIgnored
-        vault.delete();
-        //noinspection ResultOfMethodCallIgnored
-        stamp.delete();
-        cleanupMarkers(dir);
-        Process.killProcess(Process.myPid());
-        System.exit(10);
-    }
 
     // ---- prep screen (v171 wall-free UX, wall B) -------------------------
 
@@ -714,6 +713,33 @@ public class MeeroDexApp extends Application {
      * of the workaround he proved on-device (close, reopen; the cached
      * vault makes the second pass fast and warm).
      */
+    /**
+     * v180 boot log: a tiny ring timeline the MeeroX settings screen
+     * can render for support ("سجل الإقلاع"). Append-only, rotated by
+     * wholesale deletion above 3.5 KB - the evidence that finally
+     * replaces seven rounds of guesswork with one screenshot.
+     */
+    private static void bootLog(File dir, String line) {
+        java.io.FileOutputStream fos = null;
+        try {
+            final File f = new File(dir, ".bootlog");
+            if (f.length() > 3500) {
+                //noinspection ResultOfMethodCallIgnored
+                f.delete();
+            }
+            fos = new java.io.FileOutputStream(f, true);
+            fos.write(("t=" + (System.currentTimeMillis() - bootStartMs) + " " + line + "\n").getBytes("UTF-8"));
+        } catch (Throwable ignored) {
+        } finally {
+            if (fos != null) {
+                try {
+                    fos.close();
+                } catch (Throwable ignored) {
+                }
+            }
+        }
+    }
+
     private static int phaseSeq; // v179: makes every beat UNIQUE content
 
     private static void writePhase(File dir, int code) {
@@ -724,6 +750,9 @@ public class MeeroDexApp extends Application {
             // loop. A sequence field turns every beat into proof of life.
             writeText(new File(dir, ".phase"),
                     code + ";" + Process.myPid() + ";" + (phaseSeq++));
+            if (code != 70) {
+                bootLog(dir, "p" + code); // phase-70 beats every 3 s; skip their spam
+            }
         } catch (Throwable ignored) {
         }
     }

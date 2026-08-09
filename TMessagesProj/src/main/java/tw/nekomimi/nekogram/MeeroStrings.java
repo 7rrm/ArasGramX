@@ -32,6 +32,9 @@ public final class MeeroStrings {
         put("JanitorModeDaily", "Daily", "يومي");
         put("JanitorModeLimit", "Only when over the limit", "فقط عند تجاوز الحد");
         put("JanitorModeWeekly", "Weekly", "أسبوعي");
+        put("MeeroBootLogDlgTitle", "Boot timeline", "خط زمن الإقلاع");
+        put("MeeroBootLogEmpty", "No boot records on this device yet.", "لا توجد سجلات إقلاع على هذا الجهاز بعد.");
+        put("MeeroBootLogTitle", "Boot log (support)", "سجل الإقلاع (للدعم)");
         put("JanitorReport", "Storage janitor freed %1$s of cache", "حارس التخزين حرّر %1$s من الكاش");
         put("MeeroAmoledBubblesInfo", "On dark themes with a pure-black background, incoming bubbles turn true #000000 black for contrast and battery saving. OFF restores the theme colors.", "مع الثيمات الداكنة ذات الخلفية السوداء الخالصة، فقاعات الطرف الثاني تصير سوداء 100% (#000000) للتباين وتوفير البطارية. الإطفاء يرجّع ألوان الثيم.");
         put("MeeroAmoledStrokeInfo", "Draws a barely-there 1px outline around pure-black incoming bubbles so their borders stay visible on true-black backgrounds. Works only while AMOLED black bubbles is on.", "يرسم خطاً خافتاً جداً بسماكة 1px حول فقاعات الطرف الثاني السوداء الخالصة حتى تبقى حدودها واضحة على الخلفية السوداء الحقيقية. يشتغل فقط إذا خيار «فقاعات سوداء AMOLED» شغّال.");

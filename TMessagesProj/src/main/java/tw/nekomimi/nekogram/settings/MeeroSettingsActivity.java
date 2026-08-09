@@ -229,6 +229,11 @@ public class MeeroSettingsActivity extends BaseNekoXSettingsActivity {
     private final AbstractConfigCell iosIntroRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosIntro, MeeroStrings.s("MeeroIosIntroInfo")));
     private final AbstractConfigCell dividerSound = cellGroup.appendCell(new ConfigCellDivider());
 
+    // v180: the support microscope - renders the stub's boot timeline so
+    // one screenshot replaces any future guessing, for him and for any
+    // user of the public build who reports boot trouble.
+    private final AbstractConfigCell bootLogRow = cellGroup.appendCell(new ConfigCellText("MeeroBootLogTitle", () -> showBootLogDialog()));
+
     private ListAdapter listAdapter;
 
     public MeeroSettingsActivity() {
@@ -475,6 +480,47 @@ public class MeeroSettingsActivity extends BaseNekoXSettingsActivity {
                 listAdapter.notifyDataSetChanged();
             }
         });
+    }
+
+    /**
+     * v180: renders files/vaultdex/.bootlog (written by the plain boot
+     * stub - phases with millisecond stamps, seal outcome, done marker).
+     * Selectable text so it can be copied into any support chat too.
+     */
+    private void showBootLogDialog() {
+        String text = "";
+        try {
+            final java.io.File f = new java.io.File(getParentActivity().getFilesDir(), "vaultdex/.bootlog");
+            if (f.exists()) {
+                final byte[] b = new byte[(int) Math.min(f.length(), 6000)];
+                final java.io.FileInputStream in = new java.io.FileInputStream(f);
+                final int n = in.read(b);
+                in.close();
+                if (n > 0) {
+                    text = new String(b, 0, n, "UTF-8");
+                }
+            }
+        } catch (Throwable ignored) {
+        }
+        if (text.length() == 0) {
+            text = MeeroStrings.s("MeeroBootLogEmpty");
+        }
+        final ScrollView sv = new ScrollView(getParentActivity());
+        final TextView tv = new TextView(getParentActivity());
+        tv.setText(text);
+        tv.setTextSize(13);
+        tv.setTypeface(android.graphics.Typeface.MONOSPACE);
+        tv.setTextIsSelectable(true);
+        final float dp = getParentActivity().getResources().getDisplayMetrics().density;
+        final int pad = (int) (18 * dp);
+        sv.setPadding(pad, pad, pad, pad);
+        sv.addView(tv);
+        final AlertDialog dlg = new AlertDialog.Builder(getParentActivity())
+                .setTitle(MeeroStrings.s("MeeroBootLogDlgTitle"))
+                .setView(sv)
+                .setPositiveButton(getString(R.string.OK), null)
+                .create();
+        dlg.show();
     }
 
     @Override
