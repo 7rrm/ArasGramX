@@ -21,6 +21,12 @@
  * v182 behaviour.
  */
 
+/* v184 follow-up: localtime_r is POSIX, not C11 - bionic declares it
+ * unconditionally (and the NDK default is gnu11), so device builds were
+ * always correct, but a strict -std=c11 host compile must see the
+ * prototype too. Declare the intent explicitly; harmless on bionic. */
+#define _POSIX_C_SOURCE 200809L
+
 #include <jni.h>
 #include <pthread.h>
 #include <stdint.h>
