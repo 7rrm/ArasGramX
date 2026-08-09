@@ -153,6 +153,17 @@ jobs:
           rm -f packed.apk aligned.apk
           echo "MeeroVault pack OK"
 
+      - name: Upload R8 mapping
+        # v182 batch 1: mapping.txt lets us verify EXACTLY what was renamed
+        # (and retrace stacks later). Lives only in CI artifacts, never in
+        # the APK or any public link.
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: r8-mapping
+          path: TMessagesProj/build/outputs/mapping/release/
+          retention-days: 30
+
       - name: Collect APKs
         if: success()
         run: |

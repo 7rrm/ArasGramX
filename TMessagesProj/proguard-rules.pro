@@ -253,27 +253,29 @@
 -dontoptimize
 
 # ----------------------------------------------------------------------
-# MeeroX Batch 1 (v182): obfuscate HIS feature code, change NOTHING else.
+# MeeroX Batch 1 (v182, REVISED): obfuscate like a real release.
 #
-# The fork default was "-dontobfuscate" (R8 shrink-only) which left every
-# MeeroX class readable in jadx. Now names stay pinned app-wide EXACTLY as
-# before, except the pure-MeeroX surface, which R8 renames (classes +
-# methods + fields) and repackages into opaque package "m".
+# First attempt shipped a keepnames blanket "pin everything except the
+# Meero surface". R8 full-mode ignored it at app scale: run 31309518000
+# renamed 14,809 of 43,344 class_defs (androguard-verified, owned - the
+# same rule worked in a 6-class toy lab). That APK was NOT shipped.
 #
-# Safety audit before enabling (all CLEAN):
-#   - zero reflection (Class.forName/loadClass) on any Meero* class
-#   - zero manifest declarations of Meero* components
-#   - zero res/layout references to Meero* views
-#   - zero Gson databinding over Meero* models (persistence = prefs/manual)
-#   - zero Serializable/Parcelable in the surface
-#   - the only name-mangled JNI on the surface is MeeroVaultSeed -> kept
+# Revision: obfuscate exactly like upstream's obfuscated releases (these
+# 251 base rules are battle-tested by them every release), and PIN the
+# fork packages whose reflection/hook code was never validated under
+# obfuscation by the fork - MINUS the Meero surface, which is our actual
+# target (classes+methods+fields renamed, packed into opaque "m").
 #
-# (1) everything OUTSIDE the surface keeps today's names verbatim
--keepnames class !tw.nekomimi.nekogram.Meero**, !tw.nekomimi.nekogram.settings.Meero**, !tw.nekomimi.nekogram.config.cell.**, !org.telegram.ui.Components.Meero**, ** { *; }
-
+# (1) fork packages stay name-pinned (hooks/reflection-safe), except
+#     the pure-MeeroX surface:
+-keepnames class !tw.nekomimi.nekogram.Meero**, !tw.nekomimi.nekogram.settings.Meero**, !tw.nekomimi.nekogram.config.cell.**, !org.telegram.ui.Components.Meero**, tw.** { *; }
+-keepnames class xyz.** { *; }
+-keepnames class org.akanework.** { *; }
+-keepnames class me.** { *; }
+#
 # (2) JNI seed bridge stays name-exact (libmeerovault exports
 #     Java_tw_nekomimi_nekogram_MeeroVaultSeed_fingerprintSeedNative)
 -keep class tw.nekomimi.nekogram.MeeroVaultSeed { *; }
-
-# (3) renamed code collapses into one opaque package (surface only)
+#
+# (3) renamed code collapses into one opaque package
 -repackageclasses 'm'
