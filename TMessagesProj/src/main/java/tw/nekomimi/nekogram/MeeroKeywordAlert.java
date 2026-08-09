@@ -20,7 +20,6 @@ import org.telegram.messenger.ApplicationLoader;
 import org.telegram.messenger.BuildVars;
 import org.telegram.messenger.DialogObject;
 import org.telegram.messenger.FileLog;
-import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.MessageObject;
 import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.NotificationCenter;
@@ -47,15 +46,22 @@ import java.util.concurrent.ConcurrentHashMap;
  * throttled to one per 30 seconds so buzzing groups stay usable. All
  * matching is on-device; while the master switch is off the watcher does
  * nothing at all. Off by default (user opt-in).
+ *
+ * v184 (batch 2B): the matching heart moved into libmeerocore - freshness,
+ * entry scan order, comma + arabic-comma splitting, trimming, the 2-letter
+ * floor and the 30 s per-chat throttle all run natively, and the word sets
+ * persist as an opaque seed-sealed blob. Java keeps the system notification
+ * plumbing and a byte-identical legacy JSON path for builds without the lib.
  */
 public final class MeeroKeywordAlert {
 
     private MeeroKeywordAlert() {}
 
     private static final String CHANNEL_ID = "meero_keyword";
-    private static final long THROTTLE_MS = 30_000L;
+    private static final long THROTTLE_MS = 30_000L; // legacy fallback path only
     private static volatile boolean started;
-    private static final ConcurrentHashMap<Long, Long> lastNotifyAt = new ConcurrentHashMap<>();
+    private static volatile boolean nativeLoaded;
+    private static final ConcurrentHashMap<Long, Long> lastNotifyAt = new ConcurrentHashMap<>(); // legacy fallback only
 
     public static final class Entry {
         public long dialogId;      // 0 = every chat
@@ -92,8 +98,16 @@ public final class MeeroKeywordAlert {
         if (dialogId == UserConfig.getInstance(account).getClientUserId()) return; // Saved Messages
         if (dialogId == 777000) return; // Telegram service account
 
-        ArrayList<Entry> entries = getEntries();
-        if (entries.isEmpty() || messages == null) return;
+        final boolean nativeCore = MeeroCore.ready();
+        ArrayList<Entry> entries = null;
+        if (nativeCore) {
+            ensureNativeLoaded();
+            if (MeeroCore.nKwCount() == 0) return;
+        } else {
+            entries = getEntries();
+            if (entries.isEmpty()) return;
+        }
+        if (messages == null) return;
 
         for (MessageObject msg : messages) {
             if (msg == null || msg.isOut()) continue;
@@ -102,6 +116,18 @@ public final class MeeroKeywordAlert {
             String text = msg.messageOwner.message; // captions live here too
             if (TextUtils.isEmpty(text)) continue;
             String lower = text.toLowerCase(Locale.ROOT);
+
+            if (nativeCore) {
+                // one alert per message is enough: the native core returns
+                // the winning word, or null for no-hit / throttled
+                String hit = MeeroCore.nKwMatch(dialogId, msg.messageOwner.date, now, lower);
+                if (hit == null) continue;
+                String who = senderName(account, msg, dialogId);
+                String chat = chatTitle(account, dialogId);
+                notifyHit(who, chat, text);
+                continue;
+            }
+
             for (Entry entry : entries) {
                 if (entry.dialogId != 0 && entry.dialogId != dialogId) continue;
                 String hit = firstHit(entry.words, lower);
@@ -195,6 +221,20 @@ public final class MeeroKeywordAlert {
     }
 
     public static synchronized ArrayList<Entry> getEntries() {
+        if (MeeroCore.ready()) {
+            ensureNativeLoaded();
+            ArrayList<Entry> out = new ArrayList<>();
+            int n = MeeroCore.nKwCount();
+            for (int i = 0; i < n; i++) {
+                String words = MeeroCore.nKwWordsAt(i);
+                if (words == null || words.trim().isEmpty()) continue;
+                Entry e = new Entry();
+                e.dialogId = MeeroCore.nKwIdAt(i);
+                e.words = words;
+                out.add(e);
+            }
+            return out;
+        }
         ArrayList<Entry> out = new ArrayList<>();
         JSONArray array = readEntries();
         for (int i = 0; i < array.length(); i++) {
@@ -214,6 +254,12 @@ public final class MeeroKeywordAlert {
 
     /** One set per dialog id (0 = the global "all chats" set). Empty words = remove. */
     public static synchronized void upsertEntry(long dialogId, String words) {
+        if (MeeroCore.ready()) {
+            ensureNativeLoaded();
+            MeeroCore.nKwUpsert(dialogId, normalizeWords(words));
+            persistNative();
+            return;
+        }
         JSONArray array = readEntries();
         JSONArray out = new JSONArray();
         for (int i = 0; i < array.length(); i++) {
@@ -234,5 +280,53 @@ public final class MeeroKeywordAlert {
 
     public static synchronized void removeEntry(long dialogId) {
         upsertEntry(dialogId, null);
+    }
+
+    // --- v184 (batch 2B): native store lifecycle ---------------------------
+
+    /** Words are stored lowercase (matching is case-insensitive anyway);
+     *  null/empty means remove. */
+    private static String normalizeWords(String words) {
+        if (words == null) return null;
+        String t = words.trim();
+        if (t.isEmpty()) return null;
+        return t.toLowerCase(Locale.ROOT);
+    }
+
+    /** One-shot per process: decrypt the sealed store into native memory.
+     *  On a fresh/tampered blob the legacy JSON key is imported once, the
+     *  sealed store is written, and the plaintext key is dropped. */
+    private static synchronized void ensureNativeLoaded() {
+        if (nativeLoaded || !MeeroCore.ready()) return;
+        nativeLoaded = true;
+        String blob = NekoConfig.meeroKeywordStore.String();
+        int r = MeeroCore.nKwLoad(TextUtils.isEmpty(blob) ? null : blob);
+        if (r != 1) {
+            importLegacyToNative();
+            persistNative();
+        }
+        if (!TextUtils.isEmpty(NekoConfig.meeroKeywordRules.String())) {
+            NekoConfig.meeroKeywordRules.setConfigString("");
+        }
+    }
+
+    private static void persistNative() {
+        if (!MeeroCore.ready()) return;
+        String blob = MeeroCore.nKwBlob();
+        if (!TextUtils.isEmpty(blob)) {
+            NekoConfig.meeroKeywordStore.setConfigString(blob);
+        }
+    }
+
+    private static void importLegacyToNative() {
+        JSONArray array = readEntries();
+        for (int i = 0; i < array.length(); i++) {
+            JSONObject o = array.optJSONObject(i);
+            if (o == null) continue;
+            String words = normalizeWords(o.optString("words", ""));
+            if (words != null) {
+                MeeroCore.nKwUpsert(o.optLong("id"), words);
+            }
+        }
     }
 }

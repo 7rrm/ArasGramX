@@ -84,4 +84,63 @@ public final class MeeroCore {
     public static native int nKeyAdvance(int current);
 
     public static native boolean nIsKeyError(String errorText);
+
+    /* ---------------- automation group (MeeroX v184, batch 2B) ----------------
+     * Persisted stores are opaque seed-sealed blobs written by nArBlob /
+     * nKwBlob only; Java never parses them. nKwMatch returns the winning
+     * word to alert on, or null to stay silent (no hit / throttled / stale
+     * message). nArShouldReply performs exclusion + per-chat cooldown and
+     * stamps on pass, exactly like the old gates 2.5 + 6 combined. */
+    public static native int nKwLoad(String blob);
+
+    public static native String nKwBlob();
+
+    public static native void nKwUpsert(long dialogId, String words);
+
+    public static native int nKwCount();
+
+    public static native long nKwIdAt(int index);
+
+    public static native String nKwWordsAt(int index);
+
+    public static native String nKwMatch(long dialogId, long msgDateSec, long nowMs, String lowerText);
+
+    public static native int nArLoad(String blob);
+
+    public static native String nArBlob();
+
+    public static native void nArUpsertRule(long dialogId, String text);
+
+    public static native int nArRuleCount();
+
+    public static native long nArRuleIdAt(int index);
+
+    public static native String nArRuleText(long dialogId);
+
+    public static native void nArAddExcl(long dialogId);
+
+    public static native void nArDelExcl(long dialogId);
+
+    public static native int nArExclCount();
+
+    public static native long nArExclIdAt(int index);
+
+    public static native boolean nArIsExcl(long dialogId);
+
+    public static native int nArPoolCount();
+
+    public static native String nArPoolAt(int index);
+
+    public static native void nArPoolAdd(String text);
+
+    public static native void nArPoolSet(int index, String text);
+
+    public static native void nArPoolDel(int index);
+
+    public static native boolean nArShouldReply(long dialogId, long nowMs, int cooldownMin);
+
+    public static native boolean nArWindowPass(int enabled, int daysMask, int startMin, int endMin, long nowMs);
+
+    public static native String nArResolveText(long dialogId, int poolOn, int nightActive, String general,
+                                               String night, String defaultText, String firstName, int emojiOn, long nowMs);
 }

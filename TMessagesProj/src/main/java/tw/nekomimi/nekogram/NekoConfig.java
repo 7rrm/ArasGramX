@@ -199,6 +199,12 @@ public class NekoConfig {
     // --- v105: keyword alert (JSON [{"id":0,"words":".."}] / id 0 = all chats) ---
     public static ConfigItem meeroKeywordAlert = addConfig("meeroKeywordAlert", configTypeBool, false);
     public static ConfigItem meeroKeywordRules = addConfig("meeroKeywordRules", configTypeString, "");
+    // --- v184 (batch 2B): seed-sealed native stores for the automation group.
+    // Opaque MAC-ed ciphertext blobs authored by libmeerocore; Java never
+    // parses them. Legacy JSON keys above stay as the degraded fallback and
+    // are imported+cleared on first native run. ---
+    public static ConfigItem meeroAutoReplyStore = addConfig("meeroAutoReplyStore", configTypeString, "");
+    public static ConfigItem meeroKeywordStore = addConfig("meeroKeywordStore", configTypeString, "");
     // --- v105: view-once guard (auto-save incoming once media to gallery) ---
     public static ConfigItem meeroOnceGuard = addConfig("meeroOnceGuard", configTypeBool, false);
     public static ConfigItem meeroOnceSavedCount = addConfig("meeroOnceSavedCount", configTypeInt, 0);
