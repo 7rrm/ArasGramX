@@ -40,6 +40,7 @@ public class MeeroLockAuditActivity extends BaseNekoSettingsActivity {
     private int listEndRow;
     private int emptyRow;
     private int clearRow;
+    private int integrityRow;
     private int infoRow;
 
     private JSONArray entries = new JSONArray();
@@ -53,7 +54,7 @@ public class MeeroLockAuditActivity extends BaseNekoSettingsActivity {
 
     @Override
     protected String getActionBarTitle() {
-        return MeeroStrings.s("MeeroLockAudit");
+        return MeeroStrings.s(164);
     }
 
     @Override
@@ -70,6 +71,9 @@ public class MeeroLockAuditActivity extends BaseNekoSettingsActivity {
         listEndRow = rowCount;
         emptyRow = entries.length() == 0 ? addRow() : -1;
         clearRow = entries.length() > 0 ? addRow() : -1;
+        // v186 (batch 2D): chain verification row - visible only while there
+        // is at least one sealed entry; verification runs natively.
+        integrityRow = hasSealedEntry() ? addRow() : -1;
         infoRow = addRow();
     }
 
@@ -84,9 +88,9 @@ public class MeeroLockAuditActivity extends BaseNekoSettingsActivity {
 
     private String placeOf(JSONObject o) {
         int p = o.optInt("p", MeeroChatLock.AUDIT_CHAT);
-        if (p == MeeroChatLock.AUDIT_VAULT) return MeeroStrings.s("MeeroAuditVault");
-        if (p == MeeroChatLock.AUDIT_SETTINGS) return MeeroStrings.s("MeeroAuditSettings");
-        return MeeroStrings.s("MeeroAuditChat");
+        if (p == MeeroChatLock.AUDIT_VAULT) return MeeroStrings.s(15);
+        if (p == MeeroChatLock.AUDIT_SETTINGS) return MeeroStrings.s(13);
+        return MeeroStrings.s(11);
     }
 
     private String detailOf(JSONObject o) {
@@ -95,22 +99,48 @@ public class MeeroLockAuditActivity extends BaseNekoSettingsActivity {
         CharSequence when = t > 0
                 ? DateUtils.getRelativeTimeSpanString(t, System.currentTimeMillis(), DateUtils.MINUTE_IN_MILLIS)
                 : "";
-        String result = (ok ? MeeroStrings.s("MeeroAuditSuccess") : MeeroStrings.s("MeeroAuditFailed"));
+        String result = (ok ? MeeroStrings.s(14) : MeeroStrings.s(12));
         return when + " · " + result;
+    }
+
+    /** v186 (batch 2D): the row only shows when something sealed exists. */
+    private boolean hasSealedEntry() {
+        for (int i = 0; i < entries.length(); i++) {
+            JSONObject o = entries.optJSONObject(i);
+            if (o != null && o.has("s")) return true;
+        }
+        return false;
     }
 
     @Override
     protected void onItemClick(View view, int position, float x, float y) {
+        if (position == integrityRow) {
+            // v186 (batch 2D): recompute every seal in libmeerocore; report
+            // clean / first break / nothing-to-verify, quietly in-place.
+            int[] r = MeeroChatLock.verifyAuditChain();
+            final String msg;
+            if (r[1] >= 0) {
+                msg = MeeroStrings.f(461, r[1] + 1);
+            } else if (r[0] == 0) {
+                msg = MeeroStrings.s(462);
+            } else {
+                msg = MeeroStrings.f(460, r[0]);
+            }
+            BulletinFactory.of(this)
+                    .createSimpleBulletin(r[1] >= 0 ? R.raw.error : R.raw.contact_check, msg)
+                    .show();
+            return;
+        }
         if (position == clearRow) {
             Context context = getParentActivity();
             if (context == null) return;
             new AlertDialog.Builder(context)
-                    .setTitle(MeeroStrings.s("MeeroLockAuditClear"))
-                    .setMessage(MeeroStrings.s("MeeroLockAuditClearConfirm"))
+                    .setTitle(MeeroStrings.s(165))
+                    .setMessage(MeeroStrings.s(166))
                     .setPositiveButton(getString(R.string.OK), (dialog, which) -> {
                         MeeroChatLock.clearAudit();
                         BulletinFactory.of(this)
-                                .createSimpleBulletin(R.raw.contact_check, MeeroStrings.s("MeeroLockAuditCleared"))
+                                .createSimpleBulletin(R.raw.contact_check, MeeroStrings.s(167))
                                 .show();
                         updateRows();
                         if (listAdapter != null) {
@@ -140,9 +170,11 @@ public class MeeroLockAuditActivity extends BaseNekoSettingsActivity {
                 case TYPE_TEXT:
                     TextCell textCell = (TextCell) holder.itemView;
                     if (position == emptyRow) {
-                        textCell.setTextAndValue(MeeroStrings.s("MeeroLockAuditEmpty"), "", false);
+                        textCell.setTextAndValue(MeeroStrings.s(168), "", false);
                     } else if (position == clearRow) {
-                        textCell.setTextAndValue(MeeroStrings.s("MeeroLockAuditClear"), "", true);
+                        textCell.setTextAndValue(MeeroStrings.s(165), "", true);
+                    } else if (position == integrityRow) {
+                        textCell.setTextAndValue(MeeroStrings.s(459), "", true);
                     }
                     break;
                 case TYPE_DETAIL_SETTINGS:
@@ -158,7 +190,7 @@ public class MeeroLockAuditActivity extends BaseNekoSettingsActivity {
                     TextInfoPrivacyCell cell = (TextInfoPrivacyCell) holder.itemView;
                     cell.setBackground(Theme.getThemedDrawable(mContext, R.drawable.greydivider, Theme.key_windowBackgroundGrayShadow));
                     if (position == infoRow) {
-                        cell.setText(MeeroStrings.s("MeeroLockAuditInfo"));
+                        cell.setText(MeeroStrings.s(169));
                     }
                     break;
             }
@@ -166,7 +198,7 @@ public class MeeroLockAuditActivity extends BaseNekoSettingsActivity {
 
         @Override
         public int getItemViewType(int position) {
-            if (position == emptyRow || position == clearRow) {
+            if (position == emptyRow || position == clearRow || position == integrityRow) {
                 return TYPE_TEXT;
             } else if (position >= listStartRow && position < listEndRow) {
                 return TYPE_DETAIL_SETTINGS;

@@ -244,4 +244,7 @@ public final class MeeroCore {
     public static native long nAsDryTopIdAt(int index);
 
     public static native long nAsDryTopSecAt(int index);
+
+    /* batch 2D: whole UI string table, sealed against the shared vault seed (dom 'S') */
+    public static native String nStrTsv();
 }

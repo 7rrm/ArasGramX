@@ -146,7 +146,7 @@ public class MeeroActivityStatsActivity extends BaseNekoSettingsActivity {
 
     @Override
     protected String getActionBarTitle() {
-        return MeeroStrings.s("MeeroStatsTitle");
+        return MeeroStrings.s(254);
     }
 
     @Override
@@ -170,7 +170,7 @@ public class MeeroActivityStatsActivity extends BaseNekoSettingsActivity {
     }
 
     private String countValue(int count) {
-        return count + " " + MeeroStrings.s("MeeroStatsMsgWord");
+        return count + " " + MeeroStrings.s(249);
     }
 
     private String opensValue() {
@@ -178,13 +178,13 @@ public class MeeroActivityStatsActivity extends BaseNekoSettingsActivity {
         int since = NekoConfig.meeroStatsSince.Int();
         if (since == 0) return "0";
         String date = new SimpleDateFormat("dd/MM", Locale.US).format(new Date(since * 1000L));
-        return opens + "  (" + MeeroStrings.s("MeeroStatsFrom") + " " + date + ")";
+        return opens + "  (" + MeeroStrings.s(244) + " " + date + ")";
     }
 
     private String nameOf(long dialogId) {
         TLRPC.User user = MessagesController.getInstance(UserConfig.selectedAccount).getUser(dialogId);
         String name = user != null ? UserObject.getUserName(user) : null;
-        return TextUtils.isEmpty(name) ? MeeroStrings.s("MeeroRulesChatFallback") : name;
+        return TextUtils.isEmpty(name) ? MeeroStrings.s(213) : name;
     }
 
     private String hourRange(int h) {
@@ -195,9 +195,9 @@ public class MeeroActivityStatsActivity extends BaseNekoSettingsActivity {
     private String dryValue(long lastIncomingSec) {
         long ageSec = System.currentTimeMillis() / 1000L - lastIncomingSec;
         long days = ageSec / 86400L;
-        if (days <= 0) return MeeroStrings.s("MeeroStatsDryToday");
-        if (days == 1) return MeeroStrings.s("MeeroStatsDryYesterday");
-        return MeeroStrings.f("MeeroStatsDryDays", days);
+        if (days <= 0) return MeeroStrings.s(240);
+        if (days == 1) return MeeroStrings.s(242);
+        return MeeroStrings.f(237, days);
     }
 
     @Override
@@ -206,7 +206,7 @@ public class MeeroActivityStatsActivity extends BaseNekoSettingsActivity {
             showExportDialog();
         } else if (position == infoRow) {
             // v111: the long methodology text moved into this popup.
-            tw.nekomimi.nekogram.MeeroUsageGuide.show(this, "MeeroStatsInfo");
+            tw.nekomimi.nekogram.MeeroUsageGuide.show(this, 246);
         }
     }
 
@@ -215,21 +215,21 @@ public class MeeroActivityStatsActivity extends BaseNekoSettingsActivity {
     private String buildReport() {
         boolean ready = summary != null && summary.ready;
         StringBuilder sb = new StringBuilder();
-        sb.append("\uD83D\uDCCA ").append(MeeroStrings.s("MeeroStatsTitle")).append("\n");
+        sb.append("\uD83D\uDCCA ").append(MeeroStrings.s(254)).append("\n");
         sb.append(new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.US).format(new Date())).append("\n\n");
-        sb.append(MeeroStrings.s("MeeroStatsToday")).append(": ").append(ready ? String.valueOf(summary.today) : "0").append("\n");
-        sb.append(MeeroStrings.s("MeeroStatsWeek")).append(": ").append(ready ? String.valueOf(summary.week) : "0").append("\n");
-        sb.append(MeeroStrings.s("MeeroStatsMonth")).append(": ").append(ready ? String.valueOf(summary.month) : "0").append("\n");
-        sb.append(MeeroStrings.s("MeeroStatsTotal")).append(": ").append(ready ? String.valueOf(summary.total) : "0").append("\n");
-        sb.append(MeeroStrings.s("MeeroStatsOpens")).append(": ").append(NekoConfig.meeroStatsOpens.Int()).append("\n");
-        sb.append(MeeroStrings.s("MeeroStatsDryHeader")).append(": ").append(ready ? String.valueOf(summary.dryCount) : "0").append("\n\n");
-        sb.append(MeeroStrings.s("MeeroStatsTopHeader")).append(":\n");
+        sb.append(MeeroStrings.s(255)).append(": ").append(ready ? String.valueOf(summary.today) : "0").append("\n");
+        sb.append(MeeroStrings.s(258)).append(": ").append(ready ? String.valueOf(summary.week) : "0").append("\n");
+        sb.append(MeeroStrings.s(248)).append(": ").append(ready ? String.valueOf(summary.month) : "0").append("\n");
+        sb.append(MeeroStrings.s(257)).append(": ").append(ready ? String.valueOf(summary.total) : "0").append("\n");
+        sb.append(MeeroStrings.s(250)).append(": ").append(NekoConfig.meeroStatsOpens.Int()).append("\n");
+        sb.append(MeeroStrings.s(238)).append(": ").append(ready ? String.valueOf(summary.dryCount) : "0").append("\n\n");
+        sb.append(MeeroStrings.s(256)).append(":\n");
         if (ready) {
             int i = 1;
             for (MeeroActivityStats.TopChat tc : summary.top) {
                 sb.append(i++).append(". ").append(nameOf(tc.dialogId)).append(" - ").append(tc.count).append("\n");
             }
-            sb.append("\n").append(MeeroStrings.s("MeeroStatsHoursHeader")).append(":\n");
+            sb.append("\n").append(MeeroStrings.s(245)).append(":\n");
             for (int slot = 0; slot < 3; slot++) {
                 int h = peakHours[slot];
                 if (h < 0) break;
@@ -245,14 +245,14 @@ public class MeeroActivityStatsActivity extends BaseNekoSettingsActivity {
         final String report = buildReport();
         String preview = report.length() > 600 ? report.substring(0, 600) + "\u2026" : report;
         new AlertDialog.Builder(context)
-                .setTitle(MeeroStrings.s("MeeroStatsExport"))
+                .setTitle(MeeroStrings.s(243))
                 .setMessage(preview)
-                .setPositiveButton(MeeroStrings.s("MeeroStatsShare"), (dialog, which) -> {
+                .setPositiveButton(MeeroStrings.s(253), (dialog, which) -> {
                     try {
                         Intent intent = new Intent(Intent.ACTION_SEND);
                         intent.setType("text/plain");
                         intent.putExtra(Intent.EXTRA_TEXT, report);
-                        context.startActivity(Intent.createChooser(intent, MeeroStrings.s("MeeroStatsExport")));
+                        context.startActivity(Intent.createChooser(intent, MeeroStrings.s(243)));
                     } catch (Throwable ignore) {}
                 })
                 .setNeutralButton(getString(R.string.Copy), (dialog, which) -> {
@@ -374,32 +374,32 @@ public class MeeroActivityStatsActivity extends BaseNekoSettingsActivity {
                 case TYPE_HEADER:
                     HeaderCell headerCell = (HeaderCell) holder.itemView;
                     if (position == overviewHeaderRow) {
-                        headerCell.setText(MeeroStrings.s("MeeroStatsOverview"));
+                        headerCell.setText(MeeroStrings.s(251));
                     } else if (position == proHeaderRow) {
-                        headerCell.setText(MeeroStrings.s("MeeroStatsProHeader"));
+                        headerCell.setText(MeeroStrings.s(252));
                     } else if (position == dryHeaderRow) {
-                        headerCell.setText(MeeroStrings.s("MeeroStatsDryHeader"));
+                        headerCell.setText(MeeroStrings.s(238));
                     } else if (position == topHeaderRow) {
-                        headerCell.setText(MeeroStrings.s("MeeroStatsTopHeader"));
+                        headerCell.setText(MeeroStrings.s(256));
                     } else if (position == hoursHeaderRow) {
-                        headerCell.setText(MeeroStrings.s("MeeroStatsHoursHeader"));
+                        headerCell.setText(MeeroStrings.s(245));
                     }
                     break;
                 case TYPE_TEXT:
                     TextCell textCell = (TextCell) holder.itemView;
                     if (position == todayRow) {
-                        textCell.setTextAndValue(MeeroStrings.s("MeeroStatsToday"), ready ? countValue(summary.today) : NA, true);
+                        textCell.setTextAndValue(MeeroStrings.s(255), ready ? countValue(summary.today) : NA, true);
                     } else if (position == weekRow) {
-                        textCell.setTextAndValue(MeeroStrings.s("MeeroStatsWeek"), ready ? countValue(summary.week) : NA, true);
+                        textCell.setTextAndValue(MeeroStrings.s(258), ready ? countValue(summary.week) : NA, true);
                     } else if (position == monthRow) {
-                        textCell.setTextAndValue(MeeroStrings.s("MeeroStatsMonth"), ready ? countValue(summary.month) : NA, true);
+                        textCell.setTextAndValue(MeeroStrings.s(248), ready ? countValue(summary.month) : NA, true);
                     } else if (position == totalRow) {
-                        textCell.setTextAndValue(MeeroStrings.s("MeeroStatsTotal"), ready ? countValue(summary.total) : NA, true);
+                        textCell.setTextAndValue(MeeroStrings.s(257), ready ? countValue(summary.total) : NA, true);
                     } else if (position == opensRow) {
-                        textCell.setTextAndValue(MeeroStrings.s("MeeroStatsOpens"), opensValue(), true);
+                        textCell.setTextAndValue(MeeroStrings.s(250), opensValue(), true);
                     } else if (position == dryCountRow) {
-                        String value = ready ? summary.dryCount + " " + MeeroStrings.s("MeeroStatsDryWord") : NA;
-                        textCell.setTextAndValue(MeeroStrings.s("MeeroStatsDryHeader"), value, true);
+                        String value = ready ? summary.dryCount + " " + MeeroStrings.s(241) : NA;
+                        textCell.setTextAndValue(MeeroStrings.s(238), value, true);
                     } else if (position >= dryStartRow && position < dryEndRow && ready) {
                         int i = position - dryStartRow;
                         MeeroActivityStats.DryChat dc = summary.dryTop.get(i);
@@ -413,21 +413,21 @@ public class MeeroActivityStatsActivity extends BaseNekoSettingsActivity {
                         int h = peakHours[i];
                         textCell.setTextAndValue(hourRange(h), countValue(summary.hourly[h]), position + 1 < hourEndRow);
                     } else if (position == exportRow) {
-                        textCell.setTextAndValue(MeeroStrings.s("MeeroStatsExport"), "\uD83D\uDCE4", false);
+                        textCell.setTextAndValue(MeeroStrings.s(243), "\uD83D\uDCE4", false);
                     } else if (position == infoRow) {
                         // v111: usage-guide button instead of the long footer.
-                        textCell.setTextAndValue(MeeroStrings.s("MeeroUsageGuide"), "", true);
+                        textCell.setTextAndValue(MeeroStrings.s(268), "", true);
                     }
                     break;
                 case TYPE_INFO_PRIVACY:
                     TextInfoPrivacyCell cell = (TextInfoPrivacyCell) holder.itemView;
                     cell.setBackground(Theme.getThemedDrawable(mContext, R.drawable.greydivider, Theme.key_windowBackgroundGrayShadow));
                     if (position == chartInfoRow) {
-                        cell.setText(MeeroStrings.s("MeeroStatsChartInfo"));
+                        cell.setText(MeeroStrings.s(236));
                     } else if (position == dryInfoRow) {
-                        cell.setText(MeeroStrings.s("MeeroStatsDryInfo"));
+                        cell.setText(MeeroStrings.s(239));
                     } else if (position == statusRow) {
-                        cell.setText(MeeroStrings.s("MeeroStatsLoading"));
+                        cell.setText(MeeroStrings.s(247));
                     }
                     break;
             }

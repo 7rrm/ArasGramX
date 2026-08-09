@@ -2232,7 +2232,7 @@ public class PeerStoriesView extends SizeNotifierFrameLayout implements Notifica
                         // no-save flag - that is the feature. Hidden when the
                         // MeeroX switch is off, keeping the stock behaviour.
                         if (NekoConfig.meeroStoryDownload.Bool() && currentStory != null && currentStory.storyItem != null && !(currentStory.storyItem instanceof TL_stories.TL_storyItemDeleted) && !(currentStory.storyItem instanceof TL_stories.TL_storyItemSkipped) && !unsupported) {
-                            ActionBarMenuItem.addItem(popupLayout, R.drawable.msg_gallery, MeeroStrings.s("MeeroStoryDownload"), false, resourcesProvider).setOnClickListener(v -> {
+                            ActionBarMenuItem.addItem(popupLayout, R.drawable.msg_gallery, MeeroStrings.s(259), false, resourcesProvider).setOnClickListener(v -> {
                                 try {
                                     final TL_stories.StoryItem storyItemForSave = currentStory.storyItem;
                                     storyItemForSave.dialogId = dialogId;
@@ -2246,7 +2246,7 @@ public class PeerStoriesView extends SizeNotifierFrameLayout implements Notifica
                                                     AndroidUtilities.runOnUIThread(() -> {
                                                         if (uri != null) {
                                                             BulletinFactory.of(storyContainer, resourcesProvider)
-                                                                    .createSimpleBulletin(R.raw.ic_save_to_gallery, MeeroStrings.s("MeeroStorySaved")).show();
+                                                                    .createSimpleBulletin(R.raw.ic_save_to_gallery, MeeroStrings.s(261)).show();
                                                         } else {
                                                             BulletinFactory.of(storyContainer, resourcesProvider)
                                                                     .createSimpleBulletin(R.raw.error, getString(R.string.UnknownError)).show();

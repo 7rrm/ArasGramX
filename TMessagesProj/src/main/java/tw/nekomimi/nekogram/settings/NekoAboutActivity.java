@@ -87,15 +87,15 @@ public class NekoAboutActivity extends BaseNekoSettingsActivity {
         body.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 15);
         body.setTextColor(Theme.getColor(Theme.key_dialogTextBlack));
         body.setLineSpacing(AndroidUtilities.dp(3), 1f);
-        body.setText(MeeroStrings.s("MeeroPrivacyBody"));
+        body.setText(MeeroStrings.s(203));
         body.setGravity(LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT);
         content.addView(body, LayoutHelper.createLinear(
                 LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 24, 8, 24, 0));
 
         AlertDialog.Builder builder = new AlertDialog.Builder(getParentActivity());
-        builder.setTitle(MeeroStrings.s("MeeroPrivacyTitle"));
+        builder.setTitle(MeeroStrings.s(204));
         builder.setView(content);
-        builder.setPositiveButton(MeeroStrings.s("MeeroPrivacyAccept"), (d, w) -> {
+        builder.setPositiveButton(MeeroStrings.s(202), (d, w) -> {
             org.telegram.messenger.MessagesController.getGlobalMainSettings()
                     .edit().putBoolean("meerox_privacy_accepted", true).apply();
         });
@@ -135,17 +135,17 @@ public class NekoAboutActivity extends BaseNekoSettingsActivity {
             if (holder.getItemViewType() == TYPE_SETTINGS) {
                 TextSettingsCell textCell = (TextSettingsCell) holder.itemView;
                 if (position == versionRow) {
-                    textCell.setTextAndValue(MeeroStrings.s("MeeroVersion"), versionName(), true);
+                    textCell.setTextAndValue(MeeroStrings.s(278), versionName(), true);
                 } else if (position == meeroEditionRow) {
-                    textCell.setTextAndValue(MeeroStrings.s("MeeroAppEdition"), String.valueOf(BuildConfig.MEERO_EDITION), true);
+                    textCell.setTextAndValue(MeeroStrings.s(10), String.valueOf(BuildConfig.MEERO_EDITION), true);
                 } else if (position == developerRow) {
-                    textCell.setTextAndValue(MeeroStrings.s("MeeroDeveloper"), "@i55544", true);
+                    textCell.setTextAndValue(MeeroStrings.s(82), "@i55544", true);
                 } else if (position == channel1Row) {
-                    textCell.setTextAndValue(MeeroStrings.s("MeeroChannel1"), "@nadoremalf", true);
+                    textCell.setTextAndValue(MeeroStrings.s(37), "@nadoremalf", true);
                 } else if (position == channel2Row) {
-                    textCell.setTextAndValue(MeeroStrings.s("MeeroChannel2"), "@TOOPENK", true);
+                    textCell.setTextAndValue(MeeroStrings.s(38), "@TOOPENK", true);
                 } else if (position == privacyRow) {
-                    textCell.setText(MeeroStrings.s("MeeroPrivacyTitle"), false);
+                    textCell.setText(MeeroStrings.s(204), false);
                 }
             }
         }

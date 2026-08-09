@@ -80,7 +80,7 @@ public class MeeroAutoReplyRulesActivity extends BaseNekoSettingsActivity {
 
     @Override
     protected String getActionBarTitle() {
-        return MeeroStrings.s("MeeroRulesTitle");
+        return MeeroStrings.s(221);
     }
 
     @Override
@@ -91,7 +91,7 @@ public class MeeroAutoReplyRulesActivity extends BaseNekoSettingsActivity {
     private String nameOf(long dialogId) {
         TLRPC.User user = MessagesController.getInstance(UserConfig.selectedAccount).getUser(dialogId);
         String name = user != null ? UserObject.getUserName(user) : null;
-        return TextUtils.isEmpty(name) ? MeeroStrings.s("MeeroRulesChatFallback") : name;
+        return TextUtils.isEmpty(name) ? MeeroStrings.s(213) : name;
     }
 
     @Override
@@ -115,7 +115,7 @@ public class MeeroAutoReplyRulesActivity extends BaseNekoSettingsActivity {
                 long dialogId = dids.get(0).dialogId;
                 if (parentLayout != null) parentLayout.removeFragmentFromStack(fragment, true);
                 if (!DialogObject.isUserDialog(dialogId)) {
-                    BulletinFactory.of(this).createSimpleBulletin(R.raw.chats_infotip, MeeroStrings.s("MeeroRulesPickPrivate")).show();
+                    BulletinFactory.of(this).createSimpleBulletin(R.raw.chats_infotip, MeeroStrings.s(219)).show();
                     return true;
                 }
                 editRuleText(dialogId, MeeroAutoReply.getRuleText(dialogId));
@@ -129,7 +129,7 @@ public class MeeroAutoReplyRulesActivity extends BaseNekoSettingsActivity {
     private void showRuleOptions(long dialogId) {
         new AlertDialog.Builder(getParentActivity())
                 .setTitle(nameOf(dialogId))
-                .setItems(new CharSequence[]{MeeroStrings.s("MeeroRulesEdit"), MeeroStrings.s("MeeroRulesDelete")}, (dialog, which) -> {
+                .setItems(new CharSequence[]{MeeroStrings.s(216), MeeroStrings.s(215)}, (dialog, which) -> {
                     if (which == 0) {
                         editRuleText(dialogId, MeeroAutoReply.getRuleText(dialogId));
                     } else {
@@ -149,9 +149,9 @@ public class MeeroAutoReplyRulesActivity extends BaseNekoSettingsActivity {
         editText.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 16);
         editText.setTextColor(getThemedColor(Theme.key_dialogTextBlack));
         editText.setHintTextColor(getThemedColor(Theme.key_windowBackgroundWhiteHintText));
-        editText.setText(currentText != null ? currentText : MeeroStrings.s("MeeroAutoReplyDefaultText"));
+        editText.setText(currentText != null ? currentText : MeeroStrings.s(20));
         editText.setSelection(editText.getText().length());
-        editText.setHint(MeeroStrings.s("MeeroAutoReplyTextHint"));
+        editText.setHint(MeeroStrings.s(25));
         FrameLayout container = new FrameLayout(context);
         FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         lp.setMargins(AndroidUtilities.dp(24), AndroidUtilities.dp(4), AndroidUtilities.dp(24), 0);
@@ -197,13 +197,13 @@ public class MeeroAutoReplyRulesActivity extends BaseNekoSettingsActivity {
                 case TYPE_HEADER:
                     HeaderCell headerCell = (HeaderCell) holder.itemView;
                     if (position == headerRow) {
-                        headerCell.setText(MeeroStrings.s("MeeroRulesTitle"));
+                        headerCell.setText(MeeroStrings.s(221));
                     }
                     break;
                 case TYPE_TEXT:
                     TextCell textCell = (TextCell) holder.itemView;
                     if (position == addRow) {
-                        textCell.setTextAndValue(MeeroStrings.s("MeeroRulesAdd"), "", true);
+                        textCell.setTextAndValue(MeeroStrings.s(212), "", true);
                     }
                     break;
                 case TYPE_DETAIL_SETTINGS:
@@ -219,7 +219,7 @@ public class MeeroAutoReplyRulesActivity extends BaseNekoSettingsActivity {
                     TextInfoPrivacyCell cell = (TextInfoPrivacyCell) holder.itemView;
                     cell.setBackground(Theme.getThemedDrawable(mContext, R.drawable.greydivider, Theme.key_windowBackgroundGrayShadow));
                     if (position == infoRow) {
-                        cell.setText(MeeroStrings.s("MeeroRulesInfo"));
+                        cell.setText(MeeroStrings.s(217));
                     }
                     break;
             }

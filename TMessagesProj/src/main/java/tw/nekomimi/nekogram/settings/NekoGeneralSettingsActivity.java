@@ -202,7 +202,7 @@ public class NekoGeneralSettingsActivity extends BaseNekoXSettingsActivity {
             getString(R.string.Default),
             getString(R.string.StyleModern),
             getString(R.string.StyleMaterialDesign3),
-            MeeroStrings.s("StyleIos")
+            MeeroStrings.s(362)
     }, null));
     private final AbstractConfigCell sliderStyleRow = cellGroup.appendCell(new ConfigCellSelectBox("SliderStyle", NaConfig.INSTANCE.getSliderStyle(), new String[]{
             getString(R.string.Default),
@@ -223,8 +223,8 @@ public class NekoGeneralSettingsActivity extends BaseNekoXSettingsActivity {
     private final AbstractConfigCell notificationIconRow = cellGroup.appendCell(new ConfigCellSelectBox(null, NaConfig.INSTANCE.getNotificationIcon(), new String[]{
             getString(R.string.MapPreviewProviderTelegram),
             getString(R.string.NagramX),
-            MeeroStrings.s("MeeroIconAlt"),
-            MeeroStrings.s("MeeroIconStyle2")
+            MeeroStrings.s(129),
+            MeeroStrings.s(130)
     }, null));
     private final AbstractConfigCell tabletModeRow = cellGroup.appendCell(new ConfigCellSelectBox(null, NekoConfig.tabletMode, new String[]{
             getString(R.string.TabletModeDefault),

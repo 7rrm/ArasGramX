@@ -105,7 +105,7 @@ public class MeeroAutoReplyActivity extends BaseNekoSettingsActivity {
 
     @Override
     protected String getActionBarTitle() {
-        return MeeroStrings.s("MeeroAutoReplyTitle");
+        return MeeroStrings.s(26);
     }
 
     @Override
@@ -116,64 +116,64 @@ public class MeeroAutoReplyActivity extends BaseNekoSettingsActivity {
     private String currentReplyText() {
         String value = NekoConfig.meeroAutoReplyText.String();
         if (TextUtils.isEmpty(value)) {
-            value = MeeroStrings.s("MeeroAutoReplyDefaultText");
+            value = MeeroStrings.s(20);
         }
         return value;
     }
 
     /** Live preview exactly as the other side receives it ({name} resolved). */
     private String replyTextPreview() {
-        return currentReplyText().replace("{name}", MeeroStrings.s("MeeroAutoReplySampleName"));
+        return currentReplyText().replace("{name}", MeeroStrings.s(23));
     }
 
     private String rulesValue() {
         int count = MeeroAutoReply.getRuleCount();
-        if (count == 0) return MeeroStrings.s("MeeroRulesNone");
-        String word = count == 1 ? MeeroStrings.s("MeeroRulesWordOne") : MeeroStrings.s("MeeroRulesWordMany");
+        if (count == 0) return MeeroStrings.s(218);
+        String word = count == 1 ? MeeroStrings.s(223) : MeeroStrings.s(222);
         return String.format(Locale.US, "%d %s", count, word);
     }
 
     private String exclusionsValue() {
         int count = MeeroAutoReply.getExclusionCount();
-        if (count == 0) return MeeroStrings.s("MeeroExclusionsNone");
-        String word = count == 1 ? MeeroStrings.s("MeeroExclusionsWordOne") : MeeroStrings.s("MeeroExclusionsWordMany");
+        if (count == 0) return MeeroStrings.s(86);
+        String word = count == 1 ? MeeroStrings.s(91) : MeeroStrings.s(90);
         return String.format(Locale.US, "%d %s", count, word);
     }
 
     private String poolValue() {
         int count = MeeroAutoReply.getPoolCount();
-        if (count == 0) return MeeroStrings.s("MeeroPoolNone");
-        String word = count == 1 ? MeeroStrings.s("MeeroPoolWordOne") : MeeroStrings.s("MeeroPoolWordMany");
+        if (count == 0) return MeeroStrings.s(198);
+        String word = count == 1 ? MeeroStrings.s(201) : MeeroStrings.s(200);
         return String.format(Locale.US, "%d %s", count, word);
     }
 
     private String cooldownName(int minutes) {
         switch (minutes) {
             case 0:
-                return MeeroStrings.s("MeeroCooldownEveryMessage");
+                return MeeroStrings.s(70);
             case 5:
-                return MeeroStrings.s("MeeroCooldown5");
+                return MeeroStrings.s(68);
             case 10:
-                return MeeroStrings.s("MeeroCooldown10");
+                return MeeroStrings.s(66);
             case 60:
-                return MeeroStrings.s("MeeroCooldown60");
+                return MeeroStrings.s(69);
             case 30:
             default:
-                return MeeroStrings.s("MeeroCooldown30");
+                return MeeroStrings.s(67);
         }
     }
 
     private String delayName(int seconds) {
         switch (seconds) {
             case 0:
-                return MeeroStrings.s("MeeroDelayInstant");
+                return MeeroStrings.s(81);
             case 3:
-                return MeeroStrings.s("MeeroDelay3");
+                return MeeroStrings.s(79);
             case 5:
-                return MeeroStrings.s("MeeroDelay5");
+                return MeeroStrings.s(80);
             case 10:
             default:
-                return MeeroStrings.s("MeeroDelay10");
+                return MeeroStrings.s(78);
         }
     }
 
@@ -206,14 +206,14 @@ public class MeeroAutoReplyActivity extends BaseNekoSettingsActivity {
             NekoConfig.meeroAutoReplyWindow.toggleConfigBool();
             ((TextCheckCell) view).setChecked(NekoConfig.meeroAutoReplyWindow.Bool());
         } else if (position == windowStartRow) {
-            showTimePicker(NekoConfig.meeroAutoReplyWindowStart, "MeeroAutoReplyWindowStart", windowStartRow);
+            showTimePicker(NekoConfig.meeroAutoReplyWindowStart, MeeroStrings.s(33), windowStartRow);
         } else if (position == windowEndRow) {
-            showTimePicker(NekoConfig.meeroAutoReplyWindowEnd, "MeeroAutoReplyWindowEnd", windowEndRow);
+            showTimePicker(NekoConfig.meeroAutoReplyWindowEnd, MeeroStrings.s(31), windowEndRow);
         } else if (position == windowDaysRow) {
             showDaysPicker();
         } else if (position == boundsInfoRow) {
             // v111: one popup holds everything this section used to spell out.
-            tw.nekomimi.nekogram.MeeroUsageGuide.show(this, "MeeroAutoReplyUsage");
+            tw.nekomimi.nekogram.MeeroUsageGuide.show(this, 27);
         } else if (position == nightTextOnRow) {
             NekoConfig.meeroAutoReplyNightTextOn.toggleConfigBool();
             ((TextCheckCell) view).setChecked(NekoConfig.meeroAutoReplyNightTextOn.Bool());
@@ -226,26 +226,26 @@ public class MeeroAutoReplyActivity extends BaseNekoSettingsActivity {
     private String dayName(int i) {
         switch (i) {
             case 0:
-                return MeeroStrings.s("MeeroDaySun");
+                return MeeroStrings.s(74);
             case 1:
-                return MeeroStrings.s("MeeroDayMon");
+                return MeeroStrings.s(72);
             case 2:
-                return MeeroStrings.s("MeeroDayTue");
+                return MeeroStrings.s(76);
             case 3:
-                return MeeroStrings.s("MeeroDayWed");
+                return MeeroStrings.s(77);
             case 4:
-                return MeeroStrings.s("MeeroDayThu");
+                return MeeroStrings.s(75);
             case 5:
-                return MeeroStrings.s("MeeroDayFri");
+                return MeeroStrings.s(71);
             default:
-                return MeeroStrings.s("MeeroDaySat");
+                return MeeroStrings.s(73);
         }
     }
 
     private String daysValue() {
         int mask = NekoConfig.meeroAutoReplyWindowDays.Int();
-        if (mask == 127) return MeeroStrings.s("MeeroAutoReplyWindowDaysAll");
-        if (mask == 0) return MeeroStrings.s("MeeroAutoReplyWindowDaysNone");
+        if (mask == 127) return MeeroStrings.s(29);
+        if (mask == 0) return MeeroStrings.s(30);
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < 7; i++) {
             if ((mask & (1 << i)) != 0) {
@@ -277,7 +277,7 @@ public class MeeroAutoReplyActivity extends BaseNekoSettingsActivity {
             layout.addView(cell);
         }
         new AlertDialog.Builder(context)
-                .setTitle(MeeroStrings.s("MeeroAutoReplyWindowDays"))
+                .setTitle(MeeroStrings.s(28))
                 .setView(layout)
                 .setPositiveButton(getString(R.string.Save), (dialog, which) -> {
                     int newMask = 0;
@@ -294,9 +294,9 @@ public class MeeroAutoReplyActivity extends BaseNekoSettingsActivity {
     private String nightTextPreview() {
         String value = NekoConfig.meeroAutoReplyNightText.String();
         if (TextUtils.isEmpty(value)) {
-            return MeeroStrings.s("MeeroNightTextEmpty");
+            return MeeroStrings.s(172);
         }
-        return value.replace("{name}", MeeroStrings.s("MeeroAutoReplySampleName"));
+        return value.replace("{name}", MeeroStrings.s(23));
     }
 
     /** Same editor widget as the general reply text, for the night variant. */
@@ -309,13 +309,13 @@ public class MeeroAutoReplyActivity extends BaseNekoSettingsActivity {
         editText.setHintTextColor(getThemedColor(Theme.key_windowBackgroundWhiteHintText));
         editText.setText(NekoConfig.meeroAutoReplyNightText.String());
         editText.setSelection(editText.getText().length());
-        editText.setHint(MeeroStrings.s("MeeroNightTextHint"));
+        editText.setHint(MeeroStrings.s(173));
         FrameLayout container = new FrameLayout(context);
         FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         lp.setMargins(AndroidUtilities.dp(24), AndroidUtilities.dp(4), AndroidUtilities.dp(24), 0);
         container.addView(editText, lp);
         new AlertDialog.Builder(context)
-                .setTitle(MeeroStrings.s("MeeroNightText"))
+                .setTitle(MeeroStrings.s(171))
                 .setView(container)
                 .setPositiveButton(getString(R.string.Save), (dialog, which) -> {
                     NekoConfig.meeroAutoReplyNightText.setConfigString(editText.getText().toString().trim());
@@ -348,20 +348,20 @@ public class MeeroAutoReplyActivity extends BaseNekoSettingsActivity {
         editText.setHintTextColor(getThemedColor(Theme.key_windowBackgroundWhiteHintText));
         editText.setText(currentReplyText());
         editText.setSelection(editText.getText().length());
-        editText.setHint(MeeroStrings.s("MeeroAutoReplyTextHint"));
+        editText.setHint(MeeroStrings.s(25));
         FrameLayout container = new FrameLayout(context);
         FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         lp.setMargins(AndroidUtilities.dp(24), AndroidUtilities.dp(4), AndroidUtilities.dp(24), 0);
         container.addView(editText, lp);
 
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
-        builder.setTitle(MeeroStrings.s("MeeroAutoReplyText"));
+        builder.setTitle(MeeroStrings.s(24));
         builder.setView(container);
         builder.setPositiveButton(getString(R.string.Save), (dialog, which) -> {
             String value = editText.getText().toString().trim();
             // Store empty when it matches the localized default: future app
             // translations then follow the interface language for free.
-            if (value.equals(MeeroStrings.s("MeeroAutoReplyDefaultText"))) {
+            if (value.equals(MeeroStrings.s(20))) {
                 value = "";
             }
             NekoConfig.meeroAutoReplyText.setConfigString(value);
@@ -383,7 +383,7 @@ public class MeeroAutoReplyActivity extends BaseNekoSettingsActivity {
             names[i] = cooldownName(COOLDOWN_MINUTES[i]) + (COOLDOWN_MINUTES[i] == current ? "  ✓" : "");
         }
         new AlertDialog.Builder(getParentActivity())
-                .setTitle(MeeroStrings.s("MeeroAutoReplyCooldown"))
+                .setTitle(MeeroStrings.s(19))
                 .setItems(names, (dialog, which) -> {
                     NekoConfig.meeroAutoReplyCooldown.setConfigInt(COOLDOWN_MINUTES[which]);
                     listAdapter.notifyItemChanged(cooldownRow);
@@ -399,7 +399,7 @@ public class MeeroAutoReplyActivity extends BaseNekoSettingsActivity {
             names[i] = delayName(DELAY_SECONDS[i]) + (DELAY_SECONDS[i] == current ? "  ✓" : "");
         }
         new AlertDialog.Builder(getParentActivity())
-                .setTitle(MeeroStrings.s("MeeroAutoReplyDelay"))
+                .setTitle(MeeroStrings.s(21))
                 .setItems(names, (dialog, which) -> {
                     NekoConfig.meeroAutoReplyDelay.setConfigInt(DELAY_SECONDS[which]);
                     listAdapter.notifyItemChanged(delayRow);
@@ -450,63 +450,63 @@ public class MeeroAutoReplyActivity extends BaseNekoSettingsActivity {
                 case TYPE_CHECK:
                     TextCheckCell checkCell = (TextCheckCell) holder.itemView;
                     if (position == autoReplyRow) {
-                        checkCell.setTextAndCheck(MeeroStrings.s("MeeroAutoReplyTitle"), NekoConfig.meeroAutoReply.Bool(), true);
+                        checkCell.setTextAndCheck(MeeroStrings.s(26), NekoConfig.meeroAutoReply.Bool(), true);
                     } else if (position == emojiRow) {
-                        checkCell.setTextAndCheck(MeeroStrings.s("MeeroRandomEmoji"), NekoConfig.meeroAutoReplyRandomEmoji.Bool(), true);
+                        checkCell.setTextAndCheck(MeeroStrings.s(205), NekoConfig.meeroAutoReplyRandomEmoji.Bool(), true);
                     } else if (position == windowRow) {
-                        checkCell.setTextAndCheck(MeeroStrings.s("MeeroAutoReplyWindowTitle"), NekoConfig.meeroAutoReplyWindow.Bool(), true);
+                        checkCell.setTextAndCheck(MeeroStrings.s(34), NekoConfig.meeroAutoReplyWindow.Bool(), true);
                     } else if (position == nightTextOnRow) {
-                        checkCell.setTextAndCheck(MeeroStrings.s("MeeroNightTextOn"), NekoConfig.meeroAutoReplyNightTextOn.Bool(), true);
+                        checkCell.setTextAndCheck(MeeroStrings.s(174), NekoConfig.meeroAutoReplyNightTextOn.Bool(), true);
                     }
                     break;
                 case TYPE_HEADER:
                     HeaderCell headerCell = (HeaderCell) holder.itemView;
                     if (position == contentHeaderRow) {
-                        headerCell.setText(MeeroStrings.s("MeeroRulesContentHeader"));
+                        headerCell.setText(MeeroStrings.s(214));
                     } else if (position == timingHeaderRow) {
-                        headerCell.setText(MeeroStrings.s("MeeroRulesTimingHeader"));
+                        headerCell.setText(MeeroStrings.s(220));
                     }
                     break;
                 case TYPE_DETAIL_SETTINGS:
                     TextDetailSettingsCell detailCell = (TextDetailSettingsCell) holder.itemView;
                     if (position == textRow) {
                         detailCell.setMultilineDetail(true);
-                        detailCell.setTextAndValue(MeeroStrings.s("MeeroAutoReplyText"), replyTextPreview(), false);
+                        detailCell.setTextAndValue(MeeroStrings.s(24), replyTextPreview(), false);
                     } else if (position == nightTextRow) {
                         detailCell.setMultilineDetail(true);
-                        detailCell.setTextAndValue(MeeroStrings.s("MeeroNightText"), nightTextPreview(), false);
+                        detailCell.setTextAndValue(MeeroStrings.s(171), nightTextPreview(), false);
                     }
                     break;
                 case TYPE_TEXT:
                     TextCell textCell = (TextCell) holder.itemView;
                     if (position == rulesRow) {
-                        textCell.setTextAndValue(MeeroStrings.s("MeeroRulesTitle"), rulesValue(), true);
+                        textCell.setTextAndValue(MeeroStrings.s(221), rulesValue(), true);
                     } else if (position == exclusionsRow) {
-                        textCell.setTextAndValue(MeeroStrings.s("MeeroExclusionsTitle"), exclusionsValue(), true);
+                        textCell.setTextAndValue(MeeroStrings.s(89), exclusionsValue(), true);
                     } else if (position == poolRow) {
-                        textCell.setTextAndValue(MeeroStrings.s("MeeroPoolTitle"), poolValue(), true);
+                        textCell.setTextAndValue(MeeroStrings.s(199), poolValue(), true);
                     } else if (position == cooldownRow) {
-                        textCell.setTextAndValue(MeeroStrings.s("MeeroAutoReplyCooldown"), cooldownName(NekoConfig.meeroAutoReplyCooldown.Int()), true);
+                        textCell.setTextAndValue(MeeroStrings.s(19), cooldownName(NekoConfig.meeroAutoReplyCooldown.Int()), true);
                     } else if (position == delayRow) {
-                        textCell.setTextAndValue(MeeroStrings.s("MeeroAutoReplyDelay"), delayName(NekoConfig.meeroAutoReplyDelay.Int()), true);
+                        textCell.setTextAndValue(MeeroStrings.s(21), delayName(NekoConfig.meeroAutoReplyDelay.Int()), true);
                     } else if (position == windowStartRow) {
-                        textCell.setTextAndValue(MeeroStrings.s("MeeroAutoReplyWindowStart"), timeValue(NekoConfig.meeroAutoReplyWindowStart.Int()), true);
+                        textCell.setTextAndValue(MeeroStrings.s(33), timeValue(NekoConfig.meeroAutoReplyWindowStart.Int()), true);
                     } else if (position == windowEndRow) {
-                        textCell.setTextAndValue(MeeroStrings.s("MeeroAutoReplyWindowEnd"), timeValue(NekoConfig.meeroAutoReplyWindowEnd.Int()), true);
+                        textCell.setTextAndValue(MeeroStrings.s(31), timeValue(NekoConfig.meeroAutoReplyWindowEnd.Int()), true);
                     } else if (position == windowDaysRow) {
-                        textCell.setTextAndValue(MeeroStrings.s("MeeroAutoReplyWindowDays"), daysValue(), true);
+                        textCell.setTextAndValue(MeeroStrings.s(28), daysValue(), true);
                     } else if (position == boundsInfoRow) {
                         // v111: usage-guide button instead of the long footers.
-                        textCell.setTextAndValue(MeeroStrings.s("MeeroUsageGuide"), "", true);
+                        textCell.setTextAndValue(MeeroStrings.s(268), "", true);
                     }
                     break;
                 case TYPE_INFO_PRIVACY:
                     TextInfoPrivacyCell cell = (TextInfoPrivacyCell) holder.itemView;
                     cell.setBackground(Theme.getThemedDrawable(mContext, R.drawable.greydivider, Theme.key_windowBackgroundGrayShadow));
                     if (position == autoReplyInfoRow) {
-                        cell.setText(MeeroStrings.s("MeeroAutoReplyInfo"));
+                        cell.setText(MeeroStrings.s(22));
                     } else if (position == windowInfoRow) {
-                        cell.setText(MeeroStrings.s("MeeroAutoReplyWindowInfo"));
+                        cell.setText(MeeroStrings.s(32));
                     }
                     break;
             }

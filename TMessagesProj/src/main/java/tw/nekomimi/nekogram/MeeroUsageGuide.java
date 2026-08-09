@@ -24,16 +24,32 @@ public final class MeeroUsageGuide {
 
     /** Shows the usage dialog. Safe no-op without a live context. */
     public static void show(BaseFragment fragment, String textKey) {
-        if (fragment == null) return;
+        if (fragment == null || textKey == null) return;
         show(fragment.getParentActivity(), textKey);
     }
 
     public static void show(Context context, String textKey) {
         if (context == null || textKey == null) return;
         new AlertDialog.Builder(context)
-                .setTitle(MeeroStrings.s("MeeroUsageGuide"))
+                .setTitle(MeeroStrings.s(268))
                 .setMessage(MeeroStrings.s(textKey))
-                .setPositiveButton(MeeroStrings.s("MeeroUsageGuideGotIt"), null)
+                .setPositiveButton(MeeroStrings.s(269), null)
+                .show();
+    }
+
+    /* v186 (batch 2D): numeric vault-id form - call sites no longer carry
+     * the guide key as a readable DEX literal. */
+    public static void show(BaseFragment fragment, int textId) {
+        if (fragment == null) return;
+        show(fragment.getParentActivity(), textId);
+    }
+
+    public static void show(Context context, int textId) {
+        if (context == null) return;
+        new AlertDialog.Builder(context)
+                .setTitle(MeeroStrings.s(268))
+                .setMessage(MeeroStrings.s(textId))
+                .setPositiveButton(MeeroStrings.s(269), null)
                 .show();
     }
 }

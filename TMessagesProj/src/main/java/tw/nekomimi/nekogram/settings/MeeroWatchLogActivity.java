@@ -84,7 +84,7 @@ public class MeeroWatchLogActivity extends BaseNekoSettingsActivity {
 
     @Override
     protected String getActionBarTitle() {
-        return MeeroStrings.s("MeeroWatchLogTitle");
+        return MeeroStrings.s(296);
     }
 
     @Override
@@ -113,9 +113,9 @@ public class MeeroWatchLogActivity extends BaseNekoSettingsActivity {
             }
         } else if (position == clearRow && clearRow >= 0) {
             new AlertDialog.Builder(getParentActivity())
-                    .setTitle(MeeroStrings.s("MeeroWatchLogClear"))
-                    .setMessage(MeeroStrings.s("MeeroWatchLogClearConfirm"))
-                    .setPositiveButton(MeeroStrings.s("MeeroWatchLogClear"), (dialog, which) -> {
+                    .setTitle(MeeroStrings.s(291))
+                    .setMessage(MeeroStrings.s(292))
+                    .setPositiveButton(MeeroStrings.s(291), (dialog, which) -> {
                         MeeroWatch.clearLog();
                         updateRows();
                         listAdapter.notifyDataSetChanged();
@@ -129,15 +129,15 @@ public class MeeroWatchLogActivity extends BaseNekoSettingsActivity {
         ArrayList<CharSequence> options = new ArrayList<>();
         ArrayList<String> paths = new ArrayList<>();
         if (!TextUtils.isEmpty(item.oldPath) && new File(item.oldPath).exists()) {
-            options.add(MeeroStrings.s("MeeroWatchPhotoViewOld"));
+            options.add(MeeroStrings.s(309));
             paths.add(item.oldPath);
         }
         if (!TextUtils.isEmpty(item.newPath) && new File(item.newPath).exists()) {
-            options.add(MeeroStrings.s("MeeroWatchPhotoViewNew"));
+            options.add(MeeroStrings.s(308));
             paths.add(item.newPath);
         }
         if (options.isEmpty()) {
-            BulletinFactory.of(this).createSimpleBulletin(R.raw.chats_infotip, MeeroStrings.s("MeeroWatchPhotoMissing")).show();
+            BulletinFactory.of(this).createSimpleBulletin(R.raw.chats_infotip, MeeroStrings.s(306)).show();
             return;
         }
         new AlertDialog.Builder(getParentActivity())
@@ -157,7 +157,7 @@ public class MeeroWatchLogActivity extends BaseNekoSettingsActivity {
         container.addView(imageView, new FrameLayout.LayoutParams(size, size, android.view.Gravity.CENTER));
         new AlertDialog.Builder(context)
                 .setView(container)
-                .setPositiveButton(MeeroStrings.s("MeeroWatchPhotoSave"), (dialog, which) -> saveToGallery(path))
+                .setPositiveButton(MeeroStrings.s(307), (dialog, which) -> saveToGallery(path))
                 .setNegativeButton(getString(R.string.Cancel), null)
                 .show();
     }
@@ -182,9 +182,9 @@ public class MeeroWatchLogActivity extends BaseNekoSettingsActivity {
                 int n;
                 while ((n = in.read(buf)) > 0) out.write(buf, 0, n);
             }
-            BulletinFactory.of(this).createSimpleBulletin(R.raw.chats_infotip, MeeroStrings.s("MeeroWatchSaved")).show();
+            BulletinFactory.of(this).createSimpleBulletin(R.raw.chats_infotip, MeeroStrings.s(312)).show();
         } catch (Throwable ignore) {
-            BulletinFactory.of(this).createSimpleBulletin(R.raw.chats_infotip, MeeroStrings.s("MeeroWatchSaveFailed")).show();
+            BulletinFactory.of(this).createSimpleBulletin(R.raw.chats_infotip, MeeroStrings.s(311)).show();
         }
     }
 
@@ -206,7 +206,7 @@ public class MeeroWatchLogActivity extends BaseNekoSettingsActivity {
                 case TYPE_HEADER:
                     HeaderCell headerCell = (HeaderCell) holder.itemView;
                     if (position == headerRow) {
-                        headerCell.setText(MeeroStrings.s("MeeroWatchLogTitle"));
+                        headerCell.setText(MeeroStrings.s(296));
                     }
                     break;
                 case TYPE_DETAIL_SETTINGS:
@@ -216,7 +216,7 @@ public class MeeroWatchLogActivity extends BaseNekoSettingsActivity {
                         String title = item.who + "  •  " + MeeroWatch.whatText(item.what);
                         String detail;
                         if ("photo".equals(item.what)) {
-                            detail = timeOf(item.t) + "  •  " + MeeroStrings.s("MeeroWatchPhotoHint");
+                            detail = timeOf(item.t) + "  •  " + MeeroStrings.s(305);
                         } else if (TextUtils.isEmpty(item.oldValue)) {
                             // v111: message entries carry a single detail
                             // string (no old -> new arrow).
@@ -232,16 +232,16 @@ public class MeeroWatchLogActivity extends BaseNekoSettingsActivity {
                 case TYPE_TEXT:
                     TextCell textCell = (TextCell) holder.itemView;
                     if (position == emptyRow) {
-                        textCell.setTextAndValue(MeeroStrings.s("MeeroWatchLogEmpty"), "", true);
+                        textCell.setTextAndValue(MeeroStrings.s(293), "", true);
                     } else if (position == clearRow && clearRow >= 0) {
-                        textCell.setTextAndValue(MeeroStrings.s("MeeroWatchLogClear"), "", true);
+                        textCell.setTextAndValue(MeeroStrings.s(291), "", true);
                     }
                     break;
                 case TYPE_INFO_PRIVACY:
                     TextInfoPrivacyCell cell = (TextInfoPrivacyCell) holder.itemView;
                     cell.setBackground(Theme.getThemedDrawable(mContext, R.drawable.greydivider, Theme.key_windowBackgroundGrayShadow));
                     if (position == infoRow) {
-                        cell.setText(MeeroStrings.s("MeeroWatchLogInfo"));
+                        cell.setText(MeeroStrings.s(294));
                     }
                     break;
             }

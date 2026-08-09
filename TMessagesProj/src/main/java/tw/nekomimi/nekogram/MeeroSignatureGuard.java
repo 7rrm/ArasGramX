@@ -108,10 +108,10 @@ public final class MeeroSignatureGuard {
             // Telegram's own Builder has no setCancelable - apply the two
             // flags on the shown dialog itself instead.
             final AlertDialog dlg = new AlertDialog.Builder(ctx)
-                    .setTitle(MeeroStrings.s("MeeroSigWarningTitle"))
-                    .setMessage(MeeroStrings.f("MeeroSigWarningText", current == null ? "?" : current, OFFICIAL_FINGERPRINT))
-                    .setPositiveButton(MeeroStrings.s("MeeroSigExit"), (d, w) -> host.finishAffinity())
-                    .setNegativeButton(MeeroStrings.s("MeeroSigContinue"), null)
+                    .setTitle(MeeroStrings.s(234))
+                    .setMessage(MeeroStrings.f(233, current == null ? "?" : current, OFFICIAL_FINGERPRINT))
+                    .setPositiveButton(MeeroStrings.s(232), (d, w) -> host.finishAffinity())
+                    .setNegativeButton(MeeroStrings.s(231), null)
                     .show();
             dlg.setCancelable(false);
             dlg.setCanceledOnTouchOutside(false);

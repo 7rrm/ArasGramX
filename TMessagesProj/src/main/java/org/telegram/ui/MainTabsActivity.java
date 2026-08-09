@@ -1554,11 +1554,11 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
         // MessagesStorage.readAllDialogs path - behind a confirmation, because
         // zeroed unread badges cannot be restored.
         o.addGap();
-        o.add(R.drawable.ios_chat_readall, MeeroStrings.s("MeeroReadAllChats"), () -> {
+        o.add(R.drawable.ios_chat_readall, MeeroStrings.s(206), () -> {
             o.dismiss();
             new AlertDialog.Builder(getParentActivity())
-                    .setTitle(MeeroStrings.s("MeeroReadAllChats"))
-                    .setMessage(MeeroStrings.s("MeeroReadAllConfirm"))
+                    .setTitle(MeeroStrings.s(206))
+                    .setMessage(MeeroStrings.s(207))
                     .setPositiveButton(getString(R.string.OK), (dialog, which) ->
                             getMessagesStorage().readAllDialogs(-1))
                     .setNegativeButton(getString(R.string.Cancel), null)
@@ -1569,7 +1569,7 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
         if (tw.nekomimi.nekogram.MeeroChatLock.hasHiddenDialogs()) {
             o.addGap();
             o.add(R.drawable.baseline_lock_base_24,
-                    MeeroStrings.s("MeeroHiddenChats") + " (" + tw.nekomimi.nekogram.MeeroChatLock.getLockedIds().size() + ")",
+                    MeeroStrings.s(114) + " (" + tw.nekomimi.nekogram.MeeroChatLock.getLockedIds().size() + ")",
                     () -> presentFragment(new MeeroLockedVaultActivity()));
         }
         // MeeroX v107: frosted fog behind this popup (user request). The

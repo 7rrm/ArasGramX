@@ -70,7 +70,7 @@ public class MeeroFontsActivity extends BaseNekoSettingsActivity {
 
     @Override
     protected String getActionBarTitle() {
-        return MeeroStrings.s("MeeroFontSection");
+        return MeeroStrings.s(97);
     }
 
     @Override
@@ -95,7 +95,7 @@ public class MeeroFontsActivity extends BaseNekoSettingsActivity {
             if (o.id.startsWith(MeeroFonts.CUSTOM_PREFIX) && getParentActivity() != null) {
                 AlertDialog.Builder b = new AlertDialog.Builder(getParentActivity());
                 b.setTitle(o.title);
-                b.setMessage(MeeroStrings.s("MeeroFontDeleteConfirm"));
+                b.setMessage(MeeroStrings.s(95));
                 b.setPositiveButton(getString(R.string.Delete), (d, w) -> {
                     MeeroFonts.deleteCustom(o.id);
                     AndroidUtilities.clearTypefaceCache();
@@ -120,7 +120,7 @@ public class MeeroFontsActivity extends BaseNekoSettingsActivity {
             i.setType("*/*");
             i.addCategory(Intent.CATEGORY_OPENABLE);
             startActivityForResult(
-                    Intent.createChooser(i, MeeroStrings.s("MeeroFontPick")), PICK_FONT);
+                    Intent.createChooser(i, MeeroStrings.s(96)), PICK_FONT);
         } catch (Throwable e) {
             FileLog.e(e);
         }
@@ -167,7 +167,7 @@ public class MeeroFontsActivity extends BaseNekoSettingsActivity {
             if (getParentActivity() != null) {
                 AlertDialog.Builder b = new AlertDialog.Builder(getParentActivity());
                 b.setTitle("MeeroX");
-                b.setMessage(MeeroStrings.s("MeeroFontBadFormat"));
+                b.setMessage(MeeroStrings.s(94));
                 b.setPositiveButton(getString(R.string.OK), null);
                 showDialog(b.create());
             }
@@ -206,7 +206,7 @@ public class MeeroFontsActivity extends BaseNekoSettingsActivity {
                 cell.setTypeface(tf != null ? tf : Typeface.DEFAULT);
             } else if (type == TYPE_SETTINGS) {
                 TextSettingsCell cell = (TextSettingsCell) holder.itemView;
-                cell.setText(MeeroStrings.s("MeeroFontAdd"), false);
+                cell.setText(MeeroStrings.s(93), false);
                 cell.getTextView().setTypeface(Typeface.DEFAULT);
             }
         }

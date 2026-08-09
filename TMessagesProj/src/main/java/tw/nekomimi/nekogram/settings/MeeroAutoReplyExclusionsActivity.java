@@ -75,7 +75,7 @@ public class MeeroAutoReplyExclusionsActivity extends BaseNekoSettingsActivity {
 
     @Override
     protected String getActionBarTitle() {
-        return MeeroStrings.s("MeeroExclusionsTitle");
+        return MeeroStrings.s(89);
     }
 
     @Override
@@ -86,7 +86,7 @@ public class MeeroAutoReplyExclusionsActivity extends BaseNekoSettingsActivity {
     private String nameOf(long dialogId) {
         TLRPC.User user = MessagesController.getInstance(UserConfig.selectedAccount).getUser(dialogId);
         String name = user != null ? UserObject.getUserName(user) : null;
-        return TextUtils.isEmpty(name) ? MeeroStrings.s("MeeroRulesChatFallback") : name;
+        return TextUtils.isEmpty(name) ? MeeroStrings.s(213) : name;
     }
 
     @Override
@@ -110,7 +110,7 @@ public class MeeroAutoReplyExclusionsActivity extends BaseNekoSettingsActivity {
                 long dialogId = dids.get(0).dialogId;
                 if (parentLayout != null) parentLayout.removeFragmentFromStack(fragment, true);
                 if (!DialogObject.isUserDialog(dialogId)) {
-                    BulletinFactory.of(this).createSimpleBulletin(R.raw.chats_infotip, MeeroStrings.s("MeeroRulesPickPrivate")).show();
+                    BulletinFactory.of(this).createSimpleBulletin(R.raw.chats_infotip, MeeroStrings.s(219)).show();
                     return true;
                 }
                 MeeroAutoReply.addExclusion(dialogId);
@@ -126,7 +126,7 @@ public class MeeroAutoReplyExclusionsActivity extends BaseNekoSettingsActivity {
     private void showExclusionOptions(long dialogId) {
         new AlertDialog.Builder(getParentActivity())
                 .setTitle(nameOf(dialogId))
-                .setItems(new CharSequence[]{MeeroStrings.s("MeeroExclusionsRemove")}, (dialog, which) -> {
+                .setItems(new CharSequence[]{MeeroStrings.s(87)}, (dialog, which) -> {
                     MeeroAutoReply.removeExclusion(dialogId);
                     updateRows();
                     listAdapter.notifyDataSetChanged();
@@ -153,27 +153,27 @@ public class MeeroAutoReplyExclusionsActivity extends BaseNekoSettingsActivity {
                 case TYPE_HEADER:
                     HeaderCell headerCell = (HeaderCell) holder.itemView;
                     if (position == headerRow) {
-                        headerCell.setText(MeeroStrings.s("MeeroExclusionsTitle"));
+                        headerCell.setText(MeeroStrings.s(89));
                     }
                     break;
                 case TYPE_TEXT:
                     TextCell textCell = (TextCell) holder.itemView;
                     if (position == addRow) {
-                        textCell.setTextAndValue(MeeroStrings.s("MeeroExclusionsAdd"), "", true);
+                        textCell.setTextAndValue(MeeroStrings.s(84), "", true);
                     }
                     break;
                 case TYPE_DETAIL_SETTINGS:
                     TextDetailSettingsCell detailCell = (TextDetailSettingsCell) holder.itemView;
                     if (position >= exclusionStartRow && position < exclusionEndRow) {
                         long dialogId = exclusions.get(position - exclusionStartRow);
-                        detailCell.setTextAndValue(nameOf(dialogId), MeeroStrings.s("MeeroExclusionsRowDetail"), position + 1 < exclusionEndRow);
+                        detailCell.setTextAndValue(nameOf(dialogId), MeeroStrings.s(88), position + 1 < exclusionEndRow);
                     }
                     break;
                 case TYPE_INFO_PRIVACY:
                     TextInfoPrivacyCell cell = (TextInfoPrivacyCell) holder.itemView;
                     cell.setBackground(Theme.getThemedDrawable(mContext, R.drawable.greydivider, Theme.key_windowBackgroundGrayShadow));
                     if (position == infoRow) {
-                        cell.setText(MeeroStrings.s("MeeroExclusionsInfo"));
+                        cell.setText(MeeroStrings.s(85));
                     }
                     break;
             }

@@ -160,7 +160,7 @@ public final class MeeroAutoReply {
                     nightActive ? 1 : 0,
                     NekoConfig.meeroAutoReplyText.String(),
                     NekoConfig.meeroAutoReplyNightText.String(),
-                    MeeroStrings.s("MeeroAutoReplyDefaultText"),
+                    MeeroStrings.s(20),
                     user != null && !TextUtils.isEmpty(user.first_name) ? user.first_name : "",
                     NekoConfig.meeroAutoReplyRandomEmoji.Bool() ? 1 : 0,
                     now);
@@ -238,7 +238,7 @@ public final class MeeroAutoReply {
             }
         }
         if (TextUtils.isEmpty(template)) {
-            template = MeeroStrings.s("MeeroAutoReplyDefaultText");
+            template = MeeroStrings.s(20);
         }
         String firstName = "";
         if (user != null && !TextUtils.isEmpty(user.first_name)) {

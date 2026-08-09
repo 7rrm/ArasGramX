@@ -52,7 +52,7 @@ public class MeeroSmartFoldersActivity extends BaseNekoSettingsActivity {
 
     @Override
     protected String getActionBarTitle() {
-        return MeeroStrings.s("SmartFoldersTitle");
+        return MeeroStrings.s(361);
     }
 
     @Override
@@ -69,13 +69,13 @@ public class MeeroSmartFoldersActivity extends BaseNekoSettingsActivity {
     @Override
     protected void onItemClick(View view, int position, float x, float y) {
         if (position == infoRow) {
-            tw.nekomimi.nekogram.MeeroUsageGuide.show(this, "SmartFoldersInfo");
+            tw.nekomimi.nekogram.MeeroUsageGuide.show(this, 360);
         } else if (position >= presetStartRow && position < presetEndRow) {
             final MeeroSmartFolders.Preset p = MeeroSmartFolders.presets()[position - presetStartRow];
             if (MeeroSmartFolders.exists(p)) {
                 new AlertDialog.Builder(getParentActivity())
                         .setTitle(MeeroStrings.s(p.titleKey))
-                        .setMessage(MeeroStrings.s("SmartFolderExists"))
+                        .setMessage(MeeroStrings.s(351))
                         .setPositiveButton(getString(R.string.OK), null)
                         .show();
                 return;
@@ -83,7 +83,7 @@ public class MeeroSmartFoldersActivity extends BaseNekoSettingsActivity {
             new AlertDialog.Builder(getParentActivity())
                     .setTitle(MeeroStrings.s(p.titleKey))
                     .setMessage(MeeroStrings.s(p.ruleKey))
-                    .setPositiveButton(MeeroStrings.s("SmartFolderCreate"), (d, w) ->
+                    .setPositiveButton(MeeroStrings.s(349), (d, w) ->
                             MeeroSmartFolders.create(this, p, () -> {
                                 if (listView != null) listView.post(() -> {
                                     if (listAdapter != null) listAdapter.notifyDataSetChanged();
@@ -110,7 +110,7 @@ public class MeeroSmartFoldersActivity extends BaseNekoSettingsActivity {
         public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position, boolean payload) {
             switch (holder.getItemViewType()) {
                 case TYPE_HEADER:
-                    ((HeaderCell) holder.itemView).setText(MeeroStrings.s("SmartFoldersHeader"));
+                    ((HeaderCell) holder.itemView).setText(MeeroStrings.s(358));
                     break;
                 case TYPE_DETAIL_SETTINGS: {
                     TextDetailSettingsCell cell = (TextDetailSettingsCell) holder.itemView;
@@ -119,13 +119,13 @@ public class MeeroSmartFoldersActivity extends BaseNekoSettingsActivity {
                     final boolean done = MeeroSmartFolders.exists(p);
                     cell.setTextAndValue(
                             p.emoticon + "  " + MeeroStrings.s(p.titleKey),
-                            done ? MeeroStrings.s("SmartFolderDone") : MeeroStrings.s(p.ruleKey),
+                            done ? MeeroStrings.s(350) : MeeroStrings.s(p.ruleKey),
                             position + 1 < presetEndRow);
                     break;
                 }
                 case TYPE_TEXT: {
                     org.telegram.ui.Cells.TextCell cell = (org.telegram.ui.Cells.TextCell) holder.itemView;
-                    cell.setTextAndValue(MeeroStrings.s("MeeroUsageGuide"), "", false);
+                    cell.setTextAndValue(MeeroStrings.s(268), "", false);
                     break;
                 }
             }

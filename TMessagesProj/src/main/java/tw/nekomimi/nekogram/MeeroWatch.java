@@ -456,7 +456,7 @@ public final class MeeroWatch {
         CharSequence text = msg.messageText;
         String s = text == null ? "" : text.toString().replace('\n', ' ').trim();
         if (s.isEmpty() && msg.messageOwner != null && msg.messageOwner.media != null) {
-            s = "[" + MeeroStrings.s("MeeroWatchMsgMedia") + "]";
+            s = "[" + MeeroStrings.s(298) + "]";
         }
         return s.length() > 140 ? s.substring(0, 140) + "…" : s;
     }
@@ -464,16 +464,16 @@ public final class MeeroWatch {
     private static String mediaLabel(MessageObject msg) {
         String text = snippetOf(msg);
         if (!text.isEmpty()) return text;
-        return "[" + MeeroStrings.s("MeeroWatchMsgMedia") + "]";
+        return "[" + MeeroStrings.s(298) + "]";
     }
 
     private static String buildMsgDetail(MessagesController controller, long dialogId,
                                          MessageObject msg, String replyAuthorName, String replySnippet) {
-        String in = MeeroStrings.s("MeeroWatchMsgIn");
+        String in = MeeroStrings.s(297);
         StringBuilder sb = new StringBuilder();
         sb.append(in).append(" ").append(chatTitle(controller, dialogId));
         if (replyAuthorName != null) {
-            sb.append(" · ").append(MeeroStrings.s("MeeroWatchMsgReplyingTo"))
+            sb.append(" · ").append(MeeroStrings.s(300))
                     .append(" ").append(replyAuthorName);
             if (!TextUtils.isEmpty(replySnippet)) {
                 sb.append(": ").append(replySnippet);
@@ -485,7 +485,7 @@ public final class MeeroWatch {
 
     private static String buildReplyToHimDetail(MessagesController controller, long dialogId,
                                                 MessageObject msg, String actorName) {
-        return MeeroStrings.s("MeeroWatchMsgIn") + " " + chatTitle(controller, dialogId)
+        return MeeroStrings.s(297) + " " + chatTitle(controller, dialogId)
                 + " · " + actorName + " ⇒ " + mediaLabel(msg);
     }
 
@@ -767,14 +767,14 @@ public final class MeeroWatch {
 
     public static String whatText(String what) {
         switch (what == null ? "" : what) {
-            case "name": return MeeroStrings.s("MeeroWatchChangedName");
-            case "username": return MeeroStrings.s("MeeroWatchChangedUsername");
-            case "bio": return MeeroStrings.s("MeeroWatchChangedBio");
-            case "bday": return MeeroStrings.s("MeeroWatchChangedBday");
-            case "photo": return MeeroStrings.s("MeeroWatchChangedPhoto");
-            case "msg": return MeeroStrings.s("MeeroWatchWhatMsg");
-            case "msg_reply": return MeeroStrings.s("MeeroWatchWhatMsgReply");
-            case "reply_to_him": return MeeroStrings.s("MeeroWatchWhatReplyTo");
+            case "name": return MeeroStrings.s(286);
+            case "username": return MeeroStrings.s(288);
+            case "bio": return MeeroStrings.s(285);
+            case "bday": return MeeroStrings.s(284);
+            case "photo": return MeeroStrings.s(287);
+            case "msg": return MeeroStrings.s(315);
+            case "msg_reply": return MeeroStrings.s(316);
+            case "reply_to_him": return MeeroStrings.s(317);
             default: return what == null ? "" : what;
         }
     }
@@ -785,7 +785,7 @@ public final class MeeroWatch {
             NotificationManager manager = (NotificationManager) ctx.getSystemService(Context.NOTIFICATION_SERVICE);
             if (Build.VERSION.SDK_INT >= 26) {
                 NotificationChannel channel = new NotificationChannel(CHANNEL_ID,
-                        MeeroStrings.s("MeeroWatchTitle"), NotificationManager.IMPORTANCE_DEFAULT);
+                        MeeroStrings.s(313), NotificationManager.IMPORTANCE_DEFAULT);
                 manager.createNotificationChannel(channel);
             }
             Intent intent = new Intent(ctx, LaunchActivity.class);
@@ -795,7 +795,7 @@ public final class MeeroWatch {
                     PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
             NotificationCompat.Builder builder = new NotificationCompat.Builder(ctx, CHANNEL_ID)
                     .setSmallIcon(R.drawable.nagram_notification)
-                    .setContentTitle(MeeroStrings.s("MeeroWatchTitle"))
+                    .setContentTitle(MeeroStrings.s(313))
                     .setContentText(TextUtils.isEmpty(who) ? whatText(what) : (who + " " + whatText(what)))
                     .setAutoCancel(true)
                     .setContentIntent(pendingIntent);

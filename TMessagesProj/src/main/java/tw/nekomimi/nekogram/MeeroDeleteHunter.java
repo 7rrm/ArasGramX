@@ -233,7 +233,7 @@ public final class MeeroDeleteHunter {
 
     private static String textOf(TLRPC.Message msg) {
         if (!TextUtils.isEmpty(msg.message)) return msg.message;
-        return MeeroStrings.s("MeeroHunterMedia");
+        return MeeroStrings.s(123);
     }
 
     // ---------------- log + notify (UI thread) ----------------
@@ -244,7 +244,7 @@ public final class MeeroDeleteHunter {
             String name = user != null ? UserObject.getUserName(user) : null;
             if (!TextUtils.isEmpty(name)) return name;
         } catch (Throwable ignore) {}
-        return MeeroStrings.s("MeeroHunterSomeone");
+        return MeeroStrings.s(127);
     }
 
     private static synchronized void addLog(int account, long senderId, String kind, String oldValue, String newValue) {
@@ -334,8 +334,8 @@ public final class MeeroDeleteHunter {
     }
 
     public static String kindText(String kind) {
-        if ("edit".equals(kind)) return MeeroStrings.s("MeeroHunterEditedMsg");
-        return MeeroStrings.s("MeeroHunterDeletedMsg");
+        if ("edit".equals(kind)) return MeeroStrings.s(118);
+        return MeeroStrings.s(117);
     }
 
     private static void notifyEvent(String who, String kind) {
@@ -344,7 +344,7 @@ public final class MeeroDeleteHunter {
             NotificationManager manager = (NotificationManager) ctx.getSystemService(Context.NOTIFICATION_SERVICE);
             if (Build.VERSION.SDK_INT >= 26) {
                 NotificationChannel channel = new NotificationChannel(CHANNEL_ID,
-                        MeeroStrings.s("MeeroHunterTitle"), NotificationManager.IMPORTANCE_DEFAULT);
+                        MeeroStrings.s(128), NotificationManager.IMPORTANCE_DEFAULT);
                 manager.createNotificationChannel(channel);
             }
             Intent intent = new Intent(ctx, LaunchActivity.class);
@@ -354,7 +354,7 @@ public final class MeeroDeleteHunter {
                     PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
             NotificationCompat.Builder builder = new NotificationCompat.Builder(ctx, CHANNEL_ID)
                     .setSmallIcon(R.drawable.nagram_notification)
-                    .setContentTitle(MeeroStrings.s("MeeroHunterTitle"))
+                    .setContentTitle(MeeroStrings.s(128))
                     .setContentText(who + " " + kindText(kind))
                     .setAutoCancel(true)
                     .setContentIntent(pendingIntent);

@@ -537,11 +537,11 @@ public class NekoSettingsActivity extends BaseNekoSettingsActivity {
                     final tw.nekomimi.nekogram.ui.cells.HeaderCell header =
                             (tw.nekomimi.nekogram.ui.cells.HeaderCell) holder.itemView;
                     if (position == meeroHeaderCategories) {
-                        header.setText(MeeroStrings.s("MeeroSectionCategories"));
+                        header.setText(MeeroStrings.s(225));
                     } else if (position == meeroHeaderData) {
-                        header.setText(MeeroStrings.s("MeeroSectionData"));
+                        header.setText(MeeroStrings.s(226));
                     } else if (position == meeroHeaderInfo) {
-                        header.setText(MeeroStrings.s("MeeroSectionInfo"));
+                        header.setText(MeeroStrings.s(227));
                     }
                     break;
                 }
@@ -552,25 +552,25 @@ public class NekoSettingsActivity extends BaseNekoSettingsActivity {
                 case TYPE_TEXT: {
                     TextCell textCell = (TextCell) holder.itemView;
                     if (position == meeroRow) {
-                        textCell.setTextAndIcon(MeeroStrings.s("MeeroSettingsTitle"), R.drawable.msg_photo_settings_solar, true);
+                        textCell.setTextAndIcon(MeeroStrings.s(230), R.drawable.msg_photo_settings_solar, true);
                     } else if (position == autoReplyRow) {
-                        textCell.setTextAndIcon(MeeroStrings.s("MeeroAutoReplyTitle"), R.drawable.input_reply_solar, true);
+                        textCell.setTextAndIcon(MeeroStrings.s(26), R.drawable.input_reply_solar, true);
                     } else if (position == activityStatsRow) {
-                        textCell.setTextAndIcon(MeeroStrings.s("MeeroStatsTitle"), R.drawable.msg_stats_solar, true);
+                        textCell.setTextAndIcon(MeeroStrings.s(254), R.drawable.msg_stats_solar, true);
                     } else if (position == watchRow) {
-                        textCell.setTextAndIcon(MeeroStrings.s("MeeroWatchTitle"), R.drawable.msg_views_solar, true);
+                        textCell.setTextAndIcon(MeeroStrings.s(313), R.drawable.msg_views_solar, true);
                     } else if (position == hunterRow) {
-                        textCell.setTextAndIcon(MeeroStrings.s("MeeroHunterTitle"), R.drawable.baseline_delete_forever_24, true);
+                        textCell.setTextAndIcon(MeeroStrings.s(128), R.drawable.baseline_delete_forever_24, true);
                     } else if (position == keywordRow) {
-                        textCell.setTextAndIcon(MeeroStrings.s("MeeroKeywordTitle"), R.drawable.msg_search_solar, true);
+                        textCell.setTextAndIcon(MeeroStrings.s(162), R.drawable.msg_search_solar, true);
                     } else if (position == mixerRow) {
-                        textCell.setTextAndIcon(MeeroStrings.s("MixerHubTitle"), R.drawable.filter_palette_solar, true);
+                        textCell.setTextAndIcon(MeeroStrings.s(336), R.drawable.filter_palette_solar, true);
                     } else if (position == foldersRow) {
-                        textCell.setTextAndIcon(MeeroStrings.s("SmartFoldersHubTitle"), R.drawable.files_folder_solar, true);
+                        textCell.setTextAndIcon(MeeroStrings.s(359), R.drawable.files_folder_solar, true);
                     } else if (position == onceGuardRow) {
-                        textCell.setTextAndIcon(MeeroStrings.s("MeeroOnceTitle"), R.drawable.msg_download_solar, true);
+                        textCell.setTextAndIcon(MeeroStrings.s(186), R.drawable.msg_download_solar, true);
                     } else if (position == lockRow) {
-                        textCell.setTextAndIcon(MeeroStrings.s("MeeroChatLockTitle"), R.drawable.baseline_lock_base_24, true);
+                        textCell.setTextAndIcon(MeeroStrings.s(64), R.drawable.baseline_lock_base_24, true);
                     } else if (position == chatRow) {
                         textCell.setTextAndIcon(getString(R.string.Chat), R.drawable.msg_discussion, true);
                     } else if (position == generalRow) {
@@ -582,7 +582,7 @@ public class NekoSettingsActivity extends BaseNekoSettingsActivity {
                     } else if (position == experimentRow) {
                         textCell.setTextAndIcon(getString(R.string.Experimental), R.drawable.msg_fave, true);
                     } else if (position == fontsRow) {
-                        textCell.setTextAndValueAndIcon(MeeroStrings.s("MeeroFontSection"), tw.nekomimi.nekogram.MeeroFonts.titleOf(tw.nekomimi.nekogram.MeeroFonts.getSelected()), R.drawable.msg_photo_text_regular, true);
+                        textCell.setTextAndValueAndIcon(MeeroStrings.s(97), tw.nekomimi.nekogram.MeeroFonts.titleOf(tw.nekomimi.nekogram.MeeroFonts.getSelected()), R.drawable.msg_photo_text_regular, true);
                     } else if (position == importSettingsRow) {
                         textCell.setTextAndIcon(getString(R.string.ImportSettings), R.drawable.import_solar, true);
                     } else if (position == exportSettingsRow) {

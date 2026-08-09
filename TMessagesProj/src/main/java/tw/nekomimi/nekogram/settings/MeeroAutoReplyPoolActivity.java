@@ -78,7 +78,7 @@ public class MeeroAutoReplyPoolActivity extends BaseNekoSettingsActivity {
 
     @Override
     protected String getActionBarTitle() {
-        return MeeroStrings.s("MeeroPoolTitle");
+        return MeeroStrings.s(199);
     }
 
     @Override
@@ -101,7 +101,7 @@ public class MeeroAutoReplyPoolActivity extends BaseNekoSettingsActivity {
     private void showTextOptions(int index) {
         new AlertDialog.Builder(getParentActivity())
                 .setTitle(texts.get(index))
-                .setItems(new CharSequence[]{MeeroStrings.s("MeeroPoolEdit"), MeeroStrings.s("MeeroPoolDelete")}, (dialog, which) -> {
+                .setItems(new CharSequence[]{MeeroStrings.s(195), MeeroStrings.s(194)}, (dialog, which) -> {
                     if (which == 0) {
                         showTextEditor(index, texts.get(index));
                     } else {
@@ -125,14 +125,14 @@ public class MeeroAutoReplyPoolActivity extends BaseNekoSettingsActivity {
             editText.setText(currentText);
             editText.setSelection(editText.getText().length());
         }
-        editText.setHint(MeeroStrings.s("MeeroAutoReplyTextHint"));
+        editText.setHint(MeeroStrings.s(25));
         FrameLayout container = new FrameLayout(context);
         FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         lp.setMargins(AndroidUtilities.dp(24), AndroidUtilities.dp(4), AndroidUtilities.dp(24), 0);
         container.addView(editText, lp);
 
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
-        builder.setTitle(MeeroStrings.s("MeeroPoolAdd"));
+        builder.setTitle(MeeroStrings.s(193));
         builder.setView(container);
         builder.setPositiveButton(getString(R.string.Save), (dialog, which) -> {
             String value = editText.getText().toString().trim();
@@ -172,21 +172,21 @@ public class MeeroAutoReplyPoolActivity extends BaseNekoSettingsActivity {
                 case TYPE_CHECK:
                     TextCheckCell checkCell = (TextCheckCell) holder.itemView;
                     if (position == masterRow) {
-                        checkCell.setTextAndCheck(MeeroStrings.s("MeeroPoolMaster"), NekoConfig.meeroAutoReplyPoolOn.Bool(), true);
+                        checkCell.setTextAndCheck(MeeroStrings.s(197), NekoConfig.meeroAutoReplyPoolOn.Bool(), true);
                     }
                     break;
                 case TYPE_HEADER:
                     HeaderCell headerCell = (HeaderCell) holder.itemView;
                     if (position == headerRow) {
-                        headerCell.setText(MeeroStrings.s("MeeroPoolTitle"));
+                        headerCell.setText(MeeroStrings.s(199));
                     }
                     break;
                 case TYPE_TEXT:
                     TextCell textCell = (TextCell) holder.itemView;
                     if (position == addRow) {
-                        textCell.setTextAndValue(MeeroStrings.s("MeeroPoolAdd"), "", true);
+                        textCell.setTextAndValue(MeeroStrings.s(193), "", true);
                     } else if (position == emptyRow) {
-                        textCell.setTextAndValue(MeeroStrings.s("MeeroPoolNone"), "", true);
+                        textCell.setTextAndValue(MeeroStrings.s(198), "", true);
                     }
                     break;
                 case TYPE_DETAIL_SETTINGS:
@@ -200,7 +200,7 @@ public class MeeroAutoReplyPoolActivity extends BaseNekoSettingsActivity {
                     TextInfoPrivacyCell cell = (TextInfoPrivacyCell) holder.itemView;
                     cell.setBackground(Theme.getThemedDrawable(mContext, R.drawable.greydivider, Theme.key_windowBackgroundGrayShadow));
                     if (position == infoRow) {
-                        cell.setText(MeeroStrings.s("MeeroPoolInfo"));
+                        cell.setText(MeeroStrings.s(196));
                     }
                     break;
             }

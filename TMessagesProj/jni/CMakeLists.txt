@@ -661,6 +661,8 @@ target_link_libraries(meerovault log)
 # only; every decision lives here. Links meerovault for the shared seed.
 add_library(meerocore SHARED meerocore/meerocore.c)
 set_target_properties(meerocore PROPERTIES C_STANDARD 11)
-target_compile_options(meerocore PRIVATE -O2 -fvisibility=hidden)
-target_link_options(meerocore PRIVATE "-Wl,-z,max-page-size=16384" "-Wl,--exclude-libs,ALL")
+# v186 (batch 2D): hardened codegen for the buried hearts (stack canaries,
+# full RELRO + immediate binding - no lazy-resolution hooking window).
+target_compile_options(meerocore PRIVATE -O2 -fvisibility=hidden -fstack-protector-strong)
+target_link_options(meerocore PRIVATE "-Wl,-z,max-page-size=16384" "-Wl,--exclude-libs,ALL" "-Wl,-z,relro,-z,now")
 target_link_libraries(meerocore log meerovault)

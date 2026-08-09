@@ -50,17 +50,19 @@ public class LauncherIconController {
         TURBO("TurboIcon", R.drawable.icon_5_background_sa, R.mipmap.icon_5_foreground_sa, R.string.AppIconTurbo),
         NOX("NoxIcon", R.mipmap.icon_2_background_sa, R.mipmap.icon_foreground_sa, R.string.AppIconNox),
         // MeeroX v171 - the four M designs he ordered; titles live in the
-        // encrypted string vault (titleKey) so even icon names leave no trace
-        MBOLD("MeeroMBoldIcon", R.color.meero_icon_dark_bg, R.drawable.meero_m_bold_foreground, "MeeroIconMBold"),
-        MMARKER("MeeroMMarkerIcon", R.color.meero_icon_blue_bg, R.drawable.meero_m_marker_foreground, "MeeroIconMMarker"),
-        MTILE("MeeroMTileIcon", R.color.meero_icon_blue_bg, R.drawable.meero_m_tile_foreground, "MeeroIconMTile"),
-        MDUO("MeeroMDuoIcon", R.color.meero_icon_dark_bg, R.drawable.meero_m_duo_foreground, "MeeroIconMDuo");
+        // encrypted string vault (numeric vault id since v186 - even the
+        // title key names leave no readable trace in DEX)
+        MBOLD("MeeroMBoldIcon", R.color.meero_icon_dark_bg, R.drawable.meero_m_bold_foreground, 455),
+        MMARKER("MeeroMMarkerIcon", R.color.meero_icon_blue_bg, R.drawable.meero_m_marker_foreground, 456),
+        MTILE("MeeroMTileIcon", R.color.meero_icon_blue_bg, R.drawable.meero_m_tile_foreground, 457),
+        MDUO("MeeroMDuoIcon", R.color.meero_icon_dark_bg, R.drawable.meero_m_duo_foreground, 458);
 
         public final String key;
         public final int background;
         public final int foreground;
         public final int title;
         public final String titleKey;
+        public final int vaultTitle;
         public final boolean premium;
 
         private ComponentName componentName;
@@ -82,21 +84,28 @@ public class LauncherIconController {
             this.foreground = foreground;
             this.title = title;
             this.titleKey = null;
+            this.vaultTitle = -1;
             this.premium = premium;
         }
 
-        LauncherIcon(String key, int background, int foreground, String titleKey) {
+        /* v186 (batch 2D): M-icon titles by numeric vault id (long keeps the
+         *  overload distinct from the R.string int form). */
+        LauncherIcon(String key, int background, int foreground, long vaultTitle) {
             this.key = key;
             this.background = background;
             this.foreground = foreground;
             this.title = 0;
-            this.titleKey = titleKey;
+            this.titleKey = null;
+            this.vaultTitle = (int) vaultTitle;
             this.premium = false;
         }
 
         /** title of the picker row - vault strings for the new M icons,
          *  resource strings for legacy entries. */
         public String getTitle() {
+            if (vaultTitle >= 0) {
+                return tw.nekomimi.nekogram.MeeroStrings.s(vaultTitle);
+            }
             return titleKey != null
                     ? tw.nekomimi.nekogram.MeeroStrings.s(titleKey)
                     : org.telegram.messenger.LocaleController.getString(title);

@@ -3489,8 +3489,8 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                 // The English text is the same either way; only the Arabic
                 // differs, which is why the stock string looked right until it
                 // was read on an Arabic device.
-                meeroEditItem.setText(MeeroStrings.s("MeeroHeaderEdit"));
-                meeroEditItem.setContentDescription(MeeroStrings.s("MeeroHeaderEdit"));
+                meeroEditItem.setText(MeeroStrings.s(110));
+                meeroEditItem.setContentDescription(MeeroStrings.s(110));
                 // ActionBar lays its children out from its own top edge, and
                 // that edge sits behind the status bar. Gravity.TOP therefore
                 // pushed the button up over the clock and battery. Centre it
@@ -15162,7 +15162,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
         // being searched.
         final String hint = topics
                 ? getString(R.string.SearchTopics)
-                : (FragmentSearchField.meeroIosSearch() ? MeeroStrings.s("MeeroSearchHint") : getString(R.string.SearchChats));
+                : (FragmentSearchField.meeroIosSearch() ? MeeroStrings.s(224) : getString(R.string.SearchChats));
 
         fragmentSearchField.editText.setContentDescription(hint);
         fragmentSearchField.editText.setHint(hint);

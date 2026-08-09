@@ -104,24 +104,24 @@ public class MeeroSettingsActivity extends BaseNekoXSettingsActivity {
     private final CellGroup cellGroup = new CellGroup(this);
 
     // Appearance - what an idle screen looks like.
-    private final AbstractConfigCell headerAppearance = cellGroup.appendCell(new ConfigCellHeader(MeeroStrings.s("MeeroGroupAppearance")));
+    private final AbstractConfigCell headerAppearance = cellGroup.appendCell(new ConfigCellHeader(MeeroStrings.s(104)));
     // MeeroX v126: the master switch for the fixed "Glass Night" skin of the
     // MeeroX settings screens (ROADMAP batch v126: foundation + chrome).
     // OFF returns the exact stock themed look; no other row cares about it.
-    private final AbstractConfigCell glassDesignRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroGlassSettings, MeeroStrings.s("MeeroGlassSettingsInfo")));
+    private final AbstractConfigCell glassDesignRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroGlassSettings, MeeroStrings.s(102)));
     // MeeroX v129: mock-accurate switches sit directly under the master
     // design row. Own on/off; OFF = stock switch even under the glass skin.
-    private final AbstractConfigCell glassSwitchesRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroGlassSwitches, MeeroStrings.s("MeeroGlassSwitchesInfo")));
+    private final AbstractConfigCell glassSwitchesRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroGlassSwitches, MeeroStrings.s(103)));
     // MeeroX v125: ONE combined row owns both shape pickers - its name tells
     // the user it holds two features, and the tap opens the shared modern
     // sheet on the bubbles tab (the read-marks tab lives inside the same
     // sheet). The old separate tick-style row is gone.
     private final AbstractConfigCell bubbleStyleRow = cellGroup.appendCell(new ConfigCellSelectBox("MeeroPickerRowTitle", NekoConfig.meeroBubbleStyle, bubbleStyleNames(), () -> showBubbleStyleDialog()));
-    private final AbstractConfigCell cardsRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroCards, MeeroStrings.s("MeeroCardsInfo")));
-    private final AbstractConfigCell dialogsStyleRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroDialogsStyle, MeeroStrings.s("MeeroDialogsStyleInfo")));
-    private final AbstractConfigCell glassBordersRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroGlassBorders, MeeroStrings.s("MeeroGlassBordersInfo")));
-    private final AbstractConfigCell iosShadowsRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosShadows, MeeroStrings.s("MeeroIosShadowsInfo")));
-    private final AbstractConfigCell iosIconsRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosIcons, MeeroStrings.s("MeeroIosIconsInfo")));
+    private final AbstractConfigCell cardsRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroCards, MeeroStrings.s(36)));
+    private final AbstractConfigCell dialogsStyleRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroDialogsStyle, MeeroStrings.s(83)));
+    private final AbstractConfigCell glassBordersRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroGlassBorders, MeeroStrings.s(101)));
+    private final AbstractConfigCell iosShadowsRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosShadows, MeeroStrings.s(149)));
+    private final AbstractConfigCell iosIconsRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosIcons, MeeroStrings.s(137)));
     // Mirrors the General screen's row. The stored value is the option's
     // index, so the four labels have to stay in this order and iOS has to
     // stay last - a different order here would write a value the other screen
@@ -130,51 +130,51 @@ public class MeeroSettingsActivity extends BaseNekoXSettingsActivity {
             getString(R.string.Default),
             getString(R.string.StyleModern),
             getString(R.string.StyleMaterialDesign3),
-            MeeroStrings.s("StyleIos")
+            MeeroStrings.s(362)
     }, null));
-    private final AbstractConfigCell iosRowRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosRow, MeeroStrings.s("MeeroIosRowInfo")));
-    private final AbstractConfigCell iosStoriesRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosStories, MeeroStrings.s("MeeroIosStoriesInfo")));
-    private final AbstractConfigCell iosCallRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosCall, MeeroStrings.s("MeeroIosCallInfo")));
-    private final AbstractConfigCell iosAlertsRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosAlerts, MeeroStrings.s("MeeroIosAlertsInfo")));
-    private final AbstractConfigCell iosMediaGridRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosMediaGrid, MeeroStrings.s("MeeroIosMediaGridInfo")));
+    private final AbstractConfigCell iosRowRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosRow, MeeroStrings.s(146)));
+    private final AbstractConfigCell iosStoriesRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosStories, MeeroStrings.s(151)));
+    private final AbstractConfigCell iosCallRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosCall, MeeroStrings.s(133)));
+    private final AbstractConfigCell iosAlertsRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosAlerts, MeeroStrings.s(131)));
+    private final AbstractConfigCell iosMediaGridRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosMediaGrid, MeeroStrings.s(142)));
     private final AbstractConfigCell dividerAppearance = cellGroup.appendCell(new ConfigCellDivider());
 
     // Chat - things that only show up inside a conversation.
-    private final AbstractConfigCell headerChat = cellGroup.appendCell(new ConfigCellHeader(MeeroStrings.s("MeeroGroupChat")));
-    private final AbstractConfigCell tapMenuRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroTapMenu, MeeroStrings.s("MeeroTapMenuInfo")));
-    private final AbstractConfigCell menuBlurRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroMenuBlur, MeeroStrings.s("MeeroMenuBlurInfo")));
+    private final AbstractConfigCell headerChat = cellGroup.appendCell(new ConfigCellHeader(MeeroStrings.s(105)));
+    private final AbstractConfigCell tapMenuRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroTapMenu, MeeroStrings.s(264)));
+    private final AbstractConfigCell menuBlurRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroMenuBlur, MeeroStrings.s(170)));
     // MeeroX v107: separate switch for the full-screen fog behind the
     // bottom-bar chats popup (menuBlur above frosts the menu panel itself).
-    private final AbstractConfigCell chatsMenuFogRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroChatsMenuFog, MeeroStrings.s("MeeroChatsMenuFogInfo")));
-    private final AbstractConfigCell iosInputPillRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosInputPill, MeeroStrings.s("MeeroIosInputPillInfo")));
+    private final AbstractConfigCell chatsMenuFogRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroChatsMenuFog, MeeroStrings.s(65)));
+    private final AbstractConfigCell iosInputPillRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosInputPill, MeeroStrings.s(138)));
     // MeeroX v142: approved mock "preview-v142" - the iPhone chat header
     // (centered name/status pill + detached photo circle at the edge; tools
     // behind the photo tap / long-press glass menu).
-    private final AbstractConfigCell iosWaveformRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosWaveform, MeeroStrings.s("MeeroIosWaveformInfo")));
-    private final AbstractConfigCell iosCodeRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosCode, MeeroStrings.s("MeeroIosCodeInfo")));
-    private final AbstractConfigCell iosSelectionRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosSelection, MeeroStrings.s("MeeroIosSelectionInfo")));
+    private final AbstractConfigCell iosWaveformRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosWaveform, MeeroStrings.s(152)));
+    private final AbstractConfigCell iosCodeRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosCode, MeeroStrings.s(134)));
+    private final AbstractConfigCell iosSelectionRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosSelection, MeeroStrings.s(148)));
     // MeeroX v159: approved polish - true-black AMOLED bubbles + one corner
     // radius for every in-bubble card.
-    private final AbstractConfigCell amoledBubblesRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroAmoledBubbles, MeeroStrings.s("MeeroAmoledBubblesInfo")));
+    private final AbstractConfigCell amoledBubblesRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroAmoledBubbles, MeeroStrings.s(8)));
     // MeeroX v164 (approved pick): the AMOLED bubble hairline - defaults OFF
     // so the full-pure-black blend stays for everyone who prefers it merged.
-    private final AbstractConfigCell amoledStrokeRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroAmoledStroke, MeeroStrings.s("MeeroAmoledStrokeInfo")));
-    private final AbstractConfigCell unifiedRadiiRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroUnifiedRadii, MeeroStrings.s("MeeroUnifiedRadiiInfo")));
+    private final AbstractConfigCell amoledStrokeRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroAmoledStroke, MeeroStrings.s(9)));
+    private final AbstractConfigCell unifiedRadiiRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroUnifiedRadii, MeeroStrings.s(267)));
     // MeeroX v92: delivery ticks - a dedicated master switch (off returns the
     // official Android ticks). MeeroX v125: the tick-shape picker row that
     // used to sit beneath it was merged into the single combined row above
     // ("Bubbles & read marks"), whose sheet hosts both pickers as tabs - one
     // row, two features, no duplicates.
-    private final AbstractConfigCell ticksSwitchRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroTicksSwitch, MeeroStrings.s("MeeroTicksSwitchInfo")));
-    private final AbstractConfigCell storyDownloadRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroStoryDownload, MeeroStrings.s("MeeroStoryDownloadInfo")));
+    private final AbstractConfigCell ticksSwitchRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroTicksSwitch, MeeroStrings.s(266)));
+    private final AbstractConfigCell storyDownloadRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroStoryDownload, MeeroStrings.s(260)));
     // MeeroX v95: the ghost swipe-read toggle moved into GhostModeActivity
     // (circle-style row) so all ghost features live in one place.
     private final AbstractConfigCell dividerChat = cellGroup.appendCell(new ConfigCellDivider());
 
     // Navigation - moving between screens and lists.
-    private final AbstractConfigCell headerNavigation = cellGroup.appendCell(new ConfigCellHeader(MeeroStrings.s("MeeroGroupNavigation")));
-    private final AbstractConfigCell iosSearchRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosSearch, MeeroStrings.s("MeeroIosSearchInfo")));
-    private final AbstractConfigCell iosFastScrollRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosFastScroll, MeeroStrings.s("MeeroIosFastScrollInfo")));
+    private final AbstractConfigCell headerNavigation = cellGroup.appendCell(new ConfigCellHeader(MeeroStrings.s(107)));
+    private final AbstractConfigCell iosSearchRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosSearch, MeeroStrings.s(147)));
+    private final AbstractConfigCell iosFastScrollRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosFastScroll, MeeroStrings.s(135)));
     // Mirrors the Experimental screen's row, index-valued in the same way.
     // Predictive is always listed even below API 34, exactly as it is there -
     // dropping it would shift iOS from 3 to 2 and reinterpret the preference.
@@ -182,51 +182,51 @@ public class MeeroSettingsActivity extends BaseNekoXSettingsActivity {
             getString(R.string.BackAnimationClassic),
             getString(R.string.BackAnimationSpring),
             getString(R.string.BackAnimationPredictive),
-            MeeroStrings.s("BackAnimationIos"),
+            MeeroStrings.s(0),
     }, null));
     private final AbstractConfigCell dividerNavigation = cellGroup.appendCell(new ConfigCellDivider());
 
     // Motion and feedback - how the interface reacts to a touch.
-    private final AbstractConfigCell headerMotion = cellGroup.appendCell(new ConfigCellHeader(MeeroStrings.s("MeeroGroupMotion")));
-    private final AbstractConfigCell iosAnimRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosAnim, MeeroStrings.s("MeeroIosAnimInfo")));
-    private final AbstractConfigCell iosMenuAnimRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosMenuAnim, MeeroStrings.s("MeeroIosMenuAnimInfo")));
-    private final AbstractConfigCell iosPopupMenuRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosPopupMenu, MeeroStrings.s("MeeroIosPopupMenuInfo")));
-    private final AbstractConfigCell iosMsgMenuRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosMsgMenu, MeeroStrings.s("MeeroIosMsgMenuInfo")));
-    private final AbstractConfigCell iosMainMenuRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosMainMenu, MeeroStrings.s("MeeroIosMainMenuInfo")));
+    private final AbstractConfigCell headerMotion = cellGroup.appendCell(new ConfigCellHeader(MeeroStrings.s(106)));
+    private final AbstractConfigCell iosAnimRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosAnim, MeeroStrings.s(132)));
+    private final AbstractConfigCell iosMenuAnimRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosMenuAnim, MeeroStrings.s(143)));
+    private final AbstractConfigCell iosPopupMenuRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosPopupMenu, MeeroStrings.s(145)));
+    private final AbstractConfigCell iosMsgMenuRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosMsgMenu, MeeroStrings.s(144)));
+    private final AbstractConfigCell iosMainMenuRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosMainMenu, MeeroStrings.s(141)));
     // MeeroX v159: approved polish bundle for the menus themselves.
-    private final AbstractConfigCell swiftMenusRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroSwiftMenus, MeeroStrings.s("MeeroSwiftMenusInfo")));
-    private final AbstractConfigCell sepFadeRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroSepFade, MeeroStrings.s("MeeroSepFadeInfo")));
-    private final AbstractConfigCell flexWidthRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroFlexWidth, MeeroStrings.s("MeeroFlexWidthInfo")));
-    private final AbstractConfigCell iosHapticsRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosHaptics, MeeroStrings.s("MeeroIosHapticsInfo")));
-    private final AbstractConfigCell iosLoadingRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosLoading, MeeroStrings.s("MeeroIosLoadingInfo")));
+    private final AbstractConfigCell swiftMenusRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroSwiftMenus, MeeroStrings.s(262)));
+    private final AbstractConfigCell sepFadeRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroSepFade, MeeroStrings.s(228)));
+    private final AbstractConfigCell flexWidthRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroFlexWidth, MeeroStrings.s(92)));
+    private final AbstractConfigCell iosHapticsRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosHaptics, MeeroStrings.s(136)));
+    private final AbstractConfigCell iosLoadingRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosLoading, MeeroStrings.s(140)));
     // MeeroX v164 (approved pick): startup smoothness pre-warm, one shot per
     // launch - lives with the motion rows since its whole job is feel.
-    private final AbstractConfigCell smoothPassRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroSmoothPass, MeeroStrings.s("MeeroSmoothPassInfo")));
+    private final AbstractConfigCell smoothPassRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroSmoothPass, MeeroStrings.s(235)));
     private final AbstractConfigCell dividerMotion = cellGroup.appendCell(new ConfigCellDivider());
 
     // Storage - the auto cache janitor (MeeroX v159, approved feature). The
     // master switch defaults OFF; the three pickers only shape what an armed
     // janitor does. It deletes re-downloadable cloud-media copies only -
     // never messages, never the database, never music.
-    private final AbstractConfigCell headerStorage = cellGroup.appendCell(new ConfigCellHeader(MeeroStrings.s("MeeroGroupStorage")));
-    private final AbstractConfigCell autoJanitorRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroAutoJanitor, MeeroStrings.s("MeeroAutoJanitorInfo")));
+    private final AbstractConfigCell headerStorage = cellGroup.appendCell(new ConfigCellHeader(MeeroStrings.s(109)));
+    private final AbstractConfigCell autoJanitorRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroAutoJanitor, MeeroStrings.s(16)));
     private final AbstractConfigCell janitorLimitRow = cellGroup.appendCell(new ConfigCellSelectBox(null, NekoConfig.meeroJanitorLimit, MeeroJanitor.limitTitles(), null));
     private final AbstractConfigCell janitorAgeRow = cellGroup.appendCell(new ConfigCellSelectBox(null, NekoConfig.meeroJanitorAge, new String[]{
-            MeeroStrings.s("JanitorDays7"),
-            MeeroStrings.s("JanitorDays14"),
-            MeeroStrings.s("JanitorDays30"),
+            MeeroStrings.s(3),
+            MeeroStrings.s(1),
+            MeeroStrings.s(2),
     }, null));
     private final AbstractConfigCell janitorModeRow = cellGroup.appendCell(new ConfigCellSelectBox(null, NekoConfig.meeroJanitorMode, new String[]{
-            MeeroStrings.s("JanitorModeDaily"),
-            MeeroStrings.s("JanitorModeWeekly"),
-            MeeroStrings.s("JanitorModeLimit"),
+            MeeroStrings.s(4),
+            MeeroStrings.s(6),
+            MeeroStrings.s(5),
     }, null));
     private final AbstractConfigCell dividerStorage = cellGroup.appendCell(new ConfigCellDivider());
 
     // Sound and launch.
-    private final AbstractConfigCell headerSound = cellGroup.appendCell(new ConfigCellHeader(MeeroStrings.s("MeeroGroupSound")));
-    private final AbstractConfigCell iosSoundsRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosSounds, MeeroStrings.s("MeeroIosSoundsInfo")));
-    private final AbstractConfigCell iosIntroRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosIntro, MeeroStrings.s("MeeroIosIntroInfo")));
+    private final AbstractConfigCell headerSound = cellGroup.appendCell(new ConfigCellHeader(MeeroStrings.s(108)));
+    private final AbstractConfigCell iosSoundsRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosSounds, MeeroStrings.s(150)));
+    private final AbstractConfigCell iosIntroRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosIntro, MeeroStrings.s(139)));
     private final AbstractConfigCell dividerSound = cellGroup.appendCell(new ConfigCellDivider());
 
     private ListAdapter listAdapter;
@@ -372,43 +372,43 @@ public class MeeroSettingsActivity extends BaseNekoXSettingsActivity {
 
     static String tickStyleName(int style) {
         switch (style) {
-            case 1:  return MeeroStrings.s("meeroTickName1");
-            case 2:  return MeeroStrings.s("meeroTickName2");
-            case 3:  return MeeroStrings.s("meeroTickName3");
-            case 4:  return MeeroStrings.s("meeroTickName4");
-            case 5:  return MeeroStrings.s("meeroTickName5");
-            case 6:  return MeeroStrings.s("meeroTickName6");
-            case 7:  return MeeroStrings.s("meeroTickName7");
-            case 8:  return MeeroStrings.s("meeroTickName8");
-            case 9:  return MeeroStrings.s("meeroTickName9");
-            case 10: return MeeroStrings.s("meeroTickName10");
-            case 11: return MeeroStrings.s("meeroTickName11");
-            case 12: return MeeroStrings.s("meeroTickName12");
-            case 13: return MeeroStrings.s("meeroTickName13");
-            case 14: return MeeroStrings.s("meeroTickName14");
-            case 15: return MeeroStrings.s("meeroTickName15");
-            default: return MeeroStrings.s("meeroTickName0");
+            case 1:  return MeeroStrings.s(438);
+            case 2:  return MeeroStrings.s(445);
+            case 3:  return MeeroStrings.s(446);
+            case 4:  return MeeroStrings.s(447);
+            case 5:  return MeeroStrings.s(448);
+            case 6:  return MeeroStrings.s(449);
+            case 7:  return MeeroStrings.s(450);
+            case 8:  return MeeroStrings.s(451);
+            case 9:  return MeeroStrings.s(452);
+            case 10: return MeeroStrings.s(439);
+            case 11: return MeeroStrings.s(440);
+            case 12: return MeeroStrings.s(441);
+            case 13: return MeeroStrings.s(442);
+            case 14: return MeeroStrings.s(443);
+            case 15: return MeeroStrings.s(444);
+            default: return MeeroStrings.s(437);
         }
     }
 
     static String tickStyleDesc(int style) {
         switch (style) {
-            case 1:  return MeeroStrings.s("meeroTickDesc1");
-            case 2:  return MeeroStrings.s("meeroTickDesc2");
-            case 3:  return MeeroStrings.s("meeroTickDesc3");
-            case 4:  return MeeroStrings.s("meeroTickDesc4");
-            case 5:  return MeeroStrings.s("meeroTickDesc5");
-            case 6:  return MeeroStrings.s("meeroTickDesc6");
-            case 7:  return MeeroStrings.s("meeroTickDesc7");
-            case 8:  return MeeroStrings.s("meeroTickDesc8");
-            case 9:  return MeeroStrings.s("meeroTickDesc9");
-            case 10: return MeeroStrings.s("meeroTickDesc10");
-            case 11: return MeeroStrings.s("meeroTickDesc11");
-            case 12: return MeeroStrings.s("meeroTickDesc12");
-            case 13: return MeeroStrings.s("meeroTickDesc13");
-            case 14: return MeeroStrings.s("meeroTickDesc14");
-            case 15: return MeeroStrings.s("meeroTickDesc15");
-            default: return MeeroStrings.s("meeroTickDesc0");
+            case 1:  return MeeroStrings.s(422);
+            case 2:  return MeeroStrings.s(429);
+            case 3:  return MeeroStrings.s(430);
+            case 4:  return MeeroStrings.s(431);
+            case 5:  return MeeroStrings.s(432);
+            case 6:  return MeeroStrings.s(433);
+            case 7:  return MeeroStrings.s(434);
+            case 8:  return MeeroStrings.s(435);
+            case 9:  return MeeroStrings.s(436);
+            case 10: return MeeroStrings.s(423);
+            case 11: return MeeroStrings.s(424);
+            case 12: return MeeroStrings.s(425);
+            case 13: return MeeroStrings.s(426);
+            case 14: return MeeroStrings.s(427);
+            case 15: return MeeroStrings.s(428);
+            default: return MeeroStrings.s(421);
         }
     }
 
@@ -434,28 +434,28 @@ public class MeeroSettingsActivity extends BaseNekoXSettingsActivity {
 
     static String bubbleStyleName(int style) {
         switch (style) {
-            case 1:  return MeeroStrings.s("meeroBubbleName1");
-            case 2:  return MeeroStrings.s("meeroBubbleName2");
-            case 3:  return MeeroStrings.s("meeroBubbleName3");
-            case 4:  return MeeroStrings.s("meeroBubbleName4");
+            case 1:  return MeeroStrings.s(375);
+            case 2:  return MeeroStrings.s(376);
+            case 3:  return MeeroStrings.s(377);
+            case 4:  return MeeroStrings.s(378);
             // MeeroX v124: the three shapes added with the picker sheet.
-            case 5:  return MeeroStrings.s("meeroBubbleName5");
-            case 6:  return MeeroStrings.s("meeroBubbleName6");
-            case 7:  return MeeroStrings.s("meeroBubbleName7");
-            default: return MeeroStrings.s("meeroBubbleName0");
+            case 5:  return MeeroStrings.s(379);
+            case 6:  return MeeroStrings.s(380);
+            case 7:  return MeeroStrings.s(381);
+            default: return MeeroStrings.s(374);
         }
     }
 
     static String bubbleStyleDesc(int style) {
         switch (style) {
-            case 1:  return MeeroStrings.s("meeroBubbleDesc1");
-            case 2:  return MeeroStrings.s("meeroBubbleDesc2");
-            case 3:  return MeeroStrings.s("meeroBubbleDesc3");
-            case 4:  return MeeroStrings.s("meeroBubbleDesc4");
-            case 5:  return MeeroStrings.s("meeroBubbleDesc5");
-            case 6:  return MeeroStrings.s("meeroBubbleDesc6");
-            case 7:  return MeeroStrings.s("meeroBubbleDesc7");
-            default: return MeeroStrings.s("meeroBubbleDesc0");
+            case 1:  return MeeroStrings.s(367);
+            case 2:  return MeeroStrings.s(368);
+            case 3:  return MeeroStrings.s(369);
+            case 4:  return MeeroStrings.s(370);
+            case 5:  return MeeroStrings.s(371);
+            case 6:  return MeeroStrings.s(372);
+            case 7:  return MeeroStrings.s(373);
+            default: return MeeroStrings.s(366);
         }
     }
 
@@ -479,7 +479,7 @@ public class MeeroSettingsActivity extends BaseNekoXSettingsActivity {
 
     @Override
     public String getTitle() {
-        return MeeroStrings.s("MeeroSettingsTitle");
+        return MeeroStrings.s(230);
     }
 
     @Override

@@ -120,7 +120,7 @@ public class NekoExperimentalSettingsActivity extends BaseNekoXSettingsActivity 
                     getString(R.string.BackAnimationClassic),
                     getString(R.string.BackAnimationSpring),
                     getString(R.string.BackAnimationPredictive),
-                    MeeroStrings.s("BackAnimationIos"),
+                    MeeroStrings.s(0),
             }, null));
     private final AbstractConfigCell springAnimationCrossfadeRow = cellGroup.appendCell(new ConfigCellTextCheck(NaConfig.INSTANCE.getSpringAnimationCrossfade()));
     private final AbstractConfigCell localPremiumRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.localPremium));

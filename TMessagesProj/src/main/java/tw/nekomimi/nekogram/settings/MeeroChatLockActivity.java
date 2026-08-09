@@ -97,7 +97,7 @@ public class MeeroChatLockActivity extends BaseNekoSettingsActivity {
 
     @Override
     protected String getActionBarTitle() {
-        return MeeroStrings.s("MeeroChatLockTitle");
+        return MeeroStrings.s(64);
     }
 
     @Override
@@ -143,7 +143,7 @@ public class MeeroChatLockActivity extends BaseNekoSettingsActivity {
             TLRPC.Chat chat = mc.getChat(-dialogId);
             if (chat != null && !TextUtils.isEmpty(chat.title)) return chat.title;
         }
-        return MeeroStrings.s("MeeroRulesChatFallback");
+        return MeeroStrings.s(213);
     }
 
     @Override
@@ -165,7 +165,7 @@ public class MeeroChatLockActivity extends BaseNekoSettingsActivity {
             presentFragment(new MeeroLockAuditActivity());
         } else if (position == infoRow) {
             // v111: the full no-recovery/behavior guide lives in this popup.
-            tw.nekomimi.nekogram.MeeroUsageGuide.show(this, "MeeroChatLockInfo");
+            tw.nekomimi.nekogram.MeeroUsageGuide.show(this, 52);
         } else if (position == addRow) {
             pickChat();
         } else if (position >= listStartRow && position < listEndRow) {
@@ -183,11 +183,11 @@ public class MeeroChatLockActivity extends BaseNekoSettingsActivity {
         Context context = getParentActivity();
         if (context == null) return;
         CharSequence[] items = {
-                MeeroStrings.s("MeeroChatLockMethodSystem"),
-                MeeroStrings.s("MeeroChatLockMethodCode")
+                MeeroStrings.s(57),
+                MeeroStrings.s(56)
         };
         new AlertDialog.Builder(context)
-                .setTitle(MeeroStrings.s("MeeroChatLockMethod"))
+                .setTitle(MeeroStrings.s(55))
                 .setItems(items, (dialog, which) -> {
                     if (which == 0) {
                         MeeroChatLock.setMethod(MeeroChatLock.METHOD_SYSTEM);
@@ -211,12 +211,12 @@ public class MeeroChatLockActivity extends BaseNekoSettingsActivity {
         Context context = getParentActivity();
         if (context == null) return;
         CharSequence[] items = {
-                MeeroStrings.s("MeeroRelockNow"),
-                MeeroStrings.s("MeeroRelockAfterMin"),
-                MeeroStrings.s("MeeroRelockAfter5Min")
+                MeeroStrings.s(211),
+                MeeroStrings.s(209),
+                MeeroStrings.s(208)
         };
         new AlertDialog.Builder(context)
-                .setTitle(MeeroStrings.s("MeeroRelockDelay"))
+                .setTitle(MeeroStrings.s(210))
                 .setItems(items, (dialog, which) -> {
                     NekoConfig.meeroChatLockRelockGrace.setConfigInt(which);
                     refreshRows();
@@ -230,9 +230,9 @@ public class MeeroChatLockActivity extends BaseNekoSettingsActivity {
      *  right over this settings screen, not a dialog. */
     private void startSetCodeFlow() {
         MeeroChatLock.showCodeLockOver(this,
-                MeeroStrings.s("MeeroChatLockSetCode"),
-                MeeroStrings.s("MeeroChatLockSetCodeHint"),
-                MeeroStrings.s("MeeroChatLockCodeMismatch"),
+                MeeroStrings.s(62),
+                MeeroStrings.s(63),
+                MeeroStrings.s(41),
                 new MeeroChatLock.CodeCallback() {
                     @Override
                     public boolean onCode(final String first) {
@@ -249,9 +249,9 @@ public class MeeroChatLockActivity extends BaseNekoSettingsActivity {
 
     private void promptConfirmCode(final String first) {
         MeeroChatLock.showCodeLockOver(this,
-                MeeroStrings.s("MeeroChatLockConfirmCode"),
-                MeeroStrings.s("MeeroChatLockSetCodeHint"),
-                MeeroStrings.s("MeeroChatLockCodeMismatch"),
+                MeeroStrings.s(44),
+                MeeroStrings.s(63),
+                MeeroStrings.s(41),
                 new MeeroChatLock.CodeCallback() {
                     @Override
                     public boolean onCode(String second) {
@@ -261,7 +261,7 @@ public class MeeroChatLockActivity extends BaseNekoSettingsActivity {
                         MeeroChatLock.setCode(second);
                         MeeroChatLock.setMethod(MeeroChatLock.METHOD_CODE8);
                         BulletinFactory.of(MeeroChatLockActivity.this)
-                                .createSimpleBulletin(R.raw.contact_check, MeeroStrings.s("MeeroChatLockCodeSaved"))
+                                .createSimpleBulletin(R.raw.contact_check, MeeroStrings.s(42))
                                 .show();
                         refreshRows();
                         return true;
@@ -275,9 +275,9 @@ public class MeeroChatLockActivity extends BaseNekoSettingsActivity {
     /** Change code = prove the current one first, then the set flow again. */
     private void verifyThenChangeCode() {
         MeeroChatLock.showCodeLockOver(this,
-                MeeroStrings.s("MeeroChatLockChangeCode"),
-                MeeroStrings.s("MeeroChatLockEnterCodeHint"),
-                MeeroStrings.s("MeeroChatLockCodeWrong"),
+                MeeroStrings.s(40),
+                MeeroStrings.s(47),
+                MeeroStrings.s(43),
                 new MeeroChatLock.CodeCallback() {
                     @Override
                     public boolean onCode(String code) {
@@ -311,7 +311,7 @@ public class MeeroChatLockActivity extends BaseNekoSettingsActivity {
                 long dialogId = dids.get(0).dialogId;
                 if (parentLayout != null) parentLayout.removeFragmentFromStack(fragment, true);
                 if (dialogId == UserConfig.getInstance(UserConfig.selectedAccount).getClientUserId() || dialogId == 777000) {
-                    BulletinFactory.of(this).createSimpleBulletin(R.raw.chats_infotip, MeeroStrings.s("MeeroChatLockInvalid")).show();
+                    BulletinFactory.of(this).createSimpleBulletin(R.raw.chats_infotip, MeeroStrings.s(53)).show();
                     return true;
                 }
                 MeeroChatLock.addLocked(UserConfig.selectedAccount, dialogId);
@@ -328,9 +328,9 @@ public class MeeroChatLockActivity extends BaseNekoSettingsActivity {
         Context context = getParentActivity();
         if (context == null) return;
         new AlertDialog.Builder(context)
-                .setTitle(MeeroStrings.s("MeeroChatLockRemove"))
-                .setMessage(MeeroStrings.f("MeeroChatLockRemoveConfirm", titleOf(dialogId)))
-                .setPositiveButton(MeeroStrings.s("MeeroChatLockRemove"), (dialog, which) -> {
+                .setTitle(MeeroStrings.s(59))
+                .setMessage(MeeroStrings.f(60, titleOf(dialogId)))
+                .setPositiveButton(MeeroStrings.s(59), (dialog, which) -> {
                     MeeroChatLock.removeLocked(UserConfig.selectedAccount, dialogId);
                     updateRows();
                     listAdapter.notifyDataSetChanged();
@@ -357,49 +357,49 @@ public class MeeroChatLockActivity extends BaseNekoSettingsActivity {
                 case TYPE_CHECK:
                     TextCheckCell checkCell = (TextCheckCell) holder.itemView;
                     if (position == masterRow) {
-                        checkCell.setTextAndCheck(MeeroStrings.s("MeeroChatLockMaster"), NekoConfig.meeroChatLock.Bool(), true);
+                        checkCell.setTextAndCheck(MeeroStrings.s(54), NekoConfig.meeroChatLock.Bool(), true);
                     } else if (position == autoRelockRow) {
-                        checkCell.setTextAndCheck(MeeroStrings.s("MeeroAutoRelock"), NekoConfig.meeroChatLockAutoRelock.Bool(), true);
+                        checkCell.setTextAndCheck(MeeroStrings.s(17), NekoConfig.meeroChatLockAutoRelock.Bool(), true);
                     }
                     break;
                 case TYPE_HEADER:
                     HeaderCell headerCell = (HeaderCell) holder.itemView;
                     if (position == headerRow) {
-                        headerCell.setText(MeeroStrings.s("MeeroChatLockHeader"));
+                        headerCell.setText(MeeroStrings.s(51));
                     }
                     break;
                 case TYPE_TEXT:
                     TextCell textCell = (TextCell) holder.itemView;
                     if (position == methodRow) {
                         // v107: shows the active unlock method, taps open the chooser.
-                        textCell.setTextAndValue(MeeroStrings.s("MeeroChatLockMethod"),
+                        textCell.setTextAndValue(MeeroStrings.s(55),
                                 (MeeroChatLock.getMethod() == MeeroChatLock.METHOD_CODE8
-                                        ? MeeroStrings.s("MeeroChatLockMethodCode") : MeeroStrings.s("MeeroChatLockMethodSystem")), true);
+                                        ? MeeroStrings.s(56) : MeeroStrings.s(57)), true);
                     } else if (position == changeCodeRow) {
-                        textCell.setTextAndValue(MeeroStrings.s("MeeroChatLockChangeCode"), "", true);
+                        textCell.setTextAndValue(MeeroStrings.s(40), "", true);
                     } else if (position == relockGraceRow) {
                         int g = NekoConfig.meeroChatLockRelockGrace.Int();
-                        textCell.setTextAndValue(MeeroStrings.s("MeeroRelockDelay"),
-                                (g == MeeroChatLock.GRACE_MIN1 ? MeeroStrings.s("MeeroRelockAfterMin")
-                                        : g == MeeroChatLock.GRACE_MIN5 ? MeeroStrings.s("MeeroRelockAfter5Min")
-                                        : MeeroStrings.s("MeeroRelockNow")), true);
+                        textCell.setTextAndValue(MeeroStrings.s(210),
+                                (g == MeeroChatLock.GRACE_MIN1 ? MeeroStrings.s(209)
+                                        : g == MeeroChatLock.GRACE_MIN5 ? MeeroStrings.s(208)
+                                        : MeeroStrings.s(211)), true);
                     } else if (position == auditRow) {
-                        textCell.setTextAndValue(MeeroStrings.s("MeeroLockAudit"),
+                        textCell.setTextAndValue(MeeroStrings.s(164),
                                 String.valueOf(MeeroChatLock.auditEntries().length()), true);
                     } else if (position == addRow) {
-                        textCell.setTextAndValue(MeeroStrings.s("MeeroChatLockAdd"), "", true);
+                        textCell.setTextAndValue(MeeroStrings.s(39), "", true);
                     } else if (position == emptyRow) {
-                        textCell.setTextAndValue(MeeroStrings.s("MeeroChatLockEmpty"), "", true);
+                        textCell.setTextAndValue(MeeroStrings.s(45), "", true);
                     } else if (position == infoRow) {
                         // v111: usage-guide button instead of the long footer.
-                        textCell.setTextAndValue(MeeroStrings.s("MeeroUsageGuide"), "", false);
+                        textCell.setTextAndValue(MeeroStrings.s(268), "", false);
                     }
                     break;
                 case TYPE_DETAIL_SETTINGS:
                     TextDetailSettingsCell detailCell = (TextDetailSettingsCell) holder.itemView;
                     if (position >= listStartRow && position < listEndRow) {
                         long dialogId = locked.get(position - listStartRow);
-                        detailCell.setTextAndValue(titleOf(dialogId), MeeroStrings.s("MeeroChatLockRowDetail"), position + 1 < listEndRow);
+                        detailCell.setTextAndValue(titleOf(dialogId), MeeroStrings.s(61), position + 1 < listEndRow);
                     }
                     break;
             }

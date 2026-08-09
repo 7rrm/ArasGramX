@@ -39,6 +39,10 @@
 extern jbyteArray JNICALL
 Java_tw_nekomimi_nekogram_MeeroVaultSeed_fingerprintSeedNative(JNIEnv *env, jclass clazz);
 
+/* v186 (batch 2D) anti-debug shield - defined in the tail section; blob
+ * writers below consult it before persisting anything to disk. */
+static int mc_ad_blocked(void);
+
 static int mc_seed(JNIEnv *env, unsigned char out[32]) {
     jbyteArray a = Java_tw_nekomimi_nekogram_MeeroVaultSeed_fingerprintSeedNative(env, NULL);
     if (a == NULL) return 0;
@@ -196,6 +200,53 @@ static char *mc_utf(JNIEnv *env, jstring s) {
     return cp;
 }
 
+/* ---- v186 (batch 2D): UTF-8 -> real UTF-16, then NewString ---------------
+ * NewStringUTF expects MODIFIED UTF-8: on ART a standard 4-byte sequence
+ * (every emoji) is invalid there and gets garbled or rejected. All v184/185
+ * free-text returns went through it, so an emoji hit/pool/resolve could
+ * render broken - owned catch of batch 2D. Every free-text jstring now
+ * leaves through NewString(jchar*, units), which has no such quirk. */
+static int mc_u16(const char *s, jchar **out) {
+    *out = NULL;
+    if (s == NULL) s = "";
+    const unsigned char *p = (const unsigned char *) s;
+    int units = 0;
+    for (const unsigned char *q = p; *q; q++) {
+        if ((*q & 0xC0) != 0x80) units += (*q >= 0xF0) ? 2 : 1;
+    }
+    jchar *b = malloc((size_t) (units + 1) * sizeof(jchar));
+    if (b == NULL) return -1;
+    int w = 0;
+    while (*p) {
+        uint32_t cp;
+        int n;
+        if (*p < 0x80) { cp = *p; n = 1; }
+        else if ((*p & 0xE0) == 0xC0) { cp = ((uint32_t) (p[0] & 0x1F) << 6) | (uint32_t) (p[1] & 0x3F); n = 2; }
+        else if ((*p & 0xF0) == 0xE0) { cp = ((uint32_t) (p[0] & 0x0F) << 12) | ((uint32_t) (p[1] & 0x3F) << 6) | (uint32_t) (p[2] & 0x3F); n = 3; }
+        else if ((*p & 0xF8) == 0xF0) { cp = ((uint32_t) (p[0] & 0x07) << 18) | ((uint32_t) (p[1] & 0x3F) << 12) | ((uint32_t) (p[2] & 0x3F) << 6) | (uint32_t) (p[3] & 0x3F); n = 4; }
+        else { cp = *p; n = 1; }
+        if (cp > 0xFFFF) {
+            uint32_t u = cp - 0x10000;
+            b[w++] = (jchar) (0xD800 + (u >> 10));
+            b[w++] = (jchar) (0xDC00 + (u & 0x3FF));
+        } else {
+            b[w++] = (jchar) cp;
+        }
+        p += n;
+    }
+    *out = b;
+    return w;
+}
+
+static jstring mc_jstr(JNIEnv *env, const char *utf8) {
+    jchar *b = NULL;
+    int n = mc_u16(utf8, &b);
+    if (n < 0) return NULL;
+    jstring r = (*env)->NewString(env, b, (jsize) n);
+    free(b);
+    return r;
+}
+
 #define MC_CLASS(verb) Java_tw_nekomimi_nekogram_MeeroCore_##verb
 
 /* ---------------- lock core ---------------- */
@@ -292,7 +343,7 @@ JNIEXPORT jstring JNICALL MC_CLASS(nAuditMac)(JNIEnv *env, jclass c, jstring pre
     for (int i = 0; i < 32; i++) { hex[i * 2] = HEXC[mac[i] >> 4]; hex[i * 2 + 1] = HEXC[mac[i] & 15]; }
     hex[64] = 0;
     memset(mac, 0, 32);
-    return (*env)->NewStringUTF(env, hex);
+    return mc_jstr(env, hex);
 }
 
 /* ---------------- api-key engine ---------------- */
@@ -363,7 +414,7 @@ JNIEXPORT jstring JNICALL MC_CLASS(nKeyHash)(JNIEnv *env, jclass c, jint idx) {
         if (idx == 2) enc = H2; else if (idx == 3) enc = H3; else if (idx == 4) enc = H4;
         mc_unxor(tmp, enc);
     }
-    jstring r = (*env)->NewStringUTF(env, tmp);
+    jstring r = mc_jstr(env, tmp);
     memset(tmp, 0, sizeof(tmp));
     return r;
 }
@@ -1196,6 +1247,7 @@ JNIEXPORT jint JNICALL MC_CLASS(nKwLoad)(JNIEnv *env, jclass c, jstring blob) {
 
 JNIEXPORT jstring JNICALL MC_CLASS(nKwBlob)(JNIEnv *env, jclass c) {
     (void) c;
+    if (mc_ad_blocked()) return NULL; /* v186: no disk writes while traced */
     pthread_mutex_lock(&mc_mu);
     unsigned char seed[32];
     if (!mc_seed(env, seed)) {
@@ -1206,7 +1258,7 @@ JNIEXPORT jstring JNICALL MC_CLASS(nKwBlob)(JNIEnv *env, jclass c) {
     memset(seed, 0, 32);
     pthread_mutex_unlock(&mc_mu);
     if (b == NULL) return NULL;
-    jstring r = (*env)->NewStringUTF(env, b);
+    jstring r = mc_jstr(env, b);
     memset(b, 0, strlen(b));
     free(b);
     return r;
@@ -1241,7 +1293,7 @@ JNIEXPORT jstring JNICALL MC_CLASS(nKwWordsAt)(JNIEnv *env, jclass c, jint idx) 
     (void) c;
     pthread_mutex_lock(&mc_mu);
     const char *w = (idx < 0 || idx >= KW_ENTRIES.len) ? NULL : KW_ENTRIES.e[idx].s;
-    jstring r = (w == NULL) ? NULL : (*env)->NewStringUTF(env, w);
+    jstring r = (w == NULL) ? NULL : mc_jstr(env, w);
     pthread_mutex_unlock(&mc_mu);
     return r;
 }
@@ -1255,7 +1307,7 @@ JNIEXPORT jstring JNICALL MC_CLASS(nKwMatch)(JNIEnv *env, jclass c, jlong dialog
     pthread_mutex_unlock(&mc_mu);
     free(t);
     if (hit == NULL) return NULL;
-    jstring r = (*env)->NewStringUTF(env, hit);
+    jstring r = mc_jstr(env, hit);
     free(hit);
     return r;
 }
@@ -1275,6 +1327,7 @@ JNIEXPORT jint JNICALL MC_CLASS(nArLoad)(JNIEnv *env, jclass c, jstring blob) {
 
 JNIEXPORT jstring JNICALL MC_CLASS(nArBlob)(JNIEnv *env, jclass c) {
     (void) c;
+    if (mc_ad_blocked()) return NULL; /* v186: no disk writes while traced */
     pthread_mutex_lock(&mc_mu);
     unsigned char seed[32];
     if (!mc_seed(env, seed)) {
@@ -1285,7 +1338,7 @@ JNIEXPORT jstring JNICALL MC_CLASS(nArBlob)(JNIEnv *env, jclass c) {
     memset(seed, 0, 32);
     pthread_mutex_unlock(&mc_mu);
     if (b == NULL) return NULL;
-    jstring r = (*env)->NewStringUTF(env, b);
+    jstring r = mc_jstr(env, b);
     memset(b, 0, strlen(b));
     free(b);
     return r;
@@ -1320,7 +1373,7 @@ JNIEXPORT jstring JNICALL MC_CLASS(nArRuleText)(JNIEnv *env, jclass c, jlong id)
     (void) c;
     pthread_mutex_lock(&mc_mu);
     const char *t = mc_idstr_get(&AR_RULES, id);
-    jstring r = (t == NULL || *t == 0) ? NULL : (*env)->NewStringUTF(env, t);
+    jstring r = (t == NULL || *t == 0) ? NULL : mc_jstr(env, t);
     pthread_mutex_unlock(&mc_mu);
     return r;
 }
@@ -1375,7 +1428,7 @@ JNIEXPORT jstring JNICALL MC_CLASS(nArPoolAt)(JNIEnv *env, jclass c, jint idx) {
     (void) c;
     pthread_mutex_lock(&mc_mu);
     const char *t = (idx < 0 || idx >= AR_POOL.len) ? NULL : AR_POOL.e[idx];
-    jstring r = (t == NULL) ? NULL : (*env)->NewStringUTF(env, t);
+    jstring r = (t == NULL) ? NULL : mc_jstr(env, t);
     pthread_mutex_unlock(&mc_mu);
     return r;
 }
@@ -1439,7 +1492,7 @@ JNIEXPORT jstring JNICALL MC_CLASS(nArResolveText)(JNIEnv *env, jclass c, jlong 
     free(d);
     free(fn);
     if (out == NULL) return NULL;
-    jstring r = (*env)->NewStringUTF(env, out);
+    jstring r = mc_jstr(env, out);
     free(out);
     return r;
 }
@@ -2177,7 +2230,7 @@ static char *mc_as_bounds(jlong nowMs) {
 
 static jstring mc_js(JNIEnv *env, char *malloced) {
     if (malloced == NULL) return NULL;
-    jstring r = (*env)->NewStringUTF(env, malloced);
+    jstring r = mc_jstr(env, malloced);
     memset(malloced, 0, strlen(malloced));
     free(malloced);
     return r;
@@ -2251,6 +2304,7 @@ JNIEXPORT jint JNICALL MC_CLASS(nDhLoad)(JNIEnv *env, jclass c, jstring blob) {
 
 JNIEXPORT jstring JNICALL MC_CLASS(nDhBlob)(JNIEnv *env, jclass c) {
     (void) c;
+    if (mc_ad_blocked()) return NULL; /* v186: no disk writes while traced */
     pthread_mutex_lock(&mc_mu);
     unsigned char seed[32];
     if (!mc_seed(env, seed)) {
@@ -2351,6 +2405,7 @@ JNIEXPORT jint JNICALL MC_CLASS(nWLoad)(JNIEnv *env, jclass c, jstring blob) {
 
 JNIEXPORT jstring JNICALL MC_CLASS(nWBlob)(JNIEnv *env, jclass c) {
     (void) c;
+    if (mc_ad_blocked()) return NULL; /* v186: no disk writes while traced */
     pthread_mutex_lock(&mc_mu);
     unsigned char seed[32];
     if (!mc_seed(env, seed)) {
@@ -2623,6 +2678,126 @@ JNIEXPORT jlong JNICALL MC_CLASS(nAsDryTopSecAt)(JNIEnv *env, jclass c, jint idx
         drySeen++;
     }
     pthread_mutex_unlock(&mc_mu);
+    return r;
+}
+
+/*
+ * ============================================================================
+ * MeeroX v186 (batch 2D) - deep hardening: the MeeroStrings vault sealed at
+ * build time (served whole, once per process), and the passive anti-debug
+ * shield. The shield's law (his v166 rule, unchanged): NEVER kills, never
+ * blocks, never pops anything; while a tracer/frida/xposed kit is attached,
+ * the sealed stores simply stop being WRITTEN BACK - reads and the whole
+ * user experience keep working, only forensic capture is starved. Cached
+ * 60 s so the probe cost never lands on the hot path.
+ * ============================================================================
+ */
+
+static int mc_ad_cached = -1;
+static long long mc_ad_at;
+
+/* reads the whole file lowercase; returns 1 when any needle shows up */
+static int mc_ad_scan(const char *path, const char *const *needles, int nn) {
+    FILE *f = fopen(path, "r");
+    if (f == NULL) return 0;
+    char line[512];
+    int hit = 0;
+    while (!hit && fgets(line, sizeof(line), f) != NULL) {
+        for (char *q = line; *q; q++) {
+            if (*q >= 'A' && *q <= 'Z') *q = (char) (*q | 0x20);
+        }
+        for (int i = 0; i < nn; i++) {
+            if (strstr(line, needles[i]) != NULL) { hit = 1; break; }
+        }
+    }
+    fclose(f);
+    return hit;
+}
+
+static int mc_ad_probe(void) {
+    /* 1) an actual tracer (ptrace/jdwp/frida attach) */
+    FILE *f = fopen("/proc/self/status", "r");
+    if (f != NULL) {
+        char line[256];
+        int traced = 0;
+        while (fgets(line, sizeof(line), f) != NULL) {
+            if (strncmp(line, "TracerPid:", 10) == 0) {
+                traced = atoi(line + 10) != 0;
+                break;
+            }
+        }
+        fclose(f);
+        if (traced) return 1;
+    }
+    /* 2) instrumentation frameworks mapped into this process */
+    static const char *const MAP_NEEDLES[] = {
+        "frida", "gum-js", "gadget", "xposed", "substrate"
+    };
+    if (mc_ad_scan("/proc/self/maps", MAP_NEEDLES, 5)) return 1;
+    /* 3) the classic instrumentation control ports listening locally
+     *    (hex column of /proc/net/tcp*: 69A2/69A3 = 27042/3, 5D8A = 23946) */
+    static const char *const TCP_NEEDLES[] = { ":69a2 ", ":69a3 ", ":5d8a " };
+    if (mc_ad_scan("/proc/net/tcp", TCP_NEEDLES, 3)) return 1;
+    if (mc_ad_scan("/proc/net/tcp6", TCP_NEEDLES, 3)) return 1;
+    return 0;
+}
+
+static int mc_ad_blocked(void) {
+    struct timespec ts;
+    long long now = 0;
+    if (clock_gettime(CLOCK_MONOTONIC, &ts) == 0) now = (long long) ts.tv_sec;
+    if (mc_ad_cached < 0 || now - mc_ad_at >= 60) {
+        mc_ad_cached = mc_ad_probe();
+        mc_ad_at = now;
+    }
+    return mc_ad_cached;
+}
+
+/* ---- sealed MeeroStrings vault (dom 'S'): raw mac|ct form, one shot ------ */
+
+#include "meero_strtab.h"
+
+static char *mc_strtab_tsv(const unsigned char seed[32], size_t *n_out) {
+    if (MC_STRTAB_LEN < 32) return NULL;
+    size_t el = (size_t) MC_STRTAB_LEN - 32;
+    const unsigned char *enc = MC_STRTAB + 32;
+    unsigned char *mm = malloc(1 + el);
+    if (mm == NULL) return NULL;
+    mm[0] = (unsigned char) 'S';
+    memcpy(mm + 1, enc, el);
+    unsigned char mac[32];
+    mc_hmac32(seed, mm, 1 + el, mac);
+    memset(mm, 0, 1 + el);
+    free(mm);
+    unsigned char diff = 0;
+    for (int i = 0; i < 32; i++) diff |= (unsigned char) (mac[i] ^ MC_STRTAB[i]);
+    memset(mac, 0, 32);
+    if (diff != 0) return NULL;
+    unsigned char *raw = malloc(el + 1);
+    if (raw == NULL) return NULL;
+    memcpy(raw, enc, el);
+    mc_xor_stream(seed, 'S', raw, el);
+    raw[el] = 0;
+    *n_out = el;
+    return (char *) raw;
+}
+
+JNIEXPORT jstring JNICALL MC_CLASS(nStrTsv)(JNIEnv *env, jclass c) {
+    (void) c;
+    pthread_mutex_lock(&mc_mu);
+    unsigned char seed[32];
+    size_t n = 0;
+    char *tsv = NULL;
+    if (mc_seed(env, seed)) {
+        tsv = mc_strtab_tsv(seed, &n);
+    }
+    memset(seed, 0, 32);
+    pthread_mutex_unlock(&mc_mu);
+    jstring r = tsv == NULL ? NULL : mc_jstr(env, tsv);
+    if (tsv != NULL) {
+        memset(tsv, 0, n);
+        free(tsv);
+    }
     return r;
 }
 

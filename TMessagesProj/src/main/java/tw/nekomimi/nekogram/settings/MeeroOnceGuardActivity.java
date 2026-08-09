@@ -52,7 +52,7 @@ public class MeeroOnceGuardActivity extends BaseNekoSettingsActivity {
 
     @Override
     protected String getActionBarTitle() {
-        return MeeroStrings.s("MeeroOnceTitle");
+        return MeeroStrings.s(186);
     }
 
     @Override
@@ -79,7 +79,7 @@ public class MeeroOnceGuardActivity extends BaseNekoSettingsActivity {
             ((TextCheckCell) view).setChecked(NekoConfig.meeroOnceGuard.Bool());
         } else if (position == infoRow) {
             // v111: usage-guide popup instead of the long footer.
-            tw.nekomimi.nekogram.MeeroUsageGuide.show(this, "MeeroOnceInfo");
+            tw.nekomimi.nekogram.MeeroUsageGuide.show(this, 181);
         }
     }
 
@@ -101,22 +101,22 @@ public class MeeroOnceGuardActivity extends BaseNekoSettingsActivity {
                 case TYPE_CHECK:
                     TextCheckCell checkCell = (TextCheckCell) holder.itemView;
                     if (position == masterRow) {
-                        checkCell.setTextAndCheck(MeeroStrings.s("MeeroOnceMaster"), NekoConfig.meeroOnceGuard.Bool(), true);
+                        checkCell.setTextAndCheck(MeeroStrings.s(184), NekoConfig.meeroOnceGuard.Bool(), true);
                     }
                     break;
                 case TYPE_HEADER:
                     HeaderCell headerCell = (HeaderCell) holder.itemView;
                     if (position == countHeaderRow) {
-                        headerCell.setText(MeeroStrings.s("MeeroOnceCountHeader"));
+                        headerCell.setText(MeeroStrings.s(180));
                     }
                     break;
                 case TYPE_TEXT:
                     TextCell textCell = (TextCell) holder.itemView;
                     if (position == countRow) {
-                        textCell.setTextAndValue(MeeroStrings.s("MeeroOnceCount"), String.valueOf(NekoConfig.meeroOnceSavedCount.Int()), true);
+                        textCell.setTextAndValue(MeeroStrings.s(179), String.valueOf(NekoConfig.meeroOnceSavedCount.Int()), true);
                     } else if (position == infoRow) {
                         // v111: usage-guide button instead of the long footer.
-                        textCell.setTextAndValue(MeeroStrings.s("MeeroUsageGuide"), "", true);
+                        textCell.setTextAndValue(MeeroStrings.s(268), "", true);
                     }
                     break;
             }

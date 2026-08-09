@@ -71,7 +71,7 @@ public class MeeroThemeMixerActivity extends BaseNekoSettingsActivity {
 
     @Override
     protected String getActionBarTitle() {
-        return MeeroStrings.s("MixerTitle");
+        return MeeroStrings.s(344);
     }
 
     @Override
@@ -88,7 +88,7 @@ public class MeeroThemeMixerActivity extends BaseNekoSettingsActivity {
     protected void onItemClick(View view, int position, float x, float y) {
         if (position == accentRow) {
             new AlertDialog.Builder(getParentActivity())
-                    .setTitle(MeeroStrings.s("MixerAccent"))
+                    .setTitle(MeeroStrings.s(318))
                     .setItems(MeeroThemeMixer.accentNames(), (d, which) -> {
                         NekoConfig.meeroMixerAccent.setConfigInt(which);
                         afterPick();
@@ -97,7 +97,7 @@ public class MeeroThemeMixerActivity extends BaseNekoSettingsActivity {
                     .show();
         } else if (position == bgRow) {
             new AlertDialog.Builder(getParentActivity())
-                    .setTitle(MeeroStrings.s("MixerBackground"))
+                    .setTitle(MeeroStrings.s(329))
                     .setItems(MeeroThemeMixer.backgroundNames(), (d, which) -> {
                         NekoConfig.meeroMixerBg.setConfigInt(which);
                         afterPick();
@@ -106,7 +106,7 @@ public class MeeroThemeMixerActivity extends BaseNekoSettingsActivity {
                     .show();
         } else if (position == inBubbleRow) {
             new AlertDialog.Builder(getParentActivity())
-                    .setTitle(MeeroStrings.s("MixerInBubble"))
+                    .setTitle(MeeroStrings.s(337))
                     .setItems(MeeroThemeMixer.inBubbleNames(), (d, which) -> {
                         NekoConfig.meeroMixerInBubble.setConfigInt(which);
                         afterPick();
@@ -119,12 +119,12 @@ public class MeeroThemeMixerActivity extends BaseNekoSettingsActivity {
                 MeeroHaptics.perform(view, ok ? MeeroHaptics.SUCCESS : MeeroHaptics.ERROR);
             }
             Toast.makeText(getContext(),
-                    (ok ? MeeroStrings.s("MixerApplied") : MeeroStrings.s("MixerFailed")),
+                    (ok ? MeeroStrings.s(327) : MeeroStrings.s(334)),
                     Toast.LENGTH_LONG).show();
         } else if (position == restoreRow) {
             presentFragment(new ThemeActivity(ThemeActivity.THEME_TYPE_BASIC));
         } else if (position == infoRow) {
-            tw.nekomimi.nekogram.MeeroUsageGuide.show(this, "MixerInfo");
+            tw.nekomimi.nekogram.MeeroUsageGuide.show(this, 342);
         }
     }
 
@@ -226,23 +226,23 @@ public class MeeroThemeMixerActivity extends BaseNekoSettingsActivity {
             }
             switch (holder.getItemViewType()) {
                 case TYPE_HEADER:
-                    ((HeaderCell) holder.itemView).setText(MeeroStrings.s("MixerHeader"));
+                    ((HeaderCell) holder.itemView).setText(MeeroStrings.s(335));
                     break;
                 case TYPE_TEXT: {
                     TextCell cell = (TextCell) holder.itemView;
                     if (position == accentRow) {
-                        cell.setTextAndValue(MeeroStrings.s("MixerAccent"), MeeroStrings.s(MeeroThemeMixer.accent().nameKey), true);
+                        cell.setTextAndValue(MeeroStrings.s(318), MeeroStrings.s(MeeroThemeMixer.accent().nameKey), true);
                     } else if (position == bgRow) {
-                        cell.setTextAndValue(MeeroStrings.s("MixerBackground"), MeeroStrings.s(MeeroThemeMixer.background().nameKey), true);
+                        cell.setTextAndValue(MeeroStrings.s(329), MeeroStrings.s(MeeroThemeMixer.background().nameKey), true);
                     } else if (position == inBubbleRow) {
-                        cell.setTextAndValue(MeeroStrings.s("MixerInBubble"), MeeroThemeMixer.inBubbleNames()[Math.max(0, Math.min(3, NekoConfig.meeroMixerInBubble.Int()))], true);
+                        cell.setTextAndValue(MeeroStrings.s(337), MeeroThemeMixer.inBubbleNames()[Math.max(0, Math.min(3, NekoConfig.meeroMixerInBubble.Int()))], true);
                     } else if (position == applyRow) {
-                        cell.setText(MeeroStrings.s("MixerApply"), false);
+                        cell.setText(MeeroStrings.s(328), false);
                         cell.setTextColor(MeeroThemeMixer.accent().color);
                     } else if (position == restoreRow) {
-                        cell.setText(MeeroStrings.s("MixerRestore"), true);
+                        cell.setText(MeeroStrings.s(343), true);
                     } else if (position == infoRow) {
-                        cell.setText(MeeroStrings.s("MeeroUsageGuide"), false);
+                        cell.setText(MeeroStrings.s(268), false);
                     }
                     break;
                 }

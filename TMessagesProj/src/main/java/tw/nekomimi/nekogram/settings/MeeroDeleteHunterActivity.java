@@ -97,7 +97,7 @@ public class MeeroDeleteHunterActivity extends BaseNekoSettingsActivity {
 
     @Override
     protected String getActionBarTitle() {
-        return MeeroStrings.s("MeeroHunterTitle");
+        return MeeroStrings.s(128);
     }
 
     @Override
@@ -111,7 +111,7 @@ public class MeeroDeleteHunterActivity extends BaseNekoSettingsActivity {
         // Selection-mode toolbar actions (hidden while not selecting).
         ActionBarMenu menu = actionBar.createMenu();
         selectAllItem = menu.addItem(MENU_SELECT_ALL, R.drawable.msg_select_solar);
-        selectAllItem.setContentDescription(MeeroStrings.s("MeeroHunterSelectAll"));
+        selectAllItem.setContentDescription(MeeroStrings.s(125));
         deleteItem = menu.addItem(MENU_DELETE, R.drawable.msg_delete_solar);
         deleteItem.setContentDescription(getString(R.string.Delete));
         // Replaces the base listener: the back arrow leaves selection mode
@@ -211,9 +211,9 @@ public class MeeroDeleteHunterActivity extends BaseNekoSettingsActivity {
         if (selectAllItem != null) selectAllItem.setVisibility(selecting ? View.VISIBLE : View.GONE);
         if (deleteItem != null) deleteItem.setVisibility(selecting ? View.VISIBLE : View.GONE);
         if (selecting) {
-            actionBar.setTitle(MeeroStrings.f("MeeroHunterSelectedCount", selected.size()));
+            actionBar.setTitle(MeeroStrings.f(126, selected.size()));
         } else {
-            actionBar.setTitle(MeeroStrings.s("MeeroHunterTitle"));
+            actionBar.setTitle(MeeroStrings.s(128));
         }
     }
 
@@ -222,12 +222,12 @@ public class MeeroDeleteHunterActivity extends BaseNekoSettingsActivity {
         if (context == null) return;
         if (selected.isEmpty()) {
             BulletinFactory.of(this)
-                    .createSimpleBulletin(R.raw.info, MeeroStrings.s("MeeroHunterNothingSelected")).show();
+                    .createSimpleBulletin(R.raw.info, MeeroStrings.s(124)).show();
             return;
         }
         new AlertDialog.Builder(context)
                 .setTitle(getString(R.string.Delete))
-                .setMessage(MeeroStrings.f("MeeroHunterDeleteConfirm", selected.size()))
+                .setMessage(MeeroStrings.f(116, selected.size()))
                 .setPositiveButton(getString(R.string.Delete), (dialog, which) -> {
                     MeeroDeleteHunter.removeFromLog(new HashSet<>(selected));
                     setSelecting(false);
@@ -254,12 +254,12 @@ public class MeeroDeleteHunterActivity extends BaseNekoSettingsActivity {
             ((TextCheckCell) view).setChecked(NekoConfig.meeroDeleteHunter.Bool());
         } else if (position == infoRow) {
             // v111: usage-guide popup instead of the long footer.
-            tw.nekomimi.nekogram.MeeroUsageGuide.show(this, "MeeroHunterInfo");
+            tw.nekomimi.nekogram.MeeroUsageGuide.show(this, 120);
         } else if (position == clearRow && clearRow >= 0) {
             new AlertDialog.Builder(getParentActivity())
-                    .setTitle(MeeroStrings.s("MeeroWatchLogClear"))
-                    .setMessage(MeeroStrings.s("MeeroHunterClearConfirm"))
-                    .setPositiveButton(MeeroStrings.s("MeeroWatchLogClear"), (dialog, which) -> {
+                    .setTitle(MeeroStrings.s(291))
+                    .setMessage(MeeroStrings.s(115))
+                    .setPositiveButton(MeeroStrings.s(291), (dialog, which) -> {
                         MeeroDeleteHunter.clearLog();
                         updateRows();
                         listAdapter.notifyDataSetChanged();
@@ -296,7 +296,7 @@ public class MeeroDeleteHunterActivity extends BaseNekoSettingsActivity {
                 case TYPE_CHECK:
                     TextCheckCell checkCell = (TextCheckCell) holder.itemView;
                     if (position == masterRow) {
-                        checkCell.setTextAndCheck(MeeroStrings.s("MeeroHunterMaster"), NekoConfig.meeroDeleteHunter.Bool(), true);
+                        checkCell.setTextAndCheck(MeeroStrings.s(122), NekoConfig.meeroDeleteHunter.Bool(), true);
                     } else if (isLogRow(position)) {
                         // selection mode: title lines carry the who/kind and
                         // the content, the time moves to the value column and
@@ -310,7 +310,7 @@ public class MeeroDeleteHunterActivity extends BaseNekoSettingsActivity {
                 case TYPE_HEADER:
                     HeaderCell headerCell = (HeaderCell) holder.itemView;
                     if (position == logHeaderRow) {
-                        headerCell.setText(MeeroStrings.s("MeeroHunterLogHeader"));
+                        headerCell.setText(MeeroStrings.s(121));
                     }
                     break;
                 case TYPE_DETAIL_SETTINGS:
@@ -326,12 +326,12 @@ public class MeeroDeleteHunterActivity extends BaseNekoSettingsActivity {
                 case TYPE_TEXT:
                     TextCell textCell = (TextCell) holder.itemView;
                     if (position == emptyRow) {
-                        textCell.setTextAndValue(MeeroStrings.s("MeeroHunterEmpty"), "", true);
+                        textCell.setTextAndValue(MeeroStrings.s(119), "", true);
                     } else if (position == clearRow && clearRow >= 0) {
-                        textCell.setTextAndValue(MeeroStrings.s("MeeroWatchLogClear"), "", true);
+                        textCell.setTextAndValue(MeeroStrings.s(291), "", true);
                     } else if (position == infoRow) {
                         // v111: usage-guide button instead of the long footer.
-                        textCell.setTextAndValue(MeeroStrings.s("MeeroUsageGuide"), "", true);
+                        textCell.setTextAndValue(MeeroStrings.s(268), "", true);
                     }
                     break;
             }

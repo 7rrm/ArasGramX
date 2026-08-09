@@ -131,10 +131,10 @@ public class MeeroThemeMixer {
 
     public static String[] inBubbleNames() {
         return new String[]{
-                MeeroStrings.s("MixerInBubbleFollow"),
-                MeeroStrings.s("MixerInBubbleBlack"),
-                MeeroStrings.s("MixerInBubbleGraphite"),
-                MeeroStrings.s("MixerInBubbleTinted"),
+                MeeroStrings.s(339),
+                MeeroStrings.s(338),
+                MeeroStrings.s(340),
+                MeeroStrings.s(341),
         };
     }
 

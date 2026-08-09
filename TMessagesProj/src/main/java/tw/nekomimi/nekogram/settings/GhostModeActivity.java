@@ -132,7 +132,7 @@ public class GhostModeActivity extends BaseNekoSettingsActivity {
             names[i] = getSwipeActionName(actions[i]) + (actions[i] == current ? "  ✓" : "");
         }
         new AlertDialog.Builder(getParentActivity())
-                .setTitle(MeeroStrings.s("MeeroSwipeAction"))
+                .setTitle(MeeroStrings.s(263))
                 .setItems(names, (dialog, which) -> {
                     SharedConfig.updateChatListSwipeSetting(actions[which]);
                     listAdapter.notifyItemChanged(swipeActionRow);
@@ -204,13 +204,13 @@ public class GhostModeActivity extends BaseNekoSettingsActivity {
             // MeeroX v97: the feature rides on the "Read" swipe action; warn
             // right away if the user enables it while swiping does something else.
             if (nowOn && SharedConfig.getChatSwipeAction(UserConfig.selectedAccount) != SwipeGestureSettingsView.SWIPE_GESTURE_READ) {
-                BulletinFactory.of(getLastFragment()).createSimpleBulletin(R.raw.chats_infotip, MeeroStrings.s("MeeroGhostSwipeReadNeedRead")).show();
+                BulletinFactory.of(getLastFragment()).createSimpleBulletin(R.raw.chats_infotip, MeeroStrings.s(100)).show();
             }
         } else if (position == swipeActionRow) {
             showSwipeActionDialog();
         } else if (position == ghostSwipeReadNoticeRow) {
             // v111: the full swipe-read explanation now lives in this popup.
-            tw.nekomimi.nekogram.MeeroUsageGuide.show(this, "MeeroGhostSwipeReadInfo");
+            tw.nekomimi.nekogram.MeeroUsageGuide.show(this, 99);
         } else if (position == markReadAfterSendRow) {
             NekoConfig.markReadAfterSend.toggleConfigBool();
             ((TextCheckCell) view).setChecked(NekoConfig.markReadAfterSend.Bool());
@@ -374,17 +374,17 @@ public class GhostModeActivity extends BaseNekoSettingsActivity {
                 case TYPE_TEXT:
                     TextCell textCell = (TextCell) holder.itemView;
                     if (position == swipeActionRow) {
-                        textCell.setTextAndValue(MeeroStrings.s("MeeroSwipeAction"), getSwipeActionName(SharedConfig.getChatSwipeAction(UserConfig.selectedAccount)), true);
+                        textCell.setTextAndValue(MeeroStrings.s(263), getSwipeActionName(SharedConfig.getChatSwipeAction(UserConfig.selectedAccount)), true);
                     } else if (position == ghostSwipeReadNoticeRow) {
                         // v111: usage-guide button instead of the long footer.
-                        textCell.setTextAndValue(MeeroStrings.s("MeeroUsageGuide"), "", true);
+                        textCell.setTextAndValue(MeeroStrings.s(268), "", true);
                     }
                     break;
                 case TYPE_CHECKBOX2:
                     CheckBoxCell checkBoxCell = (CheckBoxCell) holder.itemView;
                     if (position == ghostSwipeReadRow) {
                         // MeeroX v95 standalone row: no lock item, always enabled.
-                        checkBoxCell.setText(MeeroStrings.s("meeroGhostSwipeRead"), "", NekoConfig.meeroGhostSwipeRead.Bool(), true, true);
+                        checkBoxCell.setText(MeeroStrings.s(386), "", NekoConfig.meeroGhostSwipeRead.Bool(), true, true);
                         checkBoxCell.setEnabled(true);
                         checkBoxCell.setPad(1);
                         break;

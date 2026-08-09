@@ -214,7 +214,7 @@ public class MeeroJanitor {
                 AndroidUtilities.runOnUIThread(() -> {
                     try {
                         Toast.makeText(ApplicationLoader.applicationContext,
-                                MeeroStrings.f("JanitorReport", size),
+                                MeeroStrings.f(7, size),
                                 Toast.LENGTH_LONG).show();
                     } catch (Throwable ignore) {
                     }

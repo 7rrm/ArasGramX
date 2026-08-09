@@ -93,7 +93,7 @@ public class MeeroWatchActivity extends BaseNekoSettingsActivity {
 
     @Override
     protected String getActionBarTitle() {
-        return MeeroStrings.s("MeeroWatchTitle");
+        return MeeroStrings.s(313);
     }
 
     @Override
@@ -120,7 +120,7 @@ public class MeeroWatchActivity extends BaseNekoSettingsActivity {
     private String nameOf(long dialogId) {
         TLRPC.User user = MessagesController.getInstance(UserConfig.selectedAccount).getUser(dialogId);
         String name = user != null ? UserObject.getUserName(user) : null;
-        return TextUtils.isEmpty(name) ? MeeroStrings.s("MeeroRulesChatFallback") : name;
+        return TextUtils.isEmpty(name) ? MeeroStrings.s(213) : name;
     }
 
     private String handleOf(long dialogId) {
@@ -144,7 +144,7 @@ public class MeeroWatchActivity extends BaseNekoSettingsActivity {
             ((TextCheckCell) view).setChecked(NekoConfig.meeroWatchMsgNotify.Bool());
         } else if (position == infoRow) {
             // v111: the long explanation moved into a popup (user-requested).
-            tw.nekomimi.nekogram.MeeroUsageGuide.show(this, "MeeroWatchInfo");
+            tw.nekomimi.nekogram.MeeroUsageGuide.show(this, 290);
         } else if (position == addRow) {
             showAddChooser();
         } else if (position >= watchStartRow && position < watchEndRow && position >= 0) {
@@ -159,8 +159,8 @@ public class MeeroWatchActivity extends BaseNekoSettingsActivity {
 
     private void showAddChooser() {
         new AlertDialog.Builder(getParentActivity())
-                .setTitle(MeeroStrings.s("MeeroWatchAdd"))
-                .setItems(new CharSequence[]{MeeroStrings.s("MeeroWatchAddFromChats"), MeeroStrings.s("MeeroWatchAddByHandle")}, (dialog, which) -> {
+                .setTitle(MeeroStrings.s(279))
+                .setItems(new CharSequence[]{MeeroStrings.s(281), MeeroStrings.s(280)}, (dialog, which) -> {
                     if (which == 0) {
                         pickChat();
                     } else {
@@ -182,7 +182,7 @@ public class MeeroWatchActivity extends BaseNekoSettingsActivity {
                 long dialogId = dids.get(0).dialogId;
                 if (parentLayout != null) parentLayout.removeFragmentFromStack(fragment, true);
                 if (!DialogObject.isUserDialog(dialogId)) {
-                    BulletinFactory.of(this).createSimpleBulletin(R.raw.chats_infotip, MeeroStrings.s("MeeroRulesPickPrivate")).show();
+                    BulletinFactory.of(this).createSimpleBulletin(R.raw.chats_infotip, MeeroStrings.s(219)).show();
                     return true;
                 }
                 addPerson(dialogId);
@@ -200,16 +200,16 @@ public class MeeroWatchActivity extends BaseNekoSettingsActivity {
         editText.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 16);
         editText.setTextColor(getThemedColor(Theme.key_dialogTextBlack));
         editText.setHintTextColor(getThemedColor(Theme.key_windowBackgroundWhiteHintText));
-        editText.setHint(MeeroStrings.s("MeeroWatchHandleHint"));
+        editText.setHint(MeeroStrings.s(289));
         FrameLayout container = new FrameLayout(context);
         FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         lp.setMargins(AndroidUtilities.dp(24), AndroidUtilities.dp(4), AndroidUtilities.dp(24), 0);
         container.addView(editText, lp);
 
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
-        builder.setTitle(MeeroStrings.s("MeeroWatchAddByHandle"));
+        builder.setTitle(MeeroStrings.s(280));
         builder.setView(container);
-        builder.setPositiveButton(MeeroStrings.s("MeeroWatchAdd"), (dialog, which) -> {
+        builder.setPositiveButton(MeeroStrings.s(279), (dialog, which) -> {
             String value = editText.getText().toString().trim();
             if (value.startsWith("@")) value = value.substring(1);
             if (TextUtils.isEmpty(value)) return;
@@ -219,17 +219,17 @@ public class MeeroWatchActivity extends BaseNekoSettingsActivity {
                     if (id > 0 && MessagesController.getInstance(UserConfig.selectedAccount).getUser(id) != null) {
                         addPerson(id);
                     } else {
-                        BulletinFactory.of(this).createSimpleBulletin(R.raw.chats_infotip, MeeroStrings.s("MeeroWatchNotFound")).show();
+                        BulletinFactory.of(this).createSimpleBulletin(R.raw.chats_infotip, MeeroStrings.s(304)).show();
                     }
                 } catch (Throwable ignore) {
-                    BulletinFactory.of(this).createSimpleBulletin(R.raw.chats_infotip, MeeroStrings.s("MeeroWatchNotFound")).show();
+                    BulletinFactory.of(this).createSimpleBulletin(R.raw.chats_infotip, MeeroStrings.s(304)).show();
                 }
             } else {
                 MessagesController.getInstance(UserConfig.selectedAccount).getUserNameResolver().resolve(value, peerId -> {
                     if (peerId != null && peerId > 0) {
                         addPerson(peerId);
                     } else {
-                        BulletinFactory.of(this).createSimpleBulletin(R.raw.chats_infotip, MeeroStrings.s("MeeroWatchNotFound")).show();
+                        BulletinFactory.of(this).createSimpleBulletin(R.raw.chats_infotip, MeeroStrings.s(304)).show();
                     }
                 });
             }
@@ -245,19 +245,19 @@ public class MeeroWatchActivity extends BaseNekoSettingsActivity {
 
     private void addPerson(long dialogId) {
         if (!MeeroWatch.add(dialogId)) {
-            BulletinFactory.of(this).createSimpleBulletin(R.raw.chats_infotip, MeeroStrings.s("MeeroWatchAlready")).show();
+            BulletinFactory.of(this).createSimpleBulletin(R.raw.chats_infotip, MeeroStrings.s(283)).show();
             return;
         }
         MeeroWatch.onAdded(dialogId);
         updateRows();
         listAdapter.notifyDataSetChanged();
-        BulletinFactory.of(this).createSimpleBulletin(R.raw.chats_infotip, MeeroStrings.s("MeeroWatchAdded")).show();
+        BulletinFactory.of(this).createSimpleBulletin(R.raw.chats_infotip, MeeroStrings.s(282)).show();
     }
 
     private void showRemoveDialog(long dialogId) {
         new AlertDialog.Builder(getParentActivity())
                 .setTitle(nameOf(dialogId))
-                .setItems(new CharSequence[]{MeeroStrings.s("MeeroWatchRemove")}, (dialog, which) -> {
+                .setItems(new CharSequence[]{MeeroStrings.s(310)}, (dialog, which) -> {
                     MeeroWatch.remove(dialogId);
                     updateRows();
                     listAdapter.notifyDataSetChanged();
@@ -284,11 +284,11 @@ public class MeeroWatchActivity extends BaseNekoSettingsActivity {
                 case TYPE_CHECK:
                     TextCheckCell checkCell = (TextCheckCell) holder.itemView;
                     if (position == masterRow) {
-                        checkCell.setTextAndCheck(MeeroStrings.s("MeeroWatchTitle"), NekoConfig.meeroWatchEnabled.Bool(), true);
+                        checkCell.setTextAndCheck(MeeroStrings.s(313), NekoConfig.meeroWatchEnabled.Bool(), true);
                     } else if (position == msgTrackRow) {
-                        checkCell.setTextAndCheck(MeeroStrings.s("MeeroWatchMsgTrack"), NekoConfig.meeroWatchMsgTrack.Bool(), true);
+                        checkCell.setTextAndCheck(MeeroStrings.s(302), NekoConfig.meeroWatchMsgTrack.Bool(), true);
                     } else if (position == msgNotifyRow) {
-                        checkCell.setTextAndCheck(MeeroStrings.s("MeeroWatchMsgNotify"), NekoConfig.meeroWatchMsgNotify.Bool(), true);
+                        checkCell.setTextAndCheck(MeeroStrings.s(299), NekoConfig.meeroWatchMsgNotify.Bool(), true);
                     } else if (position >= watchStartRow && position < watchEndRow) {
                         MeeroWatch.Entry e = entries.get(position - watchStartRow);
                         checkCell.setTextAndValueAndCheck(nameOf(e.id), handleOf(e.id), e.on, true, true);
@@ -297,20 +297,20 @@ public class MeeroWatchActivity extends BaseNekoSettingsActivity {
                 case TYPE_HEADER:
                     HeaderCell headerCell = (HeaderCell) holder.itemView;
                     if (position == watchHeaderRow) {
-                        headerCell.setText(MeeroStrings.s("MeeroWatchWatchedHeader"));
+                        headerCell.setText(MeeroStrings.s(314));
                     }
                     break;
                 case TYPE_TEXT:
                     TextCell textCell = (TextCell) holder.itemView;
                     if (position == addRow) {
-                        textCell.setTextAndValue(MeeroStrings.s("MeeroWatchAdd"), "", true);
+                        textCell.setTextAndValue(MeeroStrings.s(279), "", true);
                     } else if (position == emptyRow) {
-                        textCell.setTextAndValue(MeeroStrings.s("MeeroWatchNoOne"), "", true);
+                        textCell.setTextAndValue(MeeroStrings.s(303), "", true);
                     } else if (position == logRow) {
-                        textCell.setTextAndValue(MeeroStrings.s("MeeroWatchLogRow"), "", true);
+                        textCell.setTextAndValue(MeeroStrings.s(295), "", true);
                     } else if (position == infoRow) {
                         // v111: usage-guide button replaces the long footer.
-                        textCell.setTextAndValue(MeeroStrings.s("MeeroUsageGuide"), "", true);
+                        textCell.setTextAndValue(MeeroStrings.s(268), "", true);
                     }
                     break;
             }
