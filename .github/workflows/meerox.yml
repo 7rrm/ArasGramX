@@ -113,37 +113,14 @@ jobs:
           echo "Task: $TASK / ABI: $NATIVE_TARGET"
           ./gradlew $TASK --stacktrace 2>&1 | tee build.log
 
-      - name: Pack DEX into MeeroVault
-        # v168 (his option A): encrypt ALL classesN.dex into
-        # assets/meero_vault/dex.enc; only the tiny stub (MeeroDexApp +
-        # MeeroDexFactory, compiled outside the app source set) stays as
-        # classes.dex. This is the exact whole-code scheme his WiFi app
-        # used. The packer self-tests the blob byte-exact in memory; any
-        # anomaly exits non-zero and fails the build loudly.
-        if: success()
-        working-directory: TMessagesProj
-        run: |
-          set -e
-          BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
-          AJAR=$(ls -d "$ANDROID_HOME"/platforms/* | sort -V | tail -1)/android.jar
-          APK=$(find build/outputs/apk -name "*arm64-v8a*.apk" | head -1)
-          [ -n "$APK" ] || { echo "no arm64 apk found"; exit 1; }
-          echo "dex-packing: $APK (build-tools: $BT)"
-          mkdir -p /tmp/mvdex/stub_cls /tmp/mvdex/stub_dex
-          javac -source 8 -target 8 -encoding UTF-8 -cp "$AJAR" -d /tmp/mvdex/stub_cls \
-            $(find ../tools/stubsrc -name "*.java")
-          # d8 rejects plain directories ("Unsupported source file type",
-          # run 31251945692 - owned): jar the class files first
-          jar cf /tmp/mvdex/stub.jar -C /tmp/mvdex/stub_cls .
-          "$BT/d8" --min-api 27 --lib "$AJAR" --output /tmp/mvdex/stub_dex /tmp/mvdex/stub.jar
-          ls -la /tmp/mvdex/stub_dex
-          javac -d /tmp/mvdex ../tools/MeeroDexPacker.java
-          java -Xmx3g -cp /tmp/mvdex MeeroDexPacker "$APK" /tmp/mvdex/stub_dex/classes.dex /tmp/mvdex/dexpacked.apk
-          cp /tmp/mvdex/dexpacked.apk "$APK"
-          echo "--- dex vault check ---"
-          unzip -l "$APK" | grep -E "classes.*\.dex|dex\.enc"
-          echo "MeeroVault DEX pack OK"
-
+      # MeeroX v181 (batch 0): the v168-v180 runtime DEX vault (encrypted
+      # classesN.dex + stub Application + :meeroboot prep splash) is
+      # RETIRED from the boot path. It made first-boot-after-update depend
+      # on a 42 MB runtime decrypt - the single source of the 9-version
+      # stall saga on heavy devices. Plain classesN.dex now ships in the
+      # APK: boot is 100% stock. Only the native core keeps the vault
+      # treatment in the step below (cached after first decrypt, proven
+      # silent since v167).
       - name: Pack native core into MeeroVault
         # v167: encrypt libtmessages.49.so into assets/meero_vault/core.enc
         # (his WiFi-app packer scheme, done with first-party source). The

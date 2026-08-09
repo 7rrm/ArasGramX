@@ -105,8 +105,7 @@
     </queries>
 
     <application
-        android:name="tw.nekomimi.nekogram.MeeroDexApp"
-        android:appComponentFactory="tw.nekomimi.nekogram.MeeroDexFactory"
+        android:name="org.telegram.messenger.ApplicationLoader"
         android:allowBackup="true"
         android:restoreAnyVersion="true"
         android:backupAgent=".BackupAgent"
@@ -123,21 +122,15 @@
         android:hasFragileUserData="true"
         android:preserveLegacyExternalStorage="true"
         android:allowAudioPlaybackCapture="true"
-        tools:replace="android:supportsRtl,android:appComponentFactory"
+        tools:replace="android:supportsRtl"
         android:usesCleartextTraffic="true"
         android:enableOnBackInvokedCallback="true"
     >
         <!-- usesCleartextTraffic for browser supporting opening http:// links -->
 
-        <!-- MeeroX v171: one-time prep splash, own process, stub class -->
-        <activity
-            android:name="tw.nekomimi.nekogram.MeeroBootActivity"
-            android:process=":meeroboot"
-            android:exported="false"
-            android:excludeFromRecents="true"
-            android:noHistory="true"
-            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
-            android:theme="@android:style/Theme.Black.NoTitleBar.Fullscreen" />
+        <!-- MeeroX v181 (batch 0): the runtime DEX vault and its :meeroboot
+             prep splash (v168-v180) are retired from the boot path.
+             Boot is 100% stock now - only the native core stays vaulted. -->
 
         <activity-alias
             android:enabled="false"

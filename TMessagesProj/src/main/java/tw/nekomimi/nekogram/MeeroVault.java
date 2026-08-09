@@ -83,6 +83,7 @@ public final class MeeroVault {
             if (context == null) {
                 return false;
             }
+            sweepLegacyDexCache(context);
             final File outDir = new File(context.getFilesDir(), "vaultlibs");
             //noinspection ResultOfMethodCallIgnored
             outDir.mkdirs();
@@ -134,6 +135,33 @@ public final class MeeroVault {
     /** Direct System.load path used by the tiny C helper libraries we ship. */
     public static boolean vaultActive() {
         return loaded;
+    }
+
+    /**
+     * v181 (batch 0): the runtime DEX vault is retired - boot is 100%
+     * stock again. Devices that ran v168-v180 still carry the decrypted
+     * 42 MB files/vaultdex cache (vault.apk + phase markers + .bootlog).
+     * Sweep it once here; after that the exists() check costs ~nothing.
+     */
+    private static void sweepLegacyDexCache(Context context) {
+        try {
+            final File dir = new File(context.getFilesDir(), "vaultdex");
+            if (!dir.exists()) {
+                return;
+            }
+            final File[] kids = dir.listFiles();
+            if (kids != null) {
+                for (File k : kids) {
+                    if (k.isFile()) {
+                        //noinspection ResultOfMethodCallIgnored
+                        k.delete();
+                    }
+                }
+            }
+            //noinspection ResultOfMethodCallIgnored
+            dir.delete();
+        } catch (Throwable ignored) {
+        }
     }
 
     private static byte[] readAsset(AssetManager am) {
