@@ -268,7 +268,7 @@
 #
 # (1) fork packages stay name-pinned (hooks/reflection-safe), except
 #     the pure-MeeroX surface:
--keepnames class !tw.nekomimi.nekogram.Meero**, !tw.nekomimi.nekogram.settings.Meero**, !tw.nekomimi.nekogram.config.cell.**, !org.telegram.ui.Components.Meero**, tw.** { *; }
+-keepnames class !tw.nekomimi.nekogram.Meero**, !tw.nekomimi.nekogram.settings.Meero**, !tw.nekomimi.nekogram.config.cell.**, !org.telegram.ui.**Meero**, tw.** { *; }
 -keepnames class xyz.** { *; }
 -keepnames class org.akanework.** { *; }
 -keepnames class me.** { *; }
