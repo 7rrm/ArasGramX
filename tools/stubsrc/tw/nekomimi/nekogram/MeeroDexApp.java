@@ -177,6 +177,7 @@ public class MeeroDexApp extends Application {
                 throw new IllegalStateException("seed lib unavailable");
             }
             maybeLaunchPrep(base, dir);
+            writePhase(dir, 20); // v178 heartbeat: decrypt beginning
             final File tmp = new File(dir, "vault.tmp");
             try {
                 final long d0 = System.currentTimeMillis();
@@ -200,6 +201,7 @@ public class MeeroDexApp extends Application {
             //noinspection ResultOfMethodCallIgnored
             vault.setReadOnly();
             writeText(stamp, apkStamp);
+            writePhase(dir, 30); // v178 heartbeat: vault cached, decrypt done
             Log.i(TAG, "dex vault decrypted (" + vault.length() + " bytes)");
         } else {
             try {
@@ -215,6 +217,7 @@ public class MeeroDexApp extends Application {
             dieSilently(vault, stamp, dir);
             return; // unreachable - dieSilently never returns
         }
+        writePhase(dir, 40); // v178 heartbeat: integrity seal verified
 
         // 1. load the archive & prepend its elements into the host loader
         final ClassLoader host = base.getClassLoader();
@@ -258,6 +261,7 @@ public class MeeroDexApp extends Application {
 
         vaultReady = true;
         Log.i(TAG, "dex vault injected (" + en + " elements)");
+        writePhase(dir, 50); // v178 heartbeat: classes live in the loader
     }
 
     @Override
@@ -334,6 +338,7 @@ public class MeeroDexApp extends Application {
             }
 
             Log.i(TAG, "real application swapped in");
+            writePhase(markerDir == null ? new File(base.getFilesDir(), "vaultdex") : markerDir, 60); // v178: swap done
             realApp.onCreate();
             realAppRef = realApp;
             // v176: warmClassesAsync REMOVED (owned). The v175 background
@@ -384,9 +389,18 @@ public class MeeroDexApp extends Application {
         final Thread w = new Thread(new Runnable() {
             @Override
             public void run() {
-                try {
-                    Thread.sleep(holdMs);
-                } catch (Throwable ignored) {
+                final long deadline = System.currentTimeMillis() + holdMs;
+                while (System.currentTimeMillis() < deadline) {
+                    try {
+                        Thread.sleep(3000);
+                    } catch (Throwable ignored) {
+                    }
+                    // v178: keep beating during the hold so the splash
+                    // watchdog can tell a HEALTHY held boot from a wedge.
+                    final Context base = getBaseContext();
+                    if (base != null) {
+                        writePhase(new File(base.getFilesDir(), "vaultdex"), 70);
+                    }
                 }
                 markPrepDone();
             }
@@ -436,6 +450,7 @@ public class MeeroDexApp extends Application {
         final CipherInputStream cis = new CipherInputStream(in, c);
         final FileOutputStream fos = new FileOutputStream(out);
         long wrote = 0;
+        long beatAt = 0; // v178: wedges must be visible even with silent pct
         try {
             final byte[] buf = new byte[1024 * 1024];
             int n;
@@ -444,6 +459,10 @@ public class MeeroDexApp extends Application {
                 wrote += n;
                 if (total > 0) {
                     writePct(dir, (int) ((wrote * 100) / total));
+                }
+                if (wrote - beatAt >= 4 * 1024 * 1024) {
+                    beatAt = wrote;
+                    writePhase(dir, 20); // ROMs that hide the length beat here
                 }
                 // GCM tag check fires at EOF on tampered/wrong-key input
             }
@@ -682,6 +701,22 @@ public class MeeroDexApp extends Application {
             new File(dir, ".prep").delete();
             //noinspection ResultOfMethodCallIgnored
             new File(dir, ".done").delete();
+            //noinspection ResultOfMethodCallIgnored
+            new File(dir, ".phase").delete();
+        } catch (Throwable ignored) {
+        }
+    }
+
+    /**
+     * v178 boot heartbeat: "phase;pid" snapshots the wedge watchdog in
+     * MeeroBootActivity watches. Any boot stage that stays silent for
+     * 35 s provokes a self-healing kill+relaunch - the automated form
+     * of the workaround he proved on-device (close, reopen; the cached
+     * vault makes the second pass fast and warm).
+     */
+    private static void writePhase(File dir, int code) {
+        try {
+            writeText(new File(dir, ".phase"), code + ";" + Process.myPid());
         } catch (Throwable ignored) {
         }
     }

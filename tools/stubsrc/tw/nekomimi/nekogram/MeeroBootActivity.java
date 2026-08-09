@@ -1,12 +1,14 @@
 package tw.nekomimi.nekogram;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.Process;
 import android.view.View;
 import android.view.Window;
 import android.widget.LinearLayout;
@@ -52,11 +54,18 @@ public class MeeroBootActivity extends Activity {
     // determinate and show them, exactly like v171/v172.
     private boolean sawData;
     private boolean indet;
+    // v178 wedge watchdog state
+    private String lastCombo = "";
+    private long lastChangeAt;
+    private int phasePid = -1;
+    private int phaseShown = -1;
+    private boolean healed;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         bornAt = System.currentTimeMillis();
+        lastChangeAt = bornAt;
         try {
             final java.util.Locale l = getResources().getConfiguration().locale;
             ar = l != null && "ar".equals(l.getLanguage());
@@ -139,6 +148,17 @@ public class MeeroBootActivity extends Activity {
         handler.post(tick);
     }
 
+    /**
+     * v178 self-healing boot (his architecture ask - "works on every
+     * user's device, not just mine"): any content change in .prep or
+     * .phase is a heartbeat from the booting main process. If the beats
+     * go silent for 35 s and .done never arrived, the boot is wedged -
+     * so we do exactly what he proved manually on his own device: kill
+     * the wedged sibling (same uid, pid learned from .phase) and
+     * relaunch the launcher intent. The second pass reads the already
+     * cached vault, boots fast and warm, and walks in clean. Device-
+     * independent by construction: no need to know WHY it wedged.
+     */
     private final Runnable tick = new Runnable() {
         @Override
         public void run() {
@@ -149,7 +169,19 @@ public class MeeroBootActivity extends Activity {
                     finishNoAnim();
                     return;
                 }
+                final long now = System.currentTimeMillis();
+                final String ph = readSmall(new File(dir, ".phase"));
                 final String p = readSmall(new File(dir, ".prep"));
+                final String combo = p + "|" + ph;
+                if (!combo.equals(lastCombo)) {
+                    lastCombo = combo;
+                    lastChangeAt = now;
+                    parsePhase(ph);
+                }
+                if (!healed && now - bornAt > 25000 && now - lastChangeAt > 35000) {
+                    selfHeal();
+                    return;
+                }
                 if (p.length() > 0) {
                     sawData = true;
                     if (indet) {
@@ -169,8 +201,7 @@ public class MeeroBootActivity extends Activity {
                         // decrypt done; ART + first-run init still working
                         subView.setText(ar ? "تشغيل الواجهة…" : "Starting the interface…");
                     }
-                } else if (!sawData && !indet
-                        && System.currentTimeMillis() - bornAt > 800) {
+                } else if (!sawData && !indet && now - bornAt > 800) {
                     // v173: no length info on this ROM -> live pulse instead
                     // of a frozen-looking 0% (his on-device report, owned).
                     indet = true;
@@ -182,6 +213,64 @@ public class MeeroBootActivity extends Activity {
             handler.postDelayed(this, 150);
         }
     };
+
+    private void parsePhase(String ph) {
+        try {
+            final int sc = ph.indexOf(';');
+            if (sc <= 0) {
+                return;
+            }
+            final int code = Integer.parseInt(ph.substring(0, sc).trim());
+            try {
+                phasePid = Integer.parseInt(ph.substring(sc + 1).trim());
+            } catch (Throwable ignored) {
+            }
+            if (code == phaseShown) {
+                return;
+            }
+            phaseShown = code;
+            if (code >= 40 && code < 60) {
+                // doubles as on-device forensics: a future screenshot
+                // tells us exactly which stage a wedge sits in
+                subView.setText(ar ? "نتحقق من سلامة الملفات…" : "Verifying file integrity…");
+            } else if (code >= 60) {
+                subView.setText(ar ? "تهيئة الواجهة…" : "Preparing the interface…");
+            }
+        } catch (Throwable ignored) {
+        }
+    }
+
+    private void selfHeal() {
+        healed = true;
+        try {
+            subView.setText(ar
+                    ? "معالجة ذاتية لعائق بسيط… ثوانٍ وتدخل تلقائياً"
+                    : "Self-healing a small hiccup… entering automatically");
+        } catch (Throwable ignored) {
+        }
+        try {
+            if (phasePid > 0 && phasePid != Process.myPid()) {
+                Process.killProcess(phasePid); // same-uid sibling only
+            }
+        } catch (Throwable ignored) {
+        }
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    final Intent li = getPackageManager()
+                            .getLaunchIntentForPackage(getPackageName());
+                    if (li != null) {
+                        li.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK
+                                | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                        startActivity(li);
+                    }
+                } catch (Throwable ignored) {
+                }
+                finishNoAnim(); // the cached vault makes the relaunch fast
+            }
+        }, 1500);
+    }
 
     @Override
     public void onBackPressed() {
@@ -211,7 +300,7 @@ public class MeeroBootActivity extends Activity {
                 return "";
             }
             in = new FileInputStream(f);
-            final byte[] b = new byte[8];
+            final byte[] b = new byte[32]; // v178: ".phase" carries "code;pid"
             final int n = in.read(b);
             return n <= 0 ? "" : new String(b, 0, n, "UTF-8").trim();
         } catch (Throwable t) {
