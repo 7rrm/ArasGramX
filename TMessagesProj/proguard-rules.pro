@@ -245,7 +245,10 @@
 
 -allowaccessmodification
 -keepattributes Signature,InnerClasses,EnclosingMethod
--keepattributes SourceFile,LineNumberTable
+# MeeroX (v182): SourceFile would preserve "MeeroSettingsActivity.java"-
+# style names in DEX debug info and leak the surface we just scrambled.
+# LineNumberTable alone keeps stacks debuggable via the (private) mapping.
+-keepattributes LineNumberTable
 -keepattributes *Annotation*
 -dontoptimize
 
