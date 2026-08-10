@@ -38,7 +38,7 @@ public class MeeroShadow {
     /* v188 (batch 3B): the tier tables arrive from the sealed native table;
      * the legacy arrays above stay as the byte-identical fallback. Cache
      * slots: 3 tiers x day/night. */
-    private static final float[][] sTier = new float[3][2][];
+    private static final float[][][] sTier = new float[3][2][];
     private static float tierPart(int tier, boolean dark, int part, float fb) {
         final int t = tier < 0 ? 0 : (tier > 2 ? 2 : tier);
         final int d = dark ? 1 : 0;
