@@ -43,11 +43,44 @@ import java.util.Locale;
  */
 public class MeeroJanitor {
 
-    private static final long DAY_MS = 24L * 60L * 60L * 1000L;
+    /* v189 (batch 3C): the policy numbers (size ladder, age ladder, default
+     * picks, start delay, report threshold, day/week math) come from the
+     * sealed motion table (dom 'C'); the literal block is the byte-identical
+     * no-lib fallback. pol() loads once, jf() picks native-when-ready. */
+    private static volatile float[] pol;
+
+    private static float[] pol() {
+        float[] p = pol;
+        if (p == null && MeeroCore.motionCore()) {
+            p = MeeroCore.nJanitorPolicy();
+            if (p != null && p.length == 14) pol = p; else p = null;
+        }
+        return p;
+    }
+
+    private static float jf(int i, float legacy) {
+        float[] p = pol();
+        return p != null ? p[i] : legacy;
+    }
+
+    private static long dayMs() {
+        return (long) jf(12, 86_400_000f);
+    }
 
     /** SelectBox choices: must match the settings rows exactly. */
-    public static final long[] LIMIT_GB = {1, 2, 4, 8, 16};
-    public static final long[] AGE_DAYS = {7, 14, 30};
+    private static long[] limits() {
+        float[] p = pol();
+        return p != null
+                ? new long[]{(long) p[0], (long) p[1], (long) p[2], (long) p[3], (long) p[4]}
+                : new long[]{1, 2, 4, 8, 16};
+    }
+
+    private static long[] ages() {
+        float[] p = pol();
+        return p != null
+                ? new long[]{(long) p[5], (long) p[6], (long) p[7]}
+                : new long[]{7, 14, 30};
+    }
 
     private static boolean started;
     private static volatile boolean running;
@@ -62,30 +95,33 @@ public class MeeroJanitor {
         }
         started = true;
         // Late enough that first frames, login and cold-sync all win the race.
-        Utilities.cacheClearQueue.postRunnable(MeeroJanitor::maybeRun, 15_000);
+        Utilities.cacheClearQueue.postRunnable(MeeroJanitor::maybeRun, (long) jf(10, 15_000f));
     }
 
     public static long limitBytes() {
+        final long[] lim = limits();
         int idx = NekoConfig.meeroJanitorLimit.Int();
-        if (idx < 0 || idx >= LIMIT_GB.length) {
-            idx = 3;
+        if (idx < 0 || idx >= lim.length) {
+            idx = (int) jf(8, 3f);
         }
-        return LIMIT_GB[idx] * 1024L * 1024L * 1024L;
+        return lim[idx] * 1024L * 1024L * 1024L;
     }
 
     public static long ageMillis() {
+        final long[] age = ages();
         int idx = NekoConfig.meeroJanitorAge.Int();
-        if (idx < 0 || idx >= AGE_DAYS.length) {
-            idx = 1;
+        if (idx < 0 || idx >= age.length) {
+            idx = (int) jf(9, 1f);
         }
-        return AGE_DAYS[idx] * DAY_MS;
+        return age[idx] * dayMs();
     }
 
     /** Settings labels for the limit SelectBox. */
     public static String[] limitTitles() {
-        final String[] out = new String[LIMIT_GB.length];
-        for (int i = 0; i < LIMIT_GB.length; i++) {
-            out[i] = LIMIT_GB[i] + " GB";
+        final long[] lim = limits();
+        final String[] out = new String[lim.length];
+        for (int i = 0; i < lim.length; i++) {
+            out[i] = lim[i] + " GB";
         }
         return out;
     }
@@ -144,7 +180,7 @@ public class MeeroJanitor {
         } catch (Throwable e) {
             return;
         }
-        final long interval = (mode == 0 ? DAY_MS : 7L * DAY_MS);
+        final long interval = (mode == 0 ? dayMs() : (long) jf(13, 7f) * dayMs());
         final boolean scheduledDue = mode != 2 && now - lastRun >= interval;
         running = true;
         // Never delete a file another FileLoader thread is about to write.
@@ -208,7 +244,7 @@ public class MeeroJanitor {
             }
 
             NekoConfig.meeroJanitorLastRun.setConfigLong(now);
-            if (freed > 8L * 1024L * 1024L) {
+            if (freed > (long) jf(11, 8_388_608f)) {
                 NekoConfig.meeroJanitorFreed.setConfigLong(freed);
                 final String size = AndroidUtilities.formatFileSize(freed);
                 AndroidUtilities.runOnUIThread(() -> {

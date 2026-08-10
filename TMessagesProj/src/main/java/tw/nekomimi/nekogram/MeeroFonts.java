@@ -22,8 +22,33 @@ import java.util.HashMap;
  */
 public class MeeroFonts {
 
+    /* v189 (batch 3C): the bundled-face table (ids, titles, asset paths) and
+     * the user-file prefix now come from the sealed motion table (dom 'C');
+     * the literals below only serve the no-lib fallback, byte-identical. */
     public static final String DEFAULT = "default";
-    public static final String CUSTOM_PREFIX = "custom:";
+    public static final String CUSTOM_PREFIX = initPrefix();
+
+    private static volatile String[] fontTab;
+
+    private static String[] fontTab() {
+        String[] t = fontTab;
+        if (t == null && MeeroCore.motionCore()) {
+            t = MeeroCore.nFonts();
+            if (t != null && t.length == 31) fontTab = t; else t = null;
+        }
+        return t;
+    }
+
+    private static String initPrefix() {
+        try {
+            if (MeeroCore.motionCore()) {
+                String[] t = MeeroCore.nFonts();
+                if (t != null && t.length == 31 && t[30] != null) return t[30];
+            }
+        } catch (Throwable ignore) {
+        }
+        return "custom:";
+    }
 
     private static final String PREFS = "meerox_fonts";
     private static final HashMap<String, Typeface> cache = new HashMap<>();
@@ -74,16 +99,23 @@ public class MeeroFonts {
 
     public static ArrayList<Option> getOptions() {
         ArrayList<Option> list = new ArrayList<>();
-        list.add(new Option(DEFAULT, "Default", null));
-        list.add(new Option("ios15", "iOS 15", "fonts/meerox_f8.ttf"));
-        list.add(new Option("arabicui", "Arabic UI Text", "fonts/meerox_f1.ttf"));
-        list.add(new Option("arabicuidisplay", "Arabic UI Display", "fonts/meerox_f6.ttf"));
-        list.add(new Option("arefruqaa", "Aref Ruqaa", "fonts/meerox_f3.ttf"));
-        list.add(new Option("gs45", "GS45 Arabic", "fonts/meerox_f7.ttf"));
-        list.add(new Option("cairo", "Cairo", "fonts/meero_cairo.ttf"));
-        list.add(new Option("tajawal", "Tajawal", "fonts/meero_tajawal.ttf"));
-        list.add(new Option("almarai", "Almarai", "fonts/meero_almarai.ttf"));
-        list.add(new Option("inter", "Inter", "fonts/meero_inter.ttf"));
+        final String[] t = fontTab();
+        if (t != null) {
+            for (int i = 0; i < 30; i += 3) {
+                list.add(new Option(t[i], t[i + 1], t[i + 2].isEmpty() ? null : t[i + 2]));
+            }
+        } else {
+            list.add(new Option(DEFAULT, "Default", null));
+            list.add(new Option("ios15", "iOS 15", "fonts/meerox_f8.ttf"));
+            list.add(new Option("arabicui", "Arabic UI Text", "fonts/meerox_f1.ttf"));
+            list.add(new Option("arabicuidisplay", "Arabic UI Display", "fonts/meerox_f6.ttf"));
+            list.add(new Option("arefruqaa", "Aref Ruqaa", "fonts/meerox_f3.ttf"));
+            list.add(new Option("gs45", "GS45 Arabic", "fonts/meerox_f7.ttf"));
+            list.add(new Option("cairo", "Cairo", "fonts/meero_cairo.ttf"));
+            list.add(new Option("tajawal", "Tajawal", "fonts/meero_tajawal.ttf"));
+            list.add(new Option("almarai", "Almarai", "fonts/meero_almarai.ttf"));
+            list.add(new Option("inter", "Inter", "fonts/meero_inter.ttf"));
+        }
 
         File[] files = customDir().listFiles();
         if (files != null) {

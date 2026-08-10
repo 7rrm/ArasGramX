@@ -3124,6 +3124,233 @@ JNIEXPORT jint JNICALL MC_CLASS(nCardHairline)(JNIEnv *env, jclass c,
     return v;
 }
 
+/* ============================================================================
+ * MeeroX v189 - batch 3C (final): the motion/engine family design brain.
+ * Theme-mixer palettes + blend recipe, bundled-font table, janitor policy,
+ * haptics weight map, typing-status ratios, connecting-ring geometry,
+ * smooth-pass warm-up numbers and the iOS intro metrics - sealed dom 'C'
+ * with the same vault seed, decoded once. Canvas/Path/View calls stay Java;
+ * only the recipe is buried. Tamper => silent legacy fallback, never crash.
+ * ============================================================================ */
+
+#include "meero_motiontab.h"
+#include "meero_motion.h"
+
+static int mm_ensure(JNIEnv *env) {
+    if (mm_ready()) return 1;
+    unsigned char seed[32];
+    int ok = 0;
+    if (mc_seed(env, seed)) {
+        size_t n = 0;
+        unsigned char *raw = mc_raw_unseal(seed, 'C', MC_MOTIONTAB,
+                                           (size_t) MC_MOTIONTAB_LEN, &n);
+        if (raw != NULL) {
+            ok = mm_init(raw, n);
+            memset(raw, 0, n);
+            free(raw);
+        }
+    }
+    memset(seed, 0, 32);
+    return ok;
+}
+
+static jintArray mc_iarr(JNIEnv *env, const int32_t *v, int n) {
+    jintArray a = (*env)->NewIntArray(env, n);
+    if (a != NULL) (*env)->SetIntArrayRegion(env, a, 0, n, v);
+    return a;
+}
+
+/* 1 when the sealed motion table decoded fine (dev-parity probe) */
+JNIEXPORT jboolean JNICALL MC_CLASS(nMotionReady)(JNIEnv *env, jclass c) {
+    (void) c;
+    pthread_mutex_lock(&mc_mu);
+    int ok = mm_ensure(env);
+    pthread_mutex_unlock(&mc_mu);
+    return ok ? JNI_TRUE : JNI_FALSE;
+}
+
+/* mixer accent palette: 8 ARGB colours + the default index */
+JNIEXPORT jintArray JNICALL MC_CLASS(nMixerAccents)(JNIEnv *env, jclass c) {
+    (void) c;
+    pthread_mutex_lock(&mc_mu);
+    jintArray r = NULL;
+    if (mm_ensure(env)) {
+        int32_t v[9];
+        for (int i = 0; i < 9; i++) v[i] = (int32_t) mm_i(i);
+        r = mc_iarr(env, v, 9);
+    }
+    pthread_mutex_unlock(&mc_mu);
+    return r;
+}
+
+/* mixer backgrounds: 4 x (bg, elev, lightFlag) + the default index */
+JNIEXPORT jintArray JNICALL MC_CLASS(nMixerBackgrounds)(JNIEnv *env, jclass c) {
+    (void) c;
+    pthread_mutex_lock(&mc_mu);
+    jintArray r = NULL;
+    if (mm_ensure(env)) {
+        int32_t v[13];
+        for (int i = 0; i < 12; i++) v[i] = (int32_t) mm_i(9 + i);
+        v[12] = (int32_t) mm_i(21);
+        r = mc_iarr(env, v, 13);
+    }
+    pthread_mutex_unlock(&mc_mu);
+    return r;
+}
+
+/* incoming-bubble rules: pure black, graphite, follow-light, follow-dark */
+JNIEXPORT jintArray JNICALL MC_CLASS(nMixerInBubble)(JNIEnv *env, jclass c) {
+    (void) c;
+    pthread_mutex_lock(&mc_mu);
+    jintArray r = NULL;
+    if (mm_ensure(env)) {
+        int32_t v[4];
+        for (int i = 0; i < 4; i++) v[i] = (int32_t) mm_i(22 + i);
+        r = mc_iarr(env, v, 4);
+    }
+    pthread_mutex_unlock(&mc_mu);
+    return r;
+}
+
+/* mixer fixed colours: online green, muted light/dark, media check,
+ * primary text light/dark, secondary text light/dark */
+JNIEXPORT jintArray JNICALL MC_CLASS(nMixerColors)(JNIEnv *env, jclass c) {
+    (void) c;
+    pthread_mutex_lock(&mc_mu);
+    jintArray r = NULL;
+    if (mm_ensure(env)) {
+        int32_t v[8];
+        for (int i = 0; i < 8; i++) v[i] = (int32_t) mm_i(26 + i);
+        r = mc_iarr(env, v, 8);
+    }
+    pthread_mutex_unlock(&mc_mu);
+    return r;
+}
+
+/* mixer blend/alpha recipe (16 floats: slots 0..14 + the selector alpha
+ * parked at slot 51 so the family offsets above never shift) */
+JNIEXPORT jfloatArray JNICALL MC_CLASS(nMixerRecipe)(JNIEnv *env, jclass c) {
+    (void) c;
+    pthread_mutex_lock(&mc_mu);
+    jfloatArray r = NULL;
+    if (mm_ensure(env)) {
+        float v[16];
+        for (int i = 0; i < 15; i++) v[i] = mm_f(i);
+        v[15] = mm_f(51);
+        r = mc_farr(env, v, 16);
+    }
+    pthread_mutex_unlock(&mc_mu);
+    return r;
+}
+
+/* bundled-font table: 10 x (id, title, assetOrEmpty) + the custom prefix */
+JNIEXPORT jobjectArray JNICALL MC_CLASS(nFonts)(JNIEnv *env, jclass c) {
+    (void) c;
+    pthread_mutex_lock(&mc_mu);
+    jobjectArray r = NULL;
+    if (mm_ensure(env)) {
+        jclass sc = (*env)->FindClass(env, "java/lang/String");
+        if (sc != NULL) {
+            r = (*env)->NewObjectArray(env, MM_SN, sc, NULL);
+            if (r != NULL) {
+                for (int i = 0; i < MM_SN; i++) {
+                    jstring s = (*env)->NewStringUTF(env, mm_s(i));
+                    (*env)->SetObjectArrayElement(env, r, i, s);
+                    if (s != NULL) (*env)->DeleteLocalRef(env, s);
+                }
+            }
+        }
+    }
+    pthread_mutex_unlock(&mc_mu);
+    return r;
+}
+
+/* janitor policy: 5 limits, 3 ages, 2 default idx, start delay,
+ * toast threshold, day ms, week days (14 floats) */
+JNIEXPORT jfloatArray JNICALL MC_CLASS(nJanitorPolicy)(JNIEnv *env, jclass c) {
+    (void) c;
+    pthread_mutex_lock(&mc_mu);
+    jfloatArray r = NULL;
+    if (mm_ensure(env)) {
+        float v[14];
+        for (int i = 0; i < 14; i++) v[i] = mm_f(33 + i);
+        r = mc_farr(env, v, 14);
+    }
+    pthread_mutex_unlock(&mc_mu);
+    return r;
+}
+
+/* haptics weight map: 5 weights x (modern, legacy) platform constants */
+JNIEXPORT jintArray JNICALL MC_CLASS(nHapticsMap)(JNIEnv *env, jclass c) {
+    (void) c;
+    pthread_mutex_lock(&mc_mu);
+    jintArray r = NULL;
+    if (mm_ensure(env)) {
+        int32_t v[10];
+        for (int i = 0; i < 10; i++) v[i] = (int32_t) mm_i(34 + i);
+        r = mc_iarr(env, v, 10);
+    }
+    pthread_mutex_unlock(&mc_mu);
+    return r;
+}
+
+/* typing-status ratios: stroke scale, dot scale, trail fade */
+JNIEXPORT jfloatArray JNICALL MC_CLASS(nStatusRecipe)(JNIEnv *env, jclass c) {
+    (void) c;
+    pthread_mutex_lock(&mc_mu);
+    jfloatArray r = NULL;
+    if (mm_ensure(env)) {
+        float v[3];
+        for (int i = 0; i < 3; i++) v[i] = mm_f(15 + i);
+        r = mc_farr(env, v, 3);
+    }
+    pthread_mutex_unlock(&mc_mu);
+    return r;
+}
+
+/* connecting-ring geometry: ref diameter, line factor/min, path inset,
+ * rotation/sweep periods, min sweep, size dp, dt clamp, dt frame */
+JNIEXPORT jfloatArray JNICALL MC_CLASS(nRingRecipe)(JNIEnv *env, jclass c) {
+    (void) c;
+    pthread_mutex_lock(&mc_mu);
+    jfloatArray r = NULL;
+    if (mm_ensure(env)) {
+        float v[10];
+        for (int i = 0; i < 10; i++) v[i] = mm_f(18 + i);
+        r = mc_farr(env, v, 10);
+    }
+    pthread_mutex_unlock(&mc_mu);
+    return r;
+}
+
+/* smooth-pass policy: warm delay ms, popup w/h, chat cell w/h */
+JNIEXPORT jfloatArray JNICALL MC_CLASS(nSmoothPolicy)(JNIEnv *env, jclass c) {
+    (void) c;
+    pthread_mutex_lock(&mc_mu);
+    jfloatArray r = NULL;
+    if (mm_ensure(env)) {
+        float v[5];
+        for (int i = 0; i < 5; i++) v[i] = mm_f(28 + i);
+        r = mc_farr(env, v, 5);
+    }
+    pthread_mutex_unlock(&mc_mu);
+    return r;
+}
+
+/* iOS intro metrics: button text, button height, bottom margin, headline */
+JNIEXPORT jfloatArray JNICALL MC_CLASS(nIntroRecipe)(JNIEnv *env, jclass c) {
+    (void) c;
+    pthread_mutex_lock(&mc_mu);
+    jfloatArray r = NULL;
+    if (mm_ensure(env)) {
+        float v[4];
+        for (int i = 0; i < 4; i++) v[i] = mm_f(47 + i);
+        r = mc_farr(env, v, 4);
+    }
+    pthread_mutex_unlock(&mc_mu);
+    return r;
+}
+
 JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved) {
     (void) vm; (void) reserved;
     return JNI_VERSION_1_6;

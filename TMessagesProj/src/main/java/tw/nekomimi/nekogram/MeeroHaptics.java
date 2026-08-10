@@ -47,8 +47,21 @@ public class MeeroHaptics {
         }
     }
 
+    /* v189 (batch 3C): the weight -> platform-constant map comes from the
+     * sealed motion table (dom 'C'); the switch below is the byte-identical
+     * no-lib fallback. The public weight ids (0..4) are indices, not recipe. */
+    private static volatile int[] map;
+
     private static int constantFor(int weight) {
         final boolean modern = Build.VERSION.SDK_INT >= Build.VERSION_CODES.R;
+        int[] m = map;
+        if (m == null && MeeroCore.motionCore()) {
+            m = MeeroCore.nHapticsMap();
+            if (m != null && m.length == 10) map = m; else m = null;
+        }
+        if (m != null && weight >= 0 && weight <= LONG_PRESS) {
+            return m[weight * 2 + (modern ? 0 : 1)];
+        }
         switch (weight) {
             case LIGHT:
                 // A tick is lighter than a keyboard tap and is what iOS uses

@@ -57,46 +57,96 @@ public class MeeroThemeMixer {
         }
     }
 
+    /* v189 (batch 3C): every palette colour and blend number below now comes
+     * from the sealed motion table (dom 'C') through MeeroCore; the literal
+     * paths are kept byte-identical for the no-lib fallback only. rf/rc pick
+     * native-when-ready, legacy otherwise - behaviour is exactly the same. */
+    private static volatile float[] mixR;
+    private static volatile int[] mixC;
+    private static volatile int[] mixInB;
+
+    private static float rf(int i, float legacy) {
+        float[] r = mixR;
+        if (r == null && MeeroCore.motionCore()) {
+            r = MeeroCore.nMixerRecipe();
+            if (r != null && r.length == 16) mixR = r; else r = null;
+        }
+        return r != null ? r[i] : legacy;
+    }
+
+    private static int rc(int i, int legacy) {
+        int[] c = mixC;
+        if (c == null && MeeroCore.motionCore()) {
+            c = MeeroCore.nMixerColors();
+            if (c != null && c.length == 8) mixC = c; else c = null;
+        }
+        return c != null ? c[i] : legacy;
+    }
+
+    private static int rib(int i, int legacy) {
+        int[] b = mixInB;
+        if (b == null && MeeroCore.motionCore()) {
+            b = MeeroCore.nMixerInBubble();
+            if (b != null && b.length == 4) mixInB = b; else b = null;
+        }
+        return b != null ? b[i] : legacy;
+    }
+
     private static Accent[] accents;
     private static Background[] backgrounds;
+    private static int accentDef = 1;
+    private static int bgDef = 0;
 
     public static synchronized Accent[] accents() {
         if (accents == null) {
-            accents = new Accent[]{
-                    new Accent("MixerAccentBlue", 0xFF0A84FF),
-                    new Accent("MixerAccentRose", 0xFFFF4E8A),
-                    new Accent("MixerAccentViolet", 0xFFBF5AF2),
-                    new Accent("MixerAccentMint", 0xFF30D158),
-                    new Accent("MixerAccentOrange", 0xFFFF9F0A),
-                    new Accent("MixerAccentSky", 0xFF40C8E0),
-                    new Accent("MixerAccentRed", 0xFFFF453A),
-                    new Accent("MixerAccentGold", 0xFFE7B416),
+            final String[] keys = {
+                    "MixerAccentBlue", "MixerAccentRose", "MixerAccentViolet", "MixerAccentMint",
+                    "MixerAccentOrange", "MixerAccentSky", "MixerAccentRed", "MixerAccentGold",
             };
+            int[] c = MeeroCore.motionCore() ? MeeroCore.nMixerAccents() : null;
+            if (c != null && c.length == 9) {
+                accentDef = c[8];
+            } else {
+                c = new int[]{0xFF0A84FF, 0xFFFF4E8A, 0xFFBF5AF2, 0xFF30D158,
+                        0xFFFF9F0A, 0xFF40C8E0, 0xFFFF453A, 0xFFE7B416};
+                accentDef = 1;
+            }
+            accents = new Accent[keys.length];
+            for (int i = 0; i < keys.length; i++) accents[i] = new Accent(keys[i], c[i]);
         }
         return accents;
     }
 
     public static synchronized Background[] backgrounds() {
         if (backgrounds == null) {
-            backgrounds = new Background[]{
-                    new Background("MixerBgAmoled", 0xFF000000, 0xFF1C1C1E, false),
-                    new Background("MixerBgGraphite", 0xFF141418, 0xFF1F1F25, false),
-                    new Background("MixerBgMidnight", 0xFF0E1626, 0xFF182640, false),
-                    new Background("MixerBgPaper", 0xFFF2F2F7, 0xFFFFFFFF, true),
-            };
+            final String[] keys = {"MixerBgAmoled", "MixerBgGraphite", "MixerBgMidnight", "MixerBgPaper"};
+            int[] b = MeeroCore.motionCore() ? MeeroCore.nMixerBackgrounds() : null;
+            if (b != null && b.length == 13) {
+                bgDef = b[12];
+            } else {
+                b = new int[]{0xFF000000, 0xFF1C1C1E, 0,
+                        0xFF141418, 0xFF1F1F25, 0,
+                        0xFF0E1626, 0xFF182640, 0,
+                        0xFFF2F2F7, 0xFFFFFFFF, 1};
+                bgDef = 0;
+            }
+            backgrounds = new Background[keys.length];
+            for (int i = 0; i < keys.length; i++) {
+                backgrounds[i] = new Background(keys[i], b[i * 3], b[i * 3 + 1], b[i * 3 + 2] != 0);
+            }
         }
         return backgrounds;
     }
 
     public static Accent accent() {
         int i = NekoConfig.meeroMixerAccent.Int();
-        if (i < 0 || i >= accents().length) i = 1;
+        if (i < 0 || i >= accents().length) i = accentDef;
         return accents()[i];
     }
 
     public static Background background() {
         int i = NekoConfig.meeroMixerBg.Int();
-        if (i < 0 || i >= backgrounds().length) i = 0;
+        if (i < 0 || i >= backgrounds().length) i = bgDef;
         return backgrounds()[i];
     }
 
@@ -106,14 +156,14 @@ public class MeeroThemeMixer {
         final Background b = background();
         switch (choice) {
             case 1:
-                return 0xFF000000;
+                return rib(0, 0xFF000000);
             case 2:
-                return 0xFF26262B;
+                return rib(1, 0xFF26262B);
             case 3:
-                return ColorUtils.blendARGB(accent().color, b.bg, 0.80f);
+                return ColorUtils.blendARGB(accent().color, b.bg, rf(10, 0.80f));
             case 0:
             default:
-                return b.light ? 0xFFFFFFFF : 0xFF2A2A2E;
+                return b.light ? rib(2, 0xFFFFFFFF) : rib(3, 0xFF2A2A2E);
         }
     }
 
@@ -148,16 +198,18 @@ public class MeeroThemeMixer {
     public static Map<String, Integer> buildColors() {
         final Accent a = accent();
         final Background b = background();
-        final int darker = ColorUtils.blendARGB(a.color, 0xFF000000, 0.18f);
-        final int darkish = ColorUtils.blendARGB(a.color, 0xFF000000, 0.08f);
-        final int lighter = ColorUtils.blendARGB(a.color, 0xFFFFFFFF, 0.22f);
-        final int textP = b.light ? 0xFF000000 : 0xFFFFFFFF;
-        final int textS = b.light ? 0x99000000 : 0x99FFFFFF;
+        final int black = rc(4, 0xFF000000);
+        final int white = rc(5, 0xFFFFFFFF);
+        final int darker = ColorUtils.blendARGB(a.color, black, rf(0, 0.18f));
+        final int darkish = ColorUtils.blendARGB(a.color, black, rf(1, 0.08f));
+        final int lighter = ColorUtils.blendARGB(a.color, white, rf(2, 0.22f));
+        final int textP = b.light ? black : white;
+        final int textS = b.light ? rc(6, 0x99000000) : rc(7, 0x99FFFFFF);
         final int in = inBubbleColor();
-        final int inSel = ColorUtils.blendARGB(in, b.light ? 0xFF000000 : 0xFFFFFFFF, 0.12f);
-        final boolean accentDark = ColorUtils.calculateLuminance(a.color) < 0.55f;
-        final int onAccent = accentDark ? 0xFFFFFFFF : 0xFF000000;
-        final int selector = ColorUtils.setAlphaComponent(a.color, 42);
+        final int inSel = ColorUtils.blendARGB(in, b.light ? black : white, rf(3, 0.12f));
+        final boolean accentDark = ColorUtils.calculateLuminance(a.color) < rf(4, 0.55f);
+        final int onAccent = accentDark ? white : black;
+        final int selector = ColorUtils.setAlphaComponent(a.color, (int) rf(5, 42f));
         final int barIcon = a.color;
 
         final Map<String, Integer> m = new LinkedHashMap<>();
@@ -166,7 +218,7 @@ public class MeeroThemeMixer {
         put(m, "actionBarDefaultTitle", textP);
         put(m, "actionBarDefaultSubtitle", textS);
         put(m, "actionBarDefaultIcon", barIcon);
-        put(m, "actionBarDefaultSelector", ColorUtils.setAlphaComponent(textP, 24));
+        put(m, "actionBarDefaultSelector", ColorUtils.setAlphaComponent(textP, (int) rf(15, 24f)));
         put(m, "actionBarTabActiveText", a.color);
         put(m, "actionBarTabLine", a.color);
         // Surfaces.
@@ -181,14 +233,14 @@ public class MeeroThemeMixer {
         put(m, "chats_date", textS);
         put(m, "chats_verifiedBackground", a.color);
         put(m, "chats_verifiedCheck", onAccent);
-        put(m, "chats_onlineCircle", 0xFF30D158);
+        put(m, "chats_onlineCircle", rc(0, 0xFF30D158));
         put(m, "chats_unreadCounter", a.color);
-        put(m, "chats_unreadCounterMuted", b.light ? 0xFF8E8E93 : 0xFF565A60);
+        put(m, "chats_unreadCounterMuted", b.light ? rc(1, 0xFF8E8E93) : rc(2, 0xFF565A60));
         put(m, "chats_actionBackground", a.color);
         put(m, "chats_actionPressedBackground", darker);
-        put(m, "chats_pinnedOverlay", ColorUtils.setAlphaComponent(b.bg, 200));
+        put(m, "chats_pinnedOverlay", ColorUtils.setAlphaComponent(b.bg, (int) rf(6, 200f)));
         put(m, "chats_tabUnreadActiveBackground", a.color);
-        put(m, "chats_tabUnreadUnactiveBackground", ColorUtils.blendARGB(a.color, b.bg, 0.5f));
+        put(m, "chats_tabUnreadUnactiveBackground", ColorUtils.blendARGB(a.color, b.bg, rf(7, 0.5f)));
         // Generic press feedback.
         put(m, "listSelectorSDK21", selector);
         // Input panel.
@@ -197,7 +249,7 @@ public class MeeroThemeMixer {
         put(m, "chat_messagePanelText", textP);
         put(m, "chat_messagePanelHint", textS);
         put(m, "chat_messagePanelSend", a.color);
-        put(m, "chat_messagePanelShadow", ColorUtils.setAlphaComponent(0xFF000000, b.light ? 20 : 90));
+        put(m, "chat_messagePanelShadow", ColorUtils.setAlphaComponent(black, (int) (b.light ? rf(11, 20f) : rf(12, 90f))));
         // Bubbles.
         put(m, "chat_inBubble", in);
         put(m, "chat_inBubbleSelected", inSel);
@@ -212,14 +264,14 @@ public class MeeroThemeMixer {
         put(m, "chat_inReplyNameText", b.light ? accentDarkLink(a.color) : lighter);
         put(m, "chat_outReplyNameText", onAccent);
         put(m, "chat_inTimeText", textS);
-        put(m, "chat_outTimeText", ColorUtils.setAlphaComponent(onAccent, 179));
-        put(m, "chat_serviceBackground", ColorUtils.setAlphaComponent(b.elev, 230));
+        put(m, "chat_outTimeText", ColorUtils.setAlphaComponent(onAccent, (int) rf(13, 179f)));
+        put(m, "chat_serviceBackground", ColorUtils.setAlphaComponent(b.elev, (int) rf(14, 230f)));
         put(m, "chat_serviceText", textP);
         put(m, "chat_inSentClock", textS);
         put(m, "chat_outSentClock", onAccent);
         put(m, "chat_outSentCheck", onAccent);
         put(m, "chat_outSentCheckRead", onAccent);
-        put(m, "chat_mediaSentCheck", 0xFFFFFFFF);
+        put(m, "chat_mediaSentCheck", rc(3, 0xFFFFFFFF));
         // Toggles & controls.
         put(m, "checkbox", a.color);
         put(m, "checkboxCheck", onAccent);
@@ -230,8 +282,8 @@ public class MeeroThemeMixer {
 
     /** Accent readable on light paper (pull it a little darker). */
     private static int accentDarkLink(int accent) {
-        return ColorUtils.calculateLuminance(accent) > 0.6f
-                ? ColorUtils.blendARGB(accent, 0xFF000000, 0.28f)
+        return ColorUtils.calculateLuminance(accent) > rf(8, 0.6f)
+                ? ColorUtils.blendARGB(accent, rc(4, 0xFF000000), rf(9, 0.28f))
                 : accent;
     }
 

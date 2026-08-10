@@ -401,11 +401,11 @@ public class IntroActivity extends BaseFragment implements NotificationCenter.No
         startMessagingButton.setGravity(Gravity.CENTER);
         startMessagingButton.setTypeface(AndroidUtilities.bold());
         // MeeroX: iOS labels its solid buttons at 17pt regular, not 15 bold.
-        startMessagingButton.setTextSize(TypedValue.COMPLEX_UNIT_DIP, meeroIosIntro() ? 17 : 15);
+        startMessagingButton.setTextSize(TypedValue.COMPLEX_UNIT_DIP, meeroIosIntro() ? tw.nekomimi.nekogram.MeeroIntro.buttonText() : 15);
         startMessagingButton.setPadding(dp(34), 0, dp(34), 0);
         // MeeroX: iOS's SolidRoundedButtonNode is 50pt tall; the shape is
         // already a capsule here, so only the height needs to follow.
-        frameContainerView.addView(startMessagingButton, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, meeroIosIntro() ? 50 : 48, Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM, 16, 0, 16, 76));
+        frameContainerView.addView(startMessagingButton, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, meeroIosIntro() ? (int) tw.nekomimi.nekogram.MeeroIntro.buttonHeight() : 48, Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM, 16, 0, 16, meeroIosIntro() ? (int) tw.nekomimi.nekogram.MeeroIntro.buttonBottom() : 76));
         startMessagingButton.setOnClickListener(view -> {
             if (startPressed) {
                 return;
@@ -664,7 +664,7 @@ public class IntroActivity extends BaseFragment implements NotificationCenter.No
             // MeeroX: iOS sets the intro headline at 28pt semibold
             // (AuthorizationSequenceSplashController). Android's 26 sits just
             // under it, so the page reads slightly quieter than the original.
-            headerTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, meeroIosIntro() ? 28 : 26);
+            headerTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, meeroIosIntro() ? tw.nekomimi.nekogram.MeeroIntro.headline() : 26);
             headerTextView.setTypeface(AndroidUtilities.bold());
             headerTextView.setGravity(Gravity.CENTER);
             frameLayout.addView(headerTextView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, Gravity.TOP | Gravity.LEFT, 18, 244, 18, 0));

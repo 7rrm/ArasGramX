@@ -40,26 +40,21 @@ import androidx.annotation.NonNull;
  */
 public class MeeroConnectingDrawable extends Drawable {
 
-    /** iOS derives every dimension from the ring's own diameter over 50. */
-    private static final float REFERENCE_DIAMETER = 50f;
-    private static final float LINE_WIDTH_FACTOR = 2.25f;
-    private static final float LINE_WIDTH_MIN = 1.6f;
-    private static final float PATH_INSET = 2.5f;
-    /** One full turn of the ring itself. */
-    private static final float ROTATION_PERIOD = 1500f;
-    /** One 0 -> 2 sweep: grow to a full ring, then unwind from the tail. */
-    private static final float SWEEP_PERIOD = 2500f;
-    /** Shortest arc drawn, so the ring never disappears completely. */
-    private static final float MIN_SWEEP_DEGREES = 12f;
+    /* v189 (batch 3C): every number below (the 50pt reference, the 2.25/1.6
+     * stroke rule, the 2.5 path inset, the 1500/2500 ms periods, the 12deg
+     * stub floor, the 21dp size derived from the reference screenshot's
+     * 41px-over-103px avatar, and the dt clamp/frame) comes from the sealed
+     * motion table (dom 'C'); the literals are the byte-identical fallback. */
+    private static volatile float[] rec;
 
-    /**
-     * Diameter of the ring, in dp.
-     *
-     * 21dp is what the reference screenshot shows: the purple arc spans 41px
-     * there against a 103px avatar, and Telegram lays that avatar out at 54dp,
-     * so 41 * 54 / 103 = 21.5.
-     */
-    public static final int SIZE_DP = 21;
+    private static float rg(int i, float legacy) {
+        float[] r = rec;
+        if (r == null && MeeroCore.motionCore()) {
+            r = MeeroCore.nRingRecipe();
+            if (r != null && r.length == 10) rec = r; else r = null;
+        }
+        return r != null ? r[i] : legacy;
+    }
 
     private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final RectF rect = new RectF();
@@ -99,16 +94,16 @@ public class MeeroConnectingDrawable extends Drawable {
         // advance the animation by however long the gap was and make the ring
         // jump. Anything longer than a slow frame is treated as one frame.
         long dt = lastFrame == 0 ? 0 : now - lastFrame;
-        if (dt < 0 || dt > 100) {
-            dt = 16;
+        if (dt < 0 || dt > (long) rg(8, 100f)) {
+            dt = (long) rg(9, 16f);
         }
         lastFrame = now;
 
-        rotation += 360f * dt / ROTATION_PERIOD;
+        rotation += 360f * dt / rg(4, 1500f);
         if (rotation >= 360f) {
             rotation -= 360f;
         }
-        sweep += 2f * dt / SWEEP_PERIOD;
+        sweep += 2f * dt / rg(5, 2500f);
         if (sweep >= 2f) {
             sweep -= 2f;
         }
@@ -116,12 +111,12 @@ public class MeeroConnectingDrawable extends Drawable {
         // iOS's factor: the ring's diameter over the 50pt reference. Both are
         // taken in the same unit - pixels here - so the ratio is the same
         // number the Swift code works with.
-        final float factor = diameter / dpf2(REFERENCE_DIAMETER);
-        final float lineWidth = Math.max(dpf2(LINE_WIDTH_MIN), dpf2(LINE_WIDTH_FACTOR) * factor);
+        final float factor = diameter / dpf2(rg(0, 50f));
+        final float lineWidth = Math.max(dpf2(rg(2, 1.6f)), dpf2(rg(1, 2.25f)) * factor);
         paint.setStrokeWidth(lineWidth);
         paint.setAlpha(alpha);
 
-        final float inset = lineWidth / 2f + dpf2(PATH_INSET) * factor;
+        final float inset = lineWidth / 2f + dpf2(rg(3, 2.5f)) * factor;
         rect.set(bounds.left + inset, bounds.top + inset,
                 bounds.right - inset, bounds.bottom - inset);
 
@@ -140,7 +135,7 @@ public class MeeroConnectingDrawable extends Drawable {
 
         canvas.save();
         canvas.rotate(rotation, rect.centerX(), rect.centerY());
-        canvas.drawArc(rect, start - 90f, Math.max(MIN_SWEEP_DEGREES, length), false, paint);
+        canvas.drawArc(rect, start - 90f, Math.max(rg(6, 12f), length), false, paint);
         canvas.restore();
 
         invalidateSelf();
@@ -163,11 +158,11 @@ public class MeeroConnectingDrawable extends Drawable {
 
     @Override
     public int getIntrinsicWidth() {
-        return dp(SIZE_DP);
+        return dp((int) rg(7, 21f));
     }
 
     @Override
     public int getIntrinsicHeight() {
-        return dp(SIZE_DP);
+        return dp((int) rg(7, 21f));
     }
 }

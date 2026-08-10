@@ -46,6 +46,19 @@ public final class MeeroSmoothPass {
     /** True once the pack has run (or been skipped for lacking a context). */
     private static boolean warmedOnce;
 
+    /* v189 (batch 3C): the warm-up policy numbers (delay, off-screen sizes)
+     * come from the sealed motion table (dom 'C'); literals = fallback. */
+    private static volatile float[] pol;
+
+    private static float sp(int i, float legacy) {
+        float[] p = pol;
+        if (p == null && MeeroCore.motionCore()) {
+            p = MeeroCore.nSmoothPolicy();
+            if (p != null && p.length == 5) pol = p; else p = null;
+        }
+        return p != null ? p[i] : legacy;
+    }
+
     /**
      * Called from DialogsActivity.onResume. Returns true only on the first
      * call per process with the switch ON and a usable context; the caller
@@ -78,7 +91,7 @@ public final class MeeroSmoothPass {
             } catch (Throwable ignore) {
                 // cold path, exactly as v163
             }
-        }, 900);
+        }, (long) sp(0, 900f));
         return true;
     }
 
@@ -116,10 +129,10 @@ public final class MeeroSmoothPass {
         bottom.setTextAndIcon("MeeroX", R.drawable.msg_copy);
         layout.addView(bottom);
 
-        final int w = AndroidUtilities.dp(220);
+        final int w = AndroidUtilities.dp(sp(1, 220f));
         layout.measure(
                 View.MeasureSpec.makeMeasureSpec(w, View.MeasureSpec.EXACTLY),
-                View.MeasureSpec.makeMeasureSpec(AndroidUtilities.dp(148), View.MeasureSpec.AT_MOST));
+                View.MeasureSpec.makeMeasureSpec(AndroidUtilities.dp(sp(2, 148f)), View.MeasureSpec.AT_MOST));
         layout.layout(0, 0, layout.getMeasuredWidth(), layout.getMeasuredHeight());
 
         final Bitmap off = Bitmap.createBitmap(
@@ -140,10 +153,10 @@ public final class MeeroSmoothPass {
      */
     private static void warmChatCell(Context context) {
         final ChatMessageCell cell = new ChatMessageCell(context, UserConfig.selectedAccount);
-        final int w = AndroidUtilities.dp(360);
+        final int w = AndroidUtilities.dp(sp(3, 360f));
         cell.measure(
                 View.MeasureSpec.makeMeasureSpec(w, View.MeasureSpec.EXACTLY),
-                View.MeasureSpec.makeMeasureSpec(AndroidUtilities.dp(120), View.MeasureSpec.EXACTLY));
-        cell.layout(0, 0, w, AndroidUtilities.dp(120));
+                View.MeasureSpec.makeMeasureSpec(AndroidUtilities.dp(sp(4, 120f)), View.MeasureSpec.EXACTLY));
+        cell.layout(0, 0, w, AndroidUtilities.dp(sp(4, 120f)));
     }
 }

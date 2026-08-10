@@ -296,4 +296,36 @@ public final class MeeroCore {
     public static boolean chatCore() {
         return ready() && nChatReady();
     }
+
+    /* batch 3C: motion/engine family brain (sealed table dom 'C') */
+    public static native boolean nMotionReady();
+
+    public static native int[] nMixerAccents();
+
+    public static native int[] nMixerBackgrounds();
+
+    public static native int[] nMixerInBubble();
+
+    public static native int[] nMixerColors();
+
+    public static native float[] nMixerRecipe();
+
+    public static native String[] nFonts();
+
+    public static native float[] nJanitorPolicy();
+
+    public static native int[] nHapticsMap();
+
+    public static native float[] nStatusRecipe();
+
+    public static native float[] nRingRecipe();
+
+    public static native float[] nSmoothPolicy();
+
+    public static native float[] nIntroRecipe();
+
+    /** Library up AND the sealed motion table decoded; false -> legacy fallback. */
+    public static boolean motionCore() {
+        return ready() && nMotionReady();
+    }
 }
