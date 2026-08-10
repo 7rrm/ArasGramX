@@ -2801,6 +2801,163 @@ JNIEXPORT jstring JNICALL MC_CLASS(nStrTsv)(JNIEnv *env, jclass c) {
     return r;
 }
 
+/* ============================================================================
+ * MeeroX v187 - batch 3A: the glass-family design brain.
+ *
+ * The MeeroX glass look used to live as readable literals in DEX: the
+ * fixed Glass-Night palette (18 colors x day/night), the mock switch
+ * geometry ratios (48x28 pill, 3dp inset, 22dp knob, 2/11 press stretch),
+ * the glow/shadow paddings and the card/section constants. All of that is
+ * now a sealed table (dom 'G', same vault seed) decoded ONCE per process
+ * into static memory; pure math sits in the JNI-free header meero_glass.h
+ * so the desktop gcc harness exercises the exact device logic. Java keeps
+ * byte-identical legacy fallbacks (R8-scrambled) for dev parity, and the
+ * Canvas/Paint brush itself stays Java - Android renders there; only the
+ * recipe is buried. Tampered table -> mg_init refuses -> Java falls back
+ * to the legacy path, never a crash (the v166 law).
+ * ============================================================================ */
+
+#include "meero_glasstab.h"
+#include "meero_glass.h"
+
+/* generic raw (mac|ct, no base64) unseal - the strtab kept its own copy so
+ * the 2D code path is untouched; this one is shared by design tables. */
+static unsigned char *mc_raw_unseal(const unsigned char seed[32], char dom,
+                                    const unsigned char *tab, size_t tabLen,
+                                    size_t *n_out) {
+    if (tabLen < 32) return NULL;
+    size_t el = tabLen - 32;
+    const unsigned char *enc = tab + 32;
+    unsigned char *mm = malloc(1 + el);
+    if (mm == NULL) return NULL;
+    mm[0] = (unsigned char) dom;
+    memcpy(mm + 1, enc, el);
+    unsigned char mac[32];
+    mc_hmac32(seed, mm, 1 + el, mac);
+    memset(mm, 0, 1 + el);
+    free(mm);
+    unsigned char diff = 0;
+    for (int i = 0; i < 32; i++) diff |= (unsigned char) (mac[i] ^ tab[i]);
+    memset(mac, 0, 32);
+    if (diff != 0) return NULL;
+    unsigned char *raw = malloc(el + 1);
+    if (raw == NULL) return NULL;
+    memcpy(raw, enc, el);
+    mc_xor_stream(seed, dom, raw, el);
+    raw[el] = 0;
+    *n_out = el;
+    return raw;
+}
+
+static int mg_ensure(JNIEnv *env) {
+    if (mg_ready()) return 1;
+    unsigned char seed[32];
+    int ok = 0;
+    if (mc_seed(env, seed)) {
+        size_t n = 0;
+        unsigned char *raw = mc_raw_unseal(seed, 'G', MC_GLASSTAB,
+                                           (size_t) MC_GLASSTAB_LEN, &n);
+        if (raw != NULL) {
+            ok = mg_init(raw, n);
+            memset(raw, 0, n);
+            free(raw);
+        }
+    }
+    memset(seed, 0, 32);
+    return ok;
+}
+
+static jfloatArray mc_farr(JNIEnv *env, const float *v, int n) {
+    jfloatArray a = (*env)->NewFloatArray(env, n);
+    if (a != NULL) (*env)->SetFloatArrayRegion(env, a, 0, n, v);
+    return a;
+}
+
+/* 1 when the sealed glass table decoded fine (dev-parity probe) */
+JNIEXPORT jboolean JNICALL MC_CLASS(nGlassReady)(JNIEnv *env, jclass c) {
+    (void) c;
+    pthread_mutex_lock(&mc_mu);
+    int ok = mg_ensure(env);
+    pthread_mutex_unlock(&mc_mu);
+    return ok ? JNI_TRUE : JNI_FALSE;
+}
+
+/* fixed Glass-Night palette lookup: -1 => caller uses its legacy literal */
+JNIEXPORT jint JNICALL MC_CLASS(nGtColor)(JNIEnv *env, jclass c,
+                                          jint id, jboolean night) {
+    (void) c;
+    pthread_mutex_lock(&mc_mu);
+    int32_t v = mg_ensure(env) ? mg_color((int) id, night == JNI_TRUE) : -1;
+    pthread_mutex_unlock(&mc_mu);
+    return (jint) v;
+}
+
+/* the mock switch's own constants (aspect, inset/thumb ratios, paddings,
+ * bezier points, travel/press ms) */
+JNIEXPORT jfloatArray JNICALL MC_CLASS(nGlassSwitchParams)(JNIEnv *env, jclass c) {
+    (void) c;
+    pthread_mutex_lock(&mc_mu);
+    jfloatArray r = NULL;
+    if (mg_ensure(env)) {
+        float v[16];
+        mg_switch_params(v);
+        r = mc_farr(env, v, 16);
+    }
+    pthread_mutex_unlock(&mc_mu);
+    return r;
+}
+
+/* card/section/header/chip/glow constants shared by both screen bases */
+JNIEXPORT jfloatArray JNICALL MC_CLASS(nGlassUiConsts)(JNIEnv *env, jclass c) {
+    (void) c;
+    pthread_mutex_lock(&mc_mu);
+    jfloatArray r = NULL;
+    if (mg_ensure(env)) {
+        float v[32];
+        mg_ui_consts(v);
+        r = mc_farr(env, v, 32);
+    }
+    pthread_mutex_unlock(&mc_mu);
+    return r;
+}
+
+/* full mock-switch geometry for one frame (24 floats, see meero_glass.h) */
+JNIEXPORT jfloatArray JNICALL MC_CLASS(nGlassSwitchGeom)(JNIEnv *env, jclass c,
+        jfloat density, jfloat w, jfloat h,
+        jfloat progress, jfloat press, jboolean rtl) {
+    (void) c;
+    pthread_mutex_lock(&mc_mu);
+    jfloatArray r = NULL;
+    if (mg_ensure(env)) {
+        float out[MG_GEOM_N];
+        mg_geom(density, w, h, progress, press, rtl == JNI_TRUE, out);
+        r = mc_farr(env, out, MG_GEOM_N);
+    }
+    pthread_mutex_unlock(&mc_mu);
+    return r;
+}
+
+/* glass hairline: luma rule + reference alpha, 0x7FFFFFFF => legacy path */
+JNIEXPORT jint JNICALL MC_CLASS(nGlassBorder)(JNIEnv *env, jclass c, jint base) {
+    (void) c;
+    pthread_mutex_lock(&mc_mu);
+    jint v = mg_ensure(env) ? (jint) mg_border(base)
+                            : (jint) 0x7FFFFFFF;
+    pthread_mutex_unlock(&mc_mu);
+    return v;
+}
+
+/* card edge decision shared with the legacy-base screens */
+JNIEXPORT jint JNICALL MC_CLASS(nGlassCardPos)(JNIEnv *env, jclass c,
+                                               jboolean first, jboolean last) {
+    (void) c;
+    pthread_mutex_lock(&mc_mu);
+    int v = mg_ensure(env) ? mg_cardpos(first == JNI_TRUE, last == JNI_TRUE)
+                           : -1;
+    pthread_mutex_unlock(&mc_mu);
+    return (jint) v;
+}
+
 JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved) {
     (void) vm; (void) reserved;
     return JNI_VERSION_1_6;

@@ -45,6 +45,29 @@ public final class MeeroGlassTheme {
      * master design switch and its own dedicated row are on. Read lazily,
      * so flipped rows redraw on the next frame.
      */
+    /* v187 (batch 3A): palette + design constants arrive from the sealed
+     * native table (dom 'G'). Every helper keeps its legacy literal as the
+     * exact fallback when the table is unavailable, so behavior is
+     * byte-identical either way. -1 from native = use the literal. */
+    private static int g(int id, int nightColor, int dayColor) {
+        if (MeeroCore.glassCore()) {
+            int v = MeeroCore.nGtColor(id, isNight());
+            if (v != -1) return v;
+        }
+        return isNight() ? nightColor : dayColor;
+    }
+
+    private static float[] sUi;
+    private static float uic(int i, float fb) {
+        float[] u = sUi;
+        if (u == null) {
+            float[] n = MeeroCore.glassCore() ? MeeroCore.nGlassUiConsts() : null;
+            u = (n != null && n.length == 32) ? n : new float[0];
+            sUi = u;
+        }
+        return u.length == 32 ? u[i] : fb;
+    }
+
     public static boolean switchesEnabled() {
         try {
             return enabled() && NekoConfig.meeroGlassSwitches.Bool();
@@ -67,20 +90,20 @@ public final class MeeroGlassTheme {
     public static final int ACC2 = 0xFF7B5CFF; // violet
 
     public static int bg() {
-        return isNight() ? 0xFF0B0B10 : 0xFFF2F2F7;
+        return g(0, 0xFF0B0B10, 0xFFF2F2F7);
     }
 
     /** Slightly lifted surface the adaptive ActionBar melts into on scroll. */
     public static int actionBarBg() {
-        return isNight() ? 0xFF13131B : 0xFFFBFBFE;
+        return g(1, 0xFF13131B, 0xFFFBFBFE);
     }
 
     public static int ink() {
-        return isNight() ? 0xFFF2F2F6 : 0xFF15151C;
+        return g(2, 0xFFF2F2F6, 0xFF15151C);
     }
 
     public static int sub() {
-        return isNight() ? 0xFF9A9AA5 : 0xFF7D7D88;
+        return g(3, 0xFF9A9AA5, 0xFF7D7D88);
     }
 
     public static int headerInk() {
@@ -89,55 +112,55 @@ public final class MeeroGlassTheme {
 
     /** Row-press ripple tint on the glass surface. */
     public static int press() {
-        return isNight() ? 0x0FFFFFFF /* white 6% */ : 0x0D14141A /* black 5% */;
+        return g(4, 0x0FFFFFFF /* white 6% */, 0x0D14141A /* black 5% */);
     }
 
     public static int glowA() {
-        return isNight() ? 0x29FF4E8A /* rose 16% */ : 0x1AFF4E8A /* 10% */;
+        return g(5, 0x29FF4E8A /* rose 16% */, 0x1AFF4E8A /* 10% */);
     }
 
     public static int glowB() {
-        return isNight() ? 0x217B5CFF /* violet 13% */ : 0x147B5CFF /* 8% */;
+        return g(6, 0x217B5CFF /* violet 13% */, 0x147B5CFF /* 8% */);
     }
 
     // ---------------- v127: cells layer ----------------
 
     /** Hairline separator between rows inside a section card. */
     public static int sep() {
-        return isNight() ? 0x12FFFFFF /* white 7% */ : 0x1214141A /* black 7% */;
+        return g(7, 0x12FFFFFF /* white 7% */, 0x1214141A /* black 7% */);
     }
 
     /** Off-state switch track. */
     public static int trackOff() {
-        return isNight() ? 0x2EFFFFFF /* white 18% */ : 0xFFD9D9E0;
+        return g(8, 0x2EFFFFFF /* white 18% */, 0xFFD9D9E0);
     }
 
     /** Section card: translucent fill over the glow background. */
     public static int cardFill() {
-        return isNight() ? 0x0DFFFFFF /* white 5% */ : 0xA8FFFFFF /* white 66% */;
+        return g(9, 0x0DFFFFFF /* white 5% */, 0xA8FFFFFF /* white 66% */);
     }
 
     public static int cardStroke() {
-        return isNight() ? 0x17FFFFFF /* white 9% */ : 0xD9FFFFFF /* white 85% */;
+        return g(10, 0x17FFFFFF /* white 9% */, 0xD9FFFFFF /* white 85% */);
     }
 
     /** Value chip behind the current selection of a row. */
     public static int chipFill() {
-        return 0x24FF4E8A; // rose 14%
+        return g(11, 0x24FF4E8A, 0x24FF4E8A); // rose 14%
     }
 
     public static int chipStroke() {
-        return 0x40FF4E8A; // rose 25%
+        return g(12, 0x40FF4E8A, 0x40FF4E8A); // rose 25%
     }
 
     /** v128: bottom-sheet surface (picker sheet) - lifted, but of the family. */
     public static int sheetBg() {
-        return isNight() ? 0xFF12121A : 0xFFFBFBFE;
+        return g(13, 0xFF12121A, 0xFFFBFBFE);
     }
 
     /** v128: segmented-control track inside the picker sheet. */
     public static int segTrack() {
-        return isNight() ? 0xFF1C1C26 : 0xFFE9E9F0;
+        return g(14, 0xFF1C1C26, 0xFFE9E9F0);
     }
 
     /**
@@ -158,27 +181,27 @@ public final class MeeroGlassTheme {
     public static Drawable card(boolean roundTop, boolean roundBottom, boolean topHairline) {
         GradientDrawable d = new GradientDrawable();
         d.setColor(cardFill());
-        d.setStroke(AndroidUtilities.dp(1), cardStroke());
-        float rTop = AndroidUtilities.dp(roundTop ? 20 : 0);
-        float rBot = AndroidUtilities.dp(roundBottom ? 20 : 0);
+        d.setStroke(AndroidUtilities.dp(uic(18, 1)), cardStroke());
+        float rTop = AndroidUtilities.dp(roundTop ? uic(17, 20) : 0);
+        float rBot = AndroidUtilities.dp(roundBottom ? uic(17, 20) : 0);
         d.setCornerRadii(new float[]{rTop, rTop, rTop, rTop, rBot, rBot, rBot, rBot});
         if (!topHairline) {
             return d;
         }
         final boolean rtl = LocaleController.isRTL;
         LayerDrawable layers = new LayerDrawable(new Drawable[]{d, new ColorDrawable(sep())});
-        layers.setLayerHeight(1, Math.max(1, AndroidUtilities.dp(0.66f)));
+        layers.setLayerHeight(1, Math.max(1, AndroidUtilities.dp(uic(19, 0.66f))));
         layers.setLayerGravity(1, android.view.Gravity.TOP);
-        layers.setLayerInset(1, rtl ? 0 : AndroidUtilities.dp(16), 0,
-                rtl ? AndroidUtilities.dp(16) : 0, 0);
+        layers.setLayerInset(1, rtl ? 0 : AndroidUtilities.dp(uic(20, 16)), 0,
+                rtl ? AndroidUtilities.dp(uic(20, 16)) : 0, 0);
         return layers;
     }
 
     public static Drawable chipBg() {
         GradientDrawable d = new GradientDrawable();
         d.setColor(chipFill());
-        d.setStroke(AndroidUtilities.dp(1), chipStroke());
-        d.setCornerRadius(AndroidUtilities.dp(12));
+        d.setStroke(AndroidUtilities.dp(uic(18, 1)), chipStroke());
+        d.setCornerRadius(AndroidUtilities.dp(uic(21, 12)));
         return d;
     }
 
@@ -226,10 +249,10 @@ public final class MeeroGlassTheme {
                 return ACC1;
             }
             if (key == Theme.key_switchTrackBlueSelector) {
-                return isNight() ? 0x1AFFFFFF : 0x1A14141A;
+                return g(15, 0x1AFFFFFF, 0x1A14141A);
             }
             if (key == Theme.key_switchTrackBlueSelectorChecked) {
-                return isNight() ? 0x2EFFFFFF : 0x26000000;
+                return g(16, 0x2EFFFFFF, 0x26000000);
             }
             if (key == Theme.key_divider) {
                 return sep();
@@ -247,14 +270,14 @@ public final class MeeroGlassTheme {
         GradientDrawable rose = new GradientDrawable();
         rose.setGradientType(GradientDrawable.RADIAL_GRADIENT);
         rose.setColors(new int[]{glowA(), Color.TRANSPARENT});
-        rose.setGradientRadius(AndroidUtilities.dp(330));
-        rose.setGradientCenter(0.82f, 0.0f);
+        rose.setGradientRadius(AndroidUtilities.dp(uic(22, 330)));
+        rose.setGradientCenter(uic(24, 0.82f), uic(25, 0.0f));
 
         GradientDrawable violet = new GradientDrawable();
         violet.setGradientType(GradientDrawable.RADIAL_GRADIENT);
         violet.setColors(new int[]{glowB(), Color.TRANSPARENT});
-        violet.setGradientRadius(AndroidUtilities.dp(370));
-        violet.setGradientCenter(0.12f, 1.0f);
+        violet.setGradientRadius(AndroidUtilities.dp(uic(23, 370)));
+        violet.setGradientCenter(uic(26, 0.12f), uic(27, 1.0f));
 
         return new LayerDrawable(new Drawable[]{new ColorDrawable(bg()), rose, violet});
     }
@@ -264,7 +287,7 @@ public final class MeeroGlassTheme {
         GradientDrawable d = new GradientDrawable(
                 GradientDrawable.Orientation.LEFT_RIGHT,
                 new int[]{ACC1, ACC2, Color.TRANSPARENT});
-        d.setCornerRadius(AndroidUtilities.dp(1));
+        d.setCornerRadius(AndroidUtilities.dp(uic(28, 1)));
         return d;
     }
 
@@ -346,7 +369,7 @@ public final class MeeroGlassTheme {
                     return sheetBg();
                 }
                 if (key == Theme.key_dialogBackgroundGray) {
-                    return isNight() ? 0xFF1C1C26 : 0xFFE9E9F0;
+                    return g(14, 0xFF1C1C26, 0xFFE9E9F0);
                 }
                 if (key == Theme.key_dialogButton
                         || key == Theme.key_dialogTextBlue

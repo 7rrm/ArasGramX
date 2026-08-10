@@ -31,6 +31,17 @@ public class MeeroGlass {
     /** Border opacity from the reference: 18%. */
     public static final float BORDER_ALPHA = 0.18f;
 
+    private static float[] sUi;
+    private static float uic(int i, float fb) {
+        float[] u = sUi;
+        if (u == null) {
+            float[] n = MeeroCore.glassCore() ? MeeroCore.nGlassUiConsts() : null;
+            u = (n != null && n.length == 32) ? n : new float[0];
+            sUi = u;
+        }
+        return u.length == 32 ? u[i] : fb;
+    }
+
     public static boolean enabled() {
         try {
             return NekoConfig.meeroGlassBorders.Bool();
@@ -47,6 +58,10 @@ public class MeeroGlass {
      */
     public static int borderColor(Theme.ResourcesProvider rp) {
         final int base = Theme.getColor(Theme.key_windowBackgroundWhite, rp);
+        final int nativeBorder = MeeroCore.glassCore() ? MeeroCore.nGlassBorder(base) : 0x7FFFFFFF;
+        if (nativeBorder != 0x7FFFFFFF) {
+            return nativeBorder;
+        }
         final boolean dark = (0.299 * Color.red(base)
                 + 0.587 * Color.green(base)
                 + 0.114 * Color.blue(base)) < 128;
@@ -65,7 +80,7 @@ public class MeeroGlass {
     public static void drawBorder(Canvas canvas, RectF bounds, float radius, Theme.ResourcesProvider rp) {
         final Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
         p.setStyle(Paint.Style.STROKE);
-        p.setStrokeWidth(Math.max(1f, dp(BORDER_DP)));
+        p.setStrokeWidth(Math.max(1f, dp(uic(29, BORDER_DP))));
         p.setColor(borderColor(rp));
         final float half = p.getStrokeWidth() / 2f;
         final RectF r = new RectF(bounds);
@@ -106,7 +121,7 @@ public class MeeroGlass {
             this.inset = inset;
             this.rp = rp;
             stroke.setStyle(Paint.Style.STROKE);
-            stroke.setStrokeWidth(Math.max(1f, dp(BORDER_DP)));
+            stroke.setStrokeWidth(Math.max(1f, dp(uic(29, BORDER_DP))));
         }
 
         @Override
@@ -130,7 +145,7 @@ public class MeeroGlass {
             if (inner != null) {
                 inner.setAlpha(alpha);
             }
-            stroke.setAlpha((int) (alpha * BORDER_ALPHA));
+            stroke.setAlpha((int) (alpha * uic(30, BORDER_ALPHA)));
         }
 
         @Override

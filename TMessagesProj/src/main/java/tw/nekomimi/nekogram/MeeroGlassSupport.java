@@ -64,6 +64,19 @@ public final class MeeroGlassSupport {
     public static final int CARD_MID = 3;
     public static final int CARD_BOTTOM = 4;
 
+    /* v187 (batch 3A): every design number below arrives from the sealed
+     * native table; legacy literals remain as the exact fallback. */
+    private static float[] sUi;
+    private static float uic(int i, float fb) {
+        float[] u = sUi;
+        if (u == null) {
+            float[] n = MeeroCore.glassCore() ? MeeroCore.nGlassUiConsts() : null;
+            u = (n != null && n.length == 32) ? n : new float[0];
+            sUi = u;
+        }
+        return u.length == 32 ? u[i] : fb;
+    }
+
     /** Tag for the gradient rule view injected under section headers. */
     public static final String GLASS_RULE = "meeroGlassHeaderRule";
 
@@ -84,7 +97,7 @@ public final class MeeroGlassSupport {
         }
         if (glass) {
             listView.setSections(keepRow,
-                    AndroidUtilities.dp(12), AndroidUtilities.dp(16),
+                    AndroidUtilities.dp(uic(0, 12)), AndroidUtilities.dp(uic(1, 16)),
                     (canvas, rect, rx, ry, alpha) -> { /* glass: no themed section paint */ },
                     true);
             listView.setSelectorDrawableColor(MeeroGlassTheme.press());
@@ -118,7 +131,7 @@ public final class MeeroGlassSupport {
             return;
         }
         RecyclerView.LayoutParams lp = (RecyclerView.LayoutParams) v.getLayoutParams();
-        int side = inCard ? AndroidUtilities.dp(12) : 0;
+        int side = inCard ? AndroidUtilities.dp(uic(2, 12)) : 0;
         if (lp.leftMargin != side || lp.rightMargin != side || lp.topMargin != 0 || lp.bottomMargin != 0) {
             lp.setMargins(side, 0, side, 0);
             v.setLayoutParams(lp);
@@ -136,8 +149,8 @@ public final class MeeroGlassSupport {
             h.setTextColor(MeeroGlassTheme.headerInk());
             TextView tv = h.getTextView();
             if (tv != null) {
-                tv.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 13);
-                tv.setLetterSpacing(0.04f);
+                tv.setTextSize(TypedValue.COMPLEX_UNIT_DIP, uic(7, 13));
+                tv.setLetterSpacing(uic(9, 0.04f));
             }
             View rule = h.findViewWithTag(GLASS_RULE);
             if (rule == null && h.getContext() != null) {
@@ -151,7 +164,7 @@ public final class MeeroGlassSupport {
             h.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlueHeader));
             TextView tv = h.getTextView();
             if (tv != null) {
-                tv.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 15);
+                tv.setTextSize(TypedValue.COMPLEX_UNIT_DIP, uic(8, 15));
                 tv.setLetterSpacing(0f);
             }
             View rule = h.findViewWithTag(GLASS_RULE);
@@ -176,13 +189,13 @@ public final class MeeroGlassSupport {
         }
         if (glass) {
             value.setTextColor(MeeroGlassTheme.ACC1);
-            value.setTextSize(AndroidUtilities.dp(13));
+            value.setTextSize(AndroidUtilities.dp(uic(5, 13)));
             value.setBackground(MeeroGlassTheme.chipBg());
-            value.setPadding(AndroidUtilities.dp(9), AndroidUtilities.dp(1),
-                    AndroidUtilities.dp(9), AndroidUtilities.dp(1));
+            value.setPadding(AndroidUtilities.dp(uic(3, 9)), AndroidUtilities.dp(uic(4, 1)),
+                    AndroidUtilities.dp(uic(3, 9)), AndroidUtilities.dp(uic(4, 1)));
         } else {
             value.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteValueText));
-            value.setTextSize(AndroidUtilities.dp(16));
+            value.setTextSize(AndroidUtilities.dp(uic(6, 16)));
             value.setBackground(null);
             value.setPadding(0, 0, 0, 0);
         }
@@ -252,7 +265,7 @@ public final class MeeroGlassSupport {
         cell.checkBox = glass;
 
         FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
-                AndroidUtilities.dp(48), AndroidUtilities.dp(28));
+                AndroidUtilities.dp(uic(14, 48)), AndroidUtilities.dp(uic(15, 28)));
         if (oldParams instanceof FrameLayout.LayoutParams) {
             FrameLayout.LayoutParams o = (FrameLayout.LayoutParams) oldParams;
             params.gravity = o.gravity;
@@ -283,7 +296,7 @@ public final class MeeroGlassSupport {
         cell.checkBox = glass;
 
         FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
-                AndroidUtilities.dp(48), AndroidUtilities.dp(28));
+                AndroidUtilities.dp(uic(14, 48)), AndroidUtilities.dp(uic(15, 28)));
         if (oldParams instanceof FrameLayout.LayoutParams) {
             FrameLayout.LayoutParams o = (FrameLayout.LayoutParams) oldParams;
             params.gravity = o.gravity;
@@ -352,11 +365,11 @@ public final class MeeroGlassSupport {
             }
             max = position;
             v.setAlpha(0f);
-            v.setTranslationY(AndroidUtilities.dp(10));
+            v.setTranslationY(AndroidUtilities.dp(uic(10, 10)));
             v.animate().alpha(1f).translationY(0f)
-                    .setDuration(450)
+                    .setDuration((long) uic(11, 450))
                     .setInterpolator(EASE)
-                    .setStartDelay(Math.min(position * 45L, 315L))
+                    .setStartDelay((long) Math.min(position * uic(12, 45), uic(13, 315)))
                     .start();
         }
 
@@ -390,6 +403,12 @@ public final class MeeroGlassSupport {
                 || !isLegacyCardType(adapter.getItemViewType(position - 1));
         final boolean last = position >= adapter.getItemCount() - 1
                 || !isLegacyCardType(adapter.getItemViewType(position + 1));
+        if (MeeroCore.glassCore()) {
+            final int nativePos = MeeroCore.nGlassCardPos(first, last);
+            if (nativePos != -1) {
+                return nativePos;
+            }
+        }
         if (first && last) {
             return CARD_SINGLE;
         }

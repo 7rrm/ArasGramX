@@ -38,8 +38,95 @@ import org.telegram.ui.Components.Switch;
  */
 public class MeeroGlassSwitch extends Switch {
 
-    private static final CubicBezierInterpolator GLASS_EASE =
-            new CubicBezierInterpolator(0.2, 0.9, 0.3, 1.35);
+    /* v187 (batch 3A): the mock ratios, easing and timings come from the
+     * sealed native brain; legacy literals stay as the exact fallback.
+     * Holder states: null = not probed yet, length-0 = legacy forever. */
+    private static CubicBezierInterpolator sGlassEase;
+    private static float[] sSwParams;
+
+    private static float[] swParams() {
+        float[] p = sSwParams;
+        if (p == null) {
+            float[] n = MeeroCore.glassCore() ? MeeroCore.nGlassSwitchParams() : null;
+            sSwParams = (n != null && n.length == 16) ? n : new float[0];
+            p = sSwParams;
+        }
+        return p.length == 16 ? p : null;
+    }
+
+    private static float swp(int i, float fb) {
+        float[] p = swParams();
+        return p != null ? p[i] : fb;
+    }
+
+    private static CubicBezierInterpolator glassEase() {
+        CubicBezierInterpolator e = sGlassEase;
+        if (e == null) {
+            float[] p = swParams();
+            e = p != null ? new CubicBezierInterpolator(p[8], p[9], p[10], p[11])
+                          : new CubicBezierInterpolator(0.2, 0.9, 0.3, 1.35);
+            sGlassEase = e;
+        }
+        return e;
+    }
+
+    /** Fallback workspace so the legacy path allocates nothing per frame. */
+    private final float[] mGeo = new float[24];
+
+    /**
+     * One full mock-ratio geometry for this frame. Indices (shared with the
+     * native brain, see meero_glass.h): 0..3 track rect, 4 radius, 5 cy,
+     * 6 cx, 7 tx, 8 thumbR, 9 p01, 10 glowR, 11 shadowCy, 12 shadowR,
+     * 13..16 shadow rect, 17..20 knob rect, 21 stretch, 22 offX, 23 onX.
+     */
+    private float[] glassGeometry(float w, float h) {
+        final boolean rtl = getLayoutDirection() == View.LAYOUT_DIRECTION_RTL;
+        if (MeeroCore.glassCore()) {
+            float[] g = MeeroCore.nGlassSwitchGeom(AndroidUtilities.density, w, h,
+                    glassProgress, pressProgress, rtl);
+            if (g != null && g.length == 24) {
+                return g;
+            }
+        }
+        // legacy mock-parity chain (v129) - the exact fallback
+        final float[] o = mGeo;
+        final float trackH = Math.min(h, AndroidUtilities.dp(28));
+        final float trackW = Math.min(w, trackH * (48f / 28f));
+        final float left = (w - trackW) / 2f;
+        final float top = (h - trackH) / 2f;
+        final float right = left + trackW;
+        final float bottom = top + trackH;
+        final float radius = trackH / 2f;
+        final float cy = top + radius;
+        final float cx = (left + right) / 2f;
+        final float inset = trackH * (3f / 28f);
+        final float thumbR = trackH * (11f / 28f);
+        final float edgeL = left + inset + thumbR;
+        final float edgeR = right - inset - thumbR;
+        final float offX = rtl ? edgeR : edgeL;
+        final float onX = rtl ? edgeL : edgeR;
+        final float p = Math.max(0f, Math.min(1f, glassProgress));
+        float tx = offX + (onX - offX) * glassProgress;
+        tx = Math.max(Math.min(offX, onX), Math.min(Math.max(offX, onX), tx));
+        final float glowR = radius + AndroidUtilities.dp(9);
+        final float stretch = thumbR * (2f / 11f) * pressProgress;
+        final float side = tx >= cx ? 1f : -1f;
+        final float outerEdge = tx + side * thumbR;
+        final float cx2 = outerEdge - side * (thumbR + stretch);
+        o[0] = left;  o[1] = top;    o[2] = right;  o[3] = bottom;
+        o[4] = radius; o[5] = cy;    o[6] = cx;     o[7] = tx;
+        o[8] = thumbR; o[9] = p;     o[10] = glowR;
+        o[11] = cy + AndroidUtilities.dp(2);
+        o[12] = thumbR + AndroidUtilities.dp(3);
+        o[13] = tx - thumbR - AndroidUtilities.dp(3);
+        o[14] = cy - thumbR;
+        o[15] = tx + thumbR + AndroidUtilities.dp(3);
+        o[16] = cy + thumbR + AndroidUtilities.dp(4);
+        o[17] = cx2 - thumbR - stretch; o[18] = cy - thumbR;
+        o[19] = cx2 + thumbR + stretch; o[20] = cy + thumbR;
+        o[21] = stretch; o[22] = offX; o[23] = onX;
+        return o;
+    }
 
     private float glassProgress;          // 0..1 travel of the knob
     private ValueAnimator glassAnimator;
@@ -93,8 +180,8 @@ public class MeeroGlassSwitch extends Switch {
             return;
         }
         glassAnimator = ValueAnimator.ofFloat(glassProgress, target);
-        glassAnimator.setDuration(280);                  // mock: var(--dur) .28s
-        glassAnimator.setInterpolator(GLASS_EASE);       // mock: cubic-bezier(.2,.9,.3,1.35)
+        glassAnimator.setDuration((long) swp(12, 280));    // mock: var(--dur) .28s
+        glassAnimator.setInterpolator(glassEase());       // mock: cubic-bezier(.2,.9,.3,1.35)
         glassAnimator.addUpdateListener(a -> {
             glassProgress = (float) a.getAnimatedValue();
             invalidate();
@@ -121,7 +208,7 @@ public class MeeroGlassSwitch extends Switch {
         cancelPressAnimator();
         final float target = pressed ? 1f : 0f;
         pressAnimator = ValueAnimator.ofFloat(pressProgress, target);
-        pressAnimator.setDuration(150);                  // mock: width .15s
+        pressAnimator.setDuration((long) swp(13, 150));  // mock: width .15s
         pressAnimator.setInterpolator(CubicBezierInterpolator.DEFAULT);
         pressAnimator.addUpdateListener(a -> {
             pressProgress = (float) a.getAnimatedValue();
@@ -160,33 +247,16 @@ public class MeeroGlassSwitch extends Switch {
             cachedH = (int) h;
         }
 
-        // Track geometry in the mock's proportions (48x28 box).
-        final float trackH = Math.min(h, AndroidUtilities.dp(28));
-        final float trackW = Math.min(w, trackH * (48f / 28f));
-        final float left = (w - trackW) / 2f;
-        final float top = (h - trackH) / 2f;
-        final float right = left + trackW;
-        final float bottom = top + trackH;
-        final float radius = trackH / 2f;
-        final float cy = top + radius;
-
-        final float inset = trackH * (3f / 28f);
-        final float thumbR = trackH * (11f / 28f);           // 22dp knob
-        final float edgeL = left + inset + thumbR;           // OFF center (LTR)
-        final float edgeR = right - inset - thumbR;          // ON center (LTR)
-        final boolean rtl = getLayoutDirection() == View.LAYOUT_DIRECTION_RTL;
-        final float offX = rtl ? edgeR : edgeL;
-        final float onX = rtl ? edgeL : edgeR;
-
-        final float p = Math.max(0f, Math.min(1f, glassProgress));
-        float tx = offX + (onX - offX) * glassProgress;      // overshoot allowed
-        tx = Math.max(Math.min(offX, onX), Math.min(Math.max(offX, onX), tx));
-
-        final float cx = (left + right) / 2f;
+        // Track geometry in the mock's proportions (48x28 box) - v187: the
+        // numbers come from the sealed brain; o = this frame's geometry.
+        final float[] g = glassGeometry(w, h);
+        final float left = g[0], top = g[1], right = g[2], bottom = g[3];
+        final float radius = g[4], cy = g[5], cx = g[6];
+        final float tx = g[7], thumbR = g[8], p = g[9];
 
         // 1) rose glow behind the track while ON (mock box-shadow 0/2/14 .4)
         if (p > 0.001f) {
-            final float glowR = radius + AndroidUtilities.dp(9);
+            final float glowR = g[10];
             glowPaint.setShader(new RadialGradient(cx, cy, glowR,
                     MeeroGlassTheme.ACC1 & 0x00FFFFFF | 0x66000000,
                     MeeroGlassTheme.ACC1 & 0x00FFFFFF,
@@ -215,21 +285,16 @@ public class MeeroGlassSwitch extends Switch {
         }
 
         // 3) knob shadow (mock 0/2/6 rgba(0,0,0,.25))
-        shadowPaint.setShader(new RadialGradient(tx, cy + AndroidUtilities.dp(2),
-                thumbR + AndroidUtilities.dp(3), 0x40000000, 0x00000000,
+        shadowPaint.setShader(new RadialGradient(tx, g[11],
+                g[12], 0x40000000, 0x00000000,
                 Shader.TileMode.CLAMP));
-        glassRect.set(tx - thumbR - AndroidUtilities.dp(3), cy - thumbR,
-                tx + thumbR + AndroidUtilities.dp(3), cy + thumbR + AndroidUtilities.dp(4));
+        glassRect.set(g[13], g[14], g[15], g[16]);
         canvas.drawRect(glassRect, shadowPaint);
         shadowPaint.setShader(null);
 
         // 4) the knob itself: stretches 22 -> 26dp while pressed, anchored
         // at its outer edge (mock :active::after width).
-        final float stretch = thumbR * (2f / 11f) * pressProgress;  // +2dp half width
-        final float side = tx >= cx ? 1f : -1f;
-        final float outerEdge = tx + side * thumbR;
-        final float cx2 = outerEdge - side * (thumbR + stretch);
-        glassRect.set(cx2 - thumbR - stretch, cy - thumbR, cx2 + thumbR + stretch, cy + thumbR);
+        glassRect.set(g[17], g[18], g[19], g[20]);
         thumbPaint.setColor(0xFFFFFFFF);
         canvas.drawRoundRect(glassRect, thumbR, thumbR, thumbPaint);
     }

@@ -247,4 +247,25 @@ public final class MeeroCore {
 
     /* batch 2D: whole UI string table, sealed against the shared vault seed (dom 'S') */
     public static native String nStrTsv();
+
+    /* batch 3A: the glass design brain (sealed table dom 'G') */
+    public static native boolean nGlassReady();
+
+    public static native int nGtColor(int id, boolean night);
+
+    public static native float[] nGlassSwitchParams();
+
+    public static native float[] nGlassUiConsts();
+
+    public static native float[] nGlassSwitchGeom(float density, float w, float h,
+                                                  float progress, float press, boolean rtl);
+
+    public static native int nGlassBorder(int baseColor);
+
+    public static native int nGlassCardPos(boolean first, boolean last);
+
+    /** Library up AND the sealed glass table decoded; false -> legacy fallback. */
+    public static boolean glassCore() {
+        return ready() && nGlassReady();
+    }
 }
