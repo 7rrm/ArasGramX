@@ -184,7 +184,6 @@ import java.util.stream.Collectors;
 import static tw.nekomimi.nekogram.settings.NekoChatSettingsActivity.getDeleteMenuChecks;
 import tw.nekomimi.nekogram.helpers.PasscodeHelper;
 import tw.nekomimi.nekogram.helpers.ScheduleTimeHelper;
-import tw.nekomimi.nekogram.MeeroJoinWatch;
 import tw.nekomimi.nekogram.NekoConfig;
 import xyz.nextalone.nagram.NaConfig;
 
@@ -304,8 +303,6 @@ public class AlertsCreator {
         if (error == null || error.code == 406 || error.text == null) {
             return null;
         }
-        // MeeroX v195 diag (temporary, owner-ordered): join-watch funnel.
-        MeeroJoinWatch.record("processError", request, error);
         if ("BALANCE_TOO_LOW".equalsIgnoreCase(error.text)) {
             final long price = StarsController.getAllowedPaidStars(request);
             final long dialogId = StarsController.getPeer(request);

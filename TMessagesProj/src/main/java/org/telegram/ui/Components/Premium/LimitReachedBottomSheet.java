@@ -117,7 +117,6 @@ import java.util.HashSet;
 import java.util.List;
 
 import tw.nekomimi.nekogram.NekoConfig;
-import tw.nekomimi.nekogram.MeeroJoinWatch;
 
 public class LimitReachedBottomSheet extends BottomSheetWithRecyclerListView implements NotificationCenter.NotificationCenterDelegate {
     public static final int TYPE_PIN_DIALOGS = 0;
@@ -330,11 +329,6 @@ public class LimitReachedBottomSheet extends BottomSheetWithRecyclerListView imp
         this.parentFragment = fragment;
         this.currentAccount = currentAccount;
         this.type = type;
-        // MeeroX v195 diag (temporary, owner-ordered): the moment the
-        // "too many communities" surface shows, auto-copy the watch line.
-        if (type == TYPE_TO0_MANY_COMMUNITIES) {
-            MeeroJoinWatch.onTooManyCommunitiesShown(context);
-        }
         updateTitle();
         updateRows();
         if (type == TYPE_PUBLIC_LINKS) {

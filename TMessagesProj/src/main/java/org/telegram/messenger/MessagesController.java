@@ -15893,6 +15893,27 @@ public class MessagesController extends BaseController implements NotificationCe
                     });
                     return;
                 }
+                // MeeroX v196 FIX (owner-proven): Telegram enforces some
+                // caps per api_id, not per account. Our default slot
+                // (Nagram's id) gets a phantom CHANNELS_TOO_MUCH on
+                // self-joins that the official id sails through - the
+                // owner's identical account joins fine on the official
+                // client and the v195 watch confirmed a genuine server
+                // 400 CHANNELS_TOO_MUCH on TL_channels_joinChannel.
+                // So: rotate the credential pool (the v183 machine, same
+                // one login already uses) and retry the EXACT SAME join
+                // silently. advance() walks monotonically, so this
+                // terminates: pool exhausted or a truly-at-limit account
+                // both fall through to the untouched stock limit surface.
+                // Guards keep invites-of-others and non-join requests out.
+                if ("CHANNELS_TOO_MUCH".equals(error.text)
+                        && request instanceof TLRPC.TL_channels_joinChannel
+                        && isChannel && inputUser instanceof TLRPC.TL_inputUserSelf
+                        && tw.nekomimi.nekogram.MeeroApiKeys.advance()) {
+                    FileLog.d("MeeroX: phantom CHANNELS_TOO_MUCH on join - rotated api key, retrying");
+                    AndroidUtilities.runOnUIThread(() -> addUserToChat(chatId, user, forwardCount, botHash, fragment, ignoreIfAlreadyExists, onFinishRunnable, onError, processInvitedUsers));
+                    return;
+                }
                 AndroidUtilities.runOnUIThread(() -> {
                     if (processInvitedUsers != null) {
                         processInvitedUsers.run(null);
