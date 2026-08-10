@@ -39,6 +39,7 @@ public class NekoAboutActivity extends BaseNekoSettingsActivity {
     private int versionRow;
     private int meeroEditionRow;
     private int developerRow;
+    private int mainChannelRow;
     private int channel1Row;
     private int channel2Row;
     private int privacyRow;
@@ -50,6 +51,7 @@ public class NekoAboutActivity extends BaseNekoSettingsActivity {
         versionRow = addRow();
         meeroEditionRow = addRow();
         developerRow = addRow();
+        mainChannelRow = addRow();
         channel1Row = addRow();
         channel2Row = addRow();
         privacyRow = addRow();
@@ -108,6 +110,9 @@ public class NekoAboutActivity extends BaseNekoSettingsActivity {
         if (position == developerRow) {
             MessagesController.getInstance(currentAccount)
                     .openByUserName("i55544", NekoAboutActivity.this, 1);
+        } else if (position == mainChannelRow) {
+            MessagesController.getInstance(currentAccount)
+                    .openByUserName("Y_VBB", NekoAboutActivity.this, 1);
         } else if (position == channel1Row) {
             MessagesController.getInstance(currentAccount)
                     .openByUserName("nadoremalf", NekoAboutActivity.this, 1);
@@ -140,6 +145,8 @@ public class NekoAboutActivity extends BaseNekoSettingsActivity {
                     textCell.setTextAndValue(MeeroStrings.s(10), String.valueOf(BuildConfig.MEERO_EDITION), true);
                 } else if (position == developerRow) {
                     textCell.setTextAndValue(MeeroStrings.s(82), "@i55544", true);
+                } else if (position == mainChannelRow) {
+                    textCell.setTextAndValue(MeeroStrings.s(463), "@Y_VBB", true);
                 } else if (position == channel1Row) {
                     textCell.setTextAndValue(MeeroStrings.s(37), "@nadoremalf", true);
                 } else if (position == channel2Row) {
