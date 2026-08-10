@@ -249,6 +249,15 @@ public class MeeroSettingsActivity extends BaseNekoXSettingsActivity {
         return superView;
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        // v194: owner's channel-subscribe prompt - every entry until the
+        // join button is tapped once (non-cancelable by explicit order);
+        // never-throw helper, see MeeroChannelPromo.
+        tw.nekomimi.nekogram.MeeroChannelPromo.maybeShow(this);
+    }
+
     /**
      * MeeroX v128 FIX: the base fragment called listView.setSections(true),
      * which attaches a decoration that paints THEMED section cards
