@@ -48,6 +48,8 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
+import tw.nekomimi.nekogram.MeeroJoinWatch;
+
 public class TooManyCommunitiesActivity extends BaseFragment {
 
     public static final int TYPE_JOIN = 0;
@@ -124,6 +126,9 @@ public class TooManyCommunitiesActivity extends BaseFragment {
     @Override
     public View createView(Context context) {
         type = arguments.getInt("type", TYPE_JOIN);
+        // MeeroX v195 diag (temporary, owner-ordered): page variant of the
+        // communities-limit surface -> auto-copy the watch line as well.
+        MeeroJoinWatch.onTooManyCommunitiesShown(context);
 
         actionBar.setBackButtonImage(R.drawable.ic_ab_back);
         actionBar.setAllowOverlayTitle(true);
