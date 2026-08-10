@@ -3,6 +3,8 @@ package tw.nekomimi.nekogram;
 import static org.telegram.messenger.AndroidUtilities.dp;
 
 import android.graphics.Color;
+
+import org.telegram.messenger.AndroidUtilities;
 import android.graphics.Paint;
 import android.view.View;
 
@@ -32,6 +34,22 @@ public class MeeroShadow {
 
     private static final float[] BLUR_DP = {10f, 16f, 24f};
     private static final float[] DY_DP = {2f, 4f, 8f};
+
+    /* v188 (batch 3B): the tier tables arrive from the sealed native table;
+     * the legacy arrays above stay as the byte-identical fallback. Cache
+     * slots: 3 tiers x day/night. */
+    private static final float[][] sTier = new float[3][2][];
+    private static float tierPart(int tier, boolean dark, int part, float fb) {
+        final int t = tier < 0 ? 0 : (tier > 2 ? 2 : tier);
+        final int d = dark ? 1 : 0;
+        float[] pack = sTier[t][d];
+        if (pack == null) {
+            float[] n = MeeroCore.chatCore() ? MeeroCore.nShadowTier(t, dark) : null;
+            pack = (n != null && n.length == 3) ? n : new float[0];
+            sTier[t][d] = pack;
+        }
+        return pack.length == 3 ? pack[part] : fb;
+    }
     /**
      * Dark themes need a stronger shadow to register at all, since the page
      * behind is already close to black; light themes need far less before the
@@ -74,8 +92,9 @@ public class MeeroShadow {
             return;
         }
         final int t = clampTier(tier);
-        paint.setShadowLayer(dp(BLUR_DP[t]), 0, dp(DY_DP[t]),
-                Color.argb(dark ? ALPHA_DARK[t] : ALPHA_LIGHT[t], 0, 0, 0));
+        paint.setShadowLayer(dp(tierPart(t, dark, 0, BLUR_DP[t])), 0,
+                dp(tierPart(t, dark, 1, DY_DP[t])),
+                Color.argb((int) tierPart(t, dark, 2, dark ? ALPHA_DARK[t] : ALPHA_LIGHT[t]), 0, 0, 0));
     }
 
     /** How much room the shadow needs around a surface, in pixels. */
@@ -84,6 +103,11 @@ public class MeeroShadow {
             return 0;
         }
         final int t = clampTier(tier);
+        final int nativeInset = MeeroCore.chatCore()
+                ? MeeroCore.nShadowInset(t, AndroidUtilities.density) : -1;
+        if (nativeInset >= 0) {
+            return nativeInset;
+        }
         return (int) Math.ceil(dp(BLUR_DP[t] + DY_DP[t]));
     }
 

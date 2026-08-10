@@ -51,6 +51,24 @@ public final class MeeroBubbleStyles {
     private MeeroBubbleStyles() {
     }
 
+    /* v188 (batch 3B): radius table / tailless mask / tail recipes / preview
+     * constants arrive from the sealed native table (dom 'B'); every method
+     * keeps its legacy literals as the byte-identical fallback. */
+    private static float[] sTail(int style) {
+        return MeeroCore.chatCore() ? MeeroCore.nBBTailParams(style) : null;
+    }
+
+    private static float[] sPrev;
+    private static float pvc(int i, float fb) {
+        float[] p = sPrev;
+        if (p == null) {
+            float[] n = MeeroCore.chatCore() ? MeeroCore.nBBPreviewConsts() : null;
+            p = (n != null && n.length == 4) ? n : new float[0];
+            sPrev = p;
+        }
+        return p.length == 4 ? p[i] : fb;
+    }
+
     /** Currently selected style; any failure leaves stock in charge. */
     public static int current() {
         try {
@@ -67,6 +85,9 @@ public final class MeeroBubbleStyles {
      * can simply ask for a huge value.
      */
     public static int radiusDp(int style, int fallback) {
+        if (MeeroCore.chatCore()) {
+            return MeeroCore.nBBRadius(style, fallback);
+        }
         switch (style) {
             case IOS_OFFICIAL:
             case IOS_MODERN:
@@ -90,6 +111,9 @@ public final class MeeroBubbleStyles {
 
     /** True for the clean, tail-free styles. */
     public static boolean isTailless(int style) {
+        if (MeeroCore.chatCore()) {
+            return MeeroCore.nBBTailless(style);
+        }
         return style == IOS_MODERN || style == CAPSULE || style == SHARP || style == INSTAGRAM;
     }
 
@@ -104,21 +128,32 @@ public final class MeeroBubbleStyles {
      * contours UNION with the body instead of cutting a hole in it.
      */
     public static void appendOfficialTail(Path path, float edgeX, float baseY, boolean outgoing, float dpu) {
+        final float[] tp = sTail(IOS_OFFICIAL);
+        final float connW  = tp != null && tp.length == 10 ? tp[0] : 16.5f;
+        final float connT  = tp != null && tp.length == 10 ? tp[1] : 16.5f;
+        final float connB  = tp != null && tp.length == 10 ? tp[2] : 8.5f;
+        final float inX    = tp != null && tp.length == 10 ? tp[3] : 9f;
+        final float base   = tp != null && tp.length == 10 ? tp[4] : 8.5f;
+        final float ctlX   = tp != null && tp.length == 10 ? tp[5] : 0.13f;
+        final float ctlY   = tp != null && tp.length == 10 ? tp[6] : 3.21f;
+        final float tipX   = tp != null && tp.length == 10 ? tp[7] : 4.74f;
+        final float nearX  = tp != null && tp.length == 10 ? tp[8] : 4.5f;
+        final float farX   = tp != null && tp.length == 10 ? tp[9] : 9f;
         if (outgoing) {
-            path.addRect(edgeX - 16.5f * dpu, baseY - 16.5f * dpu, edgeX, baseY - 8.5f * dpu, Path.Direction.CW);
-            path.moveTo(edgeX - 9f * dpu, baseY - 8.5f * dpu);
-            path.lineTo(edgeX, baseY - 8.5f * dpu);
-            path.quadTo(edgeX + 0.13f * dpu, baseY - 3.21f * dpu, edgeX + 4.74f * dpu, baseY);
-            path.lineTo(edgeX + 4.5f * dpu, baseY);
-            path.quadTo(edgeX - 9f * dpu, baseY, edgeX - 9f * dpu, baseY - 8.5f * dpu);
+            path.addRect(edgeX - connW * dpu, baseY - connT * dpu, edgeX, baseY - connB * dpu, Path.Direction.CW);
+            path.moveTo(edgeX - inX * dpu, baseY - base * dpu);
+            path.lineTo(edgeX, baseY - base * dpu);
+            path.quadTo(edgeX + ctlX * dpu, baseY - ctlY * dpu, edgeX + tipX * dpu, baseY);
+            path.lineTo(edgeX + nearX * dpu, baseY);
+            path.quadTo(edgeX - farX * dpu, baseY, edgeX - farX * dpu, baseY - base * dpu);
             path.close();
         } else {
-            path.addRect(edgeX, baseY - 16.5f * dpu, edgeX + 16.5f * dpu, baseY - 8.5f * dpu, Path.Direction.CCW);
-            path.moveTo(edgeX + 9f * dpu, baseY - 8.5f * dpu);
-            path.lineTo(edgeX, baseY - 8.5f * dpu);
-            path.quadTo(edgeX - 0.13f * dpu, baseY - 3.21f * dpu, edgeX - 4.74f * dpu, baseY);
-            path.lineTo(edgeX - 4.5f * dpu, baseY);
-            path.quadTo(edgeX + 9f * dpu, baseY, edgeX + 9f * dpu, baseY - 8.5f * dpu);
+            path.addRect(edgeX, baseY - connT * dpu, edgeX + connW * dpu, baseY - connB * dpu, Path.Direction.CCW);
+            path.moveTo(edgeX + inX * dpu, baseY - base * dpu);
+            path.lineTo(edgeX, baseY - base * dpu);
+            path.quadTo(edgeX - ctlX * dpu, baseY - ctlY * dpu, edgeX - tipX * dpu, baseY);
+            path.lineTo(edgeX - nearX * dpu, baseY);
+            path.quadTo(edgeX + farX * dpu, baseY, edgeX + farX * dpu, baseY - base * dpu);
             path.close();
         }
     }
@@ -129,15 +164,21 @@ public final class MeeroBubbleStyles {
      * winding contract as appendOfficialTail().
      */
     public static void appendClassicTail(Path path, float edgeX, float baseY, boolean outgoing, float dpu) {
+        final float[] tp = sTail(CLASSIC);
+        final float topY = tp != null && tp.length == 5 ? tp[0] : 9f;
+        final float ctlX = tp != null && tp.length == 5 ? tp[1] : 4.8f;
+        final float ctlY = tp != null && tp.length == 5 ? tp[2] : 2.5f;
+        final float tipX = tp != null && tp.length == 5 ? tp[3] : 3.5f;
+        final float bckX = tp != null && tp.length == 5 ? tp[4] : 9f;
         if (outgoing) {
-            path.moveTo(edgeX, baseY - 9f * dpu);
-            path.quadTo(edgeX + 4.8f * dpu, baseY - 2.5f * dpu, edgeX + 3.5f * dpu, baseY);
-            path.lineTo(edgeX - 9f * dpu, baseY);
+            path.moveTo(edgeX, baseY - topY * dpu);
+            path.quadTo(edgeX + ctlX * dpu, baseY - ctlY * dpu, edgeX + tipX * dpu, baseY);
+            path.lineTo(edgeX - bckX * dpu, baseY);
             path.close();
         } else {
-            path.moveTo(edgeX, baseY - 9f * dpu);
-            path.quadTo(edgeX - 4.8f * dpu, baseY - 2.5f * dpu, edgeX - 3.5f * dpu, baseY);
-            path.lineTo(edgeX + 9f * dpu, baseY);
+            path.moveTo(edgeX, baseY - topY * dpu);
+            path.quadTo(edgeX - ctlX * dpu, baseY - ctlY * dpu, edgeX - tipX * dpu, baseY);
+            path.lineTo(edgeX + bckX * dpu, baseY);
             path.close();
         }
     }
@@ -148,15 +189,21 @@ public final class MeeroBubbleStyles {
      * contract as appendOfficialTail().
      */
     public static void appendWhatsAppTail(Path path, float edgeX, float baseY, boolean outgoing, float dpu) {
+        final float[] tp = sTail(WHATSAPP);
+        final float topY = tp != null && tp.length == 5 ? tp[0] : 8f;
+        final float ctlX = tp != null && tp.length == 5 ? tp[1] : 3.6f;
+        final float ctlY = tp != null && tp.length == 5 ? tp[2] : 2.4f;
+        final float tipX = tp != null && tp.length == 5 ? tp[3] : 2.6f;
+        final float bckX = tp != null && tp.length == 5 ? tp[4] : 8f;
         if (outgoing) {
-            path.moveTo(edgeX, baseY - 8f * dpu);
-            path.quadTo(edgeX + 3.6f * dpu, baseY - 2.4f * dpu, edgeX + 2.6f * dpu, baseY);
-            path.lineTo(edgeX - 8f * dpu, baseY);
+            path.moveTo(edgeX, baseY - topY * dpu);
+            path.quadTo(edgeX + ctlX * dpu, baseY - ctlY * dpu, edgeX + tipX * dpu, baseY);
+            path.lineTo(edgeX - bckX * dpu, baseY);
             path.close();
         } else {
-            path.moveTo(edgeX, baseY - 8f * dpu);
-            path.quadTo(edgeX - 3.6f * dpu, baseY - 2.4f * dpu, edgeX - 2.6f * dpu, baseY);
-            path.lineTo(edgeX + 8f * dpu, baseY);
+            path.moveTo(edgeX, baseY - topY * dpu);
+            path.quadTo(edgeX - ctlX * dpu, baseY - ctlY * dpu, edgeX - tipX * dpu, baseY);
+            path.lineTo(edgeX + bckX * dpu, baseY);
             path.close();
         }
     }
@@ -167,15 +214,19 @@ public final class MeeroBubbleStyles {
      * like the real thing. Same winding contract as appendOfficialTail().
      */
     private static void appendStockNub(Path path, float edgeX, float baseY, boolean outgoing, float dpu) {
+        final float[] tp = sTail(STOCK);
+        final float topY = tp != null && tp.length == 3 ? tp[0] : 6f;
+        final float tipX = tp != null && tp.length == 3 ? tp[1] : 2.2f;
+        final float bckX = tp != null && tp.length == 3 ? tp[2] : 7f;
         if (outgoing) {
-            path.moveTo(edgeX, baseY - 6f * dpu);
-            path.lineTo(edgeX + 2.2f * dpu, baseY);
-            path.lineTo(edgeX - 7f * dpu, baseY);
+            path.moveTo(edgeX, baseY - topY * dpu);
+            path.lineTo(edgeX + tipX * dpu, baseY);
+            path.lineTo(edgeX - bckX * dpu, baseY);
             path.close();
         } else {
-            path.moveTo(edgeX, baseY - 6f * dpu);
-            path.lineTo(edgeX - 2.2f * dpu, baseY);
-            path.lineTo(edgeX + 7f * dpu, baseY);
+            path.moveTo(edgeX, baseY - topY * dpu);
+            path.lineTo(edgeX - tipX * dpu, baseY);
+            path.lineTo(edgeX + bckX * dpu, baseY);
             path.close();
         }
     }
@@ -190,10 +241,11 @@ public final class MeeroBubbleStyles {
      */
     public static void drawPreview(Canvas canvas, int style, boolean incoming, float l, float t, float r, float b, int color) {
         final float dpu = AndroidUtilities.density;
-        final float bodyR = incoming ? r : r - 7f * dpu;
-        final float bodyL = incoming ? l + 7f * dpu : l;
-        float rad = radiusDp(style, 12) * dpu;
-        rad = Math.min(rad, (b - t - 2f * dpu) / 2f);
+        final float allow = pvc(0, 7f);   // tail allowance
+        final float bodyR = incoming ? r : r - allow * dpu;
+        final float bodyL = incoming ? l + allow * dpu : l;
+        float rad = radiusDp(style, (int) pvc(2, 12f)) * dpu;
+        rad = Math.min(rad, (b - t - pvc(3, 2f) * dpu) / 2f);
 
         final Path path = new Path();
         // v125: the body MUST wind the way the tail contours expect for each
@@ -201,8 +253,9 @@ public final class MeeroBubbleStyles {
         // body happens to be CCW, which is why real bubbles were fine while
         // the CW incoming preview cancelled the overlap and spat the tail
         // out as a detached chunk.
-        path.addRoundRect(new RectF(bodyL, t + dpu, bodyR, b - dpu), rad, rad, incoming ? Path.Direction.CCW : Path.Direction.CW);
-        final float baseY = b - dpu;
+        final float inD = pvc(1, 1f) * dpu;
+        path.addRoundRect(new RectF(bodyL, t + inD, bodyR, b - inD), rad, rad, incoming ? Path.Direction.CCW : Path.Direction.CW);
+        final float baseY = b - inD;
         if (style == IOS_OFFICIAL) {
             appendOfficialTail(path, incoming ? bodyL : bodyR, baseY, incoming, dpu);
         } else if (style == CLASSIC) {

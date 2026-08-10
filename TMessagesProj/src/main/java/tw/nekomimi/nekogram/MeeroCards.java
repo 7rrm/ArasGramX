@@ -33,6 +33,20 @@ public class MeeroCards {
     public static final int POS_MIDDLE = 2;
     public static final int POS_LAST   = 3;
 
+    /* v188 (batch 3B): card geometry + the lift curve come from the sealed
+     * native table; public constants stay for API consumers and act as the
+     * exact fallback values. */
+    private static float[] sConsts;
+    private static float cc(int i, float fb) {
+        float[] p = sConsts;
+        if (p == null) {
+            float[] n = MeeroCore.chatCore() ? MeeroCore.nCardConsts() : null;
+            p = (n != null && n.length == 10) ? n : new float[0];
+            sConsts = p;
+        }
+        return p.length == 10 ? p[i] : fb;
+    }
+
     /** The fill colour a card is drawn with, for hosts that must match it. */
     public static int surfaceColor(Theme.ResourcesProvider rp) {
         final int base = Theme.getColor(Theme.key_windowBackgroundWhite, rp);
@@ -55,6 +69,12 @@ public class MeeroCards {
         final float sat = hsv[1];
         final float val = hsv[2];
         // Vivid colours need a smaller step to stay recognisable.
+        final float lifted = MeeroCore.chatCore()
+                ? MeeroCore.nCardLiftCore(sat, val) : -1f;
+        if (lifted >= 0f) {
+            hsv[2] = lifted;
+            return Color.HSVToColor(Color.alpha(base), hsv);
+        }
         final float step = 0.10f - 0.05f * Math.min(1f, sat);
         if (val < 0.5f) {
             hsv[2] = Math.min(1f, val + step);
@@ -146,11 +166,11 @@ public class MeeroCards {
          */
         public static void drawTile(Canvas canvas, float cx, float cy, int index,
                                     Theme.ResourcesProvider rp, Paint paint) {
-            final float half = dp(SIZE_DP) / 2f;
+            final float half = dp(cc(2, SIZE_DP)) / 2f;
             final RectF box = new RectF(cx - half, cy - half, cx + half, cy + half);
             paint.setColor(accentFor(index, rp));
             paint.setAlpha(255);
-            canvas.drawRoundRect(box, dp(RADIUS_DP), dp(RADIUS_DP), paint);
+            canvas.drawRoundRect(box, dp(cc(3, RADIUS_DP)), dp(cc(3, RADIUS_DP)), paint);
         }
 
         /** The glyph colour that sits on top of a solid tile. */
@@ -161,13 +181,13 @@ public class MeeroCards {
         @Override
         public void draw(Canvas canvas) {
             final android.graphics.Rect b = getBounds();
-            final int size = dp(SIZE_DP);
+            final int size = dp(cc(2, SIZE_DP));
             final float left = b.centerX() - size / 2f;
             final float top = b.centerY() - size / 2f;
             r.set(left, top, left + size, top + size);
             paint.setColor(accentFor(tintIndex, rp));
-            paint.setAlpha((int) (255 * FILL_ALPHA));
-            canvas.drawRoundRect(r, dp(RADIUS_DP), dp(RADIUS_DP), paint);
+            paint.setAlpha((int) (255 * cc(4, FILL_ALPHA)));
+            canvas.drawRoundRect(r, dp(cc(3, RADIUS_DP)), dp(cc(3, RADIUS_DP)), paint);
         }
 
         @Override
@@ -224,7 +244,7 @@ public class MeeroCards {
         }
         attach(view, new CardDrawable(position, rp));
         // Inset the content so the text is not flush against the rounded edge.
-        final int pad = dp(6);
+        final int pad = dp(cc(8, 6));
         view.setPadding(view.getPaddingLeft() + pad, view.getPaddingTop(),
                 view.getPaddingRight() + pad, view.getPaddingBottom());
     }
@@ -261,7 +281,7 @@ public class MeeroCards {
             this.position = position;
             this.rp = rp;
             hairline.setStyle(Paint.Style.STROKE);
-            hairline.setStrokeWidth(Math.max(1f, dp(0.5f)));
+            hairline.setStrokeWidth(Math.max(1f, dp(cc(6, 0.5f))));
         }
 
         @Override
@@ -275,8 +295,8 @@ public class MeeroCards {
             // a border, which is what the stock helper produces.
             MeeroShadow.apply(fill, MeeroShadow.TIER_CARD, dark);
 
-            final int m = dp(SIDE_MARGIN_DP);
-            final float r = dp(RADIUS_DP);
+            final int m = dp(cc(0, SIDE_MARGIN_DP));
+            final float r = dp(cc(1, RADIUS_DP));
             final android.graphics.Rect b = getBounds();
 
             // Bleed a hair past the shared edges. Without this the rounding
@@ -284,26 +304,33 @@ public class MeeroCards {
             // line running through the card.
             // Every row is now a standalone card, so instead of bleeding into
             // its neighbours it insets vertically to leave a visible gap.
-            final float gap = position == POS_SINGLE ? dp(3) : 0f;
+            final float gap = position == POS_SINGLE ? dp(cc(5, 3)) : 0f;
+            final float spill = cc(9, 1f);
             float top = b.top + gap;
             float bottom = b.bottom - gap;
             if (position == POS_MIDDLE || position == POS_LAST) {
-                top -= 1f;
+                top -= spill;
             }
             if (position == POS_MIDDLE || position == POS_FIRST) {
-                bottom += 1f;
+                bottom += spill;
             }
             rect.set(b.left + m, top, b.right - m, bottom);
 
             // Square off the joins so consecutive rows read as one card. Only
             // the outer corners of the group stay rounded.
-            java.util.Arrays.fill(radii, r);
-            if (position == POS_MIDDLE) {
-                java.util.Arrays.fill(radii, 0f);
-            } else if (position == POS_FIRST) {
-                radii[4] = radii[5] = radii[6] = radii[7] = 0f; // bottom corners
-            } else if (position == POS_LAST) {
-                radii[0] = radii[1] = radii[2] = radii[3] = 0f; // top corners
+            final float[] nativeRadii = MeeroCore.chatCore()
+                    ? MeeroCore.nCardRadii(position, r) : null;
+            if (nativeRadii != null && nativeRadii.length == 8) {
+                System.arraycopy(nativeRadii, 0, radii, 0, 8);
+            } else {
+                java.util.Arrays.fill(radii, r);
+                if (position == POS_MIDDLE) {
+                    java.util.Arrays.fill(radii, 0f);
+                } else if (position == POS_FIRST) {
+                    radii[4] = radii[5] = radii[6] = radii[7] = 0f; // bottom corners
+                } else if (position == POS_LAST) {
+                    radii[0] = radii[1] = radii[2] = radii[3] = 0f; // top corners
+                }
             }
             canvas.save();
             path.reset();
@@ -317,8 +344,11 @@ public class MeeroCards {
             // A separator only makes sense inside a shared card; standalone
             // cards are already told apart by the gap between them.
             if (position == POS_FIRST || position == POS_MIDDLE) {
-                hairline.setColor(dark ? lighten(fill.getColor(), 0.10f) : darken(fill.getColor(), 0.08f));
-                final float inset = dp(SIDE_MARGIN_DP + 14);
+                final int nativeHair = MeeroCore.chatCore()
+                        ? MeeroCore.nCardHairline(fill.getColor(), dark) : 0x7FFFFFFF;
+                hairline.setColor(nativeHair != 0x7FFFFFFF ? nativeHair
+                        : (dark ? lighten(fill.getColor(), 0.10f) : darken(fill.getColor(), 0.08f)));
+                final float inset = dp(cc(0, SIDE_MARGIN_DP) + cc(7, 14));
                 final float y = b.bottom - hairline.getStrokeWidth();
                 canvas.drawLine(b.left + inset, y, b.right - inset, y, hairline);
             }

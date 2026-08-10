@@ -2958,6 +2958,172 @@ JNIEXPORT jint JNICALL MC_CLASS(nGlassCardPos)(JNIEnv *env, jclass c,
     return (jint) v;
 }
 
+/* ============================================================================
+ * MeeroX v188 - batch 3B: the chat-surface family design brain.
+ * Bubble radius table + tailless mask + the four tail recipes (the derived
+ * iOS crescent numbers point for point, classic wedge, whatsapp nub, stock
+ * nub), MeeroShadow tier tables, MeeroCards constants + hue-preserving lift
+ * curve + per-position radii rules + hairline math - all sealed dom 'B'
+ * with the same vault seed, decoded once. Path/Canvas calls stay Java;
+ * only the recipe is buried. Tamper => silent legacy fallback, never crash.
+ * ============================================================================ */
+
+#include "meero_chattab.h"
+#include "meero_chat.h"
+
+static int mb_ensure(JNIEnv *env) {
+    if (mb_ready()) return 1;
+    unsigned char seed[32];
+    int ok = 0;
+    if (mc_seed(env, seed)) {
+        size_t n = 0;
+        unsigned char *raw = mc_raw_unseal(seed, 'B', MC_CHATTAB,
+                                           (size_t) MC_CHATTAB_LEN, &n);
+        if (raw != NULL) {
+            ok = mb_init(raw, n);
+            memset(raw, 0, n);
+            free(raw);
+        }
+    }
+    memset(seed, 0, 32);
+    return ok;
+}
+
+/* 1 when the sealed chat-surface table decoded fine (dev-parity probe) */
+JNIEXPORT jboolean JNICALL MC_CLASS(nChatReady)(JNIEnv *env, jclass c) {
+    (void) c;
+    pthread_mutex_lock(&mc_mu);
+    int ok = mb_ensure(env);
+    pthread_mutex_unlock(&mc_mu);
+    return ok ? JNI_TRUE : JNI_FALSE;
+}
+
+/* bubble corner radius per style (dp); the table's -1 returns `fallback` */
+JNIEXPORT jint JNICALL MC_CLASS(nBBRadius)(JNIEnv *env, jclass c,
+                                           jint style, jint fallback) {
+    (void) c;
+    pthread_mutex_lock(&mc_mu);
+    jint v = fallback;
+    if (mb_ensure(env)) {
+        float r = mb_radius((int) style);
+        if (r >= 0.0f) v = (jint) r;
+    }
+    pthread_mutex_unlock(&mc_mu);
+    return v;
+}
+
+JNIEXPORT jboolean JNICALL MC_CLASS(nBBTailless)(JNIEnv *env, jclass c, jint style) {
+    (void) c;
+    pthread_mutex_lock(&mc_mu);
+    jboolean v = (mb_ensure(env) && mb_tailless((int) style)) ? JNI_TRUE : JNI_FALSE;
+    pthread_mutex_unlock(&mc_mu);
+    return v;
+}
+
+/* the style's tail recipe numbers (10/5/5/3 floats) or NULL when tailless */
+JNIEXPORT jfloatArray JNICALL MC_CLASS(nBBTailParams)(JNIEnv *env, jclass c, jint style) {
+    (void) c;
+    pthread_mutex_lock(&mc_mu);
+    jfloatArray r = NULL;
+    if (mb_ensure(env)) {
+        float v[10];
+        int n = mb_tail((int) style, v);
+        if (n > 0) r = mc_farr(env, v, n);
+    }
+    pthread_mutex_unlock(&mc_mu);
+    return r;
+}
+
+/* preview geometry: tail allowance, inset, radius fallback, edge pad */
+JNIEXPORT jfloatArray JNICALL MC_CLASS(nBBPreviewConsts)(JNIEnv *env, jclass c) {
+    (void) c;
+    pthread_mutex_lock(&mc_mu);
+    jfloatArray r = NULL;
+    if (mb_ensure(env)) {
+        float v[4];
+        mb_preview(v);
+        r = mc_farr(env, v, 4);
+    }
+    pthread_mutex_unlock(&mc_mu);
+    return r;
+}
+
+/* shadow tier pack: blurDp, dyDp, alpha(dark-aware) */
+JNIEXPORT jfloatArray JNICALL MC_CLASS(nShadowTier)(JNIEnv *env, jclass c,
+                                                    jint tier, jboolean dark) {
+    (void) c;
+    pthread_mutex_lock(&mc_mu);
+    jfloatArray r = NULL;
+    if (mb_ensure(env)) {
+        float v[3];
+        mb_shadow((int) tier, dark == JNI_TRUE, v);
+        r = mc_farr(env, v, 3);
+    }
+    pthread_mutex_unlock(&mc_mu);
+    return r;
+}
+
+/* pixels of breathing room a shadow needs (density-aware like Java dp+ceil) */
+JNIEXPORT jint JNICALL MC_CLASS(nShadowInset)(JNIEnv *env, jclass c,
+                                              jint tier, jfloat density) {
+    (void) c;
+    pthread_mutex_lock(&mc_mu);
+    jint v = mb_ensure(env) ? (jint) mb_shadow_inset((int) tier, density) : -1;
+    pthread_mutex_unlock(&mc_mu);
+    return v;
+}
+
+/* the hue-preserving lift curve (sat,val) -> new val */
+JNIEXPORT jfloat JNICALL MC_CLASS(nCardLiftCore)(JNIEnv *env, jclass c,
+                                                 jfloat sat, jfloat val) {
+    (void) c;
+    pthread_mutex_lock(&mc_mu);
+    jfloat v = mb_ensure(env) ? (jfloat) mb_lift_core(sat, val) : (jfloat) -1.0f;
+    pthread_mutex_unlock(&mc_mu);
+    return v;
+}
+
+/* card family constants: side, radius, tileSize, tileRadius, tileAlpha,
+ * singleGap, hairlineStroke, hairlineInsetExtra, contentPad, spillPx */
+JNIEXPORT jfloatArray JNICALL MC_CLASS(nCardConsts)(JNIEnv *env, jclass c) {
+    (void) c;
+    pthread_mutex_lock(&mc_mu);
+    jfloatArray r = NULL;
+    if (mb_ensure(env)) {
+        float v[10];
+        for (int i = 0; i < 10; i++) v[i] = mb_cardc(i);
+        r = mc_farr(env, v, 10);
+    }
+    pthread_mutex_unlock(&mc_mu);
+    return r;
+}
+
+/* the 8 corner radii for a card position (px radius passed in) */
+JNIEXPORT jfloatArray JNICALL MC_CLASS(nCardRadii)(JNIEnv *env, jclass c,
+                                                   jint position, jfloat radius) {
+    (void) c;
+    pthread_mutex_lock(&mc_mu);
+    jfloatArray r = NULL;
+    if (mb_ensure(env)) {
+        float v[8];
+        mb_card_radii((int) position, radius, v);
+        r = mc_farr(env, v, 8);
+    }
+    pthread_mutex_unlock(&mc_mu);
+    return r;
+}
+
+/* in-card hairline colour derived from the card fill; 0x7FFFFFFF => legacy */
+JNIEXPORT jint JNICALL MC_CLASS(nCardHairline)(JNIEnv *env, jclass c,
+                                               jint fill, jboolean dark) {
+    (void) c;
+    pthread_mutex_lock(&mc_mu);
+    jint v = mb_ensure(env) ? (jint) mb_card_hairline(fill, dark == JNI_TRUE)
+                            : (jint) 0x7FFFFFFF;
+    pthread_mutex_unlock(&mc_mu);
+    return v;
+}
+
 JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved) {
     (void) vm; (void) reserved;
     return JNI_VERSION_1_6;

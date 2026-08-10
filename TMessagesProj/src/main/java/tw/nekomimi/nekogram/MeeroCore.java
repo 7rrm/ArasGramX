@@ -268,4 +268,32 @@ public final class MeeroCore {
     public static boolean glassCore() {
         return ready() && nGlassReady();
     }
+
+    /* batch 3B: chat-surface family brain (sealed table dom 'B') */
+    public static native boolean nChatReady();
+
+    public static native int nBBRadius(int style, int fallback);
+
+    public static native boolean nBBTailless(int style);
+
+    public static native float[] nBBTailParams(int style);
+
+    public static native float[] nBBPreviewConsts();
+
+    public static native float[] nShadowTier(int tier, boolean dark);
+
+    public static native int nShadowInset(int tier, float density);
+
+    public static native float nCardLiftCore(float sat, float val);
+
+    public static native float[] nCardConsts();
+
+    public static native float[] nCardRadii(int position, float radius);
+
+    public static native int nCardHairline(int fill, boolean dark);
+
+    /** Library up AND the sealed chat-surface table decoded. */
+    public static boolean chatCore() {
+        return ready() && nChatReady();
+    }
 }
