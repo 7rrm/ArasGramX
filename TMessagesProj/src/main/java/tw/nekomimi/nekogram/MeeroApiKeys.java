@@ -35,7 +35,9 @@ public class MeeroApiKeys {
      * the old list, so rebuilding the table must reset the saved choice once.
      */
     private static final String KEY_GENERATION = "api_generation";
-    private static final int GENERATION = 2;
+    // v197: slot 0 became the official id-4 credential (phantom join cap
+    // fix), so every saved rotation index must reset once onto it.
+    private static final int GENERATION = 3;
 
     private static int index = -1;
 
