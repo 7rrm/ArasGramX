@@ -2747,6 +2747,12 @@ public class ChatAttachAlert extends BottomSheet implements NotificationCenter.N
         buttonsRecyclerView.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_YES);
         buttonsRecyclerViewWrapper.addView(buttonsRecyclerView, LayoutHelper.createFrameMatchParent());
         containerView.addView(buttonsRecyclerViewWrapper, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, 70, Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL));
+        // MeeroX v208 (owner-approved preview, التصميم A): iOS face for the
+        // attach sheet - grabber pill + grouped action card with colored
+        // squircles. Entirely switch-gated (meeroIosAttachPanel); OFF keeps
+        // the stock face byte-exact, and every failure path inside the
+        // helper silently keeps stock too.
+        tw.nekomimi.nekogram.MeeroAttachIos.apply(this, containerView, buttonsRecyclerViewWrapper, buttonsRecyclerView, resourcesProvider);
         buttonsRecyclerView.setOnItemClickListener((view, position) -> {
             BaseFragment lastFragment = baseFragment;
             if (lastFragment == null) {
@@ -4927,6 +4933,22 @@ public class ChatAttachAlert extends BottomSheet implements NotificationCenter.N
         } else if (requestCode == 30 && locationLayout != null && currentAttachLayout == locationLayout && isShowing()) {
             locationLayout.openShareLiveLocation();
         }
+    }
+
+    // MeeroX v208: a throw-away AttachButton carrying only a tag, so the iOS
+    // face's rows re-run this sheet's EXACT stock click guard chain
+    // (permissions / premium / restriction gates) - zero duplicated logic.
+    private View meeroAttachProxyButton;
+    public View meeroProxyForAttachTag(int tag) {
+        try {
+            if (meeroAttachProxyButton == null) {
+                meeroAttachProxyButton = new AttachButton(getContext());
+            }
+            meeroAttachProxyButton.setTag(tag);
+        } catch (Throwable t) {
+            FileLog.e(t);
+        }
+        return meeroAttachProxyButton;
     }
 
     private void openContactsLayout() {

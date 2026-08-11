@@ -196,6 +196,8 @@ public class MeeroSettingsActivity extends BaseNekoXSettingsActivity {
     // desc, default OFF) - explicit title arg, so the raw-key fallback the
     // owner photographed on the avatar row can never show here.
     private final AbstractConfigCell menuWatchDiagRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroMenuWatchDiag, MeeroStrings.s(469), MeeroStrings.s(468)));
+    // v208 (owner-approved preview A): iOS attach-sheet face - vault 470 title / 471 desc
+    private final AbstractConfigCell iosAttachPanelRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosAttachPanel, MeeroStrings.s(471), MeeroStrings.s(470)));
     private final AbstractConfigCell iosMsgMenuRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosMsgMenu, MeeroStrings.s(144)));
     private final AbstractConfigCell iosMainMenuRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosMainMenu, MeeroStrings.s(141)));
     // MeeroX v159: approved polish bundle for the menus themselves.

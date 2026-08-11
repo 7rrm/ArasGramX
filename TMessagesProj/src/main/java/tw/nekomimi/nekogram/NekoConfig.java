@@ -121,6 +121,9 @@ public class NekoConfig {
     // and pastes the auto-copied technical report. No timers, no toasts and
     // no clipboard writes while it is off.
     public static ConfigItem meeroMenuWatchDiag = addConfig("meeroMenuWatchDiag", configTypeBool, false);
+    // v208 (owner-approved preview): iOS face for the attach sheet - grabber
+    // + grouped squircle action card. OFF = stock tab strip, byte-exact.
+    public static ConfigItem meeroIosAttachPanel = addConfig("meeroIosAttachPanel", configTypeBool, true);
     public static ConfigItem meeroIosMsgMenu = addConfig("meeroIosMsgMenu", configTypeBool, true);
     public static ConfigItem meeroIosMainMenu = addConfig("meeroIosMainMenu", configTypeBool, true);
     // MeeroX v159: the approved polish bundle (each off = exact v158 look).
