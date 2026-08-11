@@ -2640,7 +2640,11 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
      * disc the rest of the iOS chrome uses. No-op when the style is off.
      */
     private void meeroGlassProfileButtons() {
-        if (!tw.nekomimi.nekogram.MeeroCards.enabled() || iBlur3FactoryLiquidGlass == null || actionBar == null) {
+        // v204 (owner field evidence): this gate asked the CARDS switch, and
+        // the owner keeps cards OFF - so the header chrome stayed bare on
+        // every build (v201-v203 included). Header glass is design chrome,
+        // not a card; keep only real capability checks here.
+        if (iBlur3FactoryLiquidGlass == null || actionBar == null) {
             return;
         }
         try {
@@ -2677,7 +2681,9 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
      * circle.
      */
     private void meeroGlassProfileHeaderItem(ActionBarMenuItem item) {
-        if (!tw.nekomimi.nekogram.MeeroCards.enabled() || iBlur3FactoryLiquidGlass == null || item == null) {
+        // v204: same de-gating as the sibling helper - the owner's cards
+        // switch is OFF, which silently vetoed these discs on every build.
+        if (iBlur3FactoryLiquidGlass == null || item == null) {
             return;
         }
         try {

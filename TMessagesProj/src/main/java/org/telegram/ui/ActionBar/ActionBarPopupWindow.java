@@ -185,7 +185,28 @@ public class ActionBarPopupWindow extends PopupWindow {
 
             if ((flags & FLAG_DONT_USE_SCROLLVIEW) == 0) {
                 try {
-                    scrollView = new ScrollView(context);
+                    scrollView = new ScrollView(context) {
+                        // MeeroX v204 (owner field evidence: MXW203 capture
+                        // "DOWN consumed, no CLICK" on a destructive row;
+                        // remaining top rows die by jank-jitter interception
+                        // too): with the iOS skin the card can exceed the
+                        // viewport by a hair (44dp rows + 8dp gap + outset),
+                        // which arms this ScrollView's intercept so a natural
+                        // micro-drag CANCELS the row between DOWN and UP -
+                        // the tap is consumed yet never clicks. Veto the
+                        // interception ONLY while our skin owns the card AND
+                        // scrolling is impossible anyway; a genuinely long
+                        // menu keeps the stock swipe physics.
+                        @Override
+                        public boolean onInterceptTouchEvent(MotionEvent ev) {
+                            if (isMeeroIosSkinOn()
+                                    && !canScrollVertically(-1)
+                                    && !canScrollVertically(1)) {
+                                return false;
+                            }
+                            return super.onInterceptTouchEvent(ev);
+                        }
+                    };
                     scrollView.getViewTreeObserver().addOnScrollChangedListener(new ViewTreeObserver.OnScrollChangedListener() {
                         @Override
                         public void onScrollChanged() {

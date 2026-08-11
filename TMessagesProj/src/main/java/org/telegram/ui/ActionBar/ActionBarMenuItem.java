@@ -477,11 +477,15 @@ public class ActionBarMenuItem extends FrameLayout {
                     // chosen action never ran. Widen the outside test only
                     // while our skin owns the card; stock stays byte-exact.
                     if (popupLayout.isMeeroIosSkinOn()) {
-                        // v201: 24dp was not enough - the owner still lost
-                        // taps. The skinned card's blur shadow padding plus
-                        // the destructive-group gap plus its draw overshoot
-                        // is wider; 56dp still closes on a genuine far tap.
-                        rect.inset(-AndroidUtilities.dp(56), -AndroidUtilities.dp(56));
+                        // v204: fixed guesses failed on the owner's device
+                        // (24dp v200, 56dp v201) - use the card's OWN measured
+                        // outset (blur/shadow padding via getPadding()) plus
+                        // the 8dp destructive gap plus slack. Exact physics,
+                        // no magic numbers; genuine far taps still dismiss.
+                        final android.graphics.Rect mp = popupLayout.getPadding();
+                        final int outset = Math.max(Math.max(mp.left, mp.right), Math.max(mp.top, mp.bottom))
+                                + AndroidUtilities.dp(16);
+                        rect.inset(-outset, -outset);
                     }
                     if (!rect.contains((int) event.getX(), (int) event.getY())) {
                         popupWindow.dismiss();
