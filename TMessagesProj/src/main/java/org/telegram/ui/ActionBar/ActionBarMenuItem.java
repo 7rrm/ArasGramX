@@ -477,7 +477,11 @@ public class ActionBarMenuItem extends FrameLayout {
                     // chosen action never ran. Widen the outside test only
                     // while our skin owns the card; stock stays byte-exact.
                     if (popupLayout.isMeeroIosSkinOn()) {
-                        rect.inset(-AndroidUtilities.dp(24), -AndroidUtilities.dp(24));
+                        // v201: 24dp was not enough - the owner still lost
+                        // taps. The skinned card's blur shadow padding plus
+                        // the destructive-group gap plus its draw overshoot
+                        // is wider; 56dp still closes on a genuine far tap.
+                        rect.inset(-AndroidUtilities.dp(56), -AndroidUtilities.dp(56));
                     }
                     if (!rect.contains((int) event.getX(), (int) event.getY())) {
                         popupWindow.dismiss();

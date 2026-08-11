@@ -2644,13 +2644,12 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
             return;
         }
         try {
-            final View[] targets = new View[]{
-                    actionBar.getBackButton(),
-                    actionBar.createMenu()
-            };
-            // Both the back button and the menu are laid out at the full
-            // action bar height, so a background set on them is stretched to
-            // that height. Paint a 48dp capsule centred inside each instead.
+            // MeeroX: the profile's back button gets the same glass disc the
+            // rest of the iOS chrome uses; both it and the menu are laid out
+            // at the full action-bar height, so a 48dp capsule is centred
+            // inside instead. The header items' own discs live in
+            // meeroGlassProfileHeaderItem (v201), applied where the items
+            // are created.
             final int size = AndroidUtilities.dp(MEERO_PROFILE_BUTTON);
             final View back = actionBar.getBackButton();
             if (back != null) {
@@ -2661,34 +2660,47 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
             }
             final ActionBarMenu menu = actionBar.createMenu();
             if (menu != null) {
+                // v201: the band background/painter approaches are retired -
+                // each header item carries its own glass disc instead.
                 menu.setGlassMode(true);
-                final BlurredBackgroundDrawable bg = iBlur3FactoryLiquidGlass.create(
-                        menu, BlurredBackgroundProviderImpl.topPanel(resourcesProvider));
-                bg.setRadius(size / 2f);
-                // MeeroX v200 (owner report: زرّا البحث والنقاط عاريان عن
-                // الزجاج): a view BACKGROUND only repaints with the menu's
-                // own invalidations, so on this screen the band never drew.
-                // This is the proven v136 dialogs fix applied here - paint the
-                // capsule from the menu's own onDraw, under the items, and
-                // fade it in lockstep with them (search open / pull-down).
-                menu.setMeeroBackgroundPainter(canvas -> {
-                    try {
-                        final float buttonsAlpha = Math.max(
-                                searchItem != null ? searchItem.getAlpha() : 0f,
-                                otherItem != null ? otherItem.getAlpha() : 0f);
-                        if (buttonsAlpha <= 0.01f) {
-                            return;
-                        }
-                        final int h = menu.getHeight();
-                        final int top = Math.max(0, (h - size) / 2);
-                        bg.setBounds(0, top, menu.getWidth(), top + size);
-                        bg.setAlpha((int) (buttonsAlpha * 255));
-                        bg.draw(canvas);
-                        bg.setAlpha(255);
-                    } catch (Throwable ignore) {
-                    }
-                });
             }
+        } catch (Throwable ignore) {
+        }
+    }
+
+    /**
+     * MeeroX v201 (owner report, still bare after v200): one glass disc per
+     * profile header item, painted from the ITEM's own onDraw - the exact
+     * v136 dialogs technique that finally made the Edit pill appear there.
+     * The disc is skipped while the search item is expanded into its field
+     * (far wider than the disc), so the text input never wears a floating
+     * circle.
+     */
+    private void meeroGlassProfileHeaderItem(ActionBarMenuItem item) {
+        if (!tw.nekomimi.nekogram.MeeroCards.enabled() || iBlur3FactoryLiquidGlass == null || item == null) {
+            return;
+        }
+        try {
+            final int size = AndroidUtilities.dp(MEERO_PROFILE_BUTTON);
+            final BlurredBackgroundDrawable bg = iBlur3FactoryLiquidGlass.create(
+                    item, BlurredBackgroundProviderImpl.topPanel(resourcesProvider));
+            bg.setRadius(size / 2f);
+            item.setMeeroBackgroundPainter(canvas -> {
+                try {
+                    final int bw = item.getWidth();
+                    final int bh = item.getHeight();
+                    if (bw <= 0 || bh <= 0 || item.getAlpha() <= 0.01f || bw > size * 1.6f) {
+                        return;
+                    }
+                    final int left = (bw - size) / 2;
+                    final int top = Math.max(0, (bh - size) / 2);
+                    bg.setBounds(left, top, left + size, top + size);
+                    bg.setAlpha((int) (item.getAlpha() * 255));
+                    bg.draw(canvas);
+                    bg.setAlpha(255);
+                } catch (Throwable ignore) {
+                }
+            });
         } catch (Throwable ignore) {
         }
     }
@@ -4232,6 +4244,11 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
         ttlIconView.setImageResource(R.drawable.msg_mini_autodelete_timer);
         otherItem.addView(ttlIconView, LayoutHelper.createFrame(12, 12, Gravity.CENTER_VERTICAL | Gravity.LEFT, 8, 2, 0, 0));
         otherItem.setContentDescription(LocaleController.getString(R.string.AccDescrMoreOptions));
+
+        // MeeroX v201 (owner's item 3): the two header items wear their own
+        // painted glass discs - applied here, right after both exist.
+        meeroGlassProfileHeaderItem(searchItem);
+        meeroGlassProfileHeaderItem(otherItem);
 
         int scrollTo;
         int scrollToPosition = 0;

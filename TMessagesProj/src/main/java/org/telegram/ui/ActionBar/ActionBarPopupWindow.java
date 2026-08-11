@@ -351,7 +351,11 @@ public class ActionBarPopupWindow extends PopupWindow {
          * dismissed the popup.
          */
         public boolean isMeeroIosSkinOn() {
-            return meeroSkinEligible && meeroGate;
+            // v201: read the live switch - v200 read the measure-time sync
+            // flag, which is only refreshed in meeroPreMeasureSync and can be
+            // stale at touch time. meeroCfg() is the same live read the draw
+            // path uses.
+            return meeroSkinEligible && meeroCfg();
         }
 
         // MeeroX: same opt-in as above, but the skin follows a caller-provided
