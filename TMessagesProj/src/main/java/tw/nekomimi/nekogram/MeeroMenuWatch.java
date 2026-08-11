@@ -63,6 +63,16 @@ public final class MeeroMenuWatch {
         rec("CLICK id=" + tag);
     }
 
+    /** v205 fallback: serial read, never throws. */
+    public static int clickSeqVol() {
+        return clickSeq;
+    }
+
+    /** v205 fallback: a dead tap was rescued by direct delivery. Silent (no capture). */
+    public static void onFallbackDelivered(Object tag) {
+        rec("FALLBACK-DELIVERED id=" + tag);
+    }
+
     /**
      * A DOWN reached the skinned popup layout. When NO child consumed it the
      * tap is dead with certainty: capture the ring to the clipboard and ask

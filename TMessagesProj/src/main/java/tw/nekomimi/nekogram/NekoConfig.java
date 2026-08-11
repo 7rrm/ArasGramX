@@ -108,6 +108,10 @@ public class NekoConfig {
     public static ConfigItem meeroIosLoading = addConfig("meeroIosLoading", configTypeBool, true);
     public static ConfigItem meeroIosCode = addConfig("meeroIosCode", configTypeBool, true);
     public static ConfigItem meeroIosIntro = addConfig("meeroIosIntro", configTypeBool, true);
+    // v205 (owner: الصورة بالبار العلوي موجودة ومحد يكدر يطفيها - يريد مفتاحاً ظاهراً):
+    // stock shows the peer avatar in the chat header since the 12.9.x base;
+    // this keeps it ON by default and lets anyone turn it OFF.
+    public static ConfigItem meeroChatHeaderAvatar = addConfig("meeroChatHeaderAvatar", configTypeBool, true);
     public static ConfigItem meeroIosSearch = addConfig("meeroIosSearch", configTypeBool, true);
     public static ConfigItem meeroIosFastScroll = addConfig("meeroIosFastScroll", configTypeBool, true);
     public static ConfigItem meeroIosShadows = addConfig("meeroIosShadows", configTypeBool, true);

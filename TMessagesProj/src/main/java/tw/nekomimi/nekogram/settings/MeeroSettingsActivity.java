@@ -191,6 +191,8 @@ public class MeeroSettingsActivity extends BaseNekoXSettingsActivity {
     private final AbstractConfigCell iosAnimRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosAnim, MeeroStrings.s(132)));
     private final AbstractConfigCell iosMenuAnimRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosMenuAnim, MeeroStrings.s(143)));
     private final AbstractConfigCell iosPopupMenuRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosPopupMenu, MeeroStrings.s(145)));
+    // v205 (owner): findable switch for the stock chat top-bar avatar (vault row 467)
+    private final AbstractConfigCell chatHeaderAvatarRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroChatHeaderAvatar, MeeroStrings.s(467)));
     private final AbstractConfigCell iosMsgMenuRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosMsgMenu, MeeroStrings.s(144)));
     private final AbstractConfigCell iosMainMenuRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosMainMenu, MeeroStrings.s(141)));
     // MeeroX v159: approved polish bundle for the menus themselves.

@@ -379,19 +379,88 @@ public class ActionBarPopupWindow extends PopupWindow {
             return meeroSkinEligible && meeroCfg();
         }
 
-        // MeeroX v202 DIAGNOSTIC (temporary, v195 school): every skinned DOWN
-        // is recorded into the MeeroMenuWatch ring (coords vs measured box,
-        // child-consumed?). An UNCONSUMED DOWN is the owner's dead tap by
-        // definition and self-captures the ring to the clipboard + vaulted
-        // toast s(466). Stock path byte-untouched when the skin is off.
+        // MeeroX v205 (owner-verified on v204: bottom destructive rows click,
+        // top rows die - consumed DOWN, no CLICK, four tolerance/scroll fixes
+        // missed): stop hunting the tap-eater and DELIVER the tap ourselves.
+        // While the iOS skin owns the popup we track each gesture; on UP with
+        // no row CLICK fired (the watch serial is the witness) and no real
+        // drag, the visible ActionBarMenuSubItem under the finger is located
+        // with offsetDescendantRectToMyCoords (scroll/swipe offsets handled
+        // by the framework) and clicked directly - the row's own listener
+        // then runs the exact normal path (v200-guarded dismiss + action).
+        // Working rows keep their native path untouched: their click bumps
+        // the serial during super, so the fallback never double-fires.
+        private float meeroDownX = -1f, meeroDownY = -1f;
+        private int meeroSerialAtDown, meeroSlopPx = -1;
+        private boolean meeroMovedFar;
+
+        private View meeroRowAt(float x, float y) {
+            try {
+                for (int i = 0; i < linearLayout.getChildCount(); i++) {
+                    final View v = linearLayout.getChildAt(i);
+                    if (!(v instanceof ActionBarMenuSubItem) || v.getVisibility() != View.VISIBLE) {
+                        continue;
+                    }
+                    final android.graphics.Rect r = new android.graphics.Rect(0, 0, v.getWidth(), v.getHeight());
+                    offsetDescendantRectToMyCoords(v, r);
+                    if (r.contains((int) x, (int) y)) {
+                        return v;
+                    }
+                }
+            } catch (Throwable ignore) {
+            }
+            return null;
+        }
+
         @Override
         public boolean dispatchTouchEvent(MotionEvent ev) {
-            if (isMeeroIosSkinOn() && ev.getActionMasked() == MotionEvent.ACTION_DOWN) {
+            if (!isMeeroIosSkinOn()) {
+                return super.dispatchTouchEvent(ev);
+            }
+            final int action = ev.getActionMasked();
+            if (action == MotionEvent.ACTION_DOWN) {
+                if (meeroSlopPx < 0) {
+                    try {
+                        final int slop = android.view.ViewConfiguration.get(getContext()).getScaledTouchSlop();
+                        meeroSlopPx = slop * slop * 4;
+                    } catch (Throwable ignore) {
+                        meeroSlopPx = 0;
+                    }
+                }
+                meeroDownX = ev.getX();
+                meeroDownY = ev.getY();
+                meeroMovedFar = false;
+                meeroSerialAtDown = tw.nekomimi.nekogram.MeeroMenuWatch.clickSeqVol();
                 final boolean consumed = super.dispatchTouchEvent(ev);
                 tw.nekomimi.nekogram.MeeroMenuWatch.onDown(getContext(), ev.getX(), ev.getY(), getWidth(), getHeight(), consumed);
                 return consumed;
             }
-            return super.dispatchTouchEvent(ev);
+            if (action == MotionEvent.ACTION_MOVE && !meeroMovedFar && meeroDownX >= 0) {
+                final float dx = ev.getX() - meeroDownX, dy = ev.getY() - meeroDownY;
+                if (dx * dx + dy * dy > meeroSlopPx) {
+                    meeroMovedFar = true;
+                }
+            }
+            final boolean r = super.dispatchTouchEvent(ev);
+            if (action == MotionEvent.ACTION_UP && meeroDownX >= 0 && !meeroMovedFar
+                    && tw.nekomimi.nekogram.MeeroMenuWatch.clickSeqVol() == meeroSerialAtDown) {
+                // The gesture just crossed the whole stack and NO row clicked:
+                // this is the owner's dead tap. Deliver it directly.
+                final View row = meeroRowAt(ev.getX(), ev.getY());
+                if (row != null) {
+                    try {
+                        tw.nekomimi.nekogram.MeeroMenuWatch.onFallbackDelivered(row.getTag());
+                        org.telegram.messenger.FileLog.d("MeeroX v205: menu fallback delivered click, id=" + row.getTag());
+                        row.performClick();
+                    } catch (Throwable t) {
+                        org.telegram.messenger.FileLog.e(t);
+                    }
+                }
+            }
+            if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) {
+                meeroDownX = -1f;
+            }
+            return r;
         }
 
         // MeeroX: same opt-in as above, but the skin follows a caller-provided
