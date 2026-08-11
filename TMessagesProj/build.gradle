@@ -102,19 +102,21 @@ android {
         // MeeroApiKeys keeps this and the others as a pool and rotates when
         // the server rejects a key, so no single id going bad locks anyone out.
         //
-        // v197 (owner-proven): Telegram ALSO rate-caps community joins per
-        // api_id, binding at LOGIN time (the session's authorization). The
-        // v195 watch caught a genuine server 400 CHANNELS_TOO_MUCH on
-        // joinChannel from a 2-membership account; the same account joins
-        // fine on the official client (id 4); NekoX's own updates channel
-        // documented the identical limitation for their third-party id.
-        // Pool rotation could not cure it mid-session because the native
-        // session is inited once with the login id. So the DEFAULT slot is
-        // now the official Android credential (the exact pair every fork
-        // ships and the pair proven unlimited by the owner's own A/B test);
-        // the pool stays as the fallback ladder behind it.
-        def appId = '4'
-        def appHash = '014b35b6184100b085b0d0572f9b5103'
+        // v198 REVERT (owner field evidence, honesty clause): the v197
+        // default of official id 4 is unusable on our signature - on a clean
+        // install the owner hit Telegram's "SMS fees" paywall (subscribe $1
+        // to receive the login code at all), the monetized form of the same
+        // refusal the rotation era saw as the silent arrow loop. An official
+        // credential is only honoured for officially-signed builds; on any
+        // other key it can never create a session, so the id-4 join-cap
+        // theory is retired as UNTESTABLE here. Restoring Nagram's 11535358
+        // as slot 0 (the login-good third-party id the old saga settled on).
+        // MeeroApiKeys GENERATION bumps to 4 alongside so any rotation index
+        // parked on an official slot resets onto slot 0 once, and the v196
+        // join-time advance() hook is removed (proven ineffective AND it
+        // poisoned the login pointer - documented in ROADMAP v198).
+        def appId = '11535358'
+        def appHash = '33d372962fadb01df47e6ceed4e33cd6'
 
         if (properties != null) {
             appId = properties.getProperty('TELEGRAM_APP_ID') ?: System.getenv('TELEGRAM_APP_ID') ?: appId
