@@ -6662,7 +6662,11 @@ public class ChatActivityEnterView extends FrameLayout implements
             meeroTlp.leftMargin = dp(10);
             messageEditText.setLayoutParams(meeroTlp);
             // v137: same physical-left anchoring the live toggle applies.
-            messageEditText.setGravity(Gravity.BOTTOM | Gravity.LEFT);
+            // v200 (owner report): absolute LEFT forces Arabic to start at
+            // the wrong edge - RTL locales keep plain BOTTOM so the text
+            // follows paragraph direction (Arabic starts right), LTR keeps
+            // the iPhone left anchor.
+            messageEditText.setGravity(LocaleController.isRTL ? Gravity.BOTTOM : Gravity.BOTTOM | Gravity.LEFT);
         }
 
         richDraftPreview = new RichMessageLayout.PreviewView(getContext(), currentAccount, resourcesProvider);
@@ -17099,8 +17103,10 @@ public class ChatActivityEnterView extends FrameLayout implements
                     messageEditText.setLayoutParams(tlp);
                     // v137: the iPhone field anchors hint+text+caret at the
                     // physical left edge of the capsule (they floated mid-
-                    // field before); absolute LEFT works regardless of RTL.
-                    messageEditText.setGravity(Gravity.BOTTOM | Gravity.LEFT);
+                    // field before) - but absolute LEFT only applies to LTR;
+                    // v200 (owner report): RTL locales keep plain BOTTOM so
+                    // Arabic typing starts at the RIGHT edge again.
+                    messageEditText.setGravity(LocaleController.isRTL ? Gravity.BOTTOM : Gravity.BOTTOM | Gravity.LEFT);
                 }
                 // attachLayout (bot / gift / silent buttons) was padded one
                 // 48dp slot off the field's right edge to clear the stock

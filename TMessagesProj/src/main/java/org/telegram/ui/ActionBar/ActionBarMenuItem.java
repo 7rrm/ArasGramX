@@ -469,6 +469,16 @@ public class ActionBarMenuItem extends FrameLayout {
             if (event.getActionMasked() == MotionEvent.ACTION_DOWN) {
                 if (popupWindow != null && popupWindow.isShowing()) {
                     v.getHitRect(rect);
+                    // MeeroX v200 (owner report): the iOS card skin draws its
+                    // rounded card - blur/shadow padding and the 8dp gap that
+                    // splits the destructive row into its own card - PAST the
+                    // layout's measured box. A tap inside that visible spill
+                    // used to score "outside" here, so the menu closed but the
+                    // chosen action never ran. Widen the outside test only
+                    // while our skin owns the card; stock stays byte-exact.
+                    if (popupLayout.isMeeroIosSkinOn()) {
+                        rect.inset(-AndroidUtilities.dp(24), -AndroidUtilities.dp(24));
+                    }
                     if (!rect.contains((int) event.getX(), (int) event.getY())) {
                         popupWindow.dismiss();
                     }
@@ -519,10 +529,16 @@ public class ActionBarMenuItem extends FrameLayout {
                 processedPopupClick = true;
                 popupWindow.dismiss(allowCloseAnimation);
             }
-            if (parentMenu != null) {
-                parentMenu.onItemClick((Integer) view1.getTag());
-            } else if (delegate != null) {
-                delegate.onItemClick((Integer) view1.getTag());
+            // MeeroX v200: a handler blow-up must never kill the app from a
+            // menu tap - log it and leave the (already closed) popup alone.
+            try {
+                if (parentMenu != null) {
+                    parentMenu.onItemClick((Integer) view1.getTag());
+                } else if (delegate != null) {
+                    delegate.onItemClick((Integer) view1.getTag());
+                }
+            } catch (Throwable t) {
+                org.telegram.messenger.FileLog.e(t);
             }
         });
         view.setBackgroundDrawable(Theme.getSelectorDrawable(false));
@@ -565,10 +581,15 @@ public class ActionBarMenuItem extends FrameLayout {
                 }
                 popupWindow.dismiss(allowCloseAnimation);
             }
-            if (parentMenu != null) {
-                parentMenu.onItemClick((Integer) view.getTag());
-            } else if (delegate != null) {
-                delegate.onItemClick((Integer) view.getTag());
+            // MeeroX v200: same never-crash guard as the other subitem paths.
+            try {
+                if (parentMenu != null) {
+                    parentMenu.onItemClick((Integer) view.getTag());
+                } else if (delegate != null) {
+                    delegate.onItemClick((Integer) view.getTag());
+                }
+            } catch (Throwable t) {
+                org.telegram.messenger.FileLog.e(t);
             }
         });
         return textView;
@@ -653,10 +674,15 @@ public class ActionBarMenuItem extends FrameLayout {
                     popupWindow.dismiss(allowCloseAnimation);
                 }
             }
-            if (parentMenu != null) {
-                parentMenu.onItemClick((Integer) view.getTag());
-            } else if (delegate != null) {
-                delegate.onItemClick((Integer) view.getTag());
+            // MeeroX v200: same never-crash guard as the other subitem paths.
+            try {
+                if (parentMenu != null) {
+                    parentMenu.onItemClick((Integer) view.getTag());
+                } else if (delegate != null) {
+                    delegate.onItemClick((Integer) view.getTag());
+                }
+            } catch (Throwable t) {
+                org.telegram.messenger.FileLog.e(t);
             }
         });
         return cell;
@@ -676,10 +702,15 @@ public class ActionBarMenuItem extends FrameLayout {
         layoutParams.height = AndroidUtilities.dp(48);
         cell.setLayoutParams(layoutParams);
         cell.setOnClickListener(view -> {
-            if (parentMenu != null) {
-                parentMenu.onItemClick((Integer) view.getTag());
-            } else if (delegate != null) {
-                delegate.onItemClick((Integer) view.getTag());
+            // MeeroX v200: same never-crash guard as the other subitem paths.
+            try {
+                if (parentMenu != null) {
+                    parentMenu.onItemClick((Integer) view.getTag());
+                } else if (delegate != null) {
+                    delegate.onItemClick((Integer) view.getTag());
+                }
+            } catch (Throwable t) {
+                org.telegram.messenger.FileLog.e(t);
             }
         });
         return cell;
@@ -2591,10 +2622,16 @@ public class ActionBarMenuItem extends FrameLayout {
                             parent.popupWindow.dismiss(parent.allowCloseAnimation);
                         }
                     }
-                    if (parent.parentMenu != null) {
-                        parent.parentMenu.onItemClick((Integer) view.getTag());
-                    } else if (parent.delegate != null) {
-                        parent.delegate.onItemClick((Integer) view.getTag());
+                    // MeeroX v200: same never-crash guard - this is the lazy
+                    // path the chat header menu (صاحب بلاغ القائمة) uses.
+                    try {
+                        if (parent.parentMenu != null) {
+                            parent.parentMenu.onItemClick((Integer) view.getTag());
+                        } else if (parent.delegate != null) {
+                            parent.delegate.onItemClick((Integer) view.getTag());
+                        }
+                    } catch (Throwable t) {
+                        org.telegram.messenger.FileLog.e(t);
                     }
                 });
                 if (textColor != null && iconColor != null) {

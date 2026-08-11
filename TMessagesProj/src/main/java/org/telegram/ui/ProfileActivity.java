@@ -2665,7 +2665,29 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                 final BlurredBackgroundDrawable bg = iBlur3FactoryLiquidGlass.create(
                         menu, BlurredBackgroundProviderImpl.topPanel(resourcesProvider));
                 bg.setRadius(size / 2f);
-                menu.setBackground(new MeeroCenteredDrawable(bg, 0, size));
+                // MeeroX v200 (owner report: زرّا البحث والنقاط عاريان عن
+                // الزجاج): a view BACKGROUND only repaints with the menu's
+                // own invalidations, so on this screen the band never drew.
+                // This is the proven v136 dialogs fix applied here - paint the
+                // capsule from the menu's own onDraw, under the items, and
+                // fade it in lockstep with them (search open / pull-down).
+                menu.setMeeroBackgroundPainter(canvas -> {
+                    try {
+                        final float buttonsAlpha = Math.max(
+                                searchItem != null ? searchItem.getAlpha() : 0f,
+                                otherItem != null ? otherItem.getAlpha() : 0f);
+                        if (buttonsAlpha <= 0.01f) {
+                            return;
+                        }
+                        final int h = menu.getHeight();
+                        final int top = Math.max(0, (h - size) / 2);
+                        bg.setBounds(0, top, menu.getWidth(), top + size);
+                        bg.setAlpha((int) (buttonsAlpha * 255));
+                        bg.draw(canvas);
+                        bg.setAlpha(255);
+                    } catch (Throwable ignore) {
+                    }
+                });
             }
         } catch (Throwable ignore) {
         }

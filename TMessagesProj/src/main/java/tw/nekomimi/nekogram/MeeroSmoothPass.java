@@ -104,6 +104,14 @@ public final class MeeroSmoothPass {
         if (listView == null) {
             return;
         }
+        // MeeroX v200 (owner order: سلاسة فعالة بلا لاغ): the stock off-
+        // screen row cache of 2 starves long flings into onCreateViewHolder
+        // jank on every third row. 20 cached rows is invisible to the eye,
+        // costs only idle memory, and applies to every warmed page's list.
+        try {
+            listView.setItemViewCacheSize(20);
+        } catch (Throwable ignore) {
+        }
         try {
             listView.scrollBy(0, 1);
             listView.scrollBy(0, -1);

@@ -341,6 +341,19 @@ public class ActionBarPopupWindow extends PopupWindow {
             requestLayout();
         }
 
+        /**
+         * MeeroX v200 (owner report: tapping a choice - e.g. «حذف المحادثة» -
+         * closed the menu but never ran it): is the iOS card skin actually
+         * owning this layout right now? ActionBarMenuItem's outside-tap
+         * dismiss needs it - the skinned card's blur/shadow padding and the
+         * 8dp destructive spacer spill past the layout's measured box, so
+         * taps INSIDE the visible card counted as "outside" and merely
+         * dismissed the popup.
+         */
+        public boolean isMeeroIosSkinOn() {
+            return meeroSkinEligible && meeroGate;
+        }
+
         // MeeroX: same opt-in as above, but the skin follows a caller-provided
         // switch (used by the message context-menu so it can have its own setting).
         public void meeroEnableIosMenuSkin(java.util.function.BooleanSupplier cfg) {
