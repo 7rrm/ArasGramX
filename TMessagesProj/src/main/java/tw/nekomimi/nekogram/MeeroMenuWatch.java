@@ -5,6 +5,8 @@ import android.content.ClipboardManager;
 import android.content.Context;
 import android.widget.Toast;
 
+import org.telegram.messenger.AndroidUtilities;
+
 /**
  * MeeroX v201 DIAGNOSTIC (temporary, owner-ordered, v195 school).
  *
@@ -41,6 +43,10 @@ public final class MeeroMenuWatch {
     private static int wrote;
     private static long lastCaptureMs;
 
+    /** v203 trigger fix: sequence counters - a DOWN with no CLICK after it. */
+    private static int downSeq;
+    private static int clickSeq;
+
     private static void rec(String line) {
         try {
             synchronized (ring) {
@@ -53,6 +59,7 @@ public final class MeeroMenuWatch {
 
     /** A row's click listener actually ran (called from ActionBarMenuItem's guarded dispatch sites). */
     public static void onClickFired(Object tag) {
+        clickSeq++;
         rec("CLICK id=" + tag);
     }
 
@@ -61,11 +68,30 @@ public final class MeeroMenuWatch {
      * tap is dead with certainty: capture the ring to the clipboard and ask
      * for the paste. Never throws.
      */
-    public static void onDown(Context ctx, float x, float y, int boxW, int boxH, boolean consumed) {
+    public static void onDown(final Context ctx, float x, float y, int boxW, int boxH, boolean consumed) {
         rec("DOWN x=" + (int) x + " y=" + (int) y + " box=" + boxW + "x" + boxH + " consumed=" + consumed);
-        if (consumed || ctx == null) {
+        // v203 TRIGGER FLIP (owned miss at v202): an UNCONSUMED down is just a
+        // legit outside-dismiss - noise. The owner's dead tap is the opposite
+        // signature: a child CONSUMED the down yet no row CLICK followed.
+        // Arm a 650ms check after every consumed down; a click clears it.
+        if (!consumed || ctx == null) {
             return;
         }
+        final int clicksAtDown = clickSeq;
+        try {
+            AndroidUtilities.runOnUIThread(() -> {
+                try {
+                    if (clickSeq == clicksAtDown) {
+                        capture(ctx);
+                    }
+                } catch (Throwable ignore) {
+                }
+            }, 650);
+        } catch (Throwable ignore) {
+        }
+    }
+
+    private static void capture(Context ctx) {
         try {
             final long now = System.currentTimeMillis();
             if (now - lastCaptureMs < 1500) {
@@ -74,7 +100,7 @@ public final class MeeroMenuWatch {
             lastCaptureMs = now;
             String report;
             synchronized (ring) {
-                StringBuilder sb = new StringBuilder("MXW201 diag report:\n\n");
+                StringBuilder sb = new StringBuilder("MXW203 diag report (dead-tap: DOWN consumed, no CLICK):\n\n");
                 final int n = Math.min(wrote, CAP);
                 final int start = wrote > CAP ? wrote % CAP : 0;
                 for (int i = 0; i < n; i++) {
@@ -84,7 +110,7 @@ public final class MeeroMenuWatch {
             }
             ClipboardManager cm = (ClipboardManager) ctx.getSystemService(Context.CLIPBOARD_SERVICE);
             if (cm != null) {
-                cm.setPrimaryClip(ClipData.newPlainText("MXW201", report));
+                cm.setPrimaryClip(ClipData.newPlainText("MXW203", report));
             }
             Toast.makeText(ctx.getApplicationContext(), MeeroStrings.s(466), Toast.LENGTH_LONG).show();
         } catch (Throwable ignore) {

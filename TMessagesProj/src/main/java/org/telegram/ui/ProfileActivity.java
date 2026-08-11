@@ -2683,7 +2683,12 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
         try {
             final int size = AndroidUtilities.dp(MEERO_PROFILE_BUTTON);
             final BlurredBackgroundDrawable bg = iBlur3FactoryLiquidGlass.create(
-                    item, BlurredBackgroundProviderImpl.topPanel(resourcesProvider));
+                    item, BlurredBackgroundProviderImpl.headerButton(resourcesProvider));
+            // v203 (owner: still bare): v201 used topPanel here, but that
+            // provider's own javadoc says small discs DISSOLVE into the bar
+            // with it - headerButton doubles the fill carry and the outline
+            // exactly for 30-48dp discs (it is the dialogs pill's provider,
+            // the very look the owner pointed at as the target).
             bg.setRadius(size / 2f);
             item.setMeeroBackgroundPainter(canvas -> {
                 try {
