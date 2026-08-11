@@ -191,8 +191,11 @@ public class MeeroSettingsActivity extends BaseNekoXSettingsActivity {
     private final AbstractConfigCell iosAnimRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosAnim, MeeroStrings.s(132)));
     private final AbstractConfigCell iosMenuAnimRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosMenuAnim, MeeroStrings.s(143)));
     private final AbstractConfigCell iosPopupMenuRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosPopupMenu, MeeroStrings.s(145)));
-    // v205 (owner): findable switch for the stock chat top-bar avatar (vault row 467)
-    private final AbstractConfigCell chatHeaderAvatarRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroChatHeaderAvatar, MeeroStrings.s(467)));
+    // v207 (owner orders): the v205 avatar row is REMOVED ("زيله منحتاجه اصلا");
+    // in its slot, the menu-diagnostics switch (vault rows 468 title / 469
+    // desc, default OFF) - explicit title arg, so the raw-key fallback the
+    // owner photographed on the avatar row can never show here.
+    private final AbstractConfigCell menuWatchDiagRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroMenuWatchDiag, MeeroStrings.s(469), MeeroStrings.s(468)));
     private final AbstractConfigCell iosMsgMenuRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosMsgMenu, MeeroStrings.s(144)));
     private final AbstractConfigCell iosMainMenuRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosMainMenu, MeeroStrings.s(141)));
     // MeeroX v159: approved polish bundle for the menus themselves.

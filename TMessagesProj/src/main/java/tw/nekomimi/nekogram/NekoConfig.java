@@ -108,16 +108,19 @@ public class NekoConfig {
     public static ConfigItem meeroIosLoading = addConfig("meeroIosLoading", configTypeBool, true);
     public static ConfigItem meeroIosCode = addConfig("meeroIosCode", configTypeBool, true);
     public static ConfigItem meeroIosIntro = addConfig("meeroIosIntro", configTypeBool, true);
-    // v205 (owner: الصورة بالبار العلوي موجودة ومحد يكدر يطفيها - يريد مفتاحاً ظاهراً):
-    // stock shows the peer avatar in the chat header since the 12.9.x base;
-    // this keeps it ON by default and lets anyone turn it OFF.
-    public static ConfigItem meeroChatHeaderAvatar = addConfig("meeroChatHeaderAvatar", configTypeBool, true);
+    // v207 (owner order: "زيله منحتاجه اصلا"): the v205 meeroChatHeaderAvatar
+    // switch is REMOVED - key, settings row and ChatAvatarContainer hook.
     public static ConfigItem meeroIosSearch = addConfig("meeroIosSearch", configTypeBool, true);
     public static ConfigItem meeroIosFastScroll = addConfig("meeroIosFastScroll", configTypeBool, true);
     public static ConfigItem meeroIosShadows = addConfig("meeroIosShadows", configTypeBool, true);
     public static ConfigItem meeroIosHaptics = addConfig("meeroIosHaptics", configTypeBool, true);
     public static ConfigItem meeroIosMenuAnim = addConfig("meeroIosMenuAnim", configTypeBool, true);
     public static ConfigItem meeroIosPopupMenu = addConfig("meeroIosPopupMenu", configTypeBool, true);
+    // v207 (owner order): menu-diagnostics capture is opt-in and OFF by
+    // default - a user with a misbehaving menu flips this on, reproduces,
+    // and pastes the auto-copied technical report. No timers, no toasts and
+    // no clipboard writes while it is off.
+    public static ConfigItem meeroMenuWatchDiag = addConfig("meeroMenuWatchDiag", configTypeBool, false);
     public static ConfigItem meeroIosMsgMenu = addConfig("meeroIosMsgMenu", configTypeBool, true);
     public static ConfigItem meeroIosMainMenu = addConfig("meeroIosMainMenu", configTypeBool, true);
     // MeeroX v159: the approved polish bundle (each off = exact v158 look).

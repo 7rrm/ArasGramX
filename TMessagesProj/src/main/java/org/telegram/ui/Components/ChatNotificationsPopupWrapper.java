@@ -76,6 +76,7 @@ public class ChatNotificationsPopupWrapper {
         if (swipeBackLayout != null) {
             backItem = ActionBarMenuItem.addItem(windowLayout, R.drawable.msg_arrow_back, LocaleController.getString(R.string.Back), false, resourcesProvider);
             backItem.setOnClickListener(view -> {
+                tw.nekomimi.nekogram.MeeroMenuWatch.onClickFired("nw-back");
                 swipeBackLayout.closeForeground();
             });
         }
@@ -83,24 +84,28 @@ public class ChatNotificationsPopupWrapper {
 
         soundToggle = ActionBarMenuItem.addItem(windowLayout, R.drawable.msg_tone_on, LocaleController.getString(R.string.SoundOn), false, resourcesProvider);
         soundToggle.setOnClickListener(view -> {
+            tw.nekomimi.nekogram.MeeroMenuWatch.onClickFired("nw-sound");
             dismiss();
             callback.toggleSound();
         });
 
         muteForLastSelected = ActionBarMenuItem.addItem(windowLayout, R.drawable.msg_mute_1h, LocaleController.getString(R.string.MuteFor1h), false, resourcesProvider);
         muteForLastSelected.setOnClickListener(view -> {
+            tw.nekomimi.nekogram.MeeroMenuWatch.onClickFired("nw-mute1");
             dismiss();
             callback.muteFor(muteForLastSelected1Time);
         });
 
         muteForLastSelected2 = ActionBarMenuItem.addItem(windowLayout, R.drawable.msg_mute_1h, LocaleController.getString(R.string.MuteFor1h), false, resourcesProvider);
         muteForLastSelected2.setOnClickListener(view -> {
+            tw.nekomimi.nekogram.MeeroMenuWatch.onClickFired("nw-mute2");
             dismiss();
             callback.muteFor(muteForLastSelected2Time);
         });
 
         ActionBarMenuSubItem item = ActionBarMenuItem.addItem(windowLayout, R.drawable.msg_mute_period, LocaleController.getString(R.string.MuteForPopup), false, resourcesProvider);
         item.setOnClickListener(view -> {
+            tw.nekomimi.nekogram.MeeroMenuWatch.onClickFired("nw-mutefor");
             dismiss();
             AlertsCreator.createMuteForPickerDialog(context, resourcesProvider, (notify, inSecond, scheduleRepeatPeriod) -> {
                 AndroidUtilities.runOnUIThread(() -> {
@@ -122,12 +127,14 @@ public class ChatNotificationsPopupWrapper {
 
         item = ActionBarMenuItem.addItem(windowLayout, R.drawable.msg_customize, LocaleController.getString(R.string.NotificationsCustomize), false, resourcesProvider);
         item.setOnClickListener(view -> {
+            tw.nekomimi.nekogram.MeeroMenuWatch.onClickFired("nw-customize");
             dismiss();
             callback.showCustomize();
         });
 
         muteUnmuteButton = ActionBarMenuItem.addItem(windowLayout, 0, "", false, resourcesProvider);
         muteUnmuteButton.setOnClickListener(view -> {
+            tw.nekomimi.nekogram.MeeroMenuWatch.onClickFired("nw-mutetoggle");
             dismiss();
             AndroidUtilities.runOnUIThread(() -> {
                 callback.toggleMute();

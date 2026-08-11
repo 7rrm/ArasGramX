@@ -27,11 +27,13 @@ import org.telegram.messenger.AndroidUtilities;
  * (CLICK line present) right before a dead one gives the smoking-gun
  * asymmetry in a single paste.
  *
- * Nothing touches disk; the ring dies with the process. Removal when the
- * consumer is identified: the dispatchTouchEvent override in
- * ActionBarPopupWindow.ActionBarPopupWindowLayout, the onClickFired() lines
- * in ActionBarMenuItem's guarded listeners, and this file. Row 466 remains
- * the reserved generic "report copied" toast row.
+ * Nothing touches disk; the ring dies with the process. POST-SAGA STATE
+ * (v206 root cause = the window-level touch interceptor eating main-card
+ * taps against the last-drawn destructive card's bounds; v207 owner order):
+ * the layer now stays PERMANENT but OPT-IN via the settings switch
+ * meeroMenuWatchDiag (default OFF) - a user who meets a misbehaving menu
+ * flips it on, reproduces, and pastes the auto-copied report. Row 466
+ * remains the generic "report copied" toast row, used only while armed.
  */
 public final class MeeroMenuWatch {
 
@@ -47,7 +49,27 @@ public final class MeeroMenuWatch {
     private static int downSeq;
     private static int clickSeq;
 
+    /**
+     * v207 (owner order): the whole diagnostic layer is now OPT-IN - the new
+     * "menu diagnostics" settings switch (NekoConfig.meeroMenuWatchDiag,
+     * default OFF). While off: no ring writes, no armed timers, no toasts and
+     * no clipboard writes - the layer is invisible. The click serial itself
+     * (clickSeq) must keep counting even when off: the v205 dead-tap fallback
+     * uses it only for equality before/after super.dispatchTouchEvent, and
+     * freezing it would make every normal tap look like a dead one.
+     */
+    private static boolean on() {
+        try {
+            return NekoConfig.meeroMenuWatchDiag.Bool();
+        } catch (Throwable ignore) {
+            return false;
+        }
+    }
+
     private static void rec(String line) {
+        if (!on()) {
+            return;
+        }
         try {
             synchronized (ring) {
                 ring[wrote % CAP] = line;
@@ -84,7 +106,9 @@ public final class MeeroMenuWatch {
         // legit outside-dismiss - noise. The owner's dead tap is the opposite
         // signature: a child CONSUMED the down yet no row CLICK followed.
         // Arm a 650ms check after every consumed down; a click clears it.
-        if (!consumed || ctx == null) {
+        // v207: arming (and therefore the clipboard copy + toast) only
+        // happens while the owner's diagnostics switch is ON.
+        if (!consumed || ctx == null || !on()) {
             return;
         }
         final int clicksAtDown = clickSeq;

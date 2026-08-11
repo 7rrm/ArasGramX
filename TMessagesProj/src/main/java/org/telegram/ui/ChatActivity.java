@@ -32697,7 +32697,10 @@ public class ChatActivity extends BaseFragment implements
                     backCell.setItemHeight(44);
                     backCell.setTextAndIcon(LocaleController.getString(R.string.Back), R.drawable.msg_arrow_back);
                     backCell.getTextView().setPadding(LocaleController.isRTL ? 0 : AndroidUtilities.dp(40), 0, LocaleController.isRTL ? AndroidUtilities.dp(40) : 0, 0);
-                    backCell.setOnClickListener(v1 -> popupLayout.getSwipeBack().closeForeground());
+                    backCell.setOnClickListener(v1 -> {
+                        tw.nekomimi.nekogram.MeeroMenuWatch.onClickFired("chat-swipeback-back");
+                        popupLayout.getSwipeBack().closeForeground();
+                    });
                     linearLayout.addView(backCell, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
 
                     int[] foregroundIndex = new int[1];
@@ -33274,7 +33277,10 @@ public class ChatActivity extends BaseFragment implements
                         backCell.setItemHeight(44);
                         backCell.setTextAndIcon(LocaleController.getString(R.string.Back), R.drawable.msg_arrow_back);
                         backCell.getTextView().setPadding(LocaleController.isRTL ? 0 : AndroidUtilities.dp(40), 0, LocaleController.isRTL ? AndroidUtilities.dp(40) : 0, 0);
-                        backCell.setOnClickListener(v1 -> popupLayout.getSwipeBack().closeForeground());
+                        backCell.setOnClickListener(v1 -> {
+                        tw.nekomimi.nekogram.MeeroMenuWatch.onClickFired("chat-swipeback-back");
+                        popupLayout.getSwipeBack().closeForeground();
+                    });
                         linearLayout.addView(backCell, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
 
                         linearLayout.addView(new ActionBarPopupWindow.GapView(contentView.getContext(), themeDelegate), LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 8));

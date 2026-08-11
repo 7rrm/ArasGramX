@@ -219,12 +219,51 @@ public class PopupSwipeBackLayout extends FrameLayout {
         return transitionProgress > 0;
     }
 
+    /** MeeroX v207: is the iOS popup skin owning the parent popup layout? */
+    private boolean meeroParentSkinOn() {
+        try {
+            return getParent() instanceof ActionBarPopupWindow.ActionBarPopupWindowLayout
+                    && ((ActionBarPopupWindow.ActionBarPopupWindowLayout) getParent()).isMeeroIosSkinOn();
+        } catch (Throwable ignore) {
+            return false;
+        }
+    }
+
     @Override
     public boolean dispatchTouchEvent(MotionEvent ev) {
         if (processTouchEvent(ev)) {
             return true;
         }
         int act = ev.getActionMasked();
+        // MeeroX v207 (owner field report: the mute submenu's «رجوع» row does
+        // nothing under the iOS popup skin): while our skin owns the parent
+        // popup AND a foreground panel is the active face, route the DOWN by
+        // the foreground child's LIVE on-screen bounds (frame + translation)
+        // instead of the draw-side mRect. mRect is recomputed only inside
+        // dispatchDraw - a stale/RTL-shifted value there made a tap squarely
+        // on «رجوع» score as "outside the panel", so it hit callOnClick (a
+        // no-op here), got consumed, and the click never existed. A genuine
+        // outside-panel tap still runs the stock callOnClick affordance; a
+        // tap inside goes straight to the foreground child. Stock popups
+        // (skin off) keep the byte-exact mRect path below.
+        if (act == MotionEvent.ACTION_DOWN
+                && currentForegroundIndex >= 0 && currentForegroundIndex < getChildCount()
+                && transitionProgress > 0.5f
+                && meeroParentSkinOn()) {
+            final View fg = getChildAt(currentForegroundIndex);
+            final float fx0 = fg.getLeft() + fg.getTranslationX();
+            final float fy0 = fg.getTop() + fg.getTranslationY();
+            if (ev.getX() < fx0 || ev.getX() > fx0 + fg.getMeasuredWidth()
+                    || ev.getY() < fy0 || ev.getY() > fy0 + fg.getMeasuredHeight()) {
+                callOnClick();
+                return true;
+            }
+            boolean fb = fg.dispatchTouchEvent(ev);
+            if (!fb) {
+                return true;
+            }
+            return true;
+        }
         if (mRect != null && !mRect.contains(ev.getX(), ev.getY()) && act == MotionEvent.ACTION_DOWN) {
 //            return false;
         }

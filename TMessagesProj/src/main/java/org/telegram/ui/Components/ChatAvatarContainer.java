@@ -333,14 +333,9 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
                 sharedMediaPreloader = new SharedMediaLayout.SharedMediaPreloader(baseFragment);
             }
             avatarImageIsHidden = parentFragment != null && (parentFragment.isThreadChat() || (parentFragment.getChatMode() == ChatActivity.MODE_PINNED && !isCentered()) || parentFragment.getChatMode() == ChatActivity.MODE_QUICK_REPLIES || parentFragment.getChatMode() == ChatActivity.MODE_EDIT_BUSINESS_LINK);
-            // MeeroX v205: the owner's switch - OFF hides the header avatar
-            // exactly like the stock hidden modes (never throws, stock intact).
-            try {
-                if (!avatarImageIsHidden && !tw.nekomimi.nekogram.NekoConfig.meeroChatHeaderAvatar.Bool()) {
-                    avatarImageIsHidden = true;
-                }
-            } catch (Throwable ignore) {
-            }
+            // MeeroX v207: the v205 owner switch hook is REMOVED by owner
+            // order ("زيله منحتاجه اصلا") - stock upstream behavior restored
+            // byte-exact (avatar visible in normal chats again).
             if (avatarImageIsHidden) {
                 avatarImageView.setVisibility(GONE);
             }

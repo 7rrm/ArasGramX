@@ -442,7 +442,15 @@ public class ActionBarPopupWindow extends PopupWindow {
                 }
             }
             final boolean r = super.dispatchTouchEvent(ev);
+            // MeeroX v207: never rescue WHILE a swipe-back foreground panel
+            // (mute submenu, reactions list, ...) covers the main card - the
+            // foreground's own rows are not in linearLayout, and the main
+            // rows are mid-translate/scale, so a rescue click could land on
+            // the covered row beneath the finger. The fallback exists for
+            // the MAIN card only; foreground taps ride the v207 live-routed
+            // PopupSwipeBackLayout path instead.
             if (action == MotionEvent.ACTION_UP && meeroDownX >= 0 && !meeroMovedFar
+                    && !(swipeBackLayout != null && swipeBackLayout.isForegroundOpen())
                     && tw.nekomimi.nekogram.MeeroMenuWatch.clickSeqVol() == meeroSerialAtDown) {
                 // The gesture just crossed the whole stack and NO row clicked:
                 // this is the owner's dead tap. Deliver it directly.
