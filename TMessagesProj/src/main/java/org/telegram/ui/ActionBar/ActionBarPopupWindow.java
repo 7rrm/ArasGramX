@@ -1149,7 +1149,43 @@ public class ActionBarPopupWindow extends PopupWindow {
         if (contentView instanceof ActionBarPopupWindowLayout && ((ActionBarPopupWindowLayout) contentView).getSwipeBack() != null) {
             setTouchInterceptor((v, e) -> {
                 if (e.getAction() == MotionEvent.ACTION_DOWN) {
-                    Drawable backgroundDrawable = ((ActionBarPopupWindowLayout) contentView).getBackgroundDrawable();
+                    final ActionBarPopupWindowLayout meeroLayout = (ActionBarPopupWindowLayout) contentView;
+                    // MeeroX v206 - ROOT CAUSE of the 5-build dead-tap saga
+                    // (owner field evidence: "the last two buttons work,
+                    // everything above them is dead", menu closes on the dead
+                    // tap, and the watch recorded NOTHING for those taps -
+                    // i.e. the DOWNs never reached the layout at all):
+                    //
+                    // This interceptor runs at WINDOW level, BEFORE any
+                    // dispatch, and treats taps outside the background
+                    // drawable's bounds as "outside" -> dismiss + consume.
+                    // But the two-card iOS skin's dispatchDraw leaves CARD 2
+                    // (the small bottom destructive card) in the drawable's
+                    // bounds - the LAST setBounds call wins. With the skin
+                    // on, "inside" silently shrank to the red card only, so
+                    // every main-card row tap died right here; no layout
+                    // record, no CLICK, and v205's UP-fallback could never
+                    // run because the window was dismissed at DOWN.
+                    //
+                    // While the skin owns the card, test against the whole
+                    // content area inset by the card's own ring pads (union
+                    // of both cards) - genuine ring/outside taps still
+                    // dismiss, exactly like the stock affordance. Stock path
+                    // below stays byte-exact for every other popup class.
+                    if (meeroLayout.isMeeroIosSkinOn()) {
+                        final android.graphics.Rect pad = meeroLayout.getPadding();
+                        AndroidUtilities.rectTmp.set(
+                                (int) contentView.getX() + pad.left,
+                                (int) contentView.getY() + pad.top,
+                                (int) contentView.getX() + contentView.getWidth() - pad.right,
+                                (int) contentView.getY() + contentView.getHeight() - pad.bottom);
+                        if (!AndroidUtilities.rectTmp.contains((int) e.getX(), (int) e.getY())) {
+                            dismiss();
+                            return true;
+                        }
+                        return false;
+                    }
+                    Drawable backgroundDrawable = meeroLayout.getBackgroundDrawable();
                     AndroidUtilities.rectTmp.set(backgroundDrawable.getBounds());
                     AndroidUtilities.rectTmp.offset(contentView.getX(), contentView.getY());
                     if (!AndroidUtilities.rectTmp.contains(e.getX(), e.getY())) {
