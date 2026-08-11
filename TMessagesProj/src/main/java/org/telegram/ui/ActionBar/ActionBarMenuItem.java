@@ -536,6 +536,7 @@ public class ActionBarMenuItem extends FrameLayout {
             // MeeroX v200: a handler blow-up must never kill the app from a
             // menu tap - log it and leave the (already closed) popup alone.
             try {
+                tw.nekomimi.nekogram.MeeroMenuWatch.onClickFired(view1.getTag());
                 if (parentMenu != null) {
                     parentMenu.onItemClick((Integer) view1.getTag());
                 } else if (delegate != null) {
@@ -587,6 +588,7 @@ public class ActionBarMenuItem extends FrameLayout {
             }
             // MeeroX v200: same never-crash guard as the other subitem paths.
             try {
+                tw.nekomimi.nekogram.MeeroMenuWatch.onClickFired(view.getTag());
                 if (parentMenu != null) {
                     parentMenu.onItemClick((Integer) view.getTag());
                 } else if (delegate != null) {
@@ -680,6 +682,7 @@ public class ActionBarMenuItem extends FrameLayout {
             }
             // MeeroX v200: same never-crash guard as the other subitem paths.
             try {
+                tw.nekomimi.nekogram.MeeroMenuWatch.onClickFired(view.getTag());
                 if (parentMenu != null) {
                     parentMenu.onItemClick((Integer) view.getTag());
                 } else if (delegate != null) {
@@ -708,6 +711,7 @@ public class ActionBarMenuItem extends FrameLayout {
         cell.setOnClickListener(view -> {
             // MeeroX v200: same never-crash guard as the other subitem paths.
             try {
+                tw.nekomimi.nekogram.MeeroMenuWatch.onClickFired(view.getTag());
                 if (parentMenu != null) {
                     parentMenu.onItemClick((Integer) view.getTag());
                 } else if (delegate != null) {
@@ -2629,6 +2633,7 @@ public class ActionBarMenuItem extends FrameLayout {
                     // MeeroX v200: same never-crash guard - this is the lazy
                     // path the chat header menu (صاحب بلاغ القائمة) uses.
                     try {
+                        tw.nekomimi.nekogram.MeeroMenuWatch.onClickFired(view.getTag());
                         if (parent.parentMenu != null) {
                             parent.parentMenu.onItemClick((Integer) view.getTag());
                         } else if (parent.delegate != null) {

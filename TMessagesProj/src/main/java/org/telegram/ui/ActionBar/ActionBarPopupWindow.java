@@ -358,6 +358,21 @@ public class ActionBarPopupWindow extends PopupWindow {
             return meeroSkinEligible && meeroCfg();
         }
 
+        // MeeroX v202 DIAGNOSTIC (temporary, v195 school): every skinned DOWN
+        // is recorded into the MeeroMenuWatch ring (coords vs measured box,
+        // child-consumed?). An UNCONSUMED DOWN is the owner's dead tap by
+        // definition and self-captures the ring to the clipboard + vaulted
+        // toast s(466). Stock path byte-untouched when the skin is off.
+        @Override
+        public boolean dispatchTouchEvent(MotionEvent ev) {
+            if (isMeeroIosSkinOn() && ev.getActionMasked() == MotionEvent.ACTION_DOWN) {
+                final boolean consumed = super.dispatchTouchEvent(ev);
+                tw.nekomimi.nekogram.MeeroMenuWatch.onDown(getContext(), ev.getX(), ev.getY(), getWidth(), getHeight(), consumed);
+                return consumed;
+            }
+            return super.dispatchTouchEvent(ev);
+        }
+
         // MeeroX: same opt-in as above, but the skin follows a caller-provided
         // switch (used by the message context-menu so it can have its own setting).
         public void meeroEnableIosMenuSkin(java.util.function.BooleanSupplier cfg) {
