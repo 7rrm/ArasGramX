@@ -35,11 +35,10 @@ public class MeeroApiKeys {
      * the old list, so rebuilding the table must reset the saved choice once.
      */
     private static final String KEY_GENERATION = "api_generation";
-    // v198: slot 0 reverted to Nagram's 11535358 - official ids cannot log
-    // in on our signature (owner field evidence: Telegram's "SMS fees" $1
-    // paywall instead of a code), so every index parked on an official slot
-    // during the v197 attempts resets onto slot 0 once.
-    private static final int GENERATION = 4;
+    // v199: slot 0 becomes nullgram's 19797609 (owner-ordered fork-harvest
+    // experiment: per-id vs class-wide join cap discrimination), so every
+    // saved rotation index resets onto slot 0 once.
+    private static final int GENERATION = 5;
 
     private static int index = -1;
 

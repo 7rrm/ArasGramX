@@ -102,21 +102,21 @@ android {
         // MeeroApiKeys keeps this and the others as a pool and rotates when
         // the server rejects a key, so no single id going bad locks anyone out.
         //
-        // v198 REVERT (owner field evidence, honesty clause): the v197
-        // default of official id 4 is unusable on our signature - on a clean
-        // install the owner hit Telegram's "SMS fees" paywall (subscribe $1
-        // to receive the login code at all), the monetized form of the same
-        // refusal the rotation era saw as the silent arrow loop. An official
-        // credential is only honoured for officially-signed builds; on any
-        // other key it can never create a session, so the id-4 join-cap
-        // theory is retired as UNTESTABLE here. Restoring Nagram's 11535358
-        // as slot 0 (the login-good third-party id the old saga settled on).
-        // MeeroApiKeys GENERATION bumps to 4 alongside so any rotation index
-        // parked on an official slot resets onto slot 0 once, and the v196
-        // join-time advance() hook is removed (proven ineffective AND it
-        // poisoned the login pointer - documented in ROADMAP v198).
-        def appId = '11535358'
-        def appHash = '33d372962fadb01df47e6ceed4e33cd6'
+        // v199 EXPERIMENT (owner-ordered fork-harvest): v198 proved login
+        // sound again under Nagram's 11535358 but the phantom community cap
+        // persists under it, and v197 proved official ids can never create a
+        // session on our signature. Remaining question, decisive either way:
+        // is the server cap PER api_id (some third-party ids walk free) or
+        // PER CLASS (every non-official id capped)? Test identity: nullgram's
+        // published pair 19797609 / e8f1567dbbf38944a1391c4d23c34b60 (their
+        // own registration, taken unmodified from qwq233/nullgram
+        // BuildVars.java - public source, credit where due). Result matrix:
+        // join works -> per-id cap, this becomes the new default; same
+        // phantom screen -> class-wide cap, experiment space exhausted,
+        // honest documentation follows. GENERATION bumps to 5 so every saved
+        // rotation index resets onto this slot once.
+        def appId = '19797609'
+        def appHash = 'e8f1567dbbf38944a1391c4d23c34b60'
 
         if (properties != null) {
             appId = properties.getProperty('TELEGRAM_APP_ID') ?: System.getenv('TELEGRAM_APP_ID') ?: appId
