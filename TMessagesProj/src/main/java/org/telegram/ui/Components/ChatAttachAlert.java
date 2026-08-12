@@ -2747,11 +2747,11 @@ public class ChatAttachAlert extends BottomSheet implements NotificationCenter.N
         buttonsRecyclerView.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_YES);
         buttonsRecyclerViewWrapper.addView(buttonsRecyclerView, LayoutHelper.createFrameMatchParent());
         containerView.addView(buttonsRecyclerViewWrapper, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, 70, Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL));
-        // MeeroX v208 (owner-approved preview, التصميم A): iOS face for the
-        // attach sheet - grabber pill + grouped action card with colored
-        // squircles. Entirely switch-gated (meeroIosAttachPanel); OFF keeps
-        // the stock face byte-exact, and every failure path inside the
-        // helper silently keeps stock too.
+        // MeeroX v209 (owner-approved preview, التصميم الحقيقي من ملفات
+        // Telegram-iOS الرسمية): floating iOS capsule margins + grabber pill.
+        // Icon swap happens in ButtonsAdapter via MeeroAttachIos.tabAnim().
+        // Entirely switch-gated (meeroIosAttachPanel); OFF keeps the stock
+        // face byte-exact, and any failure inside the helper keeps stock.
         tw.nekomimi.nekogram.MeeroAttachIos.apply(this, containerView, buttonsRecyclerViewWrapper, buttonsRecyclerView, resourcesProvider);
         buttonsRecyclerView.setOnItemClickListener((view, position) -> {
             BaseFragment lastFragment = baseFragment;
@@ -4935,22 +4935,6 @@ public class ChatAttachAlert extends BottomSheet implements NotificationCenter.N
         }
     }
 
-    // MeeroX v208: a throw-away AttachButton carrying only a tag, so the iOS
-    // face's rows re-run this sheet's EXACT stock click guard chain
-    // (permissions / premium / restriction gates) - zero duplicated logic.
-    private View meeroAttachProxyButton;
-    public View meeroProxyForAttachTag(int tag) {
-        try {
-            if (meeroAttachProxyButton == null) {
-                meeroAttachProxyButton = new AttachButton(getContext());
-            }
-            meeroAttachProxyButton.setTag(tag);
-        } catch (Throwable t) {
-            FileLog.e(t);
-        }
-        return meeroAttachProxyButton;
-    }
-
     private void openContactsLayout() {
         if (!plainTextEnabled) {
             restrictedLayout = new ChatAttachRestrictedLayout(5, this, getContext(), resourcesProvider);
@@ -6649,25 +6633,25 @@ public class ChatAttachAlert extends BottomSheet implements NotificationCenter.N
                     boolean err = false;
                     boolean needPremium = false;
                     if (position == galleryButton) {
-                        attachButton.setTextAndIcon(1, getString(R.string.ChatGallery), GlassTabView.TabAnimation.GALLERY);
+                        attachButton.setTextAndIcon(1, getString(R.string.ChatGallery), tw.nekomimi.nekogram.MeeroAttachIos.tabAnim(GlassTabView.TabAnimation.GALLERY));
                         attachButton.setTag(1);
                         err = !checkPhotoAndCameraPermission(mContext);
                     } else if (position == documentButton) {
-                        attachButton.setTextAndIcon(4, getString(R.string.ChatDocument), GlassTabView.TabAnimation.FILES);
+                        attachButton.setTextAndIcon(4, getString(R.string.ChatDocument), tw.nekomimi.nekogram.MeeroAttachIos.tabAnim(GlassTabView.TabAnimation.FILES));
                         attachButton.setTag(4);
                         err = !checkPhotoAndDocumentsPermission(mContext);
                     } else if (position == locationButton) {
-                        attachButton.setTextAndIcon(6, getString(R.string.ChatLocation), GlassTabView.TabAnimation.LOCATION);
+                        attachButton.setTextAndIcon(6, getString(R.string.ChatLocation), tw.nekomimi.nekogram.MeeroAttachIos.tabAnim(GlassTabView.TabAnimation.LOCATION));
                         attachButton.setTag(6);
                     } else if (position == musicButton) {
-                        attachButton.setTextAndIcon(3, getString(R.string.AttachMusic), GlassTabView.TabAnimation.MUSIC);
+                        attachButton.setTextAndIcon(3, getString(R.string.AttachMusic), tw.nekomimi.nekogram.MeeroAttachIos.tabAnim(GlassTabView.TabAnimation.MUSIC));
                         attachButton.setTag(3);
                         err = !checkMusicPermission(mContext);
                     } else if (position == pollButton) {
-                        attachButton.setTextAndIcon(9, getString(R.string.Poll), GlassTabView.TabAnimation.POLL);
+                        attachButton.setTextAndIcon(9, getString(R.string.Poll), tw.nekomimi.nekogram.MeeroAttachIos.tabAnim(GlassTabView.TabAnimation.POLL));
                         attachButton.setTag(9);
                     } else if (position == contactButton) {
-                        attachButton.setTextAndIcon(5, getString(R.string.AttachContact), GlassTabView.TabAnimation.CONTACTS);
+                        attachButton.setTextAndIcon(5, getString(R.string.AttachContact), tw.nekomimi.nekogram.MeeroAttachIos.tabAnim(GlassTabView.TabAnimation.CONTACTS));
                         attachButton.setTag(5);
                         err = UserConfig.getInstance(currentAccount).syncContacts && !checkContactsPermission(mContext);
                     } else if (position == quickRepliesButton) {

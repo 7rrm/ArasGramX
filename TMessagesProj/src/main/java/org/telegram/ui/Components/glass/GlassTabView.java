@@ -576,7 +576,19 @@ public class GlassTabView extends FrameLayout implements MainTabsLayout.Tab, Fac
         ARTICLE(R.raw.tab_article, R.raw.tab_article_reverse),
 
         BOOSTS(R.raw.boosts, 25, 49),
-        MONETIZATION(R.raw.monetize, 19, 45);
+        MONETIZATION(R.raw.monetize, 19, 45),
+
+        /** MeeroX v209: the official Telegram-iOS "Chat/Attach Menu" glyphs
+         *  (vector PDFs from Telegram-iOS master), rasterized to template
+         *  alpha PNGs; runtime-tinted by this view's color filter exactly
+         *  like the stock static tabs. Used only when the owner switch
+         *  meeroIosAttachPanel is ON; OFF never touches these. */
+        MEERO_ATTACH_GALLERY(TabAnimationType.STATIC, R.drawable.meero_ios_attach_gallery),
+        MEERO_ATTACH_FILE(TabAnimationType.STATIC, R.drawable.meero_ios_attach_file),
+        MEERO_ATTACH_LOCATION(TabAnimationType.STATIC, R.drawable.meero_ios_attach_location),
+        MEERO_ATTACH_CONTACT(TabAnimationType.STATIC, R.drawable.meero_ios_attach_contact),
+        MEERO_ATTACH_POLL(TabAnimationType.STATIC, R.drawable.meero_ios_attach_poll),
+        MEERO_ATTACH_MUSIC(TabAnimationType.STATIC, R.drawable.meero_ios_attach_audio);
 
         public final @RawRes int iconToFilled;
         public final @RawRes int iconToOutline;
