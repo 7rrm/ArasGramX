@@ -509,12 +509,31 @@ public class ActionBarPopupWindow extends PopupWindow {
             return item.textView != null && meeroRedish(item.textView.getCurrentTextColor());
         }
 
+        // MeeroX v210 (owner field report: on SOME users' installs the popup
+        // rows rendered invisible - light text on a near-white card, menu
+        // "blank white"): never trust the theme's dark FLAG alone. Derive
+        // the card from the color the menu rows will ACTUALLY be painted
+        // with (key_actionBarDefaultSubmenuItem): light text => dark card,
+        // dark text => light card. Coherent themes keep the exact v153
+        // look; an odd custom theme can no longer produce an unreadable
+        // combination.
+        private boolean meeroCardWantsDark() {
+            try {
+                final int txt = getThemedColor(Theme.key_actionBarDefaultSubmenuItem);
+                final int r = (txt >> 16) & 0xFF, g = (txt >> 8) & 0xFF, b = txt & 0xFF;
+                final float lum = (0.2126f * r + 0.7152f * g + 0.0722f * b) / 255f;
+                return lum > 0.55f;
+            } catch (Throwable t) {
+                return Theme.isCurrentThemeDark();
+            }
+        }
+
         private int meeroIosCardColor() {
-            return Theme.isCurrentThemeDark() ? 0xFF2A2A2F : 0xFFF9F9FC;
+            return meeroCardWantsDark() ? 0xFF2A2A2F : 0xFFF9F9FC;
         }
 
         private int meeroSepColor() {
-            return Theme.isCurrentThemeDark() ? 0x21FFFFFF : 0x1F000000;
+            return meeroCardWantsDark() ? 0x21FFFFFF : 0x1F000000;
         }
 
         private Drawable meeroIosCard() {

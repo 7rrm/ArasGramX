@@ -160,6 +160,16 @@ public class AppIconsSelectorCell extends RecyclerListView implements Notificati
                 }
             }
         }
+        // MeeroX v210: drop any icon whose title/resources can't resolve on
+        // this ROM BEFORE the RecyclerView tries to bind it mid-scroll. The
+        // owner's MIUI build crashed exactly there; a filtered icon is a
+        // vanished tile, never a dead app.
+        for (int i = 0; i < availableIcons.size(); i++) {
+            if (!meeroIconUsable(availableIcons.get(i))) {
+                availableIcons.remove(i);
+                i--;
+            }
+        }
         getAdapter().notifyDataSetChanged();
         invalidateItemDecorations();
 
@@ -202,6 +212,22 @@ public class AppIconsSelectorCell extends RecyclerListView implements Notificati
     public void didReceivedNotification(int id, int account, Object... args) {
         if (id == NotificationCenter.premiumStatusChangedGlobal) {
             updateIconsVisibility();
+        }
+    }
+
+    // MeeroX v210: pre-flight a tile the way bind() will use it - title
+    // string AND both drawables AND the package-manager probe. Any throw =
+    // the icon simply doesn't get listed (logged via FileLog).
+    private boolean meeroIconUsable(LauncherIconController.LauncherIcon icon) {
+        try {
+            icon.getTitle();
+            LauncherIconController.isEnabled(icon);
+            ContextCompat.getDrawable(getContext(), icon.background);
+            ContextCompat.getDrawable(getContext(), icon.foreground);
+            return true;
+        } catch (Throwable t) {
+            org.telegram.messenger.FileLog.e(t);
+            return false;
         }
     }
 
@@ -273,21 +299,30 @@ public class AppIconsSelectorCell extends RecyclerListView implements Notificati
         }
 
         private void bind(LauncherIconController.LauncherIcon icon) {
-            iconView.setImageResource(icon.background);
+            // MeeroX v210: a recycler binding must never be fatal. If any
+            // resource/title hiccups on this ROM, draw an empty tile instead
+            // of killing the app (pre-flight already filtered, this is the
+            // belt-and-suspenders for recycled holders).
+            try {
+                iconView.setImageResource(icon.background);
 
-            MarginLayoutParams params = (MarginLayoutParams) titleView.getLayoutParams();
-            if (icon.premium && !UserConfig.hasPremiumOnAccounts()) {
-                SpannableString str = new SpannableString("d " + icon.getTitle());
-                ColoredImageSpan span = new ColoredImageSpan(R.drawable.msg_mini_premiumlock);
-                span.setTopOffset(1);
-                span.setSize(AndroidUtilities.dp(13));
-                str.setSpan(span, 0, 1, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                MarginLayoutParams params = (MarginLayoutParams) titleView.getLayoutParams();
+                if (icon.premium && !UserConfig.hasPremiumOnAccounts()) {
+                    SpannableString str = new SpannableString("d " + icon.getTitle());
+                    ColoredImageSpan span = new ColoredImageSpan(R.drawable.msg_mini_premiumlock);
+                    span.setTopOffset(1);
+                    span.setSize(AndroidUtilities.dp(13));
+                    str.setSpan(span, 0, 1, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
 
-                params.rightMargin = AndroidUtilities.dp(4);
-                titleView.setText(str);
-            } else {
-                params.rightMargin = 0;
-                titleView.setText(icon.getTitle());
+                    params.rightMargin = AndroidUtilities.dp(4);
+                    titleView.setText(str);
+                } else {
+                    params.rightMargin = 0;
+                    titleView.setText(icon.getTitle());
+                }
+            } catch (Throwable t) {
+                org.telegram.messenger.FileLog.e(t);
+                try { titleView.setText(""); } catch (Throwable ignore) {}
             }
             setSelected(LauncherIconController.isEnabled(icon), false);
         }
