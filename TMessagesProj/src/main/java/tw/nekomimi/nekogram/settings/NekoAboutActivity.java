@@ -41,7 +41,6 @@ public class NekoAboutActivity extends BaseNekoSettingsActivity {
     private int developerRow;
     private int mainChannelRow;
     private int channel1Row;
-    private int channel2Row;
     private int privacyRow;
 
     @Override
@@ -53,7 +52,6 @@ public class NekoAboutActivity extends BaseNekoSettingsActivity {
         developerRow = addRow();
         mainChannelRow = addRow();
         channel1Row = addRow();
-        channel2Row = addRow();
         privacyRow = addRow();
     }
 
@@ -116,9 +114,6 @@ public class NekoAboutActivity extends BaseNekoSettingsActivity {
         } else if (position == channel1Row) {
             MessagesController.getInstance(currentAccount)
                     .openByUserName("nadoremalf", NekoAboutActivity.this, 1);
-        } else if (position == channel2Row) {
-            MessagesController.getInstance(currentAccount)
-                    .openByUserName("TOOPENK", NekoAboutActivity.this, 1);
         } else if (position == privacyRow) {
             showPrivacyDialog();
         }
@@ -149,8 +144,6 @@ public class NekoAboutActivity extends BaseNekoSettingsActivity {
                     textCell.setTextAndValue(MeeroStrings.s(463), "@Y_VBB", true);
                 } else if (position == channel1Row) {
                     textCell.setTextAndValue(MeeroStrings.s(37), "@nadoremalf", true);
-                } else if (position == channel2Row) {
-                    textCell.setTextAndValue(MeeroStrings.s(38), "@TOOPENK", true);
                 } else if (position == privacyRow) {
                     textCell.setText(MeeroStrings.s(204), false);
                 }
