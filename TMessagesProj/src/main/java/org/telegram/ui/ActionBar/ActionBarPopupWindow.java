@@ -528,6 +528,46 @@ public class ActionBarPopupWindow extends PopupWindow {
             }
         }
 
+        // MeeroX v212: GUARANTEED readable popup rows. v210 derived the card
+        // from the theme's DECLARED submenu text key - enough for sane
+        // themes, but the owner's field report stands: same build, his
+        // device fine, some users see an empty "white" list. So now each
+        // row's ACTUAL painted text color is contrast-checked at draw time
+        // against the card actually being drawn; any unreadable pair is
+        // nudged to iOS near-black/near-white. Readable rows (incl. custom
+        // colored ones) pass through untouched; destructive rows keep their
+        // iOS red (readable on both cards). Skin OFF = never consulted.
+        private void meeroEnforceReadableRows() {
+            try {
+                final boolean cardDark = meeroCardWantsDark();
+                final int n = linearLayout.getChildCount();
+                for (int i = 0; i < n; i++) {
+                    final View v = linearLayout.getChildAt(i);
+                    if (!(v instanceof ActionBarMenuSubItem) || v.getVisibility() != View.VISIBLE) {
+                        continue;
+                    }
+                    if (meeroIsDestructive(v)) {
+                        continue;
+                    }
+                    final ActionBarMenuSubItem item = (ActionBarMenuSubItem) v;
+                    if (item.textView == null) {
+                        continue;
+                    }
+                    final int tc = item.textView.getCurrentTextColor();
+                    final int r = (tc >> 16) & 0xFF, g = (tc >> 8) & 0xFF, b = tc & 0xFF;
+                    final float tl = (0.2126f * r + 0.7152f * g + 0.0722f * b) / 255f;
+                    if (cardDark && tl < 0.45f) {
+                        item.setTextColor(0xFFF2F2F7);
+                        item.setIconColor(0xFFF2F2F7);
+                    } else if (!cardDark && tl > 0.60f) {
+                        item.setTextColor(0xFF1C1C1E);
+                        item.setIconColor(0xFF1C1C1E);
+                    }
+                }
+            } catch (Throwable ignore) {
+            }
+        }
+
         private int meeroIosCardColor() {
             return meeroCardWantsDark() ? 0xFF2A2A2F : 0xFFF9F9FC;
         }
@@ -962,6 +1002,9 @@ public class ActionBarPopupWindow extends PopupWindow {
             // MeeroX: iOS hairline separators - drawn once the popup is fully
             // settled so the entrance scale never shows unscaled strokes.
             if (meeroSkinEligible && meeroGate && backAlpha == 255 && backScaleX == 1f && backScaleY == 1f && reactionsEnterProgress == 1f) {
+                // MeeroX v212: rows must be readable no matter how strange
+                // the user's theme is (runs post-settle; cheap + idempotent).
+                meeroEnforceReadableRows();
                 View prevVisible = null;
                 final int scrollY = scrollView == null ? 0 : scrollView.getScrollY();
                 final int contentTop = linearLayout.getTop();
