@@ -26,7 +26,7 @@
     <string name="LlmProviderGroqModel" translatable="false">openai/gpt-oss-120b</string>
     <string name="LlmProviderDeepSeekModel" translatable="false">deepseek-v4-flash</string>
     <string name="LlmProviderXAIModel" translatable="false"></string>
-    <string name="LlmProviderCerebrasModel" translatable="false">gemma-4-31b</string>
+    <string name="LlmProviderCerebrasModel" translatable="false">gpt-oss-120b</string>
     <string name="LlmProviderOllamaCloudModel" translatable="false">gemma4:31b</string>
     <string name="LlmProviderOpenRouterModel" translatable="false">openrouter/free</string>
     <string name="LlmProviderVercelAIGatewayModel" translatable="false">google/gemma-4-31b-it</string>
@@ -353,4 +353,5 @@
     <string name="ImportAyuDB">Import Database</string>
     <string name="ImportAyuDBAlert">The current message database will be replaced. The app will restart after the import.</string>
     <string name="DisableSwipeToNext">Disable Swipe to Next</string>
+    <string name="ForceFontWeightFallback">Force Font Weight Fallback</string>
 </resources>

@@ -30,7 +30,6 @@ import kotlin.Unit;
 import tw.nekomimi.nekogram.helpers.AppRestartHelper;
 import tw.nekomimi.nekogram.ui.BottomBuilder;
 import tw.nekomimi.nekogram.utils.AndroidUtil;
-import xyz.nextalone.nagram.NaConfig;
 
 public class NekoXConfig {
 
@@ -77,13 +76,7 @@ public class NekoXConfig {
         if (name == null || name.isEmpty()) {
             return getString(R.string.Default);
         } else {
-            String[] parts = name.split("-");
-            Locale locale;
-            if (parts.length > 1) {
-                locale = new Locale(parts[0], parts[1]);
-            } else {
-                locale = new Locale(parts[0]);
-            }
+            Locale locale = Locale.forLanguageTag(name.replace('_', '-'));
             return locale.getDisplayName(LocaleController.getInstance().currentLocale);
         }
     }
@@ -224,9 +217,8 @@ public class NekoXConfig {
         AlertDialog restart = new AlertDialog(context, 0);
         restart.setTitle(getString(R.string.NagramX));
         restart.setMessage(getString(R.string.RestartAppToTakeEffect));
-        restart.setPositiveButton(getString(R.string.OK), (__, ___) -> {
-            AppRestartHelper.triggerRebirth(context, new Intent(context, LaunchActivity.class));
-        });
+        restart.setPositiveButton(getString(R.string.OK), (__, ___) ->
+                AppRestartHelper.triggerRebirth(context, new Intent(context, LaunchActivity.class)));
         restart.show();
     }
 

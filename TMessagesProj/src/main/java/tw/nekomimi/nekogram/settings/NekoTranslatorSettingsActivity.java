@@ -81,11 +81,13 @@ import tw.nekomimi.nekogram.config.cell.ConfigCellTextCheck;
 import tw.nekomimi.nekogram.config.cell.ConfigCellTextDetail;
 import tw.nekomimi.nekogram.config.cell.ConfigCellTextInput;
 import tw.nekomimi.nekogram.llm.LlmConfig;
+import tw.nekomimi.nekogram.llm.net.LlmResponse;
 import tw.nekomimi.nekogram.llm.net.OpenAICompatClient;
-import tw.nekomimi.nekogram.llm.preset.LlmPresetRegistry;
-import tw.nekomimi.nekogram.llm.ui.LlmEditTextFactory;
-import tw.nekomimi.nekogram.llm.utils.LlmModelUtil;
-import tw.nekomimi.nekogram.llm.utils.LlmUrlNormalizer;
+import tw.nekomimi.nekogram.llm.net.VertexGeminiClient;
+import tw.nekomimi.nekogram.llm.preset.PresetRegistry;
+import tw.nekomimi.nekogram.llm.ui.EditTextFactory;
+import tw.nekomimi.nekogram.llm.utils.ModelUtil;
+import tw.nekomimi.nekogram.llm.utils.UrlNormalizer;
 import tw.nekomimi.nekogram.translate.Translator;
 import tw.nekomimi.nekogram.translate.TranslatorKt;
 import tw.nekomimi.nekogram.ui.PopupBuilder;
@@ -159,40 +161,55 @@ public class NekoTranslatorSettingsActivity extends BaseNekoXSettingsActivity {
             getString(R.string.LlmProviderCustom),
             "OpenAI",
             "Google AI Studio",
+            "Google Vertex",
             "Groq",
             "DeepSeek",
-            "xAI",
+            "SpaceXAI",
             "Cerebras",
             "Ollama",
             "OpenRouter",
             "Vercel AI Gateway",
+    }, new int[]{
+            PresetRegistry.CUSTOM,
+            PresetRegistry.OPENAI,
+            PresetRegistry.GOOGLE_AI_STUDIO,
+            PresetRegistry.GOOGLE_AGENT_PLATFORM,
+            PresetRegistry.GROQ,
+            PresetRegistry.DEEPSEEK,
+            PresetRegistry.XAI,
+            PresetRegistry.CEREBRAS,
+            PresetRegistry.OLLAMA_CLOUD,
+            PresetRegistry.OPENROUTER,
+            PresetRegistry.VERCEL_AI_GATEWAY,
     }, null));
     private final AbstractConfigCell llmModelRow = cellGroup.appendCell(new ConfigCellCustom("LlmModelName", CellGroup.ITEM_TYPE_TEXT_SETTINGS_CELL, true));
 
     private final Map<Integer, List<AbstractConfigCell>> llmProviderConfigMap = new HashMap<>();
 
     {
-        llmProviderConfigMap.put(LlmPresetRegistry.CUSTOM, List.of(
+        llmProviderConfigMap.put(PresetRegistry.CUSTOM, List.of(
                 new ConfigCellTextDetail(NaConfig.INSTANCE.getLlmApiKey(), (view, position) -> showConfigDialog(position, NaConfig.INSTANCE.getLlmApiKey(), getString(R.string.LlmApiKeyNotice), getString(R.string.LlmApiKey)), getString(R.string.None), true),
                 new ConfigCellTextDetail(NaConfig.INSTANCE.getLlmApiUrl(), (view, position) -> showConfigDialog(position, NaConfig.INSTANCE.getLlmApiUrl(), getString(R.string.LlmApiUrlNotice), getString(R.string.LlmApiUrlHint)), getString(R.string.LlmApiUrlDefault))));
-        llmProviderConfigMap.put(LlmPresetRegistry.OPENAI, List.of(
+        llmProviderConfigMap.put(PresetRegistry.OPENAI, List.of(
                 new ConfigCellTextDetail(NaConfig.INSTANCE.getLlmProviderOpenAIKey(), (view, position) -> showConfigDialog(position, NaConfig.INSTANCE.getLlmProviderOpenAIKey(), getString(R.string.LlmApiKeyNotice), getString(R.string.LlmApiKey)), getString(R.string.None), true, getString(R.string.LlmApiKey))));
-        llmProviderConfigMap.put(LlmPresetRegistry.GEMINI, List.of(
+        llmProviderConfigMap.put(PresetRegistry.GOOGLE_AI_STUDIO, List.of(
                 new ConfigCellTextDetail(NaConfig.INSTANCE.getLlmProviderGeminiKey(), (view, position) -> showConfigDialog(position, NaConfig.INSTANCE.getLlmProviderGeminiKey(), getString(R.string.LlmApiKeyNotice), getString(R.string.LlmApiKey)), getString(R.string.None), true, getString(R.string.LlmApiKey))));
-        llmProviderConfigMap.put(LlmPresetRegistry.GROQ, List.of(
+        llmProviderConfigMap.put(PresetRegistry.GROQ, List.of(
                 new ConfigCellTextDetail(NaConfig.INSTANCE.getLlmProviderGroqKey(), (view, position) -> showConfigDialog(position, NaConfig.INSTANCE.getLlmProviderGroqKey(), getString(R.string.LlmApiKeyNotice), getString(R.string.LlmApiKey)), getString(R.string.None), true, getString(R.string.LlmApiKey))));
-        llmProviderConfigMap.put(LlmPresetRegistry.DEEPSEEK, List.of(
+        llmProviderConfigMap.put(PresetRegistry.DEEPSEEK, List.of(
                 new ConfigCellTextDetail(NaConfig.INSTANCE.getLlmProviderDeepSeekKey(), (view, position) -> showConfigDialog(position, NaConfig.INSTANCE.getLlmProviderDeepSeekKey(), getString(R.string.LlmApiKeyNotice), getString(R.string.LlmApiKey)), getString(R.string.None), true, getString(R.string.LlmApiKey))));
-        llmProviderConfigMap.put(LlmPresetRegistry.XAI, List.of(
+        llmProviderConfigMap.put(PresetRegistry.XAI, List.of(
                 new ConfigCellTextDetail(NaConfig.INSTANCE.getLlmProviderXAIKey(), (view, position) -> showConfigDialog(position, NaConfig.INSTANCE.getLlmProviderXAIKey(), getString(R.string.LlmApiKeyNotice), getString(R.string.LlmApiKey)), getString(R.string.None), true, getString(R.string.LlmApiKey))));
-        llmProviderConfigMap.put(LlmPresetRegistry.CEREBRAS, List.of(
+        llmProviderConfigMap.put(PresetRegistry.CEREBRAS, List.of(
                 new ConfigCellTextDetail(NaConfig.INSTANCE.getLlmProviderCerebrasKey(), (view, position) -> showConfigDialog(position, NaConfig.INSTANCE.getLlmProviderCerebrasKey(), getString(R.string.LlmApiKeyNotice), getString(R.string.LlmApiKey)), getString(R.string.None), true, getString(R.string.LlmApiKey))));
-        llmProviderConfigMap.put(LlmPresetRegistry.OLLAMA_CLOUD, List.of(
+        llmProviderConfigMap.put(PresetRegistry.OLLAMA_CLOUD, List.of(
                 new ConfigCellTextDetail(NaConfig.INSTANCE.getLlmProviderOllamaCloudKey(), (view, position) -> showConfigDialog(position, NaConfig.INSTANCE.getLlmProviderOllamaCloudKey(), getString(R.string.LlmApiKeyNotice), getString(R.string.LlmApiKey)), getString(R.string.None), true, getString(R.string.LlmApiKey))));
-        llmProviderConfigMap.put(LlmPresetRegistry.OPENROUTER, List.of(
+        llmProviderConfigMap.put(PresetRegistry.OPENROUTER, List.of(
                 new ConfigCellTextDetail(NaConfig.INSTANCE.getLlmProviderOpenRouterKey(), (view, position) -> showConfigDialog(position, NaConfig.INSTANCE.getLlmProviderOpenRouterKey(), getString(R.string.LlmApiKeyNotice), getString(R.string.LlmApiKey)), getString(R.string.None), true, getString(R.string.LlmApiKey))));
-        llmProviderConfigMap.put(LlmPresetRegistry.VERCEL_AI_GATEWAY, List.of(
+        llmProviderConfigMap.put(PresetRegistry.VERCEL_AI_GATEWAY, List.of(
                 new ConfigCellTextDetail(NaConfig.INSTANCE.getLlmProviderVercelAIGatewayKey(), (view, position) -> showConfigDialog(position, NaConfig.INSTANCE.getLlmProviderVercelAIGatewayKey(), getString(R.string.LlmApiKeyNotice), getString(R.string.LlmApiKey)), getString(R.string.None), true, getString(R.string.LlmApiKey))));
+        llmProviderConfigMap.put(PresetRegistry.GOOGLE_AGENT_PLATFORM, List.of(
+                new ConfigCellTextDetail(NaConfig.INSTANCE.getLlmProviderVertexKey(), (view, position) -> showConfigDialog(position, NaConfig.INSTANCE.getLlmProviderVertexKey(), getString(R.string.LlmApiKeyNotice), getString(R.string.LlmApiKey)), getString(R.string.None), true, getString(R.string.LlmApiKey))));
     }
 
     private final AbstractConfigCell llmSystemPromptRow = cellGroup.appendCell(new ConfigCellTextDetail(NaConfig.INSTANCE.getLlmSystemPrompt(), (view, position) -> showConfigDialog(position, NaConfig.INSTANCE.getLlmSystemPrompt(), getString(R.string.LlmSystemPromptNotice) + "\n", getString(R.string.LlmSystemPromptHint)), getString(R.string.Default)));
@@ -254,6 +271,8 @@ public class NekoTranslatorSettingsActivity extends BaseNekoXSettingsActivity {
             return "https://platform.openai.com/api-keys";
         } else if (bind == NaConfig.INSTANCE.getLlmProviderGeminiKey()) {
             return "https://aistudio.google.com/app/apikey";
+        } else if (bind == NaConfig.INSTANCE.getLlmProviderVertexKey()) {
+            return "https://console.cloud.google.com/agent-platform/studio/settings/api-keys";
         } else if (bind == NaConfig.INSTANCE.getLlmProviderGroqKey()) {
             return "https://console.groq.com/keys";
         } else if (bind == NaConfig.INSTANCE.getLlmProviderDeepSeekKey()) {
@@ -553,16 +572,17 @@ public class NekoTranslatorSettingsActivity extends BaseNekoXSettingsActivity {
 
     private ConfigItem getCurrentLlmProviderApiKeyItem() {
         return switch (NaConfig.INSTANCE.getLlmProviderPreset().Int()) {
-            case LlmPresetRegistry.CUSTOM -> NaConfig.INSTANCE.getLlmApiKey();
-            case LlmPresetRegistry.OPENAI -> NaConfig.INSTANCE.getLlmProviderOpenAIKey();
-            case LlmPresetRegistry.GEMINI -> NaConfig.INSTANCE.getLlmProviderGeminiKey();
-            case LlmPresetRegistry.GROQ -> NaConfig.INSTANCE.getLlmProviderGroqKey();
-            case LlmPresetRegistry.DEEPSEEK -> NaConfig.INSTANCE.getLlmProviderDeepSeekKey();
-            case LlmPresetRegistry.XAI -> NaConfig.INSTANCE.getLlmProviderXAIKey();
-            case LlmPresetRegistry.CEREBRAS -> NaConfig.INSTANCE.getLlmProviderCerebrasKey();
-            case LlmPresetRegistry.OLLAMA_CLOUD -> NaConfig.INSTANCE.getLlmProviderOllamaCloudKey();
-            case LlmPresetRegistry.OPENROUTER -> NaConfig.INSTANCE.getLlmProviderOpenRouterKey();
-            case LlmPresetRegistry.VERCEL_AI_GATEWAY -> NaConfig.INSTANCE.getLlmProviderVercelAIGatewayKey();
+            case PresetRegistry.CUSTOM -> NaConfig.INSTANCE.getLlmApiKey();
+            case PresetRegistry.OPENAI -> NaConfig.INSTANCE.getLlmProviderOpenAIKey();
+            case PresetRegistry.GOOGLE_AI_STUDIO -> NaConfig.INSTANCE.getLlmProviderGeminiKey();
+            case PresetRegistry.GROQ -> NaConfig.INSTANCE.getLlmProviderGroqKey();
+            case PresetRegistry.DEEPSEEK -> NaConfig.INSTANCE.getLlmProviderDeepSeekKey();
+            case PresetRegistry.XAI -> NaConfig.INSTANCE.getLlmProviderXAIKey();
+            case PresetRegistry.CEREBRAS -> NaConfig.INSTANCE.getLlmProviderCerebrasKey();
+            case PresetRegistry.OLLAMA_CLOUD -> NaConfig.INSTANCE.getLlmProviderOllamaCloudKey();
+            case PresetRegistry.OPENROUTER -> NaConfig.INSTANCE.getLlmProviderOpenRouterKey();
+            case PresetRegistry.VERCEL_AI_GATEWAY -> NaConfig.INSTANCE.getLlmProviderVercelAIGatewayKey();
+            case PresetRegistry.GOOGLE_AGENT_PLATFORM -> NaConfig.INSTANCE.getLlmProviderVertexKey();
             default -> null;
         };
     }
@@ -672,7 +692,7 @@ public class NekoTranslatorSettingsActivity extends BaseNekoXSettingsActivity {
     private void checkTemperatureRows() {
         int preset = NaConfig.INSTANCE.getLlmProviderPreset().Int();
         String modelName = LlmConfig.getEffectiveModelName(preset);
-        boolean showTemperature = LlmModelUtil.supportsTemperature(modelName);
+        boolean showTemperature = preset != PresetRegistry.GOOGLE_AGENT_PLATFORM && ModelUtil.supportsTemperature(modelName);
         if (listAdapter == null) {
             if (!showTemperature) {
                 cellGroup.rows.remove(headerTemperature);
@@ -756,8 +776,8 @@ public class NekoTranslatorSettingsActivity extends BaseNekoXSettingsActivity {
 
         boolean isPrompt = bind == NaConfig.INSTANCE.getLlmSystemPrompt() || bind == NaConfig.INSTANCE.getLlmUserPrompt();
         EditTextBoldCursor editText = isPrompt
-                ? LlmEditTextFactory.createAndSetupMultilineEditText(context, resourcesProvider, bind.String(), hint, EditorInfo.IME_ACTION_DONE, true)
-                : LlmEditTextFactory.createAndSetupEditText(context, resourcesProvider, bind.String(), hint, EditorInfo.IME_ACTION_DONE, true);
+                ? EditTextFactory.createAndSetupMultilineEditText(context, resourcesProvider, bind.String(), hint, EditorInfo.IME_ACTION_DONE, true)
+                : EditTextFactory.createAndSetupEditText(context, resourcesProvider, bind.String(), hint, EditorInfo.IME_ACTION_DONE, true);
         ll.addView(editText, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 0, 24, 0, 24, 0));
 
         CharSequence enhancedSubtitle = getEnhancedSubtitleWithLink(bind, subtitle);
@@ -778,7 +798,7 @@ public class NekoTranslatorSettingsActivity extends BaseNekoXSettingsActivity {
             button.setOnClickListener(v -> {
                 String value = editText.getText() != null ? editText.getText().toString() : "";
                 if (bind == NaConfig.INSTANCE.getLlmApiUrl()) {
-                    if (!LlmUrlNormalizer.isValidBaseUrl(value)) {
+                    if (!UrlNormalizer.isValidBaseUrl(value)) {
                         AndroidUtil.showInputError(editText);
                         return;
                     }
@@ -799,6 +819,7 @@ public class NekoTranslatorSettingsActivity extends BaseNekoXSettingsActivity {
     private static boolean shouldUseGenericApiKeyTitle(ConfigItem bind) {
         return bind == NaConfig.INSTANCE.getLlmProviderOpenAIKey()
                 || bind == NaConfig.INSTANCE.getLlmProviderGeminiKey()
+                || bind == NaConfig.INSTANCE.getLlmProviderVertexKey()
                 || bind == NaConfig.INSTANCE.getLlmProviderGroqKey()
                 || bind == NaConfig.INSTANCE.getLlmProviderDeepSeekKey()
                 || bind == NaConfig.INSTANCE.getLlmProviderXAIKey()
@@ -882,11 +903,25 @@ public class NekoTranslatorSettingsActivity extends BaseNekoXSettingsActivity {
         return s.substring(0, max) + "…";
     }
 
+    private static boolean isSelectableModelItem(ModelDialogItem item, HashSet<String> forceEnabledModels) {
+        if (item.type == MODEL_ITEM_TYPE_ERROR) {
+            return true;
+        }
+        if (item.type != MODEL_ITEM_TYPE_MODEL && item.type != MODEL_ITEM_TYPE_DEFAULT) {
+            return false;
+        }
+        String model = item.text != null ? item.text.trim().toLowerCase(Locale.ROOT) : "";
+        return forceEnabledModels.contains(model) || ModelUtil.isTextGenerationModel(item.text);
+    }
+
     private static void sortModelsForProvider(int preset, ArrayList<String> models) {
-        if (preset == LlmPresetRegistry.OPENROUTER) {
+        if (preset == PresetRegistry.GOOGLE_AGENT_PLATFORM) {
+            return;
+        }
+        if (preset == PresetRegistry.OPENROUTER) {
             models.sort((a, b) -> {
-                boolean aFree = LlmModelUtil.isOpenRouterFreeModel(a);
-                boolean bFree = LlmModelUtil.isOpenRouterFreeModel(b);
+                boolean aFree = ModelUtil.isOpenRouterFreeModel(a);
+                boolean bFree = ModelUtil.isOpenRouterFreeModel(b);
                 if (aFree != bFree) {
                     return aFree ? -1 : 1;
                 }
@@ -943,7 +978,7 @@ public class NekoTranslatorSettingsActivity extends BaseNekoXSettingsActivity {
         String initialText = LlmConfig.getEffectiveModelName(preset);
         final boolean pinDefaultModel;
 
-        if (preset == LlmPresetRegistry.CUSTOM) {
+        if (preset == PresetRegistry.CUSTOM) {
             String userUrl = NaConfig.INSTANCE.getLlmApiUrl().String();
             boolean hasCustomUrl = userUrl != null && !userUrl.trim().isEmpty();
             pinDefaultModel = !hasCustomUrl && !TextUtils.isEmpty(defaultModel);
@@ -958,7 +993,7 @@ public class NekoTranslatorSettingsActivity extends BaseNekoXSettingsActivity {
         final int listCellSideInsetDp = 20;
         final int listSidePaddingPx = dp(Math.max(0, dialogSideInsetDp - listCellSideInsetDp));
 
-        EditTextBoldCursor editText = LlmEditTextFactory.createAndSetupEditText(
+        EditTextBoldCursor editText = EditTextFactory.createAndSetupEditText(
                 context,
                 resourcesProvider,
                 initialText,
@@ -981,6 +1016,7 @@ public class NekoTranslatorSettingsActivity extends BaseNekoXSettingsActivity {
         boolean[] userEdited = new boolean[]{false};
         boolean[] suppressWatcher = new boolean[]{false};
         String[] currentQuery = new String[]{""};
+        HashSet<String> forceEnabledModels = new HashSet<>();
         final AlertDialog[] dialogRef = new AlertDialog[]{null};
 
         Runnable rebuildItems = () -> {
@@ -1042,10 +1078,7 @@ public class NekoTranslatorSettingsActivity extends BaseNekoXSettingsActivity {
                 if (position < 0 || position >= items.size()) {
                     return false;
                 }
-                int type = items.get(position).type;
-                return type == MODEL_ITEM_TYPE_MODEL
-                        || type == MODEL_ITEM_TYPE_DEFAULT
-                        || type == MODEL_ITEM_TYPE_ERROR;
+                return isSelectableModelItem(items.get(position), forceEnabledModels);
             }
 
             @Override
@@ -1089,16 +1122,22 @@ public class NekoTranslatorSettingsActivity extends BaseNekoXSettingsActivity {
                 int highlightColor = Theme.getColor(Theme.key_windowBackgroundWhiteBlueText4, resourcesProvider);
                 switch (holder.itemView) {
                     case TextSettingsCell cell -> {
+                        boolean enabled = isSelectableModelItem(item, forceEnabledModels);
+                        cell.setTextColor(Theme.getColor(enabled ? Theme.key_windowBackgroundWhiteBlackText : Theme.key_windowBackgroundWhiteGrayText, resourcesProvider));
+                        cell.setTextValueColor(Theme.getColor(enabled ? Theme.key_windowBackgroundWhiteValueText : Theme.key_windowBackgroundWhiteGrayText, resourcesProvider));
+                        cell.setEnabled(enabled);
                         if (item.type == MODEL_ITEM_TYPE_DEFAULT) {
                             CharSequence text = formatModelNameForList(item.text);
-                            text = highlightQueryInText(text, query, highlightColor);
+                            if (enabled) {
+                                text = highlightQueryInText(text, query, highlightColor);
+                            }
                             cell.setTextAndValue(text, item.value, divider);
                             cell.setIcon(0);
                         } else if (item.type == MODEL_ITEM_TYPE_LOADING) {
                             cell.setText(item.text, divider);
                             cell.setIcon(0);
                         } else if (item.type == MODEL_ITEM_TYPE_MODEL) {
-                            CharSequence text = highlightQueryInText(item.text, query, highlightColor);
+                            CharSequence text = enabled ? highlightQueryInText(item.text, query, highlightColor) : item.text;
                             cell.setText(text, divider);
                             cell.setIcon(0);
                         } else {
@@ -1117,7 +1156,7 @@ public class NekoTranslatorSettingsActivity extends BaseNekoXSettingsActivity {
 
         Runnable loadModels = () -> {
             if (isLoading[0]) return;
-            if (TextUtils.isEmpty(apiKey)) {
+            if (preset != PresetRegistry.GOOGLE_AGENT_PLATFORM && TextUtils.isEmpty(apiKey)) {
                 allModels.clear();
                 rawError[0] = getString(R.string.ApiKeyNotSet);
                 rebuildItems.run();
@@ -1129,7 +1168,9 @@ public class NekoTranslatorSettingsActivity extends BaseNekoXSettingsActivity {
             rebuildItems.run();
 
             Utilities.globalQueue.postRunnable(() -> {
-                OpenAICompatClient.LlmResponse<List<String>> res = OpenAICompatClient.fetchModels(baseUrl, apiKey);
+                LlmResponse<List<String>> res = preset == PresetRegistry.GOOGLE_AGENT_PLATFORM
+                        ? VertexGeminiClient.getModels()
+                        : OpenAICompatClient.fetchModels(baseUrl, apiKey);
                 AndroidUtilities.runOnUIThread(() -> {
                     AlertDialog activeDialog = dialogRef[0];
                     if (activeDialog == null || !activeDialog.isShowing()) {
@@ -1151,6 +1192,9 @@ public class NekoTranslatorSettingsActivity extends BaseNekoXSettingsActivity {
             if (position < 0 || position >= items.size()) return;
             ModelDialogItem item = items.get(position);
             if (item.type == MODEL_ITEM_TYPE_MODEL || item.type == MODEL_ITEM_TYPE_DEFAULT) {
+                if (!isSelectableModelItem(item, forceEnabledModels)) {
+                    return;
+                }
                 suppressWatcher[0] = true;
                 editText.setText(item.text);
                 editText.setSelection(editText.length());
@@ -1160,6 +1204,20 @@ public class NekoTranslatorSettingsActivity extends BaseNekoXSettingsActivity {
             } else if (item.type == MODEL_ITEM_TYPE_ERROR) {
                 loadModels.run();
             }
+        });
+
+        listView.setOnItemLongClickListener((view, position) -> {
+            if (position < 0 || position >= items.size()) return false;
+            ModelDialogItem item = items.get(position);
+            if ((item.type != MODEL_ITEM_TYPE_MODEL && item.type != MODEL_ITEM_TYPE_DEFAULT) || ModelUtil.isTextGenerationModel(item.text)) {
+                return false;
+            }
+            String model = item.text != null ? item.text.trim().toLowerCase(Locale.ROOT) : "";
+            if (!forceEnabledModels.add(model)) {
+                return false;
+            }
+            adapter.notifyItemChanged(position);
+            return true;
         });
 
         editText.addTextChangedListener(new TextWatcher() {
@@ -1185,7 +1243,7 @@ public class NekoTranslatorSettingsActivity extends BaseNekoXSettingsActivity {
         builder.setTitle(getString(R.string.LlmModelName));
 
         final int screenHeightDp = (int) (AndroidUtilities.displaySize.y / AndroidUtilities.density);
-        final int viewHeightDp = Math.max(320, Math.min(600, (int) (screenHeightDp * 0.6f)));
+        final int viewHeightDp = Math.clamp((int) (screenHeightDp * 0.6f), 320, 600);
 
         builder.setView(container, viewHeightDp);
         builder.setNegativeButton(getString(R.string.Cancel), null);
@@ -1327,7 +1385,9 @@ public class NekoTranslatorSettingsActivity extends BaseNekoXSettingsActivity {
                 testButton.setText(getString(R.string.Loading));
 
                 Utilities.globalQueue.postRunnable(() -> {
-                    OpenAICompatClient.LlmResponse<String> res = OpenAICompatClient.testChatCompletions(baseUrl, apiKey, modelToTest);
+                    LlmResponse<String> res = preset == PresetRegistry.GOOGLE_AGENT_PLATFORM
+                            ? VertexGeminiClient.testGenerateContent(baseUrl, apiKey, modelToTest)
+                            : OpenAICompatClient.testChatCompletions(baseUrl, apiKey, modelToTest);
                     AndroidUtilities.runOnUIThread(() -> {
                         testButton.setEnabled(true);
                         testButton.setText(originalText);

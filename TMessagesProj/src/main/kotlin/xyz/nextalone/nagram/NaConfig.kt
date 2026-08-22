@@ -12,7 +12,7 @@ import org.telegram.messenger.SharedConfig
 import tw.nekomimi.nekogram.NekoConfig
 import tw.nekomimi.nekogram.config.ConfigItem
 import tw.nekomimi.nekogram.config.ConfigItemKeyLinked
-import tw.nekomimi.nekogram.llm.utils.LlmUrlNormalizer
+import tw.nekomimi.nekogram.llm.utils.UrlNormalizer
 import java.io.ByteArrayInputStream
 import java.io.ObjectInputStream
 
@@ -780,6 +780,18 @@ object NaConfig {
             ConfigItem.configTypeString,
             ""
         )
+    val llmProviderVertexKey =
+        addConfig(
+            "LlmProviderVertexKey",
+            ConfigItem.configTypeString,
+            ""
+        )
+    val llmProviderVertexModel =
+        addConfig(
+            "LlmProviderVertexModel",
+            ConfigItem.configTypeString,
+            ""
+        )
     val llmTemperature =
         addConfig(
             "LlmTemperature",
@@ -1506,7 +1518,7 @@ object NaConfig {
         }
 
         val currentLlmApiUrl = llmApiUrl.String()
-        val normalizedLlmApiUrl = LlmUrlNormalizer.normalizeBaseUrl(currentLlmApiUrl)
+        val normalizedLlmApiUrl = UrlNormalizer.normalizeBaseUrl(currentLlmApiUrl)
         if (normalizedLlmApiUrl != currentLlmApiUrl) {
             llmApiUrl.setConfigString(normalizedLlmApiUrl)
         }
