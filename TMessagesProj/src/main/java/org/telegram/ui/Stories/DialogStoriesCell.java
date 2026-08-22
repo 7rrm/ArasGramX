@@ -1018,13 +1018,12 @@ public class DialogStoriesCell extends FrameLayout implements NotificationCenter
             titleView.getDrawable().setRightPadding(lastViewRight - dp(12) + actionBar.menu.getVisibleItemsMeasuredWidthWithAlpha() * progress);
 
             offset = (telegramLogoView.getMeasuredHeight() - telegramLogoView.getTextHeight()) / 2f;
-            // The logo is laid out MATCH_PARENT, so unlike titleView above it
-            // never reserved room for the action bar's buttons and ran
-            // underneath the third one. Give it the same right padding the
-            // title already uses.
-            telegramLogoView.getDrawable().setRightPadding(
-                    titleView.getTranslationX() - dp(12)
-                            + actionBar.menu.getVisibleItemsMeasuredWidthWithAlpha() * progress);
+            // MeeroX v213 note: the pre-merge right-padding fix for the logo
+            // targeted AnimatedTextView's drawable API, which upstream's new
+            // AnimatedTitleView no longer exposes - the block is dropped at
+            // the 12.10 merge; the layout offset itself is upstream's. If the
+            // logo ever crawls back under the action buttons, this is where
+            // it returns.
             telegramLogoView.setTranslationX(titleView.getTranslationX() + dp(1));
             telegramLogoView.setTranslationY(bottomY + dp(14) - offset + AndroidUtilities.dp(FAKE_TOP_PADDING) + translationOffset /*titleView.getTranslationY() + dpf2(37.33f)*/);
 
@@ -1516,12 +1515,17 @@ public class DialogStoriesCell extends FrameLayout implements NotificationCenter
      * the two cross-fade.
      */
     private float meeroHeaderTextWidth() {
-        final AnimatedTextView view =
-                (hasOverlayText || !TextUtils.isEmpty(currentTitle)) ? titleView : telegramLogoView;
-        if (view == null || view.getDrawable() == null) {
-            return 0;
+        // MeeroX v213: post-12.10 the two header views no longer share a type
+        // (titleView is still AnimatedTextView; telegramLogoView became the
+        // upstream AnimatedTitleView FrameLayout), so each uses its own
+        // width source. AnimatedTitleView exposes no text-width API, so the
+        // logo branch falls back to the view's measured width - a slight
+        // overestimate used only for story-row header spacing.
+        if (hasOverlayText || !TextUtils.isEmpty(currentTitle)) {
+            return titleView != null && titleView.getDrawable() != null
+                    ? titleView.getDrawable().getCurrentWidth() : 0;
         }
-        return view.getDrawable().getCurrentWidth();
+        return telegramLogoView == null ? 0 : telegramLogoView.getMeasuredWidth();
     }
 
     /**
