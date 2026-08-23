@@ -1018,12 +1018,14 @@ public class DialogStoriesCell extends FrameLayout implements NotificationCenter
             titleView.getDrawable().setRightPadding(lastViewRight - dp(12) + actionBar.menu.getVisibleItemsMeasuredWidthWithAlpha() * progress);
 
             offset = (telegramLogoView.getMeasuredHeight() - telegramLogoView.getTextHeight()) / 2f;
-            // MeeroX v213 note: the pre-merge right-padding fix for the logo
-            // targeted AnimatedTextView's drawable API, which upstream's new
-            // AnimatedTitleView no longer exposes - the block is dropped at
-            // the 12.10 merge; the layout offset itself is upstream's. If the
-            // logo ever crawls back under the action buttons, this is where
-            // it returns.
+            // MeeroX v216: the right-padding fix dropped at the 12.10 merge
+            // returns, re-expressed on upstream's AnimatedTitleView (the v216
+            // wrapper forwards to SimpleTextView.setRightPadding, which feeds
+            // the same fit/clip math the old drawable API did). The word
+            // gradient-ellipsizes before the action buttons again.
+            telegramLogoView.setRightPadding((int) (
+                    titleView.getTranslationX() - dp(12)
+                            + actionBar.menu.getVisibleItemsMeasuredWidthWithAlpha() * progress));
             telegramLogoView.setTranslationX(titleView.getTranslationX() + dp(1));
             telegramLogoView.setTranslationY(bottomY + dp(14) - offset + AndroidUtilities.dp(FAKE_TOP_PADDING) + translationOffset /*titleView.getTranslationY() + dpf2(37.33f)*/);
 

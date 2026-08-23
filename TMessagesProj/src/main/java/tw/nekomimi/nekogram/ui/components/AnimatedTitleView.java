@@ -98,6 +98,22 @@ public class AnimatedTitleView extends FrameLayout {
         return view == null ? 0 : view.getTextWidth();
     }
 
+    // MeeroX v216: right-side breathing room for the title word, forwarding
+    // to SimpleTextView.setRightPadding (that field feeds its fit/clip math).
+    // Re-expresses the pre-12.10 collapsed-header fix that kept the word from
+    // crawling under the action bar's buttons.
+    private int meeroRightInset;
+
+    public void setRightPadding(int px) {
+        meeroRightInset = Math.max(0, px);
+        if (titleView != null) {
+            titleView.setRightPadding(meeroRightInset);
+        }
+        if (outgoingTitleView != null) {
+            outgoingTitleView.setRightPadding(meeroRightInset);
+        }
+    }
+
     private SimpleTextView createTitleView(CharSequence title, Drawable rightDrawable) {
         SimpleTextView textView = new SimpleTextView(getContext());
         textView.setGravity(Gravity.LEFT | Gravity.CENTER_VERTICAL);
@@ -113,6 +129,7 @@ public class AnimatedTitleView extends FrameLayout {
         textView.setContentDescription(title);
         textView.setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_YES);
         textView.setFocusableInTouchMode(true);
+        textView.setRightPadding(meeroRightInset);
         return textView;
     }
 
