@@ -88,6 +88,16 @@ public class AnimatedTitleView extends FrameLayout {
         return titleView.getTextHeight();
     }
 
+    // MeeroX v214: painted width of the current title word. DialogStoriesCell
+    // centres the collapsed stories group around this value; this frame is
+    // laid out MATCH_PARENT, so its own measured width is the whole bar and
+    // could never stand in for the word (the v213 placeholder that parked the
+    // mini row at the menu edge).
+    public int getCurrentTextWidth() {
+        final SimpleTextView view = titleView;
+        return view == null ? 0 : view.getTextWidth();
+    }
+
     private SimpleTextView createTitleView(CharSequence title, Drawable rightDrawable) {
         SimpleTextView textView = new SimpleTextView(getContext());
         textView.setGravity(Gravity.LEFT | Gravity.CENTER_VERTICAL);

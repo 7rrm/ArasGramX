@@ -1515,17 +1515,18 @@ public class DialogStoriesCell extends FrameLayout implements NotificationCenter
      * the two cross-fade.
      */
     private float meeroHeaderTextWidth() {
-        // MeeroX v213: post-12.10 the two header views no longer share a type
+        // MeeroX v214: post-12.10 the two header views no longer share a type
         // (titleView is still AnimatedTextView; telegramLogoView became the
         // upstream AnimatedTitleView FrameLayout), so each uses its own
-        // width source. AnimatedTitleView exposes no text-width API, so the
-        // logo branch falls back to the view's measured width - a slight
-        // overestimate used only for story-row header spacing.
+        // width source. AnimatedTitleView now exposes the painted word width
+        // (getCurrentTextWidth), so the logo branch measures the text again -
+        // the v213 measured-width fallback returned the whole MATCH_PARENT bar
+        // and pinned the collapsed stories row to the menu edge.
         if (hasOverlayText || !TextUtils.isEmpty(currentTitle)) {
             return titleView != null && titleView.getDrawable() != null
                     ? titleView.getDrawable().getCurrentWidth() : 0;
         }
-        return telegramLogoView == null ? 0 : telegramLogoView.getMeasuredWidth();
+        return telegramLogoView == null ? 0 : telegramLogoView.getCurrentTextWidth();
     }
 
     /**
