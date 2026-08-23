@@ -564,6 +564,76 @@ public class ActionBarPopupWindow extends PopupWindow {
                         item.setIconColor(0xFF1C1C1E);
                     }
                 }
+                if (tw.nekomimi.nekogram.NekoConfig.meeroMenuWatchDiag.Bool()) {
+                    final StringBuilder sb = new StringBuilder("MeeroMenuWatch/ios cardDark=").append(cardDark);
+                    for (int i = 0; i < n; i++) {
+                        final View v2 = linearLayout.getChildAt(i);
+                        if (v2 instanceof ActionBarMenuSubItem && ((ActionBarMenuSubItem) v2).textView != null && v2.getVisibility() == View.VISIBLE) {
+                            sb.append(' ').append(i).append(":#").append(Integer.toHexString(((ActionBarMenuSubItem) v2).textView.getCurrentTextColor()));
+                        }
+                    }
+                    FileLog.d(sb.toString());
+                }
+            } catch (Throwable ignore) {
+            }
+        }
+
+        // MeeroX v215: close the "blank white menu" saga for good. The
+        // readability guarantee now covers the STOCK popup path too (iOS skin
+        // OFF): affected users can run themes whose submenu keys declare
+        // white text on a white background, and nothing stock-side ever
+        // questions the pair. Each row's ACTUAL painted text color is
+        // contrast-checked against the theme's submenu BACKGROUND color; only
+        // unreadable pairs are rewritten to iOS near-black/near-white, and
+        // icons get the same color so a row can never half-vanish. Readable
+        // themes pass through untouched; destructive rows keep their red.
+        // With meeroMenuWatchDiag on, every settle dumps the final colors to
+        // the debug log, so one capture from an affected device tells us the
+        // exact story if anything ever slips through again.
+        private float meeroLum(int c) {
+            final int r = (c >> 16) & 0xFF, g = (c >> 8) & 0xFF, b = c & 0xFF;
+            return (0.2126f * r + 0.7152f * g + 0.0722f * b) / 255f;
+        }
+
+        private void meeroEnforceReadableStockRows() {
+            try {
+                final int bg = getThemedColor(Theme.key_actionBarDefaultSubmenuBackground);
+                final float bgLum = meeroLum(bg);
+                final boolean bgLight = bgLum > 0.5f;
+                final boolean diag = tw.nekomimi.nekogram.NekoConfig.meeroMenuWatchDiag.Bool();
+                final StringBuilder sb = diag ? new StringBuilder("MeeroMenuWatch/stock bg=#").append(Integer.toHexString(bg)) : null;
+                final int n = linearLayout.getChildCount();
+                for (int i = 0; i < n; i++) {
+                    final View v = linearLayout.getChildAt(i);
+                    if (!(v instanceof ActionBarMenuSubItem) || v.getVisibility() != View.VISIBLE) {
+                        continue;
+                    }
+                    if (meeroIsDestructive(v)) {
+                        continue;
+                    }
+                    final ActionBarMenuSubItem item = (ActionBarMenuSubItem) v;
+                    if (item.textView == null) {
+                        continue;
+                    }
+                    final int tc = item.textView.getCurrentTextColor();
+                    final float tl = meeroLum(tc);
+                    final float hi = Math.max(tl, bgLum), lo = Math.min(tl, bgLum);
+                    final float ratio = (hi + 0.05f) / (lo + 0.05f);
+                    if (diag && sb != null) {
+                        sb.append(' ').append(i).append(":#").append(Integer.toHexString(tc)).append('@').append((int) (ratio * 100) / 100f);
+                    }
+                    if (ratio < 2.0f) {
+                        final int fixed = bgLight ? 0xFF1C1C1E : 0xFFF2F2F7;
+                        item.setTextColor(fixed);
+                        item.setIconColor(fixed);
+                        if (diag && sb != null) {
+                            sb.append("->#").append(Integer.toHexString(fixed));
+                        }
+                    }
+                }
+                if (diag && sb != null) {
+                    FileLog.d(sb.toString());
+                }
             } catch (Throwable ignore) {
             }
         }
@@ -1055,6 +1125,11 @@ public class ActionBarPopupWindow extends PopupWindow {
                 }
             } else {
                 meeroSepSettledAt = -1;
+                // MeeroX v215: stock popup path (skin OFF) - apply the same
+                // guarantee at settle; guarded to action-bar menus only.
+                if (meeroSkinEligible && !meeroGate && backAlpha == 255 && backScaleX == 1f && backScaleY == 1f && reactionsEnterProgress == 1f) {
+                    meeroEnforceReadableStockRows();
+                }
             }
             if (reactionsEnterProgress != 1f) {
                 canvas.saveLayerAlpha((float) AndroidUtilities.rectTmp2.left, (float) AndroidUtilities.rectTmp2.top, AndroidUtilities.rectTmp2.right, AndroidUtilities.rectTmp2.bottom, (int) (255 * reactionsEnterProgress), Canvas.ALL_SAVE_FLAG);
