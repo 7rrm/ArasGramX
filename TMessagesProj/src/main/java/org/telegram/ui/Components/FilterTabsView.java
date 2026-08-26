@@ -1899,7 +1899,13 @@ public class FilterTabsView extends FrameLayout {
                 requestLayout();
                 allTabsWidth = 0;
                 if (!NekoConfig.hideAllTab.Bool()) {
-                    findDefaultTab().setTitle(LocaleController.getString(R.string.FilterAllChats), null, false);
+                    // MeeroX v217: Nekogram's hideAllTab gate kept, plus official
+                    // 12.10.1's null-safety (our gated call could NPE when the
+                    // default tab is not yet created).
+                    final FilterTabsView.Tab defaultTab = findDefaultTab();
+                    if (defaultTab != null) {
+                        defaultTab.setTitle(LocaleController.getString(R.string.FilterAllChats), null, false);
+                    }
                 }
                 for (int b = 0; b < N; b++) {
                     allTabsWidth += tabs.get(b).getWidth(true) + dp(FolderIconHelper.getTabPadding());
@@ -1929,10 +1935,18 @@ public class FilterTabsView extends FrameLayout {
             invalidated = true;
             requestLayout();
             listView.setItemAnimator(itemAnimator);
-            adapter.notifyDataSetChanged();
+            if (adapter != null) {
+                adapter.notifyDataSetChanged();
+            }
             allTabsWidth = 0;
             if (!NekoConfig.hideAllTab.Bool()) {
-                findDefaultTab().setTitle(LocaleController.getString(R.string.FilterAllChats), null, false);
+                // MeeroX v217: Nekogram's hideAllTab gate kept, plus official
+                // 12.10.1's null-safety (our gated call could NPE when the
+                // default tab is not yet created).
+                final FilterTabsView.Tab defaultTab = findDefaultTab();
+                if (defaultTab != null) {
+                    defaultTab.setTitle(LocaleController.getString(R.string.FilterAllChats), null, false);
+                }
             }
             for (int b = 0, N = tabs.size(); b < N; b++) {
                 allTabsWidth += tabs.get(b).getWidth(true) + dp(FolderIconHelper.getTabPadding());
