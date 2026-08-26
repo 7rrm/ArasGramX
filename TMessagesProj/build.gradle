@@ -151,6 +151,12 @@ android {
         buildConfigField 'int', 'APP_ID', appId
         buildConfigField 'String', 'APP_HASH', '"' + appHash + '"'
         buildConfigField 'long', 'BUILD_TIMESTAMP', buildTimestamp + 'L'
+        // MeeroX v217 hotfix 2: official 12.10.1's merged sources reference
+        // these flags that only upstream's own BuildConfig generation had.
+        // False in our release builds = production semantics, zero behavior
+        // change, and the merged Java stays byte-faithful to upstream.
+        buildConfigField 'boolean', 'DEBUG_PRIVATE_VERSION', 'false'
+        buildConfigField 'boolean', 'DEBUG_VERSION', 'false'
 
         externalNativeBuild {
             cmake {
@@ -307,7 +313,10 @@ dependencies {
     implementation('com.stripe:stripe-android:2.0.2') {
         exclude group: 'com.android.support', module: 'support-annotations'
     }
-    implementation 'com.android.billingclient:billing:7.1.1'
+    // MeeroX v217 hotfix 2: official 12.10.1 moved its billing code to the
+    // billing-8 API surface; the library must follow (7.x has no
+    // QueryProductDetailsResult.getProductDetailsList()).
+    implementation 'com.android.billingclient:billing:8.0.0'
     coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs_nio:2.1.5'
 
     // kotlin

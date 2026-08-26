@@ -72,8 +72,11 @@ jobs:
           path: |
             TMessagesProj/.cxx
             TMessagesProj/build/intermediates/cxx
-          key: meerox-cxx-arm64-${{ hashFiles('TMessagesProj/jni/**/CMakeLists.txt') }}
-          restore-keys: meerox-cxx-arm64-
+          # MeeroX v217 hotfix 2: bump prefix - a stale restored .cxx tree held
+          # read-only objects and broke h264_encoder_impl.cc.o ('Operation not
+          # permitted'). Fresh prefix = clean rebuild once, then cached again.
+          key: meerox-cxx2-arm64-${{ hashFiles('TMessagesProj/jni/**/CMakeLists.txt') }}
+          restore-keys: meerox-cxx2-arm64-
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
