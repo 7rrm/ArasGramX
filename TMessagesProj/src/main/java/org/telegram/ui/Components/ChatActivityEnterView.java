@@ -7583,6 +7583,15 @@ public class ChatActivityEnterView extends FrameLayout implements
         }
         needShowTopView = true;
         topViewShowed = true;
+        // MeeroX v223: park the inflating bot-web overlay for the whole
+        // time the merged header is on stage (reply included - v221 parked
+        // it on edit start only). Same guard/pattern as v221 so a
+        // double-park is impossible; restored in hideTopView.
+        if (meeroIsTopViewMerged() && botWebViewButton != null
+                && botWebViewButton.getVisibility() != GONE) {
+            meeroBotWebWasVisible221 = true;
+            botWebViewButton.setVisibility(GONE);
+        }
         if (allowShowTopView) {
             animatorTopViewVisibility.setValue(true, animated);
             if (openKeyboardInternal) {
@@ -7627,6 +7636,12 @@ public class ChatActivityEnterView extends FrameLayout implements
 
         topViewShowed = false;
         needShowTopView = false;
+        // MeeroX v223: hand the parked overlay back (mirrors v221's edit-end
+        // restore; the flag guard makes it fire exactly once).
+        if (meeroBotWebWasVisible221 && botWebViewButton != null) {
+            meeroBotWebWasVisible221 = false;
+            botWebViewButton.setVisibility(VISIBLE);
+        }
         if (allowShowTopView) {
             animatorTopViewVisibility.setValue(false, animated);
         }
@@ -16226,10 +16241,13 @@ public class ChatActivityEnterView extends FrameLayout implements
             if (botCommandsMenuButton != null) {
                 botWebViewButton.setMeasuredButtonWidth(botCommandsMenuButton.getMeasuredWidth());
             }
-            // MeeroX v221: while editing, the match-parent overlay shrinks
-            // to a plain row - even if a dock animation re-shows it, it can
-            // no longer inflate the capsule into a giant void.
-            botWebViewButton.getLayoutParams().height = editingMessageObject != null
+            // MeeroX v223 (owner: «نفس الفراغ» in REPLY too; v221 covered
+            // edit only): the inflation dies whenever the MERGED header is
+            // on stage - the overlay can no longer balloon the capsule into
+            // a giant void in reply/edit/any keyboard state.
+            final boolean meeroTopOnStage223 = meeroIsTopViewMerged()
+                    && topView != null && topView.getVisibility() == VISIBLE;
+            botWebViewButton.getLayoutParams().height = (editingMessageObject != null || meeroTopOnStage223)
                     ? dp(DEFAULT_HEIGHT) : getMeasuredHeight() - dp(2);
             measureChild(botWebViewButton, widthMeasureSpec, heightMeasureSpec);
         }
