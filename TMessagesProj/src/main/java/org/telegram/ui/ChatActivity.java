@@ -4842,7 +4842,10 @@ public class ChatActivity extends BaseFragment implements
                     if (muted) {
                         updateTitleIcons(true);
                         AndroidUtilities.runOnUIThread(() -> {
-                            ChatActivity.this.toggleMute(true);
+                            // MeeroX v218: issue the unmute itself instead of
+                            // a live-read toggle - even a somehow-duplicated
+                            // tap must converge to "unmuted", never re-mute.
+                            getNotificationsController().muteDialog(dialog_id, getTopicId(), false);
                         }, 150);
                         headerItem.toggleSubMenu();
                         if (ChatActivity.this.getParentActivity() != null) {

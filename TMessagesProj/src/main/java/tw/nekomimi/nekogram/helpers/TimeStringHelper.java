@@ -28,6 +28,19 @@ import xyz.nextalone.nagram.NaConfig;
 public class TimeStringHelper {
     public static SpannableStringBuilder deletedSpan;
     public static Drawable deletedDrawable;
+    // MeeroX v218: palette for the deleted-mark trash icon; index 0 keeps the
+    // long-standing behaviour (icon tinted with the time text paint).
+    public static final int[] MEERO_TRASH_COLORS = {
+        0,          // 0 = default (follow the time text color)
+        0xFFFF3B30, // 1 red
+        0xFFFF6D3D, // 2 orange
+        0xFFFF2D92, // 3 pink
+        0xFFE040FB, // 4 fuchsia
+        0xFF9C27B0, // 5 purple
+        0xFF536DFE, // 6 indigo
+        0xFF448AFF  // 7 blue
+    };
+    private static int meeroTrashColorApplied = -1;
     public static SpannableStringBuilder editedSpan;
     public static Drawable editedDrawable;
     public static SpannableStringBuilder channelLabelSpan;
@@ -194,12 +207,22 @@ public class TimeStringHelper {
             editedSpan.setSpan(new ColoredImageSpan(editedDrawable, true), 0, 1, 0);
         }
 
-        if (deletedDrawable == null) {
+        // MeeroX v218: the trash spans are process-cached, so rebuild them
+        // whenever the owner-picked color index changes.
+        final int meeroTrashIdx = NaConfig.INSTANCE.getDeletedTrashColor().Int();
+        if (deletedDrawable == null || meeroTrashColorApplied != meeroTrashIdx) {
             deletedDrawable = Objects.requireNonNull(ContextCompat.getDrawable(ApplicationLoader.applicationContext, R.drawable.msg_delete_solar)).mutate();
+            deletedSpan = null;
+            meeroTrashColorApplied = meeroTrashIdx;
         }
         if (deletedSpan == null) {
             deletedSpan = new SpannableStringBuilder("\u200B");
-            deletedSpan.setSpan(new ColoredImageSpan(deletedDrawable, true), 0, 1, 0);
+            ColoredImageSpan meeroTrashSpan = new ColoredImageSpan(deletedDrawable, true);
+            if (meeroTrashIdx > 0 && meeroTrashIdx < MEERO_TRASH_COLORS.length) {
+                // a fixed override wins over the time-paint tint inside the span
+                meeroTrashSpan.setOverrideColor(MEERO_TRASH_COLORS[meeroTrashIdx]);
+            }
+            deletedSpan.setSpan(meeroTrashSpan, 0, 1, 0);
         }
 
         if (translatedDrawable == null) {

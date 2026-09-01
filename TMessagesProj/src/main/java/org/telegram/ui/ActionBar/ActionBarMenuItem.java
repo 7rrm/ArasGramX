@@ -2741,8 +2741,11 @@ public class ActionBarMenuItem extends FrameLayout {
                     view.setTag(R.id.meero_ios_destructive, Boolean.TRUE);
                 }
                 view.setVisibility(visibility);
+                // MeeroX v218 (owner field report, v217: unmute toast shown,
+                // dialog stayed muted): override clicks must ride the
+                // watch-tagged wrapper - see meeroInstallOverrideClick.
                 if (overrideClickListener != null) {
-                    view.setOnClickListener(overrideClickListener);
+                    meeroInstallOverrideClick(view);
                 }
             }
             return view;
@@ -2766,8 +2769,41 @@ public class ActionBarMenuItem extends FrameLayout {
         public void setOnClickListener(View.OnClickListener onClickListener) {
             overrideClickListener = onClickListener;
             if (view != null) {
-                view.setOnClickListener(overrideClickListener);
+                meeroInstallOverrideClick(view);
             }
+        }
+
+        /**
+         * MeeroX v218 (owner field report on v217: tapping «إلغاء الكتم»
+         * showed the "unmuted" capsule yet the dialog stayed muted): rows
+         * carrying an OVERRIDE listener (the chat-header mute row, ...) never
+         * hit the click hooks that bump MeeroMenuWatch's serial, so the v205
+         * dead-tap fallback concluded "no row clicked" and re-clicked the
+         * same row immediately after the native delivery. The mute row then
+         * deferred its state flip by 150ms and re-read the LIVE state at fire
+         * time, so the duplicated tap unmuted and instantly re-muted.
+         * Installing a watch-tagged wrapper for every override click: a
+         * natively delivered tap bumps the serial and the fallback stands
+         * down; a truly dead row stays rescueable because for it no click
+         * ever fires. Clearing (null) also clears the view listener.
+         */
+        private void meeroInstallOverrideClick(View v) {
+            if (v == null) {
+                return;
+            }
+            if (overrideClickListener == null) {
+                v.setOnClickListener(null);
+                return;
+            }
+            final View.OnClickListener target = overrideClickListener;
+            v.setOnClickListener(vw -> {
+                try {
+                    tw.nekomimi.nekogram.MeeroMenuWatch.onClickFired(vw.getTag());
+                    target.onClick(vw);
+                } catch (Throwable t) {
+                    org.telegram.messenger.FileLog.e(t);
+                }
+            });
         }
 
         public void openSwipeBack() {

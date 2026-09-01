@@ -1243,4 +1243,15 @@
     <string name="RemindTodayAt">\'ذكّرني اليوم عند\' HH:mm</string>
     <string name="RemindDayAt">\'ذكّرني بتاريخ\' d MMM \'عند\' HH:mm</string>
     <string name="RemindDayYearAt">\'ذكّرني بتاريخ\' d MMM yyyy \'عند\' HH:mm</string>
+    <!-- MeeroX v218: لون أيقونة سلّة الرسائل المحذوفة -->
+    <string name="meeroTrashColorTitle">لون أيقونة السلّة للرسائل المحذوفة</string>
+    <string name="meeroTrashColorDefault">افتراضي</string>
+    <string name="meeroTrashColorRed">أحمر</string>
+    <string name="meeroTrashColorOrange">برتقالي</string>
+    <string name="meeroTrashColorPink">وردي</string>
+    <string name="meeroTrashColorFuchsia">فوشي</string>
+    <string name="meeroTrashColorPurple">بنفسجي</string>
+    <string name="meeroTrashColorIndigo">نيلي</string>
+    <string name="meeroTrashColorBlue">أزرق</string>
+    <string name="meeroTrashColorHint">يُطبَّق فور اختياره على أيقونة السلّة بجانب الرسائل المحذوفة. اختر «افتراضي» ليبقى مثل قبل (الأيقونة بلون نص الوقت).</string>
 </resources>

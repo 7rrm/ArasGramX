@@ -11226,4 +11226,15 @@
     <string name="UnsupportedMessageTitle">Unsupported Message</string>
     <string name="UnsupportedMessageMessage">Update Telegram to view this message</string>
     <string name="UnsupportedUpdate">Update</string>
+    <!-- MeeroX v218: deleted-mark trash icon color picker -->
+    <string name="meeroTrashColorTitle">Trash icon color on deleted messages</string>
+    <string name="meeroTrashColorDefault">Default</string>
+    <string name="meeroTrashColorRed">Red</string>
+    <string name="meeroTrashColorOrange">Orange</string>
+    <string name="meeroTrashColorPink">Pink</string>
+    <string name="meeroTrashColorFuchsia">Fuchsia</string>
+    <string name="meeroTrashColorPurple">Purple</string>
+    <string name="meeroTrashColorIndigo">Indigo</string>
+    <string name="meeroTrashColorBlue">Blue</string>
+    <string name="meeroTrashColorHint">Applies right away to the trash icon next to every deleted message. Pick “Default” to keep the previous behaviour (icon follows the time text color).</string>
 </resources>

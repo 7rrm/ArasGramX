@@ -900,6 +900,12 @@ object NaConfig {
             ConfigItem.configTypeBool,
             true
         )
+    val deletedTrashColor =
+        addConfig(
+            "MeeroDeletedTrashColor", // MeeroX v218: 0 = default (time color), 1..7 = TimeStringHelper.MEERO_TRASH_COLORS
+            ConfigItem.configTypeInt,
+            0
+        )
     val useEditedIcon =
         addConfig(
             "UseEditedIcon",
