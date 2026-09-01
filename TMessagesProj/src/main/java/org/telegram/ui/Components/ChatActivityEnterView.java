@@ -853,6 +853,44 @@ public class ChatActivityEnterView extends FrameLayout implements
         }
     }
 
+    // MeeroX v222 (owner report: void inside the merged capsule in REPLY
+    // mode too + X must float OUTSIDE the corner «مثلها بلضبط»): the field
+    // container is taller than its visible children (bot-web overlay /
+    // measure stomps inflate it), so a TOP-anchored header floats a whole
+    // slab away from the field, and anything hung over the container's top
+    // edge risks the root's clip. So we anchor to the FIELD, every layout
+    // pass: header bottom = field top - 1dp, and the glass X rides fully
+    // ABOVE the capsule's top-right rim (Ayu reference) with a 7dp overlap
+    // onto the border. Everything is derived from live child geometry, so
+    // reply/edit/bot/keyboard states and the open/close animations all
+    // follow automatically - the void dies in EVERY mode, not just edit.
+    private void meeroLayoutMergedTop() {
+        if (!meeroIsTopViewMerged() || messageEditText == null) {
+            return;
+        }
+        try {
+            if (topView.getVisibility() != VISIBLE) {
+                return;
+            }
+            final int headerBottom = messageEditText.getTop() - dp(1);
+            topView.offsetTopAndBottom(headerBottom - topView.getBottom());
+            if (meeroTopCloseButton != null && meeroTopCloseButton.getVisibility() == VISIBLE) {
+                final int headerTop = headerBottom - (topView.getLayoutParams() != null
+                        && topView.getLayoutParams().height > 0
+                        ? topView.getLayoutParams().height : dp(48));
+                // meeroTopCloseButton's parent is textFieldContainer, so
+                // translate the field-container coordinates across.
+                final View frame = messageEditTextContainer;
+                final int xTop = frame.getTop() + headerTop - meeroTopCloseButton.getMeasuredHeight() + dp(7);
+                final int xRight = frame.getLeft() + frame.getMeasuredWidth() - dp(4);
+                meeroTopCloseButton.offsetLeftAndRight(xRight - meeroTopCloseButton.getRight());
+                meeroTopCloseButton.offsetTopAndBottom(xTop - meeroTopCloseButton.getTop());
+            }
+        } catch (Throwable ignore) {
+            // Cosmetic anchoring - never break layout.
+        }
+    }
+
     private void meeroUnmergeTopView() {
         if (topView == null || !meeroIsTopViewMerged()) {
             return;
@@ -2979,6 +3017,9 @@ public class ChatActivityEnterView extends FrameLayout implements
                     }
                     animationParamsX.clear();
                 }
+                // v222: keep the merged header + floating X glued to the
+                // field, every layout pass.
+                meeroLayoutMergedTop();
             }
 
             @Override
@@ -5186,7 +5227,15 @@ public class ChatActivityEnterView extends FrameLayout implements
     protected boolean drawChild(Canvas canvas, View child, long drawingTime) {
         boolean clip = child == topView || child == textFieldContainer;
         if (clip) {
-            final float separatorY = getMeasuredHeight() - animatorInputFieldHeight.getFactor();
+            // MeeroX v222: merged capsule - the merged header and the
+            // outside-corner close disc legitimately draw above the
+            // animated input-height line; relax the clip up to the
+            // container's own top (plus corner headroom) instead of
+            // decapitating them («X مقسوم» by the clip, any mode).
+            float separatorY = getMeasuredHeight() - animatorInputFieldHeight.getFactor();
+            if (child == textFieldContainer && meeroIsTopViewMerged()) {
+                separatorY = Math.min(separatorY, textFieldContainer.getY() - dp(42));
+            }
             canvas.save();
             if (child == textFieldContainer) {
                 canvas.clipRect(0, separatorY, getMeasuredWidth(), getMeasuredHeight());
