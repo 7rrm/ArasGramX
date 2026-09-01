@@ -841,11 +841,11 @@ public class ChatActivityEnterView extends FrameLayout implements
                     }
                 });
                 meeroApplyIosTopCloseGlass();
-                // textFieldContainer (clipChildren=false) so the disc can
-                // straddle the capsule's top-right corner like the
-                // reference shot; negative top margin hangs it half-out.
+                // v221: seated ON the capsule's top-right rim, fully inside
+                // the container - the v220 negative top margin hung it over
+                // the edge and the parent's clip cut its top («X مقسوم»).
                 textFieldContainer.addView(meeroTopCloseButton,
-                        LayoutHelper.createFrame(34, 34, Gravity.TOP | Gravity.RIGHT, 0, -13, 14, 0));
+                        LayoutHelper.createFrame(34, 34, Gravity.TOP | Gravity.RIGHT, 0, 3, 8, 0));
                 meeroTopCloseButton.setVisibility(GONE);
             }
         } catch (Throwable ignore) {
@@ -944,6 +944,8 @@ public class ChatActivityEnterView extends FrameLayout implements
     // meeroTopCloseButton = floating glass X at the capsule's top-right.
     private View meeroTopCloseView;
     private ImageView meeroTopCloseButton;
+    // MeeroX v221: remembers a parked bot-web-view overlay during editing.
+    private boolean meeroBotWebWasVisible221;
     private BotKeyboardView botKeyboardView;
     private ImageView notifyButton;
     @Nullable
@@ -11623,6 +11625,16 @@ public class ChatActivityEnterView extends FrameLayout implements
             if (scheduledButton != null) {
                 scheduledButton.setVisibility(GONE);
             }
+            // MeeroX v221 (owner report + screenshot, «فراغ كبير بين
+            // الرسالة والكبسولة المدموجة»): the bot web-view main-button
+            // overlay is MATCH_PARENT inside the field container and the
+            // root height-stomp (onMeasure) stretches it to rootH-2; while
+            // editing, the whole slab becomes capsule VOID above the text.
+            // Editing owns the input area - park it; restored on edit end.
+            if (botWebViewButton != null && botWebViewButton.getVisibility() != GONE) {
+                meeroBotWebWasVisible221 = true;
+                botWebViewButton.setVisibility(GONE);
+            }
         } else {
             if (setTextFieldRunnable != null) {
                 AndroidUtilities.cancelRunOnUIThread(setTextFieldRunnable);
@@ -11630,6 +11642,11 @@ public class ChatActivityEnterView extends FrameLayout implements
             }
             if (doneButton != null) {
                 doneButton.setVisibility(View.GONE);
+            }
+            // MeeroX v221: hand the parked bot web-view overlay back.
+            if (meeroBotWebWasVisible221 && botWebViewButton != null) {
+                meeroBotWebWasVisible221 = false;
+                botWebViewButton.setVisibility(VISIBLE);
             }
             currentLimit = -1;
             delegate.onMessageEditEnd(false);
@@ -16160,7 +16177,11 @@ public class ChatActivityEnterView extends FrameLayout implements
             if (botCommandsMenuButton != null) {
                 botWebViewButton.setMeasuredButtonWidth(botCommandsMenuButton.getMeasuredWidth());
             }
-            botWebViewButton.getLayoutParams().height = getMeasuredHeight() - dp(2);
+            // MeeroX v221: while editing, the match-parent overlay shrinks
+            // to a plain row - even if a dock animation re-shows it, it can
+            // no longer inflate the capsule into a giant void.
+            botWebViewButton.getLayoutParams().height = editingMessageObject != null
+                    ? dp(DEFAULT_HEIGHT) : getMeasuredHeight() - dp(2);
             measureChild(botWebViewButton, widthMeasureSpec, heightMeasureSpec);
         }
 //        if (botWebViewMenuContainer != null) {
