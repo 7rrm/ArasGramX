@@ -8455,7 +8455,7 @@ public class ChatActivity extends BaseFragment implements
 
                         // chatListView.setTranslationY(dy);
                         if (topView != null && topView.getVisibility() == View.VISIBLE) {
-                            topView.setTranslationY(animatedTop + (1f - getTopViewEnterProgress()) * topView.getLayoutParams().height);
+                            if (meeroIsTopViewMerged()) { topView.setTranslationY(0); } else { topView.setTranslationY(animatedTop + (1f - getTopViewEnterProgress()) * topView.getLayoutParams().height); }
                         }
 
                         changeBoundAnimator = ValueAnimator.ofFloat(dy, 0);
@@ -8463,7 +8463,7 @@ public class ChatActivity extends BaseFragment implements
                             float top = (float) a.getAnimatedValue();
                             setAnimatedTop((int) top);
                             if (topView != null && topView.getVisibility() == View.VISIBLE) {
-                                topView.setTranslationY(top + (1f - getTopViewEnterProgress()) * topView.getLayoutParams().height);
+                                if (meeroIsTopViewMerged()) { topView.setTranslationY(0); } else { topView.setTranslationY(top + (1f - getTopViewEnterProgress()) * topView.getLayoutParams().height); }
                             } else {
                                 invalidateChatListViewTopPadding();
                                 invalidateMessagesVisiblePart();
@@ -8476,7 +8476,7 @@ public class ChatActivity extends BaseFragment implements
                             public void onAnimationEnd(Animator animation) {
                                 setAnimatedTop(0);
                                 if (topView != null && topView.getVisibility() == View.VISIBLE) {
-                                    topView.setTranslationY(animatedTop + (1f - getTopViewEnterProgress()) * topView.getLayoutParams().height);
+                                    if (meeroIsTopViewMerged()) { topView.setTranslationY(0); } else { topView.setTranslationY(animatedTop + (1f - getTopViewEnterProgress()) * topView.getLayoutParams().height); }
                                 }
                                 changeBoundAnimator = null;
                             }

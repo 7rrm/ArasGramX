@@ -712,6 +712,8 @@ public class ChatActivityEnterView extends FrameLayout implements
             // v141: same late-upgrade for the reply/edit card (topView may
             // have been added before this handoff happened).
             meeroApplyIosTopViewCard();
+            // v220: and for the floating close disc of the merged capsule.
+            meeroApplyIosTopCloseGlass();
         }
     }
 
@@ -750,71 +752,173 @@ public class ChatActivityEnterView extends FrameLayout implements
         meeroAttachWrap.setBackground(circle);
     }
 
-    // MeeroX v141 (user follow-up): the pinned reply/edit strip becomes its
-    // own SEPARATE floating glass card ("بطاقة الرد بزجاج منفصل عن حقل
-    // كتابه يعني ليس مدموج") - exactly how the iPhone shows a reply quote
-    // above the composer. The glass is set as the BACKGROUND OF topView
-    // itself: the same drawable-as-background-of-the-view-passed-to-create()
-    // pattern the attach circle and the island bubble already prove
-    // on-device. v140 instead drew a sheet on this parent's canvas while
-    // handing topView to create(); the blur pipeline's position tracking +
-    // invalidation contract is anchored to the view passed to create(), so
-    // the sheet stayed wrong/invisible on-device ("الرد على رساله الى الأن
-    // لا يوجد زجاج"). Side margins get the capsule's 6dp and the corner is
-    // 18dp (vs the capsule's 24dp), so the card reads as its OWN element,
-    // detached from the writing capsule below it. Flat fallback keeps the
-    // pipeline-less path usable, and everything restores to exact stock
-    // when the switch goes off (meeroRestoreStockTopViewCard).
+    // MeeroX v220 (owner order, target = his Ayu-style reference shot):
+    // the reply/edit header MERGES INTO the writing capsule ("الكبسولة الرد
+    // تكون مدموجه مع شريط الكتابه مثلها بلضبط") - one glass capsule that
+    // wraps header + field, the header's own card removed, and the close X
+    // re-homed to a floating disc straddling the capsule's top-right corner
+    // (the reference shows X outside, done/attach outside below). This
+    // REPLACES the v141-v149 separate floating glass card; flipping the iOS
+    // composer switch off restores exact stock (meeroRestoreStockTopViewCard
+    // -> meeroUnmergeTopView).
     private void meeroApplyIosTopViewCard() {
         if (topView == null || !meeroIosComposer()) {
+            return;
+        }
+        meeroMergeTopView();
+        if (!meeroIsTopViewMerged()) {
+            return;
+        }
+        topView.setBackground(null);
+        if (topView.getLayoutParams() instanceof MarginLayoutParams) {
+            final MarginLayoutParams lp = (MarginLayoutParams) topView.getLayoutParams();
+            // Header content inside the capsule: a hair above, and inset so
+            // its text lines up with the field's text column.
+            lp.leftMargin = dp(4);
+            lp.rightMargin = dp(4);
+            lp.topMargin = dp(2);
+            lp.bottomMargin = 0;
+            topView.setLayoutParams(lp);
+        }
+        topView.invalidate();
+    }
+
+    // Runtime truth for "header rides inside the field container".
+    protected boolean meeroIsTopViewMerged() {
+        return meeroAttachWrap != null && topView != null
+                && messageEditTextContainer != null
+                && topView.getParent() == messageEditTextContainer;
+    }
+
+    // The header's built-in close is the ImageView ChatActivity pinned at
+    // RIGHT|TOP of the top view. Found lazily (ChatActivity adds it AFTER
+    // addTopView) and hidden while merged.
+    private View meeroFindTopCloseView() {
+        if (!(topView instanceof android.view.ViewGroup)) {
+            return null;
+        }
+        final android.view.ViewGroup vg = (android.view.ViewGroup) topView;
+        for (int i = 0; i < vg.getChildCount(); i++) {
+            final View child = vg.getChildAt(i);
+            if (child instanceof ImageView) {
+                final android.view.ViewGroup.LayoutParams lp = child.getLayoutParams();
+                if (lp instanceof FrameLayout.LayoutParams
+                        && (((FrameLayout.LayoutParams) lp).gravity & Gravity.RIGHT) == Gravity.RIGHT) {
+                    return child;
+                }
+            }
+        }
+        return null;
+    }
+
+    private void meeroMergeTopView() {
+        if (topView == null || messageEditTextContainer == null || meeroIsTopViewMerged()) {
+            return;
+        }
+        try {
+            final int h = topView.getLayoutParams() != null && topView.getLayoutParams().height > 0
+                    ? topView.getLayoutParams().height : dp(48);
+            if (topView.getParent() instanceof android.view.ViewGroup) {
+                ((android.view.ViewGroup) topView.getParent()).removeView(topView);
+            }
+            messageEditTextContainer.addView(topView, 0,
+                    LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, h, Gravity.TOP | Gravity.LEFT, 4, 2, 4, 0));
+            topView.setBackground(null);
+            topView.setPadding(0, 0, 0, 0);
+            topView.setTranslationY(0);
+            if (meeroTopCloseButton == null) {
+                meeroTopCloseButton = new ImageView(getContext());
+                meeroTopCloseButton.setScaleType(ImageView.ScaleType.CENTER);
+                meeroTopCloseButton.setImageResource(R.drawable.msg_cancel_solar);
+                meeroTopCloseButton.setColorFilter(new PorterDuffColorFilter(meeroIosGlyphColor(), PorterDuff.Mode.SRC_IN));
+                meeroTopCloseButton.setPadding(dp(7), dp(7), dp(7), dp(7));
+                meeroTopCloseButton.setContentDescription(getString(R.string.Cancel));
+                // Re-route to the header's own close logic (cancel reply /
+                // cancel edit stays 100% ChatActivity's code).
+                meeroTopCloseButton.setOnClickListener(v -> {
+                    if (meeroTopCloseView != null) {
+                        meeroTopCloseView.performClick();
+                    }
+                });
+                meeroApplyIosTopCloseGlass();
+                // textFieldContainer (clipChildren=false) so the disc can
+                // straddle the capsule's top-right corner like the
+                // reference shot; negative top margin hangs it half-out.
+                textFieldContainer.addView(meeroTopCloseButton,
+                        LayoutHelper.createFrame(34, 34, Gravity.TOP | Gravity.RIGHT, 0, -13, 14, 0));
+                meeroTopCloseButton.setVisibility(GONE);
+            }
+        } catch (Throwable ignore) {
+            // Cosmetic only - never break the composer.
+        }
+    }
+
+    private void meeroUnmergeTopView() {
+        if (topView == null || !meeroIsTopViewMerged()) {
+            return;
+        }
+        try {
+            final int h = topView.getLayoutParams() != null && topView.getLayoutParams().height > 0
+                    ? topView.getLayoutParams().height : dp(48);
+            messageEditTextContainer.removeView(topView);
+            addView(topView, 0, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, h, Gravity.TOP | Gravity.LEFT));
+            topView.setAlpha(1f);
+            topView.setTranslationY(0);
+            if (meeroTopCloseView != null) {
+                meeroTopCloseView.setVisibility(VISIBLE);
+                meeroTopCloseView = null;
+            }
+            if (meeroTopCloseButton != null) {
+                meeroTopCloseButton.setVisibility(GONE);
+            }
+            if (messageEditText != null) {
+                final FrameLayout.LayoutParams ftlp = (FrameLayout.LayoutParams) messageEditText.getLayoutParams();
+                ftlp.topMargin = 0;
+                messageEditText.setLayoutParams(ftlp);
+            }
+        } catch (Throwable ignore) {
+        }
+    }
+
+    // Same glass the attach circle wears (blurred when the pipeline is in,
+    // flat milk otherwise).
+    private void meeroApplyIosTopCloseGlass() {
+        if (meeroTopCloseButton == null) {
             return;
         }
         BlurredBackgroundDrawable glass = null;
         if (meeroCapsuleFactory != null) {
             try {
                 glass = meeroCapsuleFactory.create(
-                        topView,
+                        meeroTopCloseButton,
                         org.telegram.ui.Components.blur3.drawable.color.impl.BlurredBackgroundProviderImpl.headerButton(resourcesProvider));
-                glass.setRadius(dp(18));
+                glass.setRadius(dp(17));
             } catch (Throwable ignore) {
                 glass = null;
             }
         }
         if (glass != null) {
-            topView.setBackground(glass);
+            meeroTopCloseButton.setBackground(glass);
+            return;
+        }
+        final android.graphics.drawable.GradientDrawable circle = new android.graphics.drawable.GradientDrawable();
+        circle.setShape(android.graphics.drawable.GradientDrawable.OVAL);
+        if (Theme.getActiveTheme().isDark()) {
+            circle.setColor(0x17FFFFFF);
+            circle.setStroke(dp(1), 0x1FFFFFFF);
         } else {
-            final android.graphics.drawable.GradientDrawable card = new android.graphics.drawable.GradientDrawable();
-            card.setShape(android.graphics.drawable.GradientDrawable.RECTANGLE);
-            card.setCornerRadius(dp(18));
-            if (Theme.getActiveTheme().isDark()) {
-                card.setColor(0x17FFFFFF);
-                card.setStroke(dp(1), 0x1FFFFFFF);
-            } else {
-                card.setColor(0xD9FFFFFF);
-                card.setStroke(dp(1), 0x0D000000);
-            }
-            topView.setBackground(card);
+            circle.setColor(0xD9FFFFFF);
+            circle.setStroke(dp(1), 0x0D000000);
         }
-        if (topView.getLayoutParams() instanceof MarginLayoutParams) {
-            final MarginLayoutParams lp = (MarginLayoutParams) topView.getLayoutParams();
-            // v149 (his approved pick from mock "preview-bar-reply-v149" +
-            // "preview-bar-v149b"): the reply card spans the WHOLE row -
-            // "اريده على طول حقل كتابه / يعني فوق المشبك ولفويس" - 8dp screen
-            // insets on both sides so it runs from above the attach circle
-            // to above the mic circle, while staying a SEPARATE floating
-            // card (no fusion slide, no padding shifts; the v147 fused R1
-            // and the v142 62/54 field-aligned variants are both retired).
-            lp.leftMargin = dp(8);
-            lp.rightMargin = dp(8);
-            topView.setLayoutParams(lp);
-        }
-        topView.invalidate();
+        meeroTopCloseButton.setBackground(circle);
     }
 
     private void meeroRestoreStockTopViewCard() {
         if (topView == null) {
             return;
         }
+        // v220: hand the header back to the stock strip position first.
+        meeroUnmergeTopView();
         topView.setBackground(null);
         if (topView.getLayoutParams() instanceof MarginLayoutParams) {
             final MarginLayoutParams lp = (MarginLayoutParams) topView.getLayoutParams();
@@ -834,6 +938,12 @@ public class ChatActivityEnterView extends FrameLayout implements
     private SendButton doneButton;
     private AnimatorSet doneButtonAnimation;
     protected View topView;
+    // MeeroX v220: merged reply/edit capsule state (iOS composer only).
+    // meeroTopCloseView   = the header's built-in close button, hidden
+    //                       while merged (the floating disc replaces it).
+    // meeroTopCloseButton = floating glass X at the capsule's top-right.
+    private View meeroTopCloseView;
+    private ImageView meeroTopCloseButton;
     private BotKeyboardView botKeyboardView;
     private ImageView notifyButton;
     @Nullable
@@ -7544,13 +7654,18 @@ public class ChatActivityEnterView extends FrameLayout implements
     public static final int DEFAULT_HEIGHT = 44;
 
     private boolean resizeForTopViewLastShow;
+    private boolean resizeForTopViewLastMerged;
     private void resizeForTopView(boolean show) {
-        if (resizeForTopViewLastShow == show) {
+        final boolean meeroMergedNow = meeroIsTopViewMerged();
+        if (resizeForTopViewLastShow == show && resizeForTopViewLastMerged == meeroMergedNow) {
             return;
         }
+        resizeForTopViewLastMerged = meeroMergedNow;
 
         LayoutParams layoutParams = (LayoutParams) textFieldContainer.getLayoutParams();
-        layoutParams.topMargin = (show ? topView.getLayoutParams().height : 0);
+        // v220: merged capsule carries the header INSIDE the container, so
+        // the +48dp downward offset only applies to the un-merged strip.
+        layoutParams.topMargin = (show && !meeroMergedNow ? topView.getLayoutParams().height : 0);
         layoutParams.topMargin += dp(9); // for prevent clipping
         textFieldContainer.setLayoutParams(layoutParams);
 
@@ -11479,7 +11594,14 @@ public class ChatActivityEnterView extends FrameLayout implements
             openKeyboard();
             if (messageEditText != null) {
                 FrameLayout.LayoutParams layoutParams = (FrameLayout.LayoutParams) messageEditText.getLayoutParams();
-                layoutParams.rightMargin = dp(4);
+                // MeeroX v220: editing keeps the iOS accessory glyph pinned
+                // at the field's right end. This reset to 4dp (followed by
+                // updateFieldRight's editing early-return that freezes the
+                // band) is the true reason the text slid under the glyph
+                // even after the v219 clamp - the clamp re-ran only when
+                // updateFieldRight was called, this reset bypassed it. Keep
+                // the iOS 46dp band here; stock path untouched.
+                layoutParams.rightMargin = meeroAttachWrap != null ? dp(46) : dp(4);
                 messageEditText.setLayoutParams(layoutParams);
             }
             if (recordedAudioPanel != null) {
@@ -17303,7 +17425,15 @@ public class ChatActivityEnterView extends FrameLayout implements
             right = Math.min(container.getMeasuredWidth(),
                     messageEditText.getX() + messageEditText.getMeasuredWidth() + dp(8));
         }
-        final float top = Math.max(0, messageEditText.getY() - dp(4));
+        // MeeroX v220: merged capsule - when the header rides inside this
+        // container the pill wraps it too (one capsule header+field,
+        // Ayu-style «كبسولة الرد مدموجة مع شريط الكتابه»); radius stays
+        // capped by the existing v138 formula below.
+        final boolean meeroTopMerged220 = topView != null && topView.getParent() == container
+                && topView.getVisibility() == VISIBLE;
+        final float top = meeroTopMerged220
+                ? Math.max(0, topView.getY() - dp(1))
+                : Math.max(0, messageEditText.getY() - dp(4));
         final float bottom = Math.min(container.getMeasuredHeight(),
                 messageEditText.getY() + messageEditText.getMeasuredHeight() + dp(4));
         if (right <= left || bottom <= top) {
@@ -17366,7 +17496,12 @@ public class ChatActivityEnterView extends FrameLayout implements
                 }
                 meeroPillDividerPaint.setColor(dark ? 0x24FFFFFF : 0x14000000);
                 final float dividerX = right - dp(33);
-                canvas.drawLine(dividerX, top + dp(8), dividerX, bottom - dp(8), meeroPillDividerPaint);
+                // v220: clamp the hairline to the FIELD zone - a full-height
+                // line would slash across the merged reply/edit header.
+                final float dividerTop220 = Math.max(top, messageEditText.getY()) + dp(8);
+                if (bottom - dp(8) > dividerTop220) {
+                    canvas.drawLine(dividerX, dividerTop220, dividerX, bottom - dp(8), meeroPillDividerPaint);
+                }
             }
         } else {
             canvas.drawRoundRect(AndroidUtilities.rectTmp, radius, radius, meeroPillPaint);
@@ -17492,8 +17627,40 @@ public class ChatActivityEnterView extends FrameLayout implements
             // his verdict: "الرد مدموج مع حقل الكتابه / خلي منفصل يقارب
             // بسيط" (a separate card again, exactly the v142-v146 geometry
             // he called problem-free).
-            topView.setTranslationY(y - topView.getMeasuredHeight() * visibility);
-            topView.setVisibility(visibility > 0 ? VISIBLE : GONE);
+            if (meeroIsTopViewMerged()) {
+                // MeeroX v220: merged capsule. No strip translation - the
+                // field's TOP MARGIN carries the header's height, scaled by
+                // this very animator, so the capsule blooms/shrinks as
+                // smoothly as the old card slid; container height, root clip
+                // and island-height consumers all follow the existing
+                // animatorInputFieldHeight channel automatically. The
+                // header's built-in close hides; the floating disc mirrors
+                // the animator.
+                topView.setTranslationY(0);
+                topView.setVisibility(visibility > 0 ? VISIBLE : GONE);
+                topView.setAlpha(visibility);
+                if (meeroTopCloseView == null) {
+                    meeroTopCloseView = meeroFindTopCloseView();
+                }
+                if (meeroTopCloseView != null && meeroTopCloseView.getVisibility() != GONE) {
+                    meeroTopCloseView.setVisibility(GONE);
+                }
+                if (meeroTopCloseButton != null) {
+                    meeroTopCloseButton.setVisibility(visibility > 0 ? VISIBLE : GONE);
+                    meeroTopCloseButton.setAlpha(visibility);
+                }
+                if (messageEditText != null && topView.getLayoutParams() != null) {
+                    final FrameLayout.LayoutParams ftlp = (FrameLayout.LayoutParams) messageEditText.getLayoutParams();
+                    final int tm = Math.round(topView.getLayoutParams().height * visibility);
+                    if (ftlp.topMargin != tm) {
+                        ftlp.topMargin = tm;
+                        messageEditText.setLayoutParams(ftlp);
+                    }
+                }
+            } else {
+                topView.setTranslationY(y - topView.getMeasuredHeight() * visibility);
+                topView.setVisibility(visibility > 0 ? VISIBLE : GONE);
+            }
         }
 
         resizeForTopView(visibility > 0);
@@ -17510,6 +17677,12 @@ public class ChatActivityEnterView extends FrameLayout implements
             (animatorTopViewVisibility.getValue() ? 1 : 0):
             animatorTopViewVisibility.getFloatValue();
 
+        // MeeroX v220: merged capsule - the header's height already rides
+        // inside the field container's animated factor (via the field's top
+        // margin); adding it again inflates the island by 48dp.
+        if (meeroIsTopViewMerged()) {
+            return fieldHeight;
+        }
         return fieldHeight + (topView != null ? topView.getMeasuredHeight() : 0) * topViewVisibility;
     }
 
