@@ -10116,7 +10116,25 @@ public class ChatActivityEnterView extends FrameLayout implements
     private int lastAttachVisible;
     private void updateFieldRight(int attachVisible) {
         lastAttachVisible = attachVisible;
-        if (messageEditText == null || (editingMessageObject != null && !editingMessageObject.needResendWhenEdit())) {
+        if (messageEditText != null && editingMessageObject != null && !editingMessageObject.needResendWhenEdit()) {
+            // MeeroX v219 (owner field report, v218, image 3): this early
+            // return used to FREEZE whatever right margin the pre-edit row
+            // state left behind - often the 2dp of an attachment-hidden
+            // row - so while editing (caption / media) the text flooded the
+            // pinned 36dp accessory glyph at the capsule's end («النص يدخل
+            // في أيقونة الإيموجي»). Clamp a floor while editing so the iOS
+            // accessory slot always stays clear; harmless in stock mode
+            // (its own floor below already reserves 50dp there).
+            if (meeroAttachWrap != null) {
+                final FrameLayout.LayoutParams elpV219 = (FrameLayout.LayoutParams) messageEditText.getLayoutParams();
+                if (elpV219.rightMargin < dp(46)) {
+                    elpV219.rightMargin = dp(46);
+                    messageEditText.setLayoutParams(elpV219);
+                }
+            }
+            return;
+        }
+        if (messageEditText == null) {
             return;
         }
         FrameLayout.LayoutParams layoutParams = (FrameLayout.LayoutParams) messageEditText.getLayoutParams();

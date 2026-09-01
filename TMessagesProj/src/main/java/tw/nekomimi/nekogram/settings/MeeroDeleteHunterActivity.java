@@ -24,7 +24,6 @@ import org.telegram.ui.Cells.TextCheckCell;
 import org.telegram.ui.Cells.TextDetailSettingsCell;
 import org.telegram.ui.Cells.TextInfoPrivacyCell;
 import org.telegram.ui.Components.BulletinFactory;
-import org.telegram.ui.Components.RecyclerListView;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -34,7 +33,6 @@ import java.util.HashSet;
 import tw.nekomimi.nekogram.MeeroDeleteHunter;
 import tw.nekomimi.nekogram.NekoConfig;
 import tw.nekomimi.nekogram.ui.cells.HeaderCell;
-import tw.nekomimi.nekogram.ui.cells.MeeroTrashColorCell;
 
 /**
  * MeeroX v103-v104: delete/edit catcher screen ("صائد الحاذف").
@@ -56,7 +54,6 @@ public class MeeroDeleteHunterActivity extends BaseNekoSettingsActivity {
     private static final int MENU_DELETE = 2;
 
     private int masterRow;
-    private int colorRow;
     private int logHeaderRow;
     private int logStartRow;
     private int logEndRow;
@@ -77,7 +74,6 @@ public class MeeroDeleteHunterActivity extends BaseNekoSettingsActivity {
         super.updateRows();
         reload();
         masterRow = addRow();
-        colorRow = addRow();
         logHeaderRow = addRow();
         logStartRow = rowCount;
         for (int i = 0; i < items.size(); i++) addRow();
@@ -284,23 +280,8 @@ public class MeeroDeleteHunterActivity extends BaseNekoSettingsActivity {
 
     private class ListAdapter extends BaseListAdapter {
 
-        // MeeroX v218: inline deleted-trash color strip (own view type,
-        // non-clickable row - the circles inside handle their own taps).
-        private static final int TYPE_TRASH_COLORS = 21;
-
         public ListAdapter(Context context) {
             super(context);
-        }
-
-        @NonNull
-        @Override
-        public RecyclerView.ViewHolder onCreateViewHolder(@NonNull android.view.ViewGroup parent, int viewType) {
-            if (viewType == TYPE_TRASH_COLORS) {
-                View view = new MeeroTrashColorCell(mContext);
-                view.setLayoutParams(new RecyclerView.LayoutParams(RecyclerView.LayoutParams.MATCH_PARENT, RecyclerView.LayoutParams.WRAP_CONTENT));
-                return new RecyclerListView.Holder(view);
-            }
-            return super.onCreateViewHolder(parent, viewType);
         }
 
         @Override
@@ -312,9 +293,6 @@ public class MeeroDeleteHunterActivity extends BaseNekoSettingsActivity {
         @Override
         public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position, boolean payload) {
             switch (holder.getItemViewType()) {
-                case TYPE_TRASH_COLORS:
-                    ((MeeroTrashColorCell) holder.itemView).refreshSelection();
-                    break;
                 case TYPE_CHECK:
                     TextCheckCell checkCell = (TextCheckCell) holder.itemView;
                     if (position == masterRow) {
@@ -363,8 +341,6 @@ public class MeeroDeleteHunterActivity extends BaseNekoSettingsActivity {
         public int getItemViewType(int position) {
             if (position == masterRow) {
                 return TYPE_CHECK;
-            } else if (position == colorRow) {
-                return TYPE_TRASH_COLORS;
             } else if (position == logHeaderRow) {
                 return TYPE_HEADER;
             } else if (logEndRow > logStartRow && position >= logStartRow && position < logEndRow) {

@@ -100,8 +100,25 @@ public class BotCommandsMenuView extends View {
     }
 
     private void updateColors() {
-        paint.setColor(Theme.getColor(Theme.key_chat_messagePanelVoiceBackground));
-        int textColor = Theme.getColor(Theme.key_chat_messagePanelVoiceDuration);
+        // MeeroX v219 (owner field report, RTL bot chats): the stock solid
+        // accent pill («القائمة») squatted inside our glass iOS capsule as
+        // a loud color block and wrecked the bar's shape («زر مخرب شكل بار
+        // الرسائل»). Under the MeeroX iOS input pill the chip blends into
+        // the capsule itself - translucent neutral wash + field-text
+        // glyphs, exactly like the iPhone's menu chip in its composer.
+        // Stock theme path below is untouched.
+        boolean meeroIosPill = false;
+        try {
+            meeroIosPill = tw.nekomimi.nekogram.NekoConfig.meeroIosInputPill.Bool();
+        } catch (Throwable ignore) {}
+        final int textColor;
+        if (meeroIosPill) {
+            paint.setColor(Theme.getActiveTheme().isDark() ? 0x26FFFFFF : 0xD9FFFFFF);
+            textColor = Theme.getColor(Theme.key_chat_messagePanelText);
+        } else {
+            paint.setColor(Theme.getColor(Theme.key_chat_messagePanelVoiceBackground));
+            textColor = Theme.getColor(Theme.key_chat_messagePanelVoiceDuration);
+        }
         backDrawable.setBackColor(textColor);
         backDrawable.setIconColor(textColor);
         if (webViewAnimation != null) {

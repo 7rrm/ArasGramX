@@ -13,6 +13,7 @@ import android.os.Build;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -71,6 +72,7 @@ import tw.nekomimi.nekogram.config.cell.ConfigCellTextInput;
 import tw.nekomimi.nekogram.filters.RegexFiltersSettingActivity;
 import tw.nekomimi.nekogram.ui.PopupBuilder;
 import tw.nekomimi.nekogram.ui.cells.HeaderCell;
+import tw.nekomimi.nekogram.ui.cells.MeeroTrashColorCell;
 import tw.nekomimi.nekogram.utils.ShareUtil;
 import xyz.nextalone.nagram.NaConfig;
 
@@ -159,6 +161,10 @@ public class NekoExperimentalSettingsActivity extends BaseNekoXSettingsActivity 
     private final AbstractConfigCell saveDeletedMessageInBotChatRow = cellGroup.appendCell(new ConfigCellTextCheck(NaConfig.INSTANCE.getSaveDeletedMessageForBot()));
     private final AbstractConfigCell translucentDeletedMessagesRow = cellGroup.appendCell(new ConfigCellTextCheck(NaConfig.INSTANCE.getTranslucentDeletedMessages()));
     private final AbstractConfigCell useDeletedIconRow = cellGroup.appendCell(new ConfigCellTextCheck(NaConfig.INSTANCE.getUseDeletedIcon()));
+    // MeeroX v219 (owner relocation order, mock screenshot): the trash-icon
+    // color strip lives HERE, next to the icon toggle itself - it appears
+    // only while «أيقونة بدل محذوفة» is ON (inverse of customDeletedMarkRow).
+    private final AbstractConfigCell deletedTrashColorRow = cellGroup.appendCell(new ConfigCellCustom("MeeroDeletedTrashColor", ConfigCellCustom.CUSTOM_ITEM_MeeroTrashColors, true));
     private final AbstractConfigCell customDeletedMarkRow = cellGroup.appendCell(new ConfigCellTextInput(null, NaConfig.INSTANCE.getCustomDeletedMark(), "", null));
     private final AbstractConfigCell clearMessageDatabaseRow = cellGroup.appendCell(new ConfigCellTextCheckIcon(null, "ClearMessageDatabase", null, AyuData.totalSize > 0 ? AndroidUtilities.formatFileSize(AyuData.totalSize) : "...", R.drawable.msg_clear, false, () -> new AlertDialog.Builder(getContext(), getResourceProvider())
             .setTitle(getString(R.string.ClearMessageDatabase))
@@ -215,6 +221,9 @@ public class NekoExperimentalSettingsActivity extends BaseNekoXSettingsActivity 
     public NekoExperimentalSettingsActivity() {
         if (NaConfig.INSTANCE.getUseDeletedIcon().Bool()) {
             cellGroup.rows.remove(customDeletedMarkRow);
+        } else {
+            // MeeroX v219: the color strip only exists while the icon is on
+            cellGroup.rows.remove(deletedTrashColorRow);
         }
         if (!NaConfig.INSTANCE.getSaveDeletedMessageForBotUser().Bool()) {
             cellGroup.rows.remove(saveDeletedMessageInBotChatRow);
@@ -483,6 +492,16 @@ public class NekoExperimentalSettingsActivity extends BaseNekoXSettingsActivity 
         }
 
         @Override
+        protected View onCreateCustomViewHolder(@NonNull ViewGroup parent, int viewType) {
+            if (viewType == ConfigCellCustom.CUSTOM_ITEM_MeeroTrashColors) {
+                // MeeroX v219: the owner-ordered home of the color strip is
+                // this screen - right under the deleted-icon toggle.
+                return new MeeroTrashColorCell(mContext);
+            }
+            return super.onCreateCustomViewHolder(parent, viewType);
+        }
+
+        @Override
         protected void onBindCustomViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
             if (holder.itemView instanceof TextCheckCell textCheckCell) {
                 textCheckCell.setEnabled(true, null);
@@ -660,6 +679,7 @@ public class NekoExperimentalSettingsActivity extends BaseNekoXSettingsActivity 
                 saveDeletedMessageInBotChatRow,
                 translucentDeletedMessagesRow,
                 useDeletedIconRow,
+                deletedTrashColorRow,
                 customDeletedMarkRow
         );
         if (listAdapter == null) {
@@ -693,7 +713,10 @@ public class NekoExperimentalSettingsActivity extends BaseNekoXSettingsActivity 
             }
             rowsToAdd.add(translucentDeletedMessagesRow);
             rowsToAdd.add(useDeletedIconRow);
-            if (!NaConfig.INSTANCE.getUseDeletedIcon().Bool()) {
+            if (NaConfig.INSTANCE.getUseDeletedIcon().Bool()) {
+                // MeeroX v219: strip replaces the custom-text row while on
+                rowsToAdd.add(deletedTrashColorRow);
+            } else {
                 rowsToAdd.add(customDeletedMarkRow);
             }
             cellGroup.rows.addAll(anchorIndex + 1, rowsToAdd);
@@ -731,6 +754,8 @@ public class NekoExperimentalSettingsActivity extends BaseNekoXSettingsActivity 
         if (listAdapter == null) {
             if (enabled) {
                 cellGroup.rows.remove(customDeletedMarkRow);
+            } else {
+                cellGroup.rows.remove(deletedTrashColorRow);
             }
             return;
         }
@@ -747,7 +772,33 @@ public class NekoExperimentalSettingsActivity extends BaseNekoXSettingsActivity 
                 listAdapter.notifyItemRemoved(index);
             }
         }
+        // MeeroX v219: mirror-pair - the trash-color strip shows exactly
+        // while the icon toggle is ON, parked right under it.
+        checkMeeroTrashColorRows(enabled);
         addRowsToMap(cellGroup);
+    }
+
+    /** MeeroX v219: show/hide the deleted-trash color strip (paired with
+     *  the icon toggle; it lives where customDeletedMarkRow would sit). */
+    private void checkMeeroTrashColorRows(boolean iconEnabled) {
+        if (iconEnabled) {
+            if (cellGroup.rows.contains(customDeletedMarkRow)) {
+                final int m = cellGroup.rows.indexOf(customDeletedMarkRow);
+                cellGroup.rows.remove(customDeletedMarkRow);
+                if (listAdapter != null) listAdapter.notifyItemRemoved(m);
+            }
+            if (!cellGroup.rows.contains(deletedTrashColorRow)) {
+                final int index = cellGroup.rows.indexOf(useDeletedIconRow);
+                cellGroup.rows.add(index + 1, deletedTrashColorRow);
+                if (listAdapter != null) listAdapter.notifyItemInserted(index + 1);
+            }
+        } else {
+            final int index = cellGroup.rows.indexOf(deletedTrashColorRow);
+            if (index != -1) {
+                cellGroup.rows.remove(deletedTrashColorRow);
+                if (listAdapter != null) listAdapter.notifyItemRemoved(index);
+            }
+        }
     }
 
 }
