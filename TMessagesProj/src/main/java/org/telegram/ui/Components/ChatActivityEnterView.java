@@ -17415,6 +17415,11 @@ public class ChatActivityEnterView extends FrameLayout implements
                     // v228: resting glyph is the smiley (panel-open -> the
                     // override swaps in the keyboard asset).
                     emojiButton.setImageResource(R.drawable.msg_emoji_smiles);
+                    // v229 (owner: «الايقونه الايموجي + الكيبورد صغيره, كبر
+                    // حبه لو حبتين»): shave the inner pad so the glyph box
+                    // grows 21 -> 23dp inside the 36dp iOS slot.
+                    final int meeroGlyphPad = dp(6.5f);
+                    emojiButton.setPadding(meeroGlyphPad, meeroGlyphPad, meeroGlyphPad, meeroGlyphPad);
                     emojiButton.setColorFilter(new PorterDuffColorFilter(meeroIosGlyphColor(), PorterDuff.Mode.SRC_IN));
                 }
                 if (messageEditText != null) {
@@ -17466,6 +17471,9 @@ public class ChatActivityEnterView extends FrameLayout implements
                     elp.rightMargin = 0;
                     elp.width = dp(DEFAULT_HEIGHT);
                     emojiButton.setLayoutParams(elp);
+                    // v229: stock mode keeps the stock inner pad (7.5dp).
+                    final int meeroGlyphPad = dp(7.5f);
+                    emojiButton.setPadding(meeroGlyphPad, meeroGlyphPad, meeroGlyphPad, meeroGlyphPad);
                     setEmojiButtonImage(false, false);
                 }
                 if (messageEditText != null) {

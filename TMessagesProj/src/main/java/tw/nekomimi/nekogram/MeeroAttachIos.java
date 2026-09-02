@@ -155,8 +155,13 @@ public final class MeeroAttachIos {
                     FileLog.e(t);
                 }
             });
+            // v229: tagged so ChatAttachAlert's container onLayout re-parks
+            // it on the SHEET top edge every pass (it was pinned to the
+            // full-window top = floated inside the chat title «خط فنص
+            // الأسم»). Gravity still centers it horizontally.
+            grabber.setTag("meeroGrabber");
             containerView.addView(grabber, LayoutHelper.createFrame(200, 22,
-                    Gravity.TOP | Gravity.CENTER_HORIZONTAL, 0, 6, 0, 0));
+                    Gravity.TOP | Gravity.CENTER_HORIZONTAL, 0, 0, 0, 0));
         } catch (Throwable t) {
             // never let a cosmetic face crash the sheet; stock stays intact
             try {
