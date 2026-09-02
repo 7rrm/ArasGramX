@@ -816,13 +816,20 @@ public class ChatActivityEnterView extends FrameLayout implements
             return;
         }
         try {
-            final int h = topView.getLayoutParams() != null && topView.getLayoutParams().height > 0
-                    ? topView.getLayoutParams().height : dp(48);
+            // MeeroX v227 ROOT CAUSE OF THE VOID (his on-device diag dump
+            // proved it): the old line read the previous layout-param height
+            // (ALREADY PIXELS: 156 = 48dp x 3.25) and passed it to
+            // LayoutHelper.createFrame(), whose height argument is in DP -
+            // so it converted AGAIN: dp(156) = 507px. That single double-dp
+            // value then drove the field's top margin (checkUi) and the
+            // whole capsule bloated by exactly 351px. The header is 48dp by
+            // design (ChatActivity addTopView(..., 48)) - say it in dp like
+            // stock and never read pixel heights back into dp slots.
             if (topView.getParent() instanceof android.view.ViewGroup) {
                 ((android.view.ViewGroup) topView.getParent()).removeView(topView);
             }
             messageEditTextContainer.addView(topView, 0,
-                    LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, h, Gravity.TOP | Gravity.LEFT, 4, 2, 4, 0));
+                    LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, 48, Gravity.TOP | Gravity.LEFT, 4, 2, 4, 0));
             topView.setBackground(null);
             topView.setPadding(0, 0, 0, 0);
             topView.setTranslationY(0);
@@ -830,10 +837,7 @@ public class ChatActivityEnterView extends FrameLayout implements
                 meeroTopCloseButton = new ImageView(getContext());
                 meeroTopCloseButton.setScaleType(ImageView.ScaleType.CENTER);
                 meeroTopCloseButton.setImageResource(R.drawable.msg_cancel_solar);
-                // MeeroX v225 DIAG-LITMUS: ORANGE X on purpose, temporary -
-                // proves on the next screenshot that this build is really
-                // the one installed (grey X = installs not landing).
-                meeroTopCloseButton.setColorFilter(new PorterDuffColorFilter(0xFFFF6D3D, PorterDuff.Mode.SRC_IN));
+                meeroTopCloseButton.setColorFilter(new PorterDuffColorFilter(meeroIosGlyphColor(), PorterDuff.Mode.SRC_IN));
                 meeroTopCloseButton.setPadding(dp(7), dp(7), dp(7), dp(7));
                 meeroTopCloseButton.setContentDescription(getString(R.string.Cancel));
                 // Re-route to the header's own close logic (cancel reply /
@@ -874,6 +878,14 @@ public class ChatActivityEnterView extends FrameLayout implements
         try {
             if (topView.getVisibility() != VISIBLE) {
                 return;
+            }
+            // v227 self-heal: if ANY path ever re-inflates the merged
+            // header beyond its 48dp design height (the double-dp legacy or
+            // a foreign writer), stomp it back every layout pass. One
+            // requestLayout per repair, then it settles.
+            if (topView.getLayoutParams() != null && topView.getLayoutParams().height != dp(48)) {
+                topView.getLayoutParams().height = dp(48);
+                topView.requestLayout();
             }
             final int headerBottom = messageEditText.getTop() - dp(1);
             topView.offsetTopAndBottom(headerBottom - topView.getBottom());
@@ -959,10 +971,10 @@ public class ChatActivityEnterView extends FrameLayout implements
             return;
         }
         try {
-            final int h = topView.getLayoutParams() != null && topView.getLayoutParams().height > 0
-                    ? topView.getLayoutParams().height : dp(48);
+            // v227: same double-dp kill as the merge path - hand the header
+            // back exactly what ChatActivity gave it: 48dp, said in dp.
             messageEditTextContainer.removeView(topView);
-            addView(topView, 0, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, h, Gravity.TOP | Gravity.LEFT));
+            addView(topView, 0, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, 48, Gravity.TOP | Gravity.LEFT));
             topView.setAlpha(1f);
             topView.setTranslationY(0);
             if (meeroTopCloseView != null) {
