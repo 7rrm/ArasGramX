@@ -9,7 +9,6 @@ import android.text.TextUtils;
 import android.view.View;
 import android.view.Gravity;
 import android.widget.LinearLayout;
-import android.widget.ScrollView;
 import android.widget.TextView;
 import android.util.TypedValue;
 
@@ -25,7 +24,6 @@ import org.telegram.messenger.browser.Browser;
 import org.telegram.ui.ActionBar.AlertDialog;
 import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.Cells.TextSettingsCell;
-import org.telegram.ui.Components.ChatActivityEnterView;
 import org.telegram.ui.Components.LayoutHelper;
 
 /**
@@ -40,7 +38,6 @@ public class NekoAboutActivity extends BaseNekoSettingsActivity {
 
     private int versionRow;
     private int meeroEditionRow;
-    private int meeroDiagRow;
     private int developerRow;
     private int mainChannelRow;
     private int channel1Row;
@@ -52,7 +49,6 @@ public class NekoAboutActivity extends BaseNekoSettingsActivity {
 
         versionRow = addRow();
         meeroEditionRow = addRow();
-        meeroDiagRow = addRow();
         developerRow = addRow();
         mainChannelRow = addRow();
         channel1Row = addRow();
@@ -77,40 +73,6 @@ public class NekoAboutActivity extends BaseNekoSettingsActivity {
         } catch (Throwable ignore) {
             return "";
         }
-    }
-
-    // MeeroX v226 DIAG: the capsule-hierarchy dump, on screen, one tap away.
-    // Selectable + copyable so the owner can screenshot it or paste it -
-    // no Android/data spelunking on Android 16 ever again.
-    private void showMeeroDiagDialog() {
-        if (getParentActivity() == null) {
-            return;
-        }
-        final String text = ChatActivityEnterView.meeroDiagSnapshot();
-
-        ScrollView scroll = new ScrollView(getParentActivity());
-        TextView body = new TextView(getParentActivity());
-        body.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 12);
-        body.setTypeface(android.graphics.Typeface.MONOSPACE);
-        body.setTextColor(Theme.getColor(Theme.key_dialogTextBlack));
-        body.setTextIsSelectable(true);
-        body.setPadding(AndroidUtilities.dp(20), AndroidUtilities.dp(10),
-                AndroidUtilities.dp(20), AndroidUtilities.dp(10));
-        body.setText(text);
-        scroll.addView(body);
-
-        AlertDialog.Builder builder = new AlertDialog.Builder(getParentActivity());
-        builder.setTitle("تشخيص الكبسولة");
-        builder.setView(scroll);
-        builder.setPositiveButton(getString(R.string.Close), null);
-        builder.setNeutralButton("نسخ", (d, w) -> {
-            try {
-                AndroidUtilities.addToClipboard(text);
-                android.widget.Toast.makeText(getParentActivity(), "تم النسخ", android.widget.Toast.LENGTH_SHORT).show();
-            } catch (Throwable ignore) {
-            }
-        });
-        showDialog(builder.create());
     }
 
     private void showPrivacyDialog() {
@@ -154,8 +116,6 @@ public class NekoAboutActivity extends BaseNekoSettingsActivity {
                     .openByUserName("nadoremalf", NekoAboutActivity.this, 1);
         } else if (position == privacyRow) {
             showPrivacyDialog();
-        } else if (position == meeroDiagRow) {
-            showMeeroDiagDialog();
         }
     }
 
@@ -178,8 +138,6 @@ public class NekoAboutActivity extends BaseNekoSettingsActivity {
                     textCell.setTextAndValue(MeeroStrings.s(278), versionName(), true);
                 } else if (position == meeroEditionRow) {
                     textCell.setTextAndValue(MeeroStrings.s(10), String.valueOf(BuildConfig.MEERO_EDITION), true);
-                } else if (position == meeroDiagRow) {
-                    textCell.setTextAndValue("فحص كبسولة الرد/التعديل", "سجلات: " + ChatActivityEnterView.meeroDiagCount(), true);
                 } else if (position == developerRow) {
                     textCell.setTextAndValue(MeeroStrings.s(82), "@i55544", true);
                 } else if (position == mainChannelRow) {

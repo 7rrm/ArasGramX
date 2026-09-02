@@ -901,68 +901,8 @@ public class ChatActivityEnterView extends FrameLayout implements
                 meeroTopCloseButton.offsetLeftAndRight(xRight - meeroTopCloseButton.getRight());
                 meeroTopCloseButton.offsetTopAndBottom(xTop - meeroTopCloseButton.getTop());
             }
-            meeroDiagTop("layout");
         } catch (Throwable ignore) {
             // Cosmetic anchoring - never break layout.
-        }
-    }
-
-    // MeeroX v225 DIAG: dump the field container's child hierarchy (class /
-    // visibility / measured height / LP height / top) to a user-readable
-    // file whenever the signature CHANGES - the child that inflates the
-    // capsule names itself here. Remote guessing is over.
-    private void meeroDiagTop(String where) {
-        try {
-            final StringBuilder sb = new StringBuilder("meeroTopDiag[" + where + "]");
-            sb.append(" merged=").append(meeroIsTopViewMerged());
-            sb.append(" topVis=").append(topView == null ? -1 : topView.getVisibility());
-            sb.append(" anim=").append(String.format(java.util.Locale.US, "%.2f", animatorTopViewVisibility.getFloatValue()));
-            if (messageEditTextContainer != null) {
-                sb.append(" frameH=").append(messageEditTextContainer.getMeasuredHeight());
-                sb.append(" frameLpH=").append(messageEditTextContainer.getLayoutParams() == null
-                        ? "?" : messageEditTextContainer.getLayoutParams().height);
-                final int n = messageEditTextContainer.getChildCount();
-                sb.append(" kids=").append(n);
-                for (int i = 0; i < n; i++) {
-                    final View c = messageEditTextContainer.getChildAt(i);
-                    sb.append(" {").append(c.getClass().getSimpleName())
-                            .append(" v=").append(c.getVisibility())
-                            .append(" h=").append(c.getMeasuredHeight())
-                            .append(" t=").append(c.getTop())
-                            .append(" lpH=").append(c.getLayoutParams() == null ? "?" : c.getLayoutParams().height)
-                            .append("}");
-                }
-            }
-            if (textFieldContainer != null) {
-                sb.append(" containerH=").append(textFieldContainer.getMeasuredHeight());
-                sb.append(" containerKids=").append(textFieldContainer.getChildCount());
-                for (int i = 0; i < textFieldContainer.getChildCount(); i++) {
-                    final View c = textFieldContainer.getChildAt(i);
-                    sb.append(" {").append(c.getClass().getSimpleName())
-                            .append(" v=").append(c.getVisibility())
-                            .append(" h=").append(c.getMeasuredHeight())
-                            .append(" t=").append(c.getTop())
-                            .append("}");
-                }
-            }
-            sb.append(" rootH=").append(getMeasuredHeight());
-            final String sig = sb.toString();
-            if (sig.equals(meeroDiagLastSig)) {
-                return;
-            }
-            meeroDiagLastSig = sig;
-            meeroDiagRecord(System.currentTimeMillis() + " " + sig);
-            try {
-                final java.io.File dir = getContext().getExternalFilesDir(null);
-                if (dir != null) {
-                    final java.io.File f = new java.io.File(dir, "meero-topdiag.txt");
-                    final java.io.FileOutputStream fos = new java.io.FileOutputStream(f, true);
-                    fos.write((System.currentTimeMillis() + " " + sig + "\n").getBytes("UTF-8"));
-                    fos.close();
-                }
-            } catch (Throwable ignore2) {
-            }
-        } catch (Throwable ignore) {
         }
     }
 
@@ -1057,84 +997,6 @@ public class ChatActivityEnterView extends FrameLayout implements
     // meeroTopCloseButton = floating glass X at the capsule's top-right.
     private View meeroTopCloseView;
     private ImageView meeroTopCloseButton;
-    // MeeroX v225 DIAG: last dumped hierarchy signature (change-only spam).
-    private String meeroDiagLastSig;
-    // MeeroX v226 DIAG: his Android 16 file manager cannot even open
-    // Android/data, so the v225 dump file was unreachable. Keep the last 80
-    // events in a static ring, mirror the snapshot to the PUBLIC Downloads
-    // folder via MediaStore, and expose it to the About screen - the owner
-    // only needs to screenshot a dialog now, no file hunting at all.
-    private static final java.util.ArrayDeque<String> meeroDiagRing = new java.util.ArrayDeque<>();
-
-    public static int meeroDiagCount() {
-        synchronized (meeroDiagRing) {
-            return meeroDiagRing.size();
-        }
-    }
-
-    public static String meeroDiagSnapshot() {
-        final StringBuilder out = new StringBuilder("MeeroX DIAG - edition=226\n");
-        synchronized (meeroDiagRing) {
-            if (meeroDiagRing.isEmpty()) {
-                out.append("لا توجد سجلات بعد:\nافتح الرد على رسالة أو تعديل رسالة (حتى تظهر مشكلة الفراغ)\nثم ارجع لهذه الصفحة واضغط هذا السطر من جديد.\n");
-            }
-            for (String line : meeroDiagRing) {
-                out.append(line).append('\n');
-            }
-        }
-        return out.toString();
-    }
-
-    private static void meeroDiagRecord(String line) {
-        synchronized (meeroDiagRing) {
-            meeroDiagRing.addLast(line);
-            while (meeroDiagRing.size() > 80) {
-                meeroDiagRing.removeFirst();
-            }
-        }
-        meeroDiagMirrorDownloads(meeroDiagSnapshot());
-    }
-
-    private static void meeroDiagMirrorDownloads(String text) {
-        try {
-            if (android.os.Build.VERSION.SDK_INT < 29) {
-                return;
-            }
-            final android.content.Context ctx = org.telegram.messenger.ApplicationLoader.applicationContext;
-            if (ctx == null) {
-                return;
-            }
-            final android.content.ContentResolver cr = ctx.getContentResolver();
-            final android.net.Uri collection = android.provider.MediaStore.Downloads.getContentUri(android.provider.MediaStore.VOLUME_EXTERNAL_PRIMARY);
-            android.net.Uri item = null;
-            android.database.Cursor c = cr.query(collection,
-                    new String[]{android.provider.MediaStore.MediaColumns._ID},
-                    android.provider.MediaStore.MediaColumns.DISPLAY_NAME + "=? AND " + android.provider.MediaStore.MediaColumns.RELATIVE_PATH + "=?",
-                    new String[]{"meero-topdiag.txt", "Download/MeeroX/"}, null);
-            if (c != null) {
-                if (c.moveToFirst()) {
-                    item = android.content.ContentUris.withAppendedId(collection, c.getLong(0));
-                }
-                c.close();
-            }
-            if (item == null) {
-                final android.content.ContentValues v = new android.content.ContentValues();
-                v.put(android.provider.MediaStore.MediaColumns.DISPLAY_NAME, "meero-topdiag.txt");
-                v.put(android.provider.MediaStore.MediaColumns.MIME_TYPE, "text/plain");
-                v.put(android.provider.MediaStore.MediaColumns.RELATIVE_PATH, "Download/MeeroX/");
-                item = cr.insert(collection, v);
-            }
-            if (item != null) {
-                final java.io.OutputStream os = cr.openOutputStream(item, "wt");
-                if (os != null) {
-                    os.write(text.getBytes("UTF-8"));
-                    os.close();
-                }
-            }
-        } catch (Throwable ignore) {
-            // Diagnostic only - never crash the composer over a mirror miss.
-        }
-    }
     // MeeroX v221: remembers a parked bot-web-view overlay during editing.
     private boolean meeroBotWebWasVisible221;
     private BotKeyboardView botKeyboardView;
@@ -3164,7 +3026,6 @@ public class ChatActivityEnterView extends FrameLayout implements
                         setMeasuredDimension(getMeasuredWidth(), meeroCap224);
                     }
                 }
-                meeroDiagTop("measure");
                 final int height = Math.max(dp(44), getMeasuredHeight());
                 if (animatorInputFieldHeight.getFactor() > 0) {
                     animatorInputFieldHeight.animateTo(height);
@@ -3227,13 +3088,18 @@ public class ChatActivityEnterView extends FrameLayout implements
 
             @Override
             public void setState(State state, boolean animate) {
-                // MeeroX v136: in iOS-composer mode the field glyph is the
-                // static sticker asset from Telegram-iOS itself, pinned at
-                // the field's right end like on the iPhone - the RLottie
-                // smile/keyboard transitions would just fight it. Panel
-                // open/close still works; the glyph simply stays, exactly
-                // like iOS (its accessory icon never morphs).
                 if (meeroAttachWrap != null) {
+                    // MeeroX v228 (owner order): the pinned iOS slot glyph
+                    // now breathes exactly like official Telegram - emoji
+                    // panel OPEN shows the keyboard glyph, panel CLOSED is
+                    // the classic outlined smiley (his reference shot).
+                    // setEmojiButtonImage() already computes State.KEYBOARD
+                    // when the panel opens and SMILE-family when it closes,
+                    // so we only translate those states into static assets;
+                    // the RLottie morphs remain stock-mode only.
+                    setImageResource(state == State.KEYBOARD
+                            ? R.drawable.input_keyboard
+                            : R.drawable.msg_emoji_smiles);
                     return;
                 }
                 super.setState(state, animate);
@@ -17546,7 +17412,9 @@ public class ChatActivityEnterView extends FrameLayout implements
                     elp.rightMargin = dp(3);
                     elp.height = dp(DEFAULT_HEIGHT);
                     emojiButton.setLayoutParams(elp);
-                    emojiButton.setImageResource(R.drawable.meerox_ios_field_sticker);
+                    // v228: resting glyph is the smiley (panel-open -> the
+                    // override swaps in the keyboard asset).
+                    emojiButton.setImageResource(R.drawable.msg_emoji_smiles);
                     emojiButton.setColorFilter(new PorterDuffColorFilter(meeroIosGlyphColor(), PorterDuff.Mode.SRC_IN));
                 }
                 if (messageEditText != null) {
