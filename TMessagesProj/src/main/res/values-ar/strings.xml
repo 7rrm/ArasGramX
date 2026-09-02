@@ -1254,4 +1254,15 @@
     <string name="meeroTrashColorIndigo">نيلي</string>
     <string name="meeroTrashColorBlue">أزرق</string>
     <string name="meeroTrashColorHint">يُطبَّق فور اختياره على أيقونة السلّة بجانب الرسائل المحذوفة. اختر «افتراضي» ليبقى مثل قبل (الأيقونة بلون نص الوقت).</string>
+    <!-- MeeroX v230: send text style picker (Fonts page) -->
+    <string name="MeeroSendStyleTitle">تنسيق الإرسال</string>
+    <string name="MeeroStyleDefault">الافتراضي</string>
+    <string name="MeeroStyleBold">غامق</string>
+    <string name="MeeroStyleItalic">مائل</string>
+    <string name="MeeroStyleUnderline">تسطير</string>
+    <string name="MeeroStyleStrike">يتوسطه خط</string>
+    <string name="MeeroStyleSpoiler">تشويش</string>
+    <string name="MeeroStyleQuote">اقتباس</string>
+    <string name="MeeroStyleMono">أحادي</string>
+    <string name="MeeroStyleCode">كود</string>
 </resources>

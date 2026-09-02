@@ -11237,4 +11237,15 @@
     <string name="meeroTrashColorIndigo">Indigo</string>
     <string name="meeroTrashColorBlue">Blue</string>
     <string name="meeroTrashColorHint">Applies right away to the trash icon next to every deleted message. Pick “Default” to keep the previous behaviour (icon follows the time text color).</string>
+    <!-- MeeroX v230: send text style picker (Fonts page) -->
+    <string name="MeeroSendStyleTitle">Send style</string>
+    <string name="MeeroStyleDefault">Default</string>
+    <string name="MeeroStyleBold">Bold</string>
+    <string name="MeeroStyleItalic">Italic</string>
+    <string name="MeeroStyleUnderline">Underline</string>
+    <string name="MeeroStyleStrike">Strikethrough</string>
+    <string name="MeeroStyleSpoiler">Spoiler</string>
+    <string name="MeeroStyleQuote">Quote</string>
+    <string name="MeeroStyleMono">Mono</string>
+    <string name="MeeroStyleCode">Code</string>
 </resources>

@@ -124,6 +124,8 @@ public class NekoConfig {
     // v208 (owner-approved preview): iOS face for the attach sheet - grabber
     // + grouped squircle action card. OFF = stock tab strip, byte-exact.
     public static ConfigItem meeroIosAttachPanel = addConfig("meeroIosAttachPanel", configTypeBool, true);
+    // MeeroX v230: send text style picker (0 default, 1..8 TG entities).
+    public static ConfigItem meeroSendTextStyle = addConfig("meeroSendTextStyle", configTypeInt, 0);
     public static ConfigItem meeroIosMsgMenu = addConfig("meeroIosMsgMenu", configTypeBool, true);
     public static ConfigItem meeroIosMainMenu = addConfig("meeroIosMainMenu", configTypeBool, true);
     // MeeroX v159: the approved polish bundle (each off = exact v158 look).

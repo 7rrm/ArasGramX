@@ -4291,6 +4291,9 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
     }
 
     public void sendMessage(SendMessageParams sendMessageParams) {
+        // MeeroX v230: «تنسيق الإرسال» - wrap the outgoing text/caption with
+        // the owner's chosen Telegram entity (0 = off, stock bytes intact).
+        tw.nekomimi.nekogram.MeeroMessageStyler.applyTo(sendMessageParams);
         final SendMessageChatArguments sendMessageChatArguments = sendMessageParams.sendMessageChatArguments != null ?
                 sendMessageParams.sendMessageChatArguments : SendMessageChatArguments.EMPTY;
         String message = sendMessageParams.message;

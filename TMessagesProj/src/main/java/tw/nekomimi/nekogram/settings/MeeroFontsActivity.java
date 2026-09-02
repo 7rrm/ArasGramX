@@ -28,6 +28,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 
 import tw.nekomimi.nekogram.MeeroFonts;
+import tw.nekomimi.nekogram.NekoConfig;
 
 /**
  * Font picker: bundled faces plus any .ttf/.otf the user imports.
@@ -43,6 +44,9 @@ public class MeeroFontsActivity extends BaseNekoSettingsActivity {
     private int fontsEndRow;
     private int addFontRow;
     private int dividerRow;
+    // MeeroX v230: send-text-style picker row (bottom of the Fonts page).
+    private int meeroStyleDividerRow;
+    private int meeroSendStyleRow;
 
     @Override
     protected void updateRows() {
@@ -59,6 +63,8 @@ public class MeeroFontsActivity extends BaseNekoSettingsActivity {
 
         dividerRow = addRow();
         addFontRow = addRow();
+        meeroStyleDividerRow = addRow();
+        meeroSendStyleRow = addRow();
     }
 
     // MeeroX v129: opt into the fixed glass design (chrome, cards,
@@ -85,6 +91,8 @@ public class MeeroFontsActivity extends BaseNekoSettingsActivity {
             }
         } else if (position == addFontRow) {
             pickFont();
+        } else if (position == meeroSendStyleRow) {
+            showMeeroSendStyleDialog();
         }
     }
 
@@ -111,6 +119,49 @@ public class MeeroFontsActivity extends BaseNekoSettingsActivity {
             }
         }
         return false;
+    }
+
+    // MeeroX v230: values 0..8 - the order matters, entityFor() in
+    // MeeroMessageStyler maps the same indexes 1:1. Never reorder.
+    private static final int[] MEERO_STYLE_RES = {
+            R.string.MeeroStyleDefault,
+            R.string.MeeroStyleBold,
+            R.string.MeeroStyleItalic,
+            R.string.MeeroStyleUnderline,
+            R.string.MeeroStyleStrike,
+            R.string.MeeroStyleSpoiler,
+            R.string.MeeroStyleQuote,
+            R.string.MeeroStyleMono,
+            R.string.MeeroStyleCode
+    };
+
+    private int currentMeeroSendStyle() {
+        try {
+            final int v = NekoConfig.meeroSendTextStyle.Int();
+            return v >= 0 && v < MEERO_STYLE_RES.length ? v : 0;
+        } catch (Throwable ignore) {
+            return 0;
+        }
+    }
+
+    private void showMeeroSendStyleDialog() {
+        if (getParentActivity() == null) {
+            return;
+        }
+        final int current = currentMeeroSendStyle();
+        final String[] names = new String[MEERO_STYLE_RES.length];
+        for (int i = 0; i < names.length; i++) {
+            names[i] = (i == current ? "✓ " : "") + getString(MEERO_STYLE_RES[i]);
+        }
+        AlertDialog.Builder b = new AlertDialog.Builder(getParentActivity());
+        b.setTitle(getString(R.string.MeeroSendStyleTitle));
+        b.setItems(names, (d, which) -> {
+            NekoConfig.meeroSendTextStyle.setConfigInt(which);
+            if (listAdapter != null) {
+                listAdapter.notifyItemChanged(meeroSendStyleRow);
+            }
+        });
+        showDialog(b.create());
     }
 
     private void pickFont() {
@@ -206,7 +257,12 @@ public class MeeroFontsActivity extends BaseNekoSettingsActivity {
                 cell.setTypeface(tf != null ? tf : Typeface.DEFAULT);
             } else if (type == TYPE_SETTINGS) {
                 TextSettingsCell cell = (TextSettingsCell) holder.itemView;
-                cell.setText(MeeroStrings.s(93), false);
+                if (position == meeroSendStyleRow) {
+                    cell.setTextAndValue(getString(R.string.MeeroSendStyleTitle),
+                            getString(MEERO_STYLE_RES[currentMeeroSendStyle()]), false);
+                } else {
+                    cell.setText(MeeroStrings.s(93), false);
+                }
                 cell.getTextView().setTypeface(Typeface.DEFAULT);
             }
         }
@@ -214,7 +270,7 @@ public class MeeroFontsActivity extends BaseNekoSettingsActivity {
         @Override
         public int getItemViewType(int position) {
             if (position >= fontsStartRow && position < fontsEndRow) return TYPE_CHECK;
-            if (position == addFontRow) return TYPE_SETTINGS;
+            if (position == addFontRow || position == meeroSendStyleRow) return TYPE_SETTINGS;
             return TYPE_SHADOW;
         }
     }
