@@ -939,6 +939,7 @@ public class ChatActivityEnterView extends FrameLayout implements
                 return;
             }
             meeroDiagLastSig = sig;
+            meeroDiagRecord(System.currentTimeMillis() + " " + sig);
             try {
                 final java.io.File dir = getContext().getExternalFilesDir(null);
                 if (dir != null) {
@@ -1046,6 +1047,82 @@ public class ChatActivityEnterView extends FrameLayout implements
     private ImageView meeroTopCloseButton;
     // MeeroX v225 DIAG: last dumped hierarchy signature (change-only spam).
     private String meeroDiagLastSig;
+    // MeeroX v226 DIAG: his Android 16 file manager cannot even open
+    // Android/data, so the v225 dump file was unreachable. Keep the last 80
+    // events in a static ring, mirror the snapshot to the PUBLIC Downloads
+    // folder via MediaStore, and expose it to the About screen - the owner
+    // only needs to screenshot a dialog now, no file hunting at all.
+    private static final java.util.ArrayDeque<String> meeroDiagRing = new java.util.ArrayDeque<>();
+
+    public static int meeroDiagCount() {
+        synchronized (meeroDiagRing) {
+            return meeroDiagRing.size();
+        }
+    }
+
+    public static String meeroDiagSnapshot() {
+        final StringBuilder out = new StringBuilder("MeeroX DIAG - edition=226\n");
+        synchronized (meeroDiagRing) {
+            if (meeroDiagRing.isEmpty()) {
+                out.append("لا توجد سجلات بعد:\nافتح الرد على رسالة أو تعديل رسالة (حتى تظهر مشكلة الفراغ)\nثم ارجع لهذه الصفحة واضغط هذا السطر من جديد.\n");
+            }
+            for (String line : meeroDiagRing) {
+                out.append(line).append('\n');
+            }
+        }
+        return out.toString();
+    }
+
+    private static void meeroDiagRecord(String line) {
+        synchronized (meeroDiagRing) {
+            meeroDiagRing.addLast(line);
+            while (meeroDiagRing.size() > 80) {
+                meeroDiagRing.removeFirst();
+            }
+        }
+        meeroDiagMirrorDownloads(meeroDiagSnapshot());
+    }
+
+    private static void meeroDiagMirrorDownloads(String text) {
+        try {
+            if (android.os.Build.VERSION.SDK_INT < 29) {
+                return;
+            }
+            final android.content.Context ctx = org.telegram.messenger.ApplicationLoader.applicationContext;
+            if (ctx == null) {
+                return;
+            }
+            final android.content.ContentResolver cr = ctx.getContentResolver();
+            final android.net.Uri collection = android.provider.MediaStore.Downloads.getContentUri(android.provider.MediaStore.VOLUME_EXTERNAL_PRIMARY);
+            android.net.Uri item = null;
+            android.database.Cursor c = cr.query(collection,
+                    new String[]{android.provider.MediaStore.MediaColumns._ID},
+                    android.provider.MediaStore.MediaColumns.DISPLAY_NAME + "=? AND " + android.provider.MediaStore.MediaColumns.RELATIVE_PATH + "=?",
+                    new String[]{"meero-topdiag.txt", "Download/MeeroX/"}, null);
+            if (c != null) {
+                if (c.moveToFirst()) {
+                    item = android.content.ContentUris.withAppendedId(collection, c.getLong(0));
+                }
+                c.close();
+            }
+            if (item == null) {
+                final android.content.ContentValues v = new android.content.ContentValues();
+                v.put(android.provider.MediaStore.MediaColumns.DISPLAY_NAME, "meero-topdiag.txt");
+                v.put(android.provider.MediaStore.MediaColumns.MIME_TYPE, "text/plain");
+                v.put(android.provider.MediaStore.MediaColumns.RELATIVE_PATH, "Download/MeeroX/");
+                item = cr.insert(collection, v);
+            }
+            if (item != null) {
+                final java.io.OutputStream os = cr.openOutputStream(item, "wt");
+                if (os != null) {
+                    os.write(text.getBytes("UTF-8"));
+                    os.close();
+                }
+            }
+        } catch (Throwable ignore) {
+            // Diagnostic only - never crash the composer over a mirror miss.
+        }
+    }
     // MeeroX v221: remembers a parked bot-web-view overlay during editing.
     private boolean meeroBotWebWasVisible221;
     private BotKeyboardView botKeyboardView;
