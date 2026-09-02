@@ -2994,6 +2994,23 @@ public class ChatActivityEnterView extends FrameLayout implements
             @Override
             protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
                 super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+                // MeeroX v224 (owner: «نفس الفراغ الكبير» in reply+edit on
+                // v223 - the per-suspect fixes stuck nowhere): HARD-CLAMP
+                // this container while the merged header is on stage. The
+                // header's slot already rides inside the field's measured
+                // height (its animated top margin), so a sane container IS
+                // field+slack - anything taller is inflation and is cut
+                // at measure time, before the animator/clip/island channels
+                // downstream can see it. Guarded to merged+visible only.
+                if (meeroIsTopViewMerged() && topView != null && topView.getVisibility() == VISIBLE
+                        && messageEditText != null && messageEditText.getVisibility() == VISIBLE) {
+                    final FrameLayout.LayoutParams flp224 = (FrameLayout.LayoutParams) messageEditText.getLayoutParams();
+                    final int meeroCap224 = messageEditText.getMeasuredHeight()
+                            + flp224.topMargin + flp224.bottomMargin + dp(8);
+                    if (getMeasuredHeight() > meeroCap224) {
+                        setMeasuredDimension(getMeasuredWidth(), meeroCap224);
+                    }
+                }
                 final int height = Math.max(dp(44), getMeasuredHeight());
                 if (animatorInputFieldHeight.getFactor() > 0) {
                     animatorInputFieldHeight.animateTo(height);
