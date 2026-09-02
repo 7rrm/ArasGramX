@@ -830,7 +830,10 @@ public class ChatActivityEnterView extends FrameLayout implements
                 meeroTopCloseButton = new ImageView(getContext());
                 meeroTopCloseButton.setScaleType(ImageView.ScaleType.CENTER);
                 meeroTopCloseButton.setImageResource(R.drawable.msg_cancel_solar);
-                meeroTopCloseButton.setColorFilter(new PorterDuffColorFilter(meeroIosGlyphColor(), PorterDuff.Mode.SRC_IN));
+                // MeeroX v225 DIAG-LITMUS: ORANGE X on purpose, temporary -
+                // proves on the next screenshot that this build is really
+                // the one installed (grey X = installs not landing).
+                meeroTopCloseButton.setColorFilter(new PorterDuffColorFilter(0xFFFF6D3D, PorterDuff.Mode.SRC_IN));
                 meeroTopCloseButton.setPadding(dp(7), dp(7), dp(7), dp(7));
                 meeroTopCloseButton.setContentDescription(getString(R.string.Cancel));
                 // Re-route to the header's own close logic (cancel reply /
@@ -886,8 +889,67 @@ public class ChatActivityEnterView extends FrameLayout implements
                 meeroTopCloseButton.offsetLeftAndRight(xRight - meeroTopCloseButton.getRight());
                 meeroTopCloseButton.offsetTopAndBottom(xTop - meeroTopCloseButton.getTop());
             }
+            meeroDiagTop("layout");
         } catch (Throwable ignore) {
             // Cosmetic anchoring - never break layout.
+        }
+    }
+
+    // MeeroX v225 DIAG: dump the field container's child hierarchy (class /
+    // visibility / measured height / LP height / top) to a user-readable
+    // file whenever the signature CHANGES - the child that inflates the
+    // capsule names itself here. Remote guessing is over.
+    private void meeroDiagTop(String where) {
+        try {
+            final StringBuilder sb = new StringBuilder("meeroTopDiag[" + where + "]");
+            sb.append(" merged=").append(meeroIsTopViewMerged());
+            sb.append(" topVis=").append(topView == null ? -1 : topView.getVisibility());
+            sb.append(" anim=").append(String.format(java.util.Locale.US, "%.2f", animatorTopViewVisibility.getFloatValue()));
+            if (messageEditTextContainer != null) {
+                sb.append(" frameH=").append(messageEditTextContainer.getMeasuredHeight());
+                sb.append(" frameLpH=").append(messageEditTextContainer.getLayoutParams() == null
+                        ? "?" : messageEditTextContainer.getLayoutParams().height);
+                final int n = messageEditTextContainer.getChildCount();
+                sb.append(" kids=").append(n);
+                for (int i = 0; i < n; i++) {
+                    final View c = messageEditTextContainer.getChildAt(i);
+                    sb.append(" {").append(c.getClass().getSimpleName())
+                            .append(" v=").append(c.getVisibility())
+                            .append(" h=").append(c.getMeasuredHeight())
+                            .append(" t=").append(c.getTop())
+                            .append(" lpH=").append(c.getLayoutParams() == null ? "?" : c.getLayoutParams().height)
+                            .append("}");
+                }
+            }
+            if (textFieldContainer != null) {
+                sb.append(" containerH=").append(textFieldContainer.getMeasuredHeight());
+                sb.append(" containerKids=").append(textFieldContainer.getChildCount());
+                for (int i = 0; i < textFieldContainer.getChildCount(); i++) {
+                    final View c = textFieldContainer.getChildAt(i);
+                    sb.append(" {").append(c.getClass().getSimpleName())
+                            .append(" v=").append(c.getVisibility())
+                            .append(" h=").append(c.getMeasuredHeight())
+                            .append(" t=").append(c.getTop())
+                            .append("}");
+                }
+            }
+            sb.append(" rootH=").append(getMeasuredHeight());
+            final String sig = sb.toString();
+            if (sig.equals(meeroDiagLastSig)) {
+                return;
+            }
+            meeroDiagLastSig = sig;
+            try {
+                final java.io.File dir = getContext().getExternalFilesDir(null);
+                if (dir != null) {
+                    final java.io.File f = new java.io.File(dir, "meero-topdiag.txt");
+                    final java.io.FileOutputStream fos = new java.io.FileOutputStream(f, true);
+                    fos.write((System.currentTimeMillis() + " " + sig + "\n").getBytes("UTF-8"));
+                    fos.close();
+                }
+            } catch (Throwable ignore2) {
+            }
+        } catch (Throwable ignore) {
         }
     }
 
@@ -982,6 +1044,8 @@ public class ChatActivityEnterView extends FrameLayout implements
     // meeroTopCloseButton = floating glass X at the capsule's top-right.
     private View meeroTopCloseView;
     private ImageView meeroTopCloseButton;
+    // MeeroX v225 DIAG: last dumped hierarchy signature (change-only spam).
+    private String meeroDiagLastSig;
     // MeeroX v221: remembers a parked bot-web-view overlay during editing.
     private boolean meeroBotWebWasVisible221;
     private BotKeyboardView botKeyboardView;
@@ -3011,6 +3075,7 @@ public class ChatActivityEnterView extends FrameLayout implements
                         setMeasuredDimension(getMeasuredWidth(), meeroCap224);
                     }
                 }
+                meeroDiagTop("measure");
                 final int height = Math.max(dp(44), getMeasuredHeight());
                 if (animatorInputFieldHeight.getFactor() > 0) {
                     animatorInputFieldHeight.animateTo(height);
