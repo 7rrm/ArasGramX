@@ -126,6 +126,8 @@ public class NekoConfig {
     public static ConfigItem meeroIosAttachPanel = addConfig("meeroIosAttachPanel", configTypeBool, true);
     // MeeroX v230: send text style picker (0 default, 1..8 TG entities).
     public static ConfigItem meeroSendTextStyle = addConfig("meeroSendTextStyle", configTypeInt, 0);
+    // MeeroX v231: global 0.75x animation pace (default ON - owner's pick).
+    public static ConfigItem meeroFastAnimations = addConfig("meeroFastAnimations", configTypeBool, true);
     public static ConfigItem meeroIosMsgMenu = addConfig("meeroIosMsgMenu", configTypeBool, true);
     public static ConfigItem meeroIosMainMenu = addConfig("meeroIosMainMenu", configTypeBool, true);
     // MeeroX v159: the approved polish bundle (each off = exact v158 look).

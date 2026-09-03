@@ -7089,6 +7089,9 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
         super.onResume();
         isResumed = true;
         pipActivityHandler.onResume();
+        // MeeroX v231: keep the owner-approved 0.75x pace asserted after a
+        // settings flip or any foreign reset.
+        tw.nekomimi.nekogram.MeeroFastMotion.apply();
         if (onResumeStaticCallback != null) {
             onResumeStaticCallback.run();
             onResumeStaticCallback = null;

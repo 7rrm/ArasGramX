@@ -209,6 +209,10 @@ public class MeeroSettingsActivity extends BaseNekoXSettingsActivity {
     // MeeroX v164 (approved pick): startup smoothness pre-warm, one shot per
     // launch - lives with the motion rows since its whole job is feel.
     private final AbstractConfigCell smoothPassRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroSmoothPass, MeeroStrings.s(235)));
+    // MeeroX v231 (owner pick «خيار 1»): the global 0.75x animation pace.
+    // Default ON; OFF returns the stock 1.0x instantly via the callback in
+    // the constructor (same pattern NekoChatSettingsActivity uses).
+    private final AbstractConfigCell fastAnimationsRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroFastAnimations, getString(R.string.MeeroFastAnimTitle)));
     private final AbstractConfigCell dividerMotion = cellGroup.appendCell(new ConfigCellDivider());
 
     // Storage - the auto cache janitor (MeeroX v159, approved feature). The
@@ -239,6 +243,13 @@ public class MeeroSettingsActivity extends BaseNekoXSettingsActivity {
     private ListAdapter listAdapter;
 
     public MeeroSettingsActivity() {
+        // MeeroX v231: instant-apply the fast-motion switch (standard
+        // cellGroup callback; cells are field-initialized before this runs).
+        cellGroup.callBackSettingsChanged = (key, newValue) -> {
+            if (NekoConfig.meeroFastAnimations.getKey().equals(key)) {
+                tw.nekomimi.nekogram.MeeroFastMotion.apply();
+            }
+        };
         addRowsToMap(cellGroup);
     }
 

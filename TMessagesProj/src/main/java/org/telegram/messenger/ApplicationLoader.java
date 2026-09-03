@@ -322,6 +322,10 @@ public class ApplicationLoader extends Application {
         super.onCreate();
         installCrashReportFilter();
 
+        // MeeroX v231: owner-approved global 0.75x animation pace - sticky
+        // static scalar; LaunchActivity re-asserts on resume.
+        tw.nekomimi.nekogram.MeeroFastMotion.apply();
+
         // AndroidUtilities must be initialized before FileLog
         final String helloWorld = AndroidUtilities.getHelloWorld();
 

@@ -11248,4 +11248,6 @@
     <string name="MeeroStyleQuote">Quote</string>
     <string name="MeeroStyleMono">Mono</string>
     <string name="MeeroStyleCode">Code</string>
+    <!-- MeeroX v231: fast-motion switch (Motion settings) -->
+    <string name="MeeroFastAnimTitle">Fast animations (0.75×)</string>
 </resources>
