@@ -3678,7 +3678,8 @@ public class ChatActivityEnterView extends FrameLayout implements
                         }
                     }
 
-                    final float r = dpf2(19);
+                    final boolean meeroIos234 = meeroIosComposer();
+                    final float r = meeroIos234 ? dpf2(22) : dpf2(19);
                     // MeeroX v133 (iOS composer): the mic/video disc becomes a
                     // neutral glass circle, matching the attach circle on the
                     // far side - iOS never paints the accent behind the mic.
@@ -3688,10 +3689,14 @@ public class ChatActivityEnterView extends FrameLayout implements
                     // user called "لا يوجد زجاج اصلا" - it now renders the
                     // SAME BlurredBackgroundDrawable the header pills draw,
                     // with the flat path kept as pipeline-less fallback.
-                    final boolean meeroIos = meeroIosComposer();
-                    final float margin = dpf2(3);
-                    final float height = dpf2(38);
-                    final float width = dpf2(38);
+                    final boolean meeroIos = meeroIos234;
+                    // MeeroX v234 (owner: «المايك ... بنفس الحجم»): the iOS
+                    // mic disc fills the whole 44dp slot with zero inset -
+                    // the attach circle's exact twin; stock and non-iOS
+                    // keep the old inset 38dp disc untouched.
+                    final float margin = meeroIos ? 0 : dpf2(3);
+                    final float height = meeroIos ? dpf2(44) : dpf2(38);
+                    final float width = height;
                     backgroundRect.set(
                             getMeasuredWidth() - width - margin,
                             getMeasuredHeight() - height - margin,
@@ -3715,7 +3720,7 @@ public class ChatActivityEnterView extends FrameLayout implements
                     canvas.save();
                     canvas.scale(s, s, backgroundRect.centerX(), backgroundRect.centerY());
                     if (meeroMicGlass != null) {
-                        meeroMicGlass.setRadius(dpf2(19));
+                        meeroMicGlass.setRadius(dpf2(22));
                         meeroMicGlass.setBounds(
                                 Math.round(backgroundRect.left), Math.round(backgroundRect.top),
                                 Math.round(backgroundRect.right), Math.round(backgroundRect.bottom));
@@ -17395,6 +17400,17 @@ public class ChatActivityEnterView extends FrameLayout implements
                 attachButton.setImageResource(R.drawable.meerox_ios_attach);
                 attachButton.setColorFilter(new PorterDuffColorFilter(meeroIosGlyphColor(), PorterDuff.Mode.SRC_IN));
                 attachButton.setTranslationX(0);
+                // MeeroX v234 (owner: «ايقونه الارسال ... بنفس الكبر»): pin
+                // the iOS send disc to the bar's own 44dp (stock derives it
+                // from the whole panel height - 8dp, landing near 36dp and
+                // visibly the runt of the bar). The padding re-anchors the
+                // disc to the slot's edges - sendButtonContainer disables
+                // child clipping, so the disc draws full-size; switch-off
+                // restores stock defaults in the branch below.
+                if (sendButton != null) {
+                    sendButton.setCircleSize(dp(44));
+                    sendButton.setCirclePadding(-dp(4), -dp(2));
+                }
                 // Wrapping must not resurrect a hidden button: mirror where
                 // the stock animation state had got to.
                 meeroAttachWrap.setAlpha(attachButton.getAlpha());
@@ -17453,6 +17469,10 @@ public class ChatActivityEnterView extends FrameLayout implements
                     attachLayout.setLayoutParams(alp);
                 }
             } else if (!want && meeroAttachWrap != null) {
+                if (sendButton != null) {
+                    sendButton.setCircleSize(-1, -1);
+                    sendButton.setCirclePadding(0, 0);
+                }
                 meeroAttachWrap.removeView(attachButton);
                 textFieldContainer.removeView(meeroAttachWrap);
                 meeroAttachWrap = null;
@@ -17573,11 +17593,27 @@ public class ChatActivityEnterView extends FrameLayout implements
         // capped by the existing v138 formula below.
         final boolean meeroTopMerged220 = topView != null && topView.getParent() == container
                 && topView.getVisibility() == VISIBLE;
-        final float top = meeroTopMerged220
-                ? Math.max(0, topView.getY() - dp(1))
-                : Math.max(0, messageEditText.getY() - dp(4));
-        final float bottom = Math.min(container.getMeasuredHeight(),
-                messageEditText.getY() + messageEditText.getMeasuredHeight() + dp(4));
+        // MeeroX v234 (owner + reference shot: «حقل كتابه صغيره حبتين -
+        // اريده بنفس حجم صوره»): the iOS capsule hugs the FULL band exactly
+        // like the attach circle - 44dp tall, bottom aligned, growing textH
+        // +10dp with the draft - instead of hugging the text with 4dp of
+        // air (that air is what made it read two notches SMALLER than the
+        // clip/mic/send circles). Merged-header and non-iOS paths keep
+        // their proven math untouched.
+        final float top;
+        final float bottom;
+        if (meeroTopMerged220) {
+            top = Math.max(0, topView.getY() - dp(1));
+            bottom = Math.min(container.getMeasuredHeight(),
+                    messageEditText.getY() + messageEditText.getMeasuredHeight() + dp(4));
+        } else if (meeroIos) {
+            bottom = container.getMeasuredHeight();
+            top = Math.max(0, bottom - Math.max(dp(44), messageEditText.getMeasuredHeight() + dp(10)));
+        } else {
+            top = Math.max(0, messageEditText.getY() - dp(4));
+            bottom = Math.min(container.getMeasuredHeight(),
+                    messageEditText.getY() + messageEditText.getMeasuredHeight() + dp(4));
+        }
         if (right <= left || bottom <= top) {
             return;
         }
