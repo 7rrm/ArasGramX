@@ -96,9 +96,10 @@ public class NekoSettingsActivity extends BaseNekoSettingsActivity {
     private int hunterRow;
     /** MeeroX v105: keyword alert + view-once guard entries. */
     private int keywordRow;
-    /** MeeroX v161: theme mixer + smart folders entries (his approved picks). */
+    /** MeeroX v161: theme mixer entry (his approved pick). v232: the smart
+     * folders entry went away on his order («احذف ميزة المجلدات الذكية»)
+     * after the page exited the app on press. */
     private int mixerRow;
-    private int foldersRow;
     private int onceGuardRow;
     /** MeeroX v106: chat lock entry. */
     private int lockRow;
@@ -141,7 +142,6 @@ public class NekoSettingsActivity extends BaseNekoSettingsActivity {
         hunterRow = addRow();
         keywordRow = addRow();
         mixerRow = addRow();
-        foldersRow = addRow();
         onceGuardRow = addRow();
         lockRow = addRow();
         generalRow = addRow();
@@ -466,8 +466,6 @@ public class NekoSettingsActivity extends BaseNekoSettingsActivity {
             presentFragment(new MeeroKeywordAlertActivity());
         } else if (position == mixerRow) {
             presentFragment(new MeeroThemeMixerActivity());
-        } else if (position == foldersRow) {
-            presentFragment(new MeeroSmartFoldersActivity());
         } else if (position == onceGuardRow) {
             // MeeroX v109: legal/religious consent first (user-requested) -
             // "موافق" opens the screen and is remembered; any declined entry
@@ -565,8 +563,6 @@ public class NekoSettingsActivity extends BaseNekoSettingsActivity {
                         textCell.setTextAndIcon(MeeroStrings.s(162), R.drawable.msg_search_solar, true);
                     } else if (position == mixerRow) {
                         textCell.setTextAndIcon(MeeroStrings.s(336), R.drawable.filter_palette_solar, true);
-                    } else if (position == foldersRow) {
-                        textCell.setTextAndIcon(MeeroStrings.s(359), R.drawable.files_folder_solar, true);
                     } else if (position == onceGuardRow) {
                         textCell.setTextAndIcon(MeeroStrings.s(186), R.drawable.msg_download_solar, true);
                     } else if (position == lockRow) {
@@ -612,7 +608,7 @@ public class NekoSettingsActivity extends BaseNekoSettingsActivity {
                     position == chatRow || position == generalRow || position == passcodeRow || position == experimentRow || position == translatorRow ||
                     position == autoReplyRow ||
                     position == activityStatsRow || position == watchRow || position == hunterRow ||
-                    position == keywordRow || position == mixerRow || position == foldersRow ||
+                    position == keywordRow || position == mixerRow ||
                     position == onceGuardRow || position == lockRow ||
                     position == fontsRow ||
                     position == importSettingsRow || position == exportSettingsRow || position == resetSettingsRow || position == appRestartRow ||

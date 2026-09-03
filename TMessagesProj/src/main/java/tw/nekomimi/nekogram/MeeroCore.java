@@ -145,24 +145,12 @@ public final class MeeroCore {
                                                String night, String defaultText, String firstName, int emojiOn, long nowMs);
 
     /* ---------------- organization & radar group (MeeroX v185, batch 2C) ---
-     * Smart folders: static design table, never persisted. Delete hunter and
+     * v232: the smart-folder group (nSf*) was retired on the owner's order -
+     * the page exited his app on press. The dormant table may stay inside
+     * libmeerocore; no Java symbol reaches it anymore. Delete hunter and
      * watch persist as opaque seed-sealed blobs authored by nDhBlob / nWBlob
      * only; Java never parses them (import runs once, plaintext keys die).
      * Activity stats stay SQL-fed; native owns the decision layer. */
-    public static native int nSfCount();
-
-    public static native String nSfTitleKeyAt(int index);
-
-    public static native String nSfRuleKeyAt(int index);
-
-    public static native String nSfEmoticonAt(int index);
-
-    public static native int nSfFlagsAt(int index);
-
-    public static native int nSfColorAt(int index);
-
-    public static native boolean nSfTitleEq(String a, String b);
-
     public static native int nDhLoad(String blob);
 
     public static native String nDhBlob();
