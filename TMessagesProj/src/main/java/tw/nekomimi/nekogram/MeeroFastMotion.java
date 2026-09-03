@@ -11,10 +11,14 @@ import android.os.Build;
  * logic changes. Sticker/Lottie playback runs on its own clock and
  * physics springs keep their own timing; both stay untouched.
  *
- * ValueAnimator.setDurationScale exists since API 33 - older devices are
- * guarded and simply keep the stock 1.0x pace with no crash. apply() is
- * idempotent, sticky and silent; called at boot, on every LaunchActivity
- * resume, and instantly when the Motion-settings switch flips.
+ * ValueAnimator.setDurationScale(float) ships in Android 13+ (API 33),
+ * but the pre-release compileSdk 37 jar used by CI does not expose the
+ * symbol at build time, so the call is made BY REFLECTION - linked by
+ * name at runtime, resolved on-device, and every failure path (older
+ * Android, missing surface) silently keeps the stock 1.0x pace. apply()
+ * is idempotent, sticky and silent; called at boot, on every
+ * LaunchActivity resume, and instantly when the Motion-settings switch
+ * flips.
  */
 public final class MeeroFastMotion {
 
@@ -34,7 +38,8 @@ public final class MeeroFastMotion {
     public static void apply() {
         try {
             if (Build.VERSION.SDK_INT >= 33) {
-                ValueAnimator.setDurationScale(isOn() ? FAST_SCALE : 1.0f);
+                java.lang.reflect.Method m = ValueAnimator.class.getDeclaredMethod("setDurationScale", float.class);
+                m.invoke(null, isOn() ? FAST_SCALE : 1.0f);
             }
         } catch (Throwable ignore) {
             // cosmetic pace only - never block startup or a settings flip
