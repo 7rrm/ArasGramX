@@ -72,7 +72,9 @@ public class VoiceMessageEnterTransition implements MessageEnterTransitionContai
         });
 
         animator.setInterpolator(new LinearInterpolator());
-        animator.setDuration(220);
+        // MeeroX v235: voice-note send transition keeps natural pace under
+        // the global fast-motion scale (his order).
+        animator.setDuration(tw.nekomimi.nekogram.MeeroFastMotion.restore(220));
         animator.addListener(new AnimatorListenerAdapter() {
             @Override
             public void onAnimationEnd(Animator animation) {

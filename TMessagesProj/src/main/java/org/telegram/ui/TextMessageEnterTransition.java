@@ -389,7 +389,9 @@ public class TextMessageEnterTransition implements MessageEnterTransitionContain
 
 
         animator.setInterpolator(new LinearInterpolator());
-        animator.setDuration(ChatListItemAnimator.DEFAULT_DURATION);
+        // MeeroX v235: message send transition keeps natural pace under the
+        // global fast-motion scale (his order).
+        animator.setDuration(tw.nekomimi.nekogram.MeeroFastMotion.restore(ChatListItemAnimator.DEFAULT_DURATION));
 
         container.addTransition(this);
         notificationsLocker.lock();

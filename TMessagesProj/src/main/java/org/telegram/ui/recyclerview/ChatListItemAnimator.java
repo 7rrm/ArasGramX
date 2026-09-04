@@ -403,7 +403,10 @@ public class ChatListItemAnimator extends DefaultItemAnimator {
             mc.setScaleY(fromScale);
             final float baseOffsetX = mc.getAnimationOffsetX();
             final android.animation.ValueAnimator pop = android.animation.ValueAnimator.ofFloat(0f, 1f);
-            pop.setDuration(280);
+            // MeeroX v235: message appear keeps natural pace under the
+            // global fast-motion scale (his order) - stretched back by
+            // exactly 1/scale so it lands on stock 280ms.
+            pop.setDuration(tw.nekomimi.nekogram.MeeroFastMotion.restore(280));
             pop.setInterpolator(new android.view.animation.OvershootInterpolator(0.6f));
             pop.addUpdateListener(a -> {
                 final float t = (float) a.getAnimatedValue();
@@ -1564,8 +1567,11 @@ public class ChatListItemAnimator extends DefaultItemAnimator {
             animatorSet.setDuration(350);
             animatorSet.setInterpolator(new OvershootInterpolator());
         } else {
-            animatorSet.setStartDelay(currentDelay);
-            animatorSet.setDuration(DEFAULT_DURATION);
+            // MeeroX v235: message appear keeps natural pace under the
+            // global fast-motion scale (his order) - delay AND duration are
+            // pre-stretched by 1/scale, netting exactly stock timing.
+            animatorSet.setStartDelay(tw.nekomimi.nekogram.MeeroFastMotion.restore(currentDelay));
+            animatorSet.setDuration(tw.nekomimi.nekogram.MeeroFastMotion.restore(DEFAULT_DURATION));
         }
 
         animatorSet.addListener(new AnimatorListenerAdapter() {

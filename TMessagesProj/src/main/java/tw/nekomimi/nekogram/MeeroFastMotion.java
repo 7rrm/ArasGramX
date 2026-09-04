@@ -35,6 +35,17 @@ public final class MeeroFastMotion {
         }
     }
 
+    /**
+     * MeeroX v235 (his order: «بس انميشن ارسال واستقبال يرجع طبيعي - الباقي
+     * عوفه»): the message-appear animators call this so their duration is
+     * pre-stretched by 1/scale; the global scale then nets them back to the
+     * stock 1.0x pace while everything else in the app stays snappy. When
+     * the switch is off this is an identity and stock math prevails.
+     */
+    public static long restore(long durationMs) {
+        return isOn() ? Math.round(durationMs / FAST_SCALE) : durationMs;
+    }
+
     public static void apply() {
         try {
             if (Build.VERSION.SDK_INT >= 33) {
