@@ -362,7 +362,8 @@ public class NekoConfig {
     public static ConfigItem markReadAfterSend = addConfig("markReadAfterSend", configTypeBool, true);
     public static ConfigItem showGhostInDrawer = addConfig("showGhostInDrawer", configTypeBool, false);
     public static ConfigItem showGhostModeStatus = addConfig("showGhostModeStatus", configTypeBool, false);
-
+    // MeeroX v202: keyword alert log
+    public static ConfigItem meeroKeywordLog = addConfig("meeroKeywordLog", configTypeString, "");
     // --- Locked Status ---
     public static ConfigItem sendReadMessagePacketsLocked = addConfig("sendReadMessagePacketsLocked", configTypeBool, false);
     public static ConfigItem sendReadStoriesPacketsLocked = addConfig("sendReadStoriesPacketsLocked", configTypeBool, false);
