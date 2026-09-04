@@ -4,45 +4,48 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-  <!-- v171: clean flat letter M, classic blue gradient stems (bat-capsule shape removed) -->
+  <!-- v172: clean flat letter K, purple gradient stems -->
   <group android:scaleX="0.14161907" android:scaleY="0.14161907" android:translateX="17.745518" android:translateY="17.745518">
     <group>
       <clip-path android:pathData="M0,0h512v512h-512z"/>
+      
+      <!-- العمود الرأسي للحرف K -->
       <path
-          android:pathData="M86 150H150V362H86Z">
-      <aapt:attr name="android:fillColor">
-        <gradient
-            android:startX="118"
-            android:startY="150"
-            android:endX="118"
-            android:endY="362"
-            android:type="linear">
-            <item android:offset="0" android:color="#FF0095FF"/>
-            <item android:offset="0.36" android:color="#FF008AFF"/>
-            <item android:offset="0.55" android:color="#FF0084FF"/>
-            <item android:offset="1" android:color="#FF0084FF"/>
-        </gradient>
-      </aapt:attr>
+          android:pathData="M120 128H190V384H120Z">
+        <aapt:attr name="android:fillColor">
+          <gradient
+              android:startX="155"
+              android:startY="128"
+              android:endX="155"
+              android:endY="384"
+              android:type="linear">
+              <item android:offset="0" android:color="#FF5A52A6"/>
+              <item android:offset="0.36" android:color="#FF3D3A80"/>
+              <item android:offset="0.55" android:color="#FF2C2966"/>
+              <item android:offset="1" android:color="#FF2C2966"/>
+          </gradient>
+        </aapt:attr>
       </path>
+      
+      <!-- الفرع المائل العلوي والسفلي معاً -->
       <path
-          android:pathData="M362 150H426V362H362Z">
-      <aapt:attr name="android:fillColor">
-        <gradient
-            android:startX="394"
-            android:startY="150"
-            android:endX="394"
-            android:endY="362"
-            android:type="linear">
-            <item android:offset="0" android:color="#FF0095FF"/>
-            <item android:offset="0.04" android:color="#FF0094FF"/>
-            <item android:offset="0.38" android:color="#FF008AFF"/>
-            <item android:offset="0.56" android:color="#FF008AFF"/>
-            <item android:offset="1" android:color="#FF0084FF"/>
-        </gradient>
-      </aapt:attr>
+          android:pathData="M300 128L200 256L300 384H400L280 256L400 128Z">
+        <aapt:attr name="android:fillColor">
+          <gradient
+              android:startX="300"
+              android:startY="128"
+              android:endX="300"
+              android:endY="384"
+              android:type="linear">
+              <item android:offset="0" android:color="#FF5A52A6"/>
+              <item android:offset="0.04" android:color="#FF554D9E"/>
+              <item android:offset="0.38" android:color="#FF3D3A80"/>
+              <item android:offset="0.56" android:color="#FF2C2966"/>
+              <item android:offset="1" android:color="#FF2C2966"/>
+          </gradient>
+        </aapt:attr>
       </path>
-      <path android:pathData="M94.7 172L232.7 318L279.3 274L141.3 128Z" android:fillColor="#0095ff"/>
-      <path android:pathData="M370.7 128L232.7 274L279.3 318L417.3 172Z" android:fillColor="#0095ff"/>
+      
     </group>
   </group>
 </vector>
