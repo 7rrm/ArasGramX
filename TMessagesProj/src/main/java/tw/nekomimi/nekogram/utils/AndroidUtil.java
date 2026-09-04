@@ -191,7 +191,7 @@ public class AndroidUtil {
     @SuppressWarnings("ConstantValue")
     public static String getVersionText() {
         String versionName = "release".equals(BuildConfig.BUILD_TYPE) && !BuildVars.LOGS_ENABLED ? BuildConfig.VERSION_NAME.split("-")[0] : BuildConfig.VERSION_NAME;
-        return "MeeroX v" + versionName + "(" + BuildConfig.VERSION_CODE + ") " + Build.SUPPORTED_ABIS[0].toLowerCase(Locale.ROOT) + " " + BuildConfig.BUILD_TYPE + (BuildVars.LOGS_ENABLED ? " " + BuildConfig.BUILD_TIMESTAMP : "");
+        return "Aras Gram v" + versionName + "(" + BuildConfig.VERSION_CODE + ") " + Build.SUPPORTED_ABIS[0].toLowerCase(Locale.ROOT) + (BuildVars.LOGS_ENABLED ? " " + BuildConfig.BUILD_TIMESTAMP : "") + " | @InaRaS5";
     }
 
     /*<!-- Controls the navigation bar interaction mode:
