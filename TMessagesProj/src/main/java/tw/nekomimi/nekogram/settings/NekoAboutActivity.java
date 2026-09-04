@@ -107,13 +107,13 @@ public class NekoAboutActivity extends BaseNekoSettingsActivity {
     protected void onItemClick(View view, int position, float x, float y) {
         if (position == developerRow) {
             MessagesController.getInstance(currentAccount)
-                    .openByUserName("i55544", NekoAboutActivity.this, 1);
+                    .openByUserName("Lx5x5", NekoAboutActivity.this, 1);
         } else if (position == mainChannelRow) {
             MessagesController.getInstance(currentAccount)
-                    .openByUserName("Y_VBB", NekoAboutActivity.this, 1);
+                    .openByUserName("InaRaS5", NekoAboutActivity.this, 1);
         } else if (position == channel1Row) {
             MessagesController.getInstance(currentAccount)
-                    .openByUserName("nadoremalf", NekoAboutActivity.this, 1);
+                    .openByUserName("aRRaS_iD", NekoAboutActivity.this, 1);
         } else if (position == privacyRow) {
             showPrivacyDialog();
         }
@@ -139,11 +139,11 @@ public class NekoAboutActivity extends BaseNekoSettingsActivity {
                 } else if (position == meeroEditionRow) {
                     textCell.setTextAndValue(MeeroStrings.s(10), String.valueOf(BuildConfig.MEERO_EDITION), true);
                 } else if (position == developerRow) {
-                    textCell.setTextAndValue(MeeroStrings.s(82), "@i55544", true);
+                    textCell.setTextAndValue(MeeroStrings.s(82), "@Lx5x5", true);
                 } else if (position == mainChannelRow) {
-                    textCell.setTextAndValue(MeeroStrings.s(463), "@Y_VBB", true);
+                    textCell.setTextAndValue(MeeroStrings.s(463), "@InaRaS5", true);
                 } else if (position == channel1Row) {
-                    textCell.setTextAndValue(MeeroStrings.s(37), "@nadoremalf", true);
+                    textCell.setTextAndValue(MeeroStrings.s(37), "@aRRaS_iD", true);
                 } else if (position == privacyRow) {
                     textCell.setText(MeeroStrings.s(204), false);
                 }
