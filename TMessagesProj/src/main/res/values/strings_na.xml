@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="N_Config">MeeroX Config</string>
+    <string name="N_Config">ArasGram Config</string>
     <string name="CombineMessage">Combine Messages</string>
     <string name="TextStyle">Text Style</string>
     <string name="NoiseSuppressAndVoiceEnhance">Voice Enhancements</string>
