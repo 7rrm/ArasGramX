@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="AppName">MeeroX</string>
-    <string name="AppNameBeta">MeeroX Beta</string>
+    <string name="AppName">ArasGram</string>
+    <string name="AppNameBeta">ArasGram Beta</string>
     <string name="LanguageName">العربية</string>
     <string name="English">الإنجليزية</string>
     <string name="LanguageNameInEnglish">Arabic</string>
