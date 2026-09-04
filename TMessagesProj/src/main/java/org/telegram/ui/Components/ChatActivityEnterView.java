@@ -8882,16 +8882,15 @@ public class ChatActivityEnterView extends FrameLayout implements
                         }
                     } else {
                         messageTransitionIsRunning = false;
-                        AndroidUtilities.runOnUIThread(moveToSendStateRunnable = () -> {
-                            moveToSendStateRunnable = null;
-                            hideTopView(true);
-                            if (messageEditText != null) {
-                                messageEditText.setText("");
-                            }
-                            if (delegate != null) {
-                                delegate.onMessageSend(message, notify, scheduleDate, scheduleRepeatPeriod, payStars);
-                            }
-                        }, 200);
+                        // إخفاء الشريط فوراً بدون تأخير
+                        hideTopView(true);
+                        if (messageEditText != null) {
+                            messageEditText.setText("");
+                        }
+                        if (delegate != null) {
+                            delegate.onMessageSend(message, notify, scheduleDate, scheduleRepeatPeriod, payStars);
+                        }
+                        moveToSendStateRunnable = null;
                     }
                     lastTypingTimeSend = 0;
                 }
