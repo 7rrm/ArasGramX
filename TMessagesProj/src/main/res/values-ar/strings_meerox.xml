@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="NekoSettings">إعدادات ميرو</string>
+    <string name="NekoSettings">إعدادات آراس ڪرام</string>
     <string name="IPv6">تفضيل IPv6</string>
     <string name="MessageMenu">قائمة الرسالة</string>
     <string name="HidePhone">إخفاء رقم الهاتف</string>
@@ -54,19 +54,19 @@
     <string name="UserRestrictionsSendGifs">إرسال صور GIF</string>
     <string name="CheckAllAdministrated">إضافة المُدارة</string>
     <string name="RearVideoMessages">الكاميرا الخلفية في رسائل الفيديو</string>
-    <string name="OfficialChannel">قناة ميرو إكس</string>
-    <string name="UnknownNekoSettingsOption">لا يوجد خيار كهذا في إعدادات ميرو</string>
-    <string name="PasscodeShowInSettings">إظهار في إعدادات ميرو</string>
-    <string name="CloudConfigDesc">احفظ إعدادات ميرو في سحابة تيليجرام.</string>
-    <string name="CloudConfigAutoSyncDesc">المزامنة تلقائياً مع السحابة بعد تغيير إعدادات ميرو.</string>
+    <string name="OfficialChannel">قناة آراس ڪرام الرسمية</string>
+    <string name="UnknownNekoSettingsOption">لا يوجد خيار كهذا في إعدادات آراس ڪرام</string>
+    <string name="PasscodeShowInSettings">إظهار في إعدادات آراس ڪرام</string>
+    <string name="CloudConfigDesc">احفظ إعدادات آراس ڪرام في سحابة تيليجرام.</string>
+    <string name="CloudConfigAutoSyncDesc">المزامنة تلقائياً مع السحابة بعد تغيير إعدادات آراس ڪرام.</string>
     <string name="N_Config">إعدادات متقدمة</string>
     <string name="CombineMessage">دمج الرسائل</string>
     <string name="TextStyle">نمط النص</string>
     <string name="NoiseSuppressAndVoiceEnhance">تحسينات الصوت</string>
     <string name="RepeatAsCopy">إعادة نشر كنسخة</string>
     <string name="DoubleTapAction">إجراءات النقر المزدوج</string>
-    <string name="CustomTitleHint">اتركه فارغاً لاستخدام ميرو إكس</string>
-    <string name="NeedChangeNekoSettings">تحتاج إلى تغيير إعدادات ميرو</string>
+    <string name="CustomTitleHint">اتركه فارغاً لاستخدام آراس ڪرام</string>
+    <string name="NeedChangeNekoSettings">تحتاج إلى تغيير إعدادات آراس ڪرام</string>
     <string name="EnableSaveDeletedMessages">حفظ الرسائل المحذوفة</string>
     <string name="DeletedMessage">محذوفة</string>
     <string name="EnableSaveEditsHistory">حفظ سجل التعديلات</string>
@@ -83,7 +83,7 @@
     <string name="LlmModelName">النموذج</string>
     <string name="AITranslatorSettings">مترجم الذكاء الاصطناعي</string>
     <string name="ClearRegexFilters">مسح</string>
-    <string name="ResetSettingsAlert">هل أنت متأكد من إعادة تعيين جميع إعدادات ميرو؟</string>
+    <string name="ResetSettingsAlert">هل أنت متأكد من إعادة تعيين جميع إعدادات آراس ڪرام؟</string>
     <string name="DeleteAllFromSelfAlert">تحذير! سيؤدي هذا إلى **حذف جميع رسائلك** في هذه المحادثة لدى **جميع** المشاركين.</string>
     <string name="DeleteAllFromSelfAlertBefore">تحذير! سيؤدي هذا إلى **حذف جميع رسائلك قبل %s** في هذه المحادثة لدى **جميع** المشاركين.</string>
     <string name="Valentine">عيد الحب</string>
@@ -279,7 +279,7 @@
     <string name="AutoLockImmediately">فوراً</string>
     <string name="BackupSettings">تصدير الإعدادات</string>
     <string name="ImportSettings">استيراد الإعدادات</string>
-    <string name="nekoXPaymentRemovedToast">تمت إزالة ميزات الدفع.</string>
+    <string name="nekoXPaymentRemovedToast">تمت إزالة ميزات الدفع من aRRaSGram.</string>
     <string name="unreadBadgeOnBackButton">شارة غير المقروء على زر الرجوع</string>
     <string name="DeleteDownloadedFileConfirm">حذف هذا الملف من الذاكرة المحلية؟</string>
     <string name="DeleteDownloadedFileSucceed">تم الحذف</string>
@@ -398,7 +398,7 @@
     <string name="VideoPlayerDecoderPreferSW">تفضيل البرمجي</string>
     <string name="VideoPlayerDecoderHardware">العتاد فقط</string>
     <string name="VideoPlayerDecoderPreferHW">تفضيل العتاد</string>
-    <string name="XChannel">قناة ميرو إكس</string>
+    <string name="XChannel">قناة آراس ڪرام</string>
     <string name="LlmProviderPreset">مزوّد النموذج</string>
     <string name="LlmProviderCustom">مخصص</string>
     <string name="LlmProviderOpenAIKey">مفتاح OpenAI</string>
@@ -689,8 +689,6 @@
     <string name="DeepLTranslateKeyNotice">أدخل مفتاح DeepL، اتركه فارغاً لاستخدام المفاتيح المدمجة.</string>
     <string name="DefaultScheduleDelay">التأخير الافتراضي</string>
     <string name="ExportAyuDB">تصدير قاعدة البيانات</string>
-
-
 
     <!-- v104: delete catcher multi-select -->
     <!-- v104: auto-reply window pro (weekdays + night text) -->
