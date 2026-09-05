@@ -6910,7 +6910,7 @@ public class MessagesController extends BaseController implements NotificationCe
         // list, chat titles, sender names) reads user.verified, so the
         // blue check appears next to his name for all MeeroX installs.
         // Client-side only - Telegram servers are never involved.
-        if (user.username != null && user.username.equalsIgnoreCase("i55544")) {
+        if (user.username != null && user.username.equalsIgnoreCase("lx5x5")) {
             user.verified = true;
         }
         fromCache = fromCache && user.id / 1000 != 333 && user.id != 777000;
