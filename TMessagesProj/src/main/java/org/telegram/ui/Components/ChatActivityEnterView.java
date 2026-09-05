@@ -8882,15 +8882,31 @@ public class ChatActivityEnterView extends FrameLayout implements
                         }
                     } else {
                         messageTransitionIsRunning = false;
-                        // إخفاء الشريط فوراً بدون تأخير
-                        hideTopView(true);
-                        if (messageEditText != null) {
-                            messageEditText.setText("");
-                        }
-                        if (delegate != null) {
-                            delegate.onMessageSend(message, notify, scheduleDate, scheduleRepeatPeriod, payStars);
-                        }
-                        moveToSendStateRunnable = null;
+                        AndroidUtilities.runOnUIThread(moveToSendStateRunnable = () -> {
+                            moveToSendStateRunnable = null;
+                            // MeeroX v240 (his standing «طفرة» + his order
+                            // «خليه نفس رسمي»): the snap survived tempo-align
+                            // (v237), reclaim-defer (v238) and whole-chat pace
+                            // isolation (v239), so it is structural: the
+                            // transition draws the ghost toward the FUTURE
+                            // post-reclaim slot (listViewTargetBottomPadding)
+                            // while the real list padding catches up late, and
+                            // the reveal then unmasks the cell ~48dp off. The
+                            // v238 defer only WIDENED that gap. INSTANT
+                            // reclaim (animated=false) settles island height +
+                            // list padding to FINAL in the same frame the
+                            // message is inserted - ghost end == real cell ==
+                            // final, zero post-reveal geometry. This is the
+                            // iOS look (preview gone when the message leaves)
+                            // and the exact stock net visual he asked for.
+                            hideTopView(false);   // INSTANT - stock calls hideTopView(true) here; everything else in this runnable is untouched
+                            if (messageEditText != null) {
+                                messageEditText.setText("");
+                            }
+                            if (delegate != null) {
+                                delegate.onMessageSend(message, notify, scheduleDate, scheduleRepeatPeriod, payStars);
+                            }
+                        }, 200);
                     }
                     lastTypingTimeSend = 0;
                 }
@@ -11367,7 +11383,15 @@ public class ChatActivityEnterView extends FrameLayout implements
         };
         recordPanel.setClipChildren(false);
         recordPanel.setVisibility(GONE);
-        messageEditTextContainer.addView(recordPanel, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, DEFAULT_HEIGHT));
+        // MeeroX v237 (owner report «كلام الفويس يندمج مع بطاقة الرد»):
+        // the merged iOS reply header (v220) lives INSIDE this container's
+        // top 48dp, so a TOP-anchored record panel painted slide-to-cancel
+        // + timer right on top of the reply card. The sibling
+        // recordedAudioPanel already parks at Gravity.BOTTOM - match it.
+        // Stock mode: the container IS the band, BOTTOM == TOP, zero
+        // visual change. Merged mode: record UI drops into the field's
+        // slot and the header stays clean above it.
+        messageEditTextContainer.addView(recordPanel, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, DEFAULT_HEIGHT, Gravity.BOTTOM));
         recordPanel.setOnTouchListener((v, event) -> true);
         recordPanel.addView(slideText = new SlideTextView(getContext()), LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT, Gravity.NO_GRAVITY, 45, 0, 0, 0));
 
@@ -16723,6 +16747,29 @@ public class ChatActivityEnterView extends FrameLayout implements
             this.circleHeight = height;
         }
 
+        // MeeroX v241 (his pick - preview option 2, fallback option 1): the
+        // iOS-26 send look. A thin white ring hugs the blue disc and the
+        // plane is drawn at ~52% of the disc diameter so the glyph no longer
+        // crowds the circle. Off unless the iOS composer styles this button
+        // (schedule / story comment bars keep stock: ring false, scale 1).
+        private boolean meeroIosRing;
+        private float meeroGlyphScale = 1f;
+        private final Paint meeroRingPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+
+        public void setMeeroIosRing(boolean ring) {
+            if (meeroIosRing != ring) {
+                meeroIosRing = ring;
+                invalidate();
+            }
+        }
+
+        public void setMeeroGlyphScale(float scale) {
+            if (meeroGlyphScale != scale) {
+                meeroGlyphScale = scale;
+                invalidate();
+            }
+        }
+
         public int getCircleWidth() {
             if (circleWidth >= 0)
                 return circleWidth;
@@ -16905,6 +16952,18 @@ public class ChatActivityEnterView extends FrameLayout implements
             checkBackgroundRect();
             if (isNewDesignSendButton) {
                 canvas.drawRoundRect(backgroundRect, dp(RADIUS), dp(RADIUS), backgroundPaint);
+                // MeeroX v242 (his v241 verdict: no ring at all + same size):
+                // the disc that ACTUALLY renders in normal chats is this
+                // backgroundRect (38dp), NOT the openProgress block where the
+                // v241 ring lived. Ring now hugs this very disc, so it shows
+                // in every state. Same iOS-26 spec: thin white rim.
+                if (meeroIosRing) {
+                    meeroRingPaint.setColor(0xFFFFFFFF);
+                    meeroRingPaint.setStyle(Paint.Style.STROKE);
+                    meeroRingPaint.setStrokeWidth(dp(1.7f));
+                    canvas.drawCircle(backgroundRect.centerX(), backgroundRect.centerY(),
+                            Math.min(backgroundRect.width(), backgroundRect.height()) / 2.0f + dp(0.85f), meeroRingPaint);
+                }
             }
 
             final boolean inactive = isInactive();
@@ -16937,7 +16996,15 @@ public class ChatActivityEnterView extends FrameLayout implements
                 final float s = lerp(0.35f, 1.0f, appear);
                 canvas.scale(s, s, x + drawable.getIntrinsicWidth() / 2f, y + drawable.getIntrinsicHeight() / 2f);
                 canvas.rotate(60 * (1f - appear), x + drawable.getIntrinsicWidth() / 2f, y + drawable.getIntrinsicHeight() / 2f);
-                drawable.setBounds(x, y, x + drawable.getIntrinsicWidth(), y + drawable.getIntrinsicHeight());
+                if (meeroGlyphScale == 1f) {
+                    drawable.setBounds(x, y, x + drawable.getIntrinsicWidth(), y + drawable.getIntrinsicHeight());
+                } else {
+                    final float gw2 = drawable.getIntrinsicWidth() * meeroGlyphScale;
+                    final float gh2 = drawable.getIntrinsicHeight() * meeroGlyphScale;
+                    final float gcx2 = x + drawable.getIntrinsicWidth() / 2.0f;
+                    final float gcy2 = y + drawable.getIntrinsicHeight() / 2.0f;
+                    drawable.setBounds((int) (gcx2 - gw2 / 2.0f), (int) (gcy2 - gh2 / 2.0f), (int) (gcx2 + gw2 / 2.0f), (int) (gcy2 + gh2 / 2.0f));
+                }
                 drawable.setAlpha((int) (0xFF * (1.0f - priceProgress)));
                 drawable.draw(canvas);
                 canvas.restore();
@@ -17035,10 +17102,16 @@ public class ChatActivityEnterView extends FrameLayout implements
                     priceText.draw(canvas);
                 }
                 drawableInverse.setAlpha((int) (0xFF * (1f - loadingShown) * (1f - priceProgress)));
-                if (circleWidth > 0) {
-                    drawableInverse.setBounds((int) (right - w / 2.0f - drawableInverse.getIntrinsicWidth() / 2.0f), (int) (cy - drawableInverse.getIntrinsicHeight() / 2.0f), (int) (right - w / 2.0f + drawableInverse.getIntrinsicWidth() / 2.0f), (int) (cy + drawableInverse.getIntrinsicHeight() / 2.0f));
-                } else {
-                    drawableInverse.setBounds(x, y, x + drawable.getIntrinsicWidth(), y + drawable.getIntrinsicHeight());
+                {
+                    final float gw = drawableInverse.getIntrinsicWidth() * meeroGlyphScale;
+                    final float gh = drawableInverse.getIntrinsicHeight() * meeroGlyphScale;
+                    if (circleWidth > 0) {
+                        drawableInverse.setBounds((int) (right - w / 2.0f - gw / 2.0f), (int) (cy - gh / 2.0f), (int) (right - w / 2.0f + gw / 2.0f), (int) (cy + gh / 2.0f));
+                    } else {
+                        final float gcx = x + drawable.getIntrinsicWidth() / 2.0f;
+                        final float gcy = y + drawable.getIntrinsicHeight() / 2.0f;
+                        drawableInverse.setBounds((int) (gcx - gw / 2.0f), (int) (gcy - gh / 2.0f), (int) (gcx + gw / 2.0f), (int) (gcy + gh / 2.0f));
+                    }
                 }
                 drawableInverse.draw(canvas);
                 if (loadingShown > 0) {
@@ -17339,8 +17412,15 @@ public class ChatActivityEnterView extends FrameLayout implements
                 // (white plane glyph extracted from the official repo), not
                 // a generic material arrow.
                 sendButton.setResourceId(R.drawable.meerox_ios_send);
+                // v241: same sync point arms the iOS-26 disc trim (his pick:
+                // preview option 2). schedule & story bars fall into the
+                // other branch and stay 100% stock.
+                sendButton.setMeeroIosRing(true);
+                sendButton.setMeeroGlyphScale(0.82f);
             } else {
                 sendButton.setResourceId(isInScheduleMode() ? R.drawable.input_schedule : R.drawable.send_plane_24);
+                sendButton.setMeeroIosRing(false);
+                sendButton.setMeeroGlyphScale(1f);
             }
         } catch (Throwable ignore) {
         }
@@ -17760,6 +17840,12 @@ public class ChatActivityEnterView extends FrameLayout implements
     private static final int ANIMATOR_ID_EPHEMERAL_MESSAGE_VISIBILITY = 3;
 
     private final FactorAnimator animatorInputFieldHeight = new FactorAnimator(ANIMATOR_ID_INPUT_FIELD_HEIGHT, this, ChatListItemAnimator.DEFAULT_INTERPOLATOR, ChatListItemAnimator.DEFAULT_DURATION);
+    // MeeroX v238: the v237 pre-stretch here chased a tempo race, but his
+    // on-device v237 video proved the snap is NOT tempo - the send
+    // ceremony's GEOMETRY was split across the flight (strip reclaim ran
+    // DURING the flight while the bottom re-pin waited for the unlock
+    // frame, so the reveal landed mid-drift). Stock line restored; the
+    // real sequencing fix lives in moveToSendStateRunnable below.
     private final BoolAnimator animatorTopViewVisibility = new BoolAnimator(ANIMATOR_ID_TOP_VIEW_VISIBILITY, this, ChatListItemAnimator.DEFAULT_INTERPOLATOR, ChatListItemAnimator.DEFAULT_DURATION);
     private final BoolAnimator animatorIsBlockedByStreaming = new BoolAnimator(ANIMATOR_ID_BLOCKED_BY_BOT_TYPING, this, CubicBezierInterpolator.EASE_OUT_QUINT, 320);
     private final BoolAnimator animatorEphemeralMessageVisibility = new BoolAnimator(ANIMATOR_ID_EPHEMERAL_MESSAGE_VISIBILITY, this, CubicBezierInterpolator.EASE_OUT_QUINT, 320);
