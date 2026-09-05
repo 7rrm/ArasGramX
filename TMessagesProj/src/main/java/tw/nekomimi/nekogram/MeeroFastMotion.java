@@ -42,18 +42,39 @@ public final class MeeroFastMotion {
      * stock 1.0x pace while everything else in the app stays snappy. When
      * the switch is off this is an identity and stock math prevails.
      */
+    // MeeroX v239: stretch against the scale ACTUALLY installed, not the
+    // raw switch - on pre-13 devices where the setDurationScale reflection
+    // fails it no longer plays the ceremony 1/0.75 SLOWER than stock
+    // (latent v235 flaw).
     public static long restore(long durationMs) {
-        return isOn() ? Math.round(durationMs / FAST_SCALE) : durationMs;
+        if (!isOn()) {
+            return durationMs;
+        }
+        final float s = currentScale;
+        return s >= 0.9999f ? durationMs : Math.round(durationMs / s);
     }
 
     public static void apply() {
+        applyRaw(isOn() ? FAST_SCALE : 1.0f);
+    }
+
+    // The scale actually live on this process; restore() stretches
+    // against it so reflection-fail-safe (old Androids) nets DURATIONS to
+    // stock instead of over-stretching.
+    private static volatile float currentScale = 1.0f;
+
+    private static void applyRaw(float target) {
         try {
             if (Build.VERSION.SDK_INT >= 33) {
                 java.lang.reflect.Method m = ValueAnimator.class.getDeclaredMethod("setDurationScale", float.class);
-                m.invoke(null, isOn() ? FAST_SCALE : 1.0f);
+                m.invoke(null, target);
+                currentScale = target;
+            } else {
+                currentScale = 1.0f;
             }
         } catch (Throwable ignore) {
-            // cosmetic pace only - never block startup or a settings flip
+            // reflection surface missing -> this device really runs 1.0x
+            currentScale = 1.0f;
         }
     }
 }
