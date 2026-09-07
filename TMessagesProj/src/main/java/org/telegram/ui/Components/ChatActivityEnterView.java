@@ -6888,7 +6888,7 @@ public class ChatActivityEnterView extends FrameLayout implements
         // applied now that the field does.
         if (meeroAttachWrap != null) {
             final FrameLayout.LayoutParams meeroTlp = (FrameLayout.LayoutParams) messageEditText.getLayoutParams();
-            meeroTlp.leftMargin = dp(10);
+            meeroTlp.leftMargin = dp(6);
             messageEditText.setLayoutParams(meeroTlp);
             // v137: same physical-left anchoring the live toggle applies.
             // v200 (owner report): absolute LEFT forces Arabic to start at
