@@ -6888,7 +6888,6 @@ public class ChatActivityEnterView extends FrameLayout implements
         // applied now that the field does.
         if (meeroAttachWrap != null) {
             final FrameLayout.LayoutParams meeroTlp = (FrameLayout.LayoutParams) messageEditText.getLayoutParams();
-            meeroTlp.leftMargin = dp(6);
             messageEditText.setLayoutParams(meeroTlp);
             // v137: same physical-left anchoring the live toggle applies.
             // v200 (owner report): absolute LEFT forces Arabic to start at
@@ -17526,7 +17525,6 @@ public class ChatActivityEnterView extends FrameLayout implements
                 }
                 if (messageEditText != null) {
                     final FrameLayout.LayoutParams tlp = (FrameLayout.LayoutParams) messageEditText.getLayoutParams();
-                    tlp.leftMargin = dp(10);
                     messageEditText.setLayoutParams(tlp);
                     // v137: the iPhone field anchors hint+text+caret at the
                     // physical left edge of the capsule (they floated mid-
