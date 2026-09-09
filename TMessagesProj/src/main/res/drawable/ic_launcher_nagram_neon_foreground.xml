@@ -4,14 +4,13 @@
     android:height="108dp"
     android:viewportWidth="512"
     android:viewportHeight="512">
-  <!-- v171: neon wireframe now a ONE-STROKE continuous M tube (never knots) -->
+  <!-- v172: AR monogram (replaces M). Solid neon-cyan fill. -->
   <group android:scaleX="0.649" android:scaleY="0.649" android:translateX="89.856" android:translateY="89.856">
     <group>
       <clip-path android:pathData="M0 0H512V512H0V0Z"/>
-      <path android:pathData="M146 364L146 152L256 300L366 152L366 364"
-            android:strokeColor="#9CEFFF" android:strokeWidth="22"
-            android:fillColor="#00000000"
-            android:strokeLineCap="round" android:strokeLineJoin="round"/>
+      <path android:pathData="M 239.70 131.25 L 259.76 163.86 L 267.29 170.13 L 345.04 171.38 L 361.34 176.40 L 373.88 187.69 L 380.15 202.74 L 380.15 214.02 L 373.88 229.07 L 365.10 237.85 L 351.31 244.12 L 308.67 245.37 L 373.88 358.24 L 420.28 359.49 L 373.88 279.23 L 375.14 271.71 L 391.44 262.93 L 405.23 249.14 L 417.77 224.05 L 420.28 210.26 L 419.03 190.19 L 415.26 177.65 L 405.23 160.10 L 383.91 141.29 L 373.88 136.27 L 355.07 131.25 Z" android:fillColor="#9CEFFF"/>
+      <path android:pathData="M 205.84 130.00 L 90.46 360.75 L 135.61 359.49 L 203.33 224.05 L 209.60 225.31 L 235.94 277.98 L 279.83 277.98 Z" android:fillColor="#9CEFFF"/>
+      <path android:pathData="M 187.03 282.99 L 188.28 284.25 L 189.54 284.25 L 209.60 303.06 L 210.85 303.06 L 230.92 321.87 L 232.17 321.87 L 252.24 340.68 L 253.49 340.68 L 273.56 359.49 L 294.88 359.49 L 296.13 358.24 L 319.96 358.24 L 319.96 356.98 L 318.70 355.73 L 318.70 354.48 L 317.45 353.22 L 317.45 351.97 L 316.19 350.71 L 312.43 341.94 L 309.92 339.43 L 309.92 338.17 L 308.67 336.92 L 308.67 335.66 L 307.42 334.41 L 307.42 333.16 L 306.16 331.90 L 302.40 323.12 L 299.89 320.62 Z" android:fillColor="#9CEFFF"/>
     </group>
   </group>
 </vector>
