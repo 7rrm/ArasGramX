@@ -17526,7 +17526,7 @@ public class ChatActivityEnterView extends FrameLayout implements
                 }
                 if (messageEditText != null) {
                     final FrameLayout.LayoutParams tlp = (FrameLayout.LayoutParams) messageEditText.getLayoutParams();
-                    meeroTlp.leftMargin = dp(10);
+                    tlp.leftMargin = dp(10);
                     messageEditText.setLayoutParams(tlp);
                     // v137: the iPhone field anchors hint+text+caret at the
                     // physical left edge of the capsule (they floated mid-
