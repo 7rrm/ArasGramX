@@ -2,7 +2,7 @@
     xmlns:aapt="http://schemas.android.com/aapt"
     android:width="108dp" android:height="108dp"
     android:viewportWidth="108" android:viewportHeight="108">
-    <!-- Design 3 (Negative Tile): white rounded tile, M knocked out in telegram blue -->
+    <!-- v173: AR monogram centered. White rounded tile with AR knocked out. -->
     <path android:pathData="M0,0h108v108h-108z">
         <aapt:attr name="android:fillColor">
             <gradient android:startX="0" android:startY="0" android:endX="0" android:endY="108" android:type="linear">
@@ -12,8 +12,7 @@
         </aapt:attr>
     </path>
     <path android:fillColor="#FFFFFF" android:pathData="M33.96,24.47 L74.04,24.47 A15.82,15.82 0 0 1 89.86,40.29 L89.86,67.71 A15.82,15.82 0 0 1 74.04,83.53 L33.96,83.53 A15.82,15.82 0 0 1 18.14,67.71 L18.14,40.29 A15.82,15.82 0 0 1 33.96,24.47 Z"/>
-    <path android:fillColor="#229ED9" android:pathData="M25.95,36.28h12.24v35.44h-12.24z"/>
-    <path android:fillColor="#229ED9" android:pathData="M69.82,36.28h12.23v35.44h-12.23z"/>
-    <path android:fillColor="#229ED9" android:pathData="M27.90,40.77 L49.83,61.02 L58.16,52.05 L36.22,31.79 L27.90,40.77 Z"/>
-    <path android:fillColor="#229ED9" android:pathData="M71.78,31.79 L49.83,52.05 L58.16,61.02 L80.08,40.77 L71.78,31.79 Z"/>
+    <path android:fillColor="#229ED9" android:pathData="M 46.5539 30.0059 L 50.7853 36.8845 L 52.3737 38.2071 L 68.7741 38.4708 L 72.2123 39.5297 L 74.8575 41.9112 L 76.1801 45.0858 L 76.1801 47.4652 L 74.8575 50.6398 L 73.0055 52.4918 L 70.0966 53.8144 L 61.1023 54.0780 L 74.8575 77.8866 L 84.6450 78.1502 L 74.8575 61.2204 L 75.1233 59.6341 L 78.5616 57.7821 L 81.4704 54.8733 L 84.1155 49.5809 L 84.6450 46.6720 L 84.3813 42.4385 L 83.5861 39.7934 L 81.4704 36.0914 L 76.9732 32.1237 L 74.8575 31.0648 L 70.8898 30.0059 Z"/>
+    <path android:fillColor="#229ED9" android:pathData="M 39.4116 29.7422 L 15.0736 78.4160 L 24.5974 78.1502 L 38.8821 49.5809 L 40.2047 49.8466 L 45.7608 60.9567 L 55.0188 60.9567 Z"/>
+    <path android:fillColor="#229ED9" android:pathData="M 35.4438 62.0135 L 35.7075 62.2793 L 35.9733 62.2793 L 40.2047 66.2470 L 40.4684 66.2470 L 44.7019 70.2148 L 44.9655 70.2148 L 49.1991 74.1825 L 49.4627 74.1825 L 53.6962 78.1502 L 58.1934 78.1502 L 58.4571 77.8866 L 63.4837 77.8866 L 63.4837 77.6208 L 63.2180 77.3571 L 63.2180 77.0934 L 62.9543 76.8277 L 62.9543 76.5640 L 62.6885 76.2982 L 61.8954 74.4483 L 61.3659 73.9188 L 61.3659 73.6530 L 61.1023 73.3894 L 61.1023 73.1236 L 60.8386 72.8599 L 60.8386 72.5963 L 60.5728 72.3305 L 59.7797 70.4784 L 59.2502 69.9511 Z"/>
 </vector>
