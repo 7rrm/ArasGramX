@@ -207,6 +207,13 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
     private boolean glassModeIsForum;
 
     private ChatAvatarContainer chatAvatarContainer;
+    // MeeroX v254 (cherry-parity): centered-title owns a dedicated container slot,
+    // the glass pill hugs it with an animated adaptive width
+    private ChatAvatarContainer chatAvatarContainer2;
+
+    public void setChatAvatarContainer2(ChatAvatarContainer chatAvatarContainer) {
+        this.chatAvatarContainer2 = chatAvatarContainer;
+    }
 
     public void setGlassOnlyBack() {
         glassOnlyBack = true;
@@ -214,6 +221,37 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
 
     public void setChatAvatarContainer(ChatAvatarContainer chatAvatarContainer) {
         this.chatAvatarContainer = chatAvatarContainer;
+    }
+
+    // MeeroX v254: Adaptive bubble width (Cherrygram port)
+    private boolean meeroForceAdaptiveWidth;
+    private final FactorAnimator animatorAdaptiveWidth = new FactorAnimator(0, this, CubicBezierInterpolator.EASE_OUT_QUINT, 380);
+
+    public void setForceAdaptiveWidth(boolean forceAdaptiveWidth) {
+        this.meeroForceAdaptiveWidth = forceAdaptiveWidth;
+        invalidate();
+    }
+
+    private boolean isAdaptiveWidthSupported() {
+        if (chatAvatarContainer2 == null || chatAvatarContainer2.getTitleTextView() == null) {
+            return false;
+        }
+        if (meeroForceAdaptiveWidth) {
+            return true;
+        }
+        try {
+            return tw.nekomimi.nekogram.NekoConfig.meeroCherryAdaptive.Bool() && chatAvatarContainer2.isCentered();
+        } catch (Throwable e) {
+            return false;
+        }
+    }
+
+    private int getBackPillWidth() {
+        return dp(46) + dp(6) * 2;
+    }
+
+    public int getBackPillGrowth() {
+        return 0; // MeeroX v254: normal unread-chip only (iOS counter pill intentionally not ported - his pick)
     }
 
     public void setupGlass(BlurredBackgroundDrawableViewFactory factory, BlurredBackgroundColorProvider colorProvider) {
@@ -2397,25 +2435,49 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
     }
 
     public void checkAvatarContainerWidth(boolean animated) {
-        if (chatAvatarContainer == null) {
-            return;
-        }
-
-        final boolean hasAvatar = chatAvatarContainer.hasVisibleAvatar();
-        int visualWidth = chatAvatarContainer.getVisualWidth();
-        if (hasAvatar) {
-            //visualWidth = Math.max(visualWidth, dp(168));
-        }
-
-        final int width = Math.min(getMeasuredWidth() - dp(6 + 46 + 6 + 6 + 46 + 6), visualWidth);
-        if (animated) {
-            if (animatorAvatarContainerWidth.getToFactor() != width) {
-                animatorAvatarContainerWidth.animateTo(width);
+        if (chatAvatarContainer != null) {
+            final boolean hasAvatar = chatAvatarContainer.hasVisibleAvatar();
+            int visualWidth = chatAvatarContainer.getVisualWidth();
+            if (hasAvatar) {
+                //visualWidth = Math.max(visualWidth, dp(168));
             }
-        } else {
-            animatorAvatarContainerWidth.forceFactor(width);
+
+            final int width = Math.min(getMeasuredWidth() - dp(6 + 46 + 6 + 6 + 46 + 6), visualWidth);
+            if (animated) {
+                if (animatorAvatarContainerWidth.getToFactor() != width) {
+                    animatorAvatarContainerWidth.animateTo(width);
+                }
+            } else {
+                animatorAvatarContainerWidth.forceFactor(width);
+            }
+            animatorAvatarContainerHasAvatar.setValue(hasAvatar, animated);
         }
-        animatorAvatarContainerHasAvatar.setValue(hasAvatar, animated);
+
+        // MeeroX v254 (cherry-parity): Adaptive bubble width — target hugs the title text, animated
+        if (isAdaptiveWidthSupported()) {
+            int titleWidth = (int) chatAvatarContainer2.getTitleTextView().getExactWidthIncludeDrawables();
+            int subtitleWidth = 0;
+            if (chatAvatarContainer2.getSubtitleTextView() instanceof SimpleTextView) {
+                subtitleWidth = (int) ((SimpleTextView) chatAvatarContainer2.getSubtitleTextView()).getExactWidthIncludeDrawables();
+            }
+            int textWidth = Math.max(titleWidth, subtitleWidth);
+
+            // MeeroX v262: clamp to the bar itself only. The v254 clamp to the
+            // menu-dependent "default" rect could shrink the capsule under the
+            // text on chats with several menu icons; the pill's position now
+            // follows the text, so the only real bound is the bar edges.
+            int targetWidth = Math.max(dp(100), textWidth + dp(40));
+            targetWidth += dp(15);
+            targetWidth = Math.min(getWidth() - dp(12), targetWidth);
+
+            if (animated) {
+                if (animatorAdaptiveWidth.getToFactor() != targetWidth) {
+                    animatorAdaptiveWidth.animateTo(targetWidth);
+                }
+            } else {
+                animatorAdaptiveWidth.forceFactor(targetWidth);
+            }
+        }
     }
 
     private final FactorAnimator animatorAvatarContainerWidth = new FactorAnimator(0, this, CubicBezierInterpolator.EASE_OUT_QUINT, 380);
@@ -2473,6 +2535,22 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
 
     public boolean doNotDrawGlassMenu;
 
+    // MeeroX v275 (his report: with the adaptive switch OFF, the settings
+    // preview's name capsule merged with the back capsule - «الكبسولة تندمج
+    // مع كبسولة الرجوع»): the preview hides the real back button and draws
+    // its own hand-made back capsule, so the stock pill math below thought
+    // "no back element" and let the name capsule start at x=0 - sliding
+    // under the back capsule. The preview reports its back capsule's RIGHT
+    // edge through this hook; real chats never touch it (button visible =
+    // measured zone, unchanged since v254).
+    private int meeroPreviewBackZoneEndPx = -1;
+    public void setMeeroPreviewBackZoneEnd(int px) {
+        if (meeroPreviewBackZoneEndPx != px) {
+            meeroPreviewBackZoneEndPx = px;
+            invalidate();
+        }
+    }
+
     @Override
     protected void dispatchDraw(Canvas canvas) {
         final int p = dp(6);
@@ -2488,10 +2566,19 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
         final int b = t + s + p * 2;
 
         if (glassDrawable != null && !glassOnlyBack) {
+            // MeeroX v273: the alpha is animated per-frame below for the
+            // adaptive pill, so always reset it for the other branches (the
+            // drawable is kept and reused across frames).
+            glassDrawable.setAlpha(255);
             final int menuWidthWithPadding = menuWidth + ((hasForcedMenuWidth || hasForcedMenuMinWidth) ? (menuWidth > 0 ? p : 0) : (int) (p * animatorHasMenuItems.getFloatValue()));
             final int rightOffset = lerp(menuWidthWithPadding, Math.max(menuWidthWithPadding, p + s), chatAvatarContainer == null ? 0f : 1f - animatorAvatarContainerHasAvatar.getFloatValue());
 
-            final int leftDefault = lerp(hasBackButton ? s + p : 0, s + p, chatAvatarContainer == null? 0f : 1f - animatorAvatarContainerHasAvatar.getFloatValue());
+            final int leftDefault = meeroPreviewBackZoneEndPx >= 0 && chatAvatarContainer2 != null
+                    // v275: capsule glass starts at the reported capsule edge
+                    // (the drawable's own 6dp padding separates the two pills
+                    // visually, matching the reference's touching-capsules look)
+                    ? meeroPreviewBackZoneEndPx - p
+                    : lerp(hasBackButton ? s + p : 0, s + p, chatAvatarContainer == null? 0f : 1f - animatorAvatarContainerHasAvatar.getFloatValue());
             final int rightDefault = getWidth() - rightOffset;
             final int widthDefault = rightDefault - leftDefault;
             final int left, right;
@@ -2506,6 +2593,75 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
                     + p + dp(3);
                 chatAvatarContainer.setTranslationX(translationX);
                 chatAvatarContainer.setPivotX((chatAvatarContainer.getMeasuredWidth()) / 2f - translationX );
+            } else if (isAdaptiveWidthSupported()) {
+                // MeeroX v262: the pill anchors to the ACTUAL drawn title text.
+                // v254's formula centered the pill between the back button and
+                // the overflow menu (baseCenter = (52dp + W - menuWidth) / 2),
+                // while ChatAvatarContainer left-anchors the title inside its
+                // symmetric container - so the capsule drifted off the name on
+                // any real chat whose menu is wider than one item, and in the
+                // settings preview. Following the text kills every variable.
+                int width = (int) animatorAdaptiveWidth.getFactor();
+                if (width <= 0) {
+                    int titleWidth = (int) chatAvatarContainer2.getTitleTextView().getExactWidthIncludeDrawables();
+                    int subtitleWidth = 0;
+                    if (chatAvatarContainer2.getSubtitleTextView() instanceof SimpleTextView) {
+                        subtitleWidth = (int) ((SimpleTextView) chatAvatarContainer2.getSubtitleTextView()).getExactWidthIncludeDrawables();
+                    }
+                    width = Math.max(dp(100), Math.max(titleWidth, subtitleWidth) + dp(40));
+                    width += dp(15);
+                    animatorAdaptiveWidth.forceFactor(width);
+                }
+                // MeeroX v279 (his report: long chat names merge the title
+                // capsule into the back capsule and the avatar capsule; his
+                // sealed pick «طريقة Cherrygram الكاملة 1:1»): Cherrygram's
+                // adaptive branch caps the pill width at the natural zone
+                // (Math.min(widthDefault, ...)) and clamps the left edge
+                // INSIDE it - a long name can never pour over the back
+                // capsule or the menu/avatar zone. Ours capped at
+                // getWidth()-12dp and clamped at 6dp, which is exactly how
+                // his merge screenshot happened. The two guards are ported
+                // verbatim; our text-anchored centring (v262) is unchanged
+                // for names that fit. (Cherrygram's extra text-nudge step
+                // guards a back capsule that GROWS with the unread chip -
+                // ours is fixed 58dp with the chip inside it by design, so
+                // that step has no case to catch here.)
+                width = Math.min(width, widthDefault);
+                final float textCenter = chatAvatarContainer2.getX() + chatAvatarContainer2.meeroGetTitleTextCenterX();
+                final int adaptiveLeft = Math.max(leftDefault, Math.min(Math.round(textCenter - width / 2f), rightDefault - width));
+                final int adaptiveRight = adaptiveLeft + width;
+                // MeeroX v274 (his order: take the official Telegram design):
+                // in official Telegram the selection bar reads as flush
+                // ADJACENT capsules - count capsule, then tools capsule -
+                // and the switch itself animates. v272 made this title pill
+                // slide under the tools pill (glass over glass); v273's
+                // fade-out left the count bare. So instead of hiding, MORPH
+                // this pill with the action-mode factor from its
+                // text-anchored title geometry into the stock
+                // [back-pill .. menu-pill) capsule (leftDefault..rightDefault
+                // already end flush with the menu zone by design): the title
+                // capsule glides into the count capsule within one 200ms
+                // fade - natural glass + selection animation, no overlap,
+                // no bare text. The stock branches are unchanged.
+                // MeeroX v277 (his report from channel search: «زجاج ما
+                // يحضن الاكس ولا كل الكلمه» + his order: fix it exactly
+                // like the selection tools bar): the morph below only
+                // listened to actionModeFactor, so an open search left
+                // this pill anchored to the now-INVISIBLE title text - the
+                // typed word and the clear-X (both living in the search
+                // field, which spans [searchLeft .. W]) overflowed the
+                // glass. The sibling first branch (old avatar container)
+                // has always morphed with Math.max(searchFactor,
+                // actionModeFactor); port that input 1:1 here. searchFactor
+                // is animated by ChatActivity's
+                // ANIMATOR_ID_SEARCH_FIELD_VISIBILITY, so the capsule
+                // glides from the title geometry into the same flush
+                // [back-pill .. menu-pill) zone the selection capsule
+                // lands in - hugging the whole field (word + X) with one
+                // natural glide. Stock branches untouched.
+                final float meeroMorphFactor = Math.max(searchFactor, actionModeFactor);
+                left = Math.round(lerp(adaptiveLeft, leftDefault, meeroMorphFactor));
+                right = Math.round(lerp(adaptiveRight, rightDefault, meeroMorphFactor));
             } else {
                 left = leftDefault;
                 right = rightDefault;
@@ -2518,6 +2674,15 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
             glassDrawableBack.setBounds(0, t, s + p * 2, b);
             glassDrawableBack.draw(canvas);
         }
+        // MeeroX v272 (his order, «كان موجود افتراضي كان»): v263 wrongly
+        // retired this glass pill while chasing the white disc. The saga's
+        // real culprit turned out to be the community badge, which is dead
+        // since v266/v271 - this glass chrome was innocent all along. The
+        // pill is the fork's default look he remembers: the centered title
+        // forces a 46dp menu width (checkMenuItemsWidth), so it backs the
+        // pinned avatar's corner, and while the action mode is open it hugs
+        // the selection tools. Restored in every mode; the ⋮ glyph stays
+        // hidden in the centered header (v265) - only the glass returns.
         if (glassDrawableMenu != null && menuWidth > 0 && !glassOnlyBack && !doNotDrawGlassMenu) {
             glassDrawableMenu.setBounds(getWidth() - Math.max(s, menuWidth) - p * 2, t, getWidth(), b);
             glassDrawableMenu.setAlpha(hasForcedMenuWidth ? 255 : (int) (255 * animatorHasMenuItems.getFloatValue()));
