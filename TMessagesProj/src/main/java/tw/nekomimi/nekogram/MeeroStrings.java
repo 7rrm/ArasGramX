@@ -499,6 +499,19 @@ public final class MeeroStrings {
         put("MeeroKeywordLogDetailFormat", "🔔 \"%s\" • %s", "🔔 \"%s\" • %s");
         put("MeeroKeywordMatchedWord", "Matched word: %s", "الكلمة المطابقة: %s");
         put("MeeroKeywordAlertHit", "Keyword hit", "تنبيه كلمة");
+        put("MeeroHdrSectionTitle", "Chat top strip", "شريط الدردشة العلوي");
+        put("MeeroHdrStockTitle", "Restore original", "رجوع للأصلي");
+        put("MeeroHdrStockDesc", "Restore the original Telegram header; disables centering and adaptive width", "يرجع الهيدر لشكل تيليجرام الأصلي؛ يطفي التوسيط والعرض المتكيّف حتى تطفئه");
+        put("MeeroHdrCenterTitle", "Center chat title", "توسيط عنوان الدردشة");
+        put("MeeroHdrCenterDesc", "Glass capsule in the center, works without restart", "كبسولة زجاجية بالوسط، تشتغل بدون إعادة تشغيل");
+        put("MeeroHdrAdaptiveTitle", "Adaptive capsule width ", "عرض الكبسولة متكيّف");
+        put("MeeroHdrAdaptiveDesc", "The capsule expands and shrinks with the name and status width instead of fixed width", "الكبسولة تتسع وتضيق بعرض الاسم والحالة بدل العرض الثابت");
+        put("MeeroHdrGlareTitle", "Glare effects", "تأثيرات البريق");
+        put("MeeroHdrGlareDesc", "Moving glass shine across the title capsule and message bubbles", "لمعة زجاجية متحركة تعبر كبسولة العنوان وفقاعات الرسائل");
+        put("MeeroHdrBadgeTitle", "Unread counter on back button", "عداد غير المقروء على زر الرجوع");
+        put("MeeroHdrBadgeDesc", "Red counter showing your unread conversations while inside a chat", "عداد أحمر يعد محادثاتك غير المقروءة الثانية وأنت داخل دردشة");
+        put("MeeroHdrCommunityTitle", "Linked community badge ", "شارة المجتمع المرتبط ");
+        put("MeeroHdrCommunityDesc", "White disc with arrow on avatars of channels/groups linked to a community - in list, search and profile (header retired permanently since v266)", "قرص أبيض بسهم على صور القنوات/المجموعات المربوطة بمجتمع - بالقائمة والبحث والبروفايل (رأس المحادثة متوقف نهائياً منذ v266)");
     }
         // ============================================================
         // ✅ المفاتيح من strings_meerox.xml (موجودة هنا)
@@ -997,6 +1010,19 @@ public final class MeeroStrings {
         ID_TO_KEY.put(491, "MeeroKeywordLogDetailFormat");
         ID_TO_KEY.put(492, "MeeroKeywordMatchedWord");
         ID_TO_KEY.put(493, "MeeroKeywordAlertHit");
+        ID_TO_KEY.put(494, "MeeroHdrSectionTitle");
+        ID_TO_KEY.put(495, "MeeroHdrStockTitle");
+        ID_TO_KEY.put(496, "MeeroHdrStockDesc");
+        ID_TO_KEY.put(497, "MeeroHdrCenterTitle");
+        ID_TO_KEY.put(498, "MeeroHdrCenterDesc");
+        ID_TO_KEY.put(499, "MeeroHdrAdaptiveTitle");
+        ID_TO_KEY.put(500, "MeeroHdrAdaptiveDesc");
+        ID_TO_KEY.put(501, "MeeroHdrGlareTitle");
+        ID_TO_KEY.put(502, "MeeroHdrGlareDesc");
+        ID_TO_KEY.put(503, "MeeroHdrBadgeTitle");
+        ID_TO_KEY.put(504, "MeeroHdrBadgeDesc");
+        ID_TO_KEY.put(505, "MeeroHdrCommunityTitle");
+        ID_TO_KEY.put(506, "MeeroHdrCommunityDesc");
     }
 
     private static boolean isArabic() {
