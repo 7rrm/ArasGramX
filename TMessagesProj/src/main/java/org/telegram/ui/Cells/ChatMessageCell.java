@@ -4972,17 +4972,6 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
         return replyPressed;
     }
 
-    private float meeroDownX, meeroDownY;
-    private long meeroDownTime;
-
-    private static boolean meeroTapMenuEnabled() {
-        try {
-            return tw.nekomimi.nekogram.NekoConfig.meeroTapMenu.Bool();
-        } catch (Throwable e) {
-            return false;
-        }
-    }
-
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         if (currentMessageObject == null || delegate != null && !delegate.canPerformActions() || animationRunning) {
@@ -5140,28 +5129,10 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
             result = checkAdminTouchEvent(event);
         }
 
-        // MeeroX: open the message menu on a plain tap.
-        // Reached only after every other hit test above has declined, so the
-        // touch landed on the bubble body - not a link, image, button, poll,
-        // reaction or reply. Long press keeps working as before.
-        if (!result && event.getAction() == MotionEvent.ACTION_UP && meeroTapMenuEnabled()) {
-            final float ux = getEventX(event);
-            final float uy = getEventY(event);
-            if (Math.abs(ux - meeroDownX) < AndroidUtilities.dp(12)
-                    && Math.abs(uy - meeroDownY) < AndroidUtilities.dp(12)
-                    && (System.currentTimeMillis() - meeroDownTime) < 350
-                    && delegate != null && delegate.canPerformActions()) {
-                cancelCheckLongPress();
-                delegate.didLongPress(this, ux, uy);
-                return true;
-            }
-        }
-        if (event.getAction() == MotionEvent.ACTION_DOWN) {
-            meeroDownX = getEventX(event);
-            meeroDownY = getEventY(event);
-            meeroDownTime = System.currentTimeMillis();
-        }
-
+        // MeeroX v278 (owner's explicit order «زيل الميزة»): the
+        // tap-to-open-menu feature is fully retired - the row, the config
+        // key and this touch hook are all gone; a plain tap on a bubble
+        // does nothing new and long-press keeps opening the menu as stock.
         if (event.getAction() == MotionEvent.ACTION_CANCEL) {
             spoilerPressed = null;
             buttonPressed = 0;
@@ -20423,6 +20394,31 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
     @Override
     protected void onDraw(Canvas canvas) {
         drawInternal(canvas);
+    }
+
+    // MeeroX v254 — Cherrygram "Glare effects": moving liquid-glass shine over the bubble body
+    @Override
+    protected void dispatchDraw(Canvas canvas) {
+        super.dispatchDraw(canvas);
+        if (meeroGlareOn() && !mediaBackground) {
+            org.telegram.ui.Components.MeeroGlareLayer.draw(canvas,
+                    getBackgroundDrawableLeft(), getBackgroundDrawableTop(),
+                    getBackgroundDrawableRight(), getBackgroundDrawableBottom(),
+                    android.util.TypedValue.applyDimension(android.util.TypedValue.COMPLEX_UNIT_DIP, 16, getResources().getDisplayMetrics()),
+                    System.currentTimeMillis());
+            postInvalidateOnAnimation();
+        }
+    }
+
+    private boolean meeroGlareOn() {
+        if (currentMessageObject == null) {
+            return false;
+        }
+        try {
+            return tw.nekomimi.nekogram.NekoConfig.meeroGlare.Bool();
+        } catch (Throwable ignore) {
+            return false;
+        }
     }
     @SuppressLint("WrongCall")
     public void drawInternal(Canvas canvas) {
