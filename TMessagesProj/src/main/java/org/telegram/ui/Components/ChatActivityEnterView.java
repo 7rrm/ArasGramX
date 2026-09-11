@@ -17369,14 +17369,10 @@ public class ChatActivityEnterView extends FrameLayout implements
      * pill so their layouts never meet the transplant.
      */
     private boolean meeroIosComposer() {
-        // v233 (his report - two clips on the story reply bar): require a real
-        // chat host. PeerStoriesView builds its reply bar with fragment=null
-        // and sets isStories=true only after we already synced once (PeerStories
-        // View:3714); in that window we re-parented the attach button into the
-        // iOS clip, so the story bar ended up with the stock clip AND ours.
-        // Chats always pass their ChatActivity - nothing changes there; story
-        // and comment bars keep the single stock clip for everyone.
-        return isChat && !isStories && parentFragment != null && meeroIosInputPill();
+        // FIX: iOS composer disabled - causes empty space on left side of
+        // input bar and attach button not responding to clicks.
+        // Stock attach button layout is used instead (works correctly).
+        return false;
     }
 
     /** iOS glyph tone: near-white at night, system grey in day. */
