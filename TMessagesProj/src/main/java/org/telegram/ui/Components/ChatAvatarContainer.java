@@ -213,6 +213,9 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
                 }
             };
 
+            // MeeroX v254 (cherry-parity): press-bounce spring for the centered avatar
+            private final ButtonBounce avatarBounce = new ButtonBounce(this);
+
             @Override
             public void onInitializeAccessibilityNodeInfo(AccessibilityNodeInfo info) {
                 super.onInitializeAccessibilityNodeInfo(info);
@@ -226,6 +229,13 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
 
             @Override
             protected void onDraw(Canvas canvas) {
+                // MeeroX v254 (cherry-parity): centered avatar scales on press
+                final boolean scaleOnPress = isCentered();
+                if (scaleOnPress) {
+                    canvas.save();
+                    final float s = avatarBounce.getScale(.05f);
+                    canvas.scale(s, s, getWidth() / 2f, getHeight() / 2f);
+                }
                 if (allowDrawStories && animatedEmojiDrawable == null && !isCentered()) {
                     params.originalAvatarRect.set(0, 0, getMeasuredWidth(), getMeasuredHeight());
                     params.drawSegments = true;
@@ -246,10 +256,22 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
                 } else {
                     super.onDraw(canvas);
                 }
+                if (scaleOnPress) {
+                    canvas.restore();
+                }
             }
 
             @Override
             public boolean onTouchEvent(MotionEvent event) {
+                if (isCentered() && isClickable()) {
+                    // MeeroX v254 (cherry-parity): bouncing press feedback in centered mode
+                    final int action = event.getAction();
+                    if (action == MotionEvent.ACTION_DOWN) {
+                        avatarBounce.setPressed(true);
+                    } else if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) {
+                        avatarBounce.setPressed(false);
+                    }
+                }
                 if (isCentered() && avatarOptionsMenuItem != null && avatarOptionsMenuItem.hasSubMenu()) {
                     final int action = event.getActionMasked();
                     if (action == MotionEvent.ACTION_MOVE) {
@@ -366,6 +388,12 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
         titleTextView.setTextColor(getThemedColor(Theme.key_actionBarDefaultTitle));
         titleTextView.setTextSize(18);
         titleTextView.setGravity(isCentered() ? Gravity.CENTER_HORIZONTAL : Gravity.LEFT);
+        // MeeroX v254 (cherry-parity): reserve room for premium emoji + muted bell inside the centered title
+        if (isCentered() && parentFragment != null) {
+            final boolean hasEmoji = parentFragment.getCurrentUser() != null && (parentFragment.getCurrentUser().premium || DialogObject.getEmojiStatusDocumentId(parentFragment.getCurrentUser().emoji_status) != 0)
+                    || parentFragment.getCurrentChat() != null && DialogObject.getEmojiStatusDocumentId(parentFragment.getCurrentChat().emoji_status) != 0;
+            titleTextView.setPadding(hasEmoji && parentFragment.getMessagesController().isDialogMuted(parentFragment.getDialogId(), parentFragment.getTopicId(), parentFragment.getCurrentChat()) ? dp(25) : 0, dp(6), 0, dp(12));
+        }
         titleTextView.setTypeface(AndroidUtilities.bold());
         titleTextView.setLeftDrawableTopPadding(-dp(1.3f));
         // titleTextView.setCanHideRightDrawable(false);
@@ -484,7 +512,7 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
     public boolean onTouchEvent(MotionEvent ev) {
         if (ev.getAction() == MotionEvent.ACTION_DOWN && canSearch()) {
             pressed = true;
-            bounce.setPressed(true);
+            bounce.setPressed(!isCentered()); // MeeroX v254 (cherry-parity): centered pill does not wobble on press
             AndroidUtilities.cancelRunOnUIThread(this.onLongClick);
             AndroidUtilities.runOnUIThread(this.onLongClick, ViewConfiguration.getLongPressTimeout());
             return true;
@@ -509,11 +537,60 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
 
     @Override
     protected void dispatchDraw(Canvas canvas) {
-        canvas.save();
-        final float s = bounce.getScale(.02f);
-        canvas.scale(s, s, getPivotX(), getHeight() - ActionBar.getCurrentActionBarHeight() / 2f);
-        super.dispatchDraw(canvas);
-        canvas.restore();
+        if (isCentered()) {
+            // MeeroX v254 (cherry-parity): centered children scale around the middle,
+            // avatar drawn last like Cherrygram does
+            long drawingTime = getDrawingTime();
+
+            canvas.save();
+
+            float s = bounce.getScale(.02f);
+            canvas.scale(s, s, getWidth() / 2f, getHeight() - ActionBar.getCurrentActionBarHeight() / 2f);
+
+            for (int i = 0; i < getChildCount(); i++) {
+                View child = getChildAt(i);
+                if (child == avatarImageView) {
+                    continue;
+                }
+                // MeeroX v271 - the REAL end of the white-disc saga: this
+                // manual loop bypasses ViewGroup's visibility gate, so the
+                // GONE linked-community badge (retired on every path in
+                // v266, never once set VISIBLE anywhere) kept painting its
+                // white disc + dark rim + arrow at the avatar corner -
+                // "unchanged no matter what we killed". Respect GONE like
+                // the stock dispatchDraw does.
+                if (child.getVisibility() != VISIBLE) {
+                    continue;
+                }
+                drawChild(canvas, child, drawingTime);
+            }
+
+            canvas.restore();
+
+            if (avatarImageView != null) {
+                drawChild(canvas, avatarImageView, drawingTime);
+            }
+        } else {
+            canvas.save();
+            final float s = bounce.getScale(.02f);
+            canvas.scale(s, s, getPivotX(), getHeight() - ActionBar.getCurrentActionBarHeight() / 2f);
+            super.dispatchDraw(canvas);
+            canvas.restore();
+        }
+        // MeeroX v254: Cherrygram "Glare effects" - animated liquid-glass shine over the centered header pill
+        if (isCentered() && meeroGlareOn()) {
+            org.telegram.ui.Components.MeeroGlareLayer.draw(canvas, 0, dp(3), getWidth(), getHeight() - dp(5), dp(15), System.currentTimeMillis());
+            postInvalidateOnAnimation();
+        }
+    }
+
+    /** MeeroX v254: gate for the Cherrygram glare switch (slow devices keep it silent). */
+    protected boolean meeroGlareOn() {
+        try {
+            return tw.nekomimi.nekogram.NekoConfig.meeroGlare.Bool();
+        } catch (Throwable ignore) {
+            return false;
+        }
     }
 
     @Override
@@ -565,8 +642,23 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
         return super.dispatchTouchEvent(ev);
     }
 
-    protected boolean isCentered() {
+    public boolean isCentered() { // MeeroX v254 (cherry-parity): widened to public so ActionBar adaptive layout can read it
         return false;
+    }
+
+    // MeeroX v262: X of the title text's visual center in THIS container's
+    // local coordinates. The title view is measured AT_MOST (it hugs the
+    // text), so the view's center IS the text's center. ActionBar's adaptive
+    // glass pill anchors itself to this exact point: the capsule hugs the name
+    // no matter the menu width, container margins, title length or density.
+    // (Root cause of "name out of capsule": the old pill centered itself
+    // between the back button and the overflow menu while this container
+    // left-anchors the title - two unrelated formulas, guaranteed drift.)
+    public float meeroGetTitleTextCenterX() {
+        if (titleTextView != null && titleTextView.getMeasuredWidth() > 0) {
+            return titleTextView.getLeft() + titleTextView.getTranslationX() + titleTextView.getMeasuredWidth() / 2f;
+        }
+        return getMeasuredWidth() / 2f;
     }
 
     protected boolean isPreviewMode() {
@@ -870,6 +962,14 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
         setClipChildren(false);
     }
 
+    // MeeroX v261: preview-only title centering, SECOND ATTEMPT (first one
+    // failed on a dp/px unit slip - signed in blood below at onLayout).
+    // Only MeeroHeaderPreviewView flips this; real chats use stock math.
+    private boolean meeroPreviewTitleCenter;
+    public void setMeeroPreviewTitleCenter(boolean value) {
+        meeroPreviewTitleCenter = value;
+    }
+
     private boolean glassMode;
     public void setGlassMode() {
         if (titleTextView != null) {
@@ -893,11 +993,22 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
         }
         avatarImageView.layout(avatarLeft, 1 + viewTop, avatarLeft + avatarImageView.getMeasuredWidth(), 1 + viewTop + avatarImageView.getMeasuredHeight());
 
-        int l = leftPadding + (avatarImageView.getVisibility() == VISIBLE && !isCentered() ? dp(glassMode ? 49.66f : 55) : (isCentered() ? 0 : dp(glassMode ? 13 : 1))) + (isCentered() ? 0 : rightAvatarPadding);
-        if (isPreviewMode() && isCentered()) {
-            l += dp(AndroidUtilities.isTablet() ? 80 : 72) / 2;
+        final int l;
+        if (isCentered() && meeroPreviewTitleCenter) {
+            // MeeroX v261 settings-preview geometry (PIXEL-EXACT, see note):
+            // The glass pill is bar-centered (baseCenter = bar middle, drawn by
+            // ActionBar's adaptive machinery). The container itself spans
+            // [54dp-margin .. bar end], so its middle sits 27px right of the
+            // bar middle: (barCenter) = (containerCenter) - 27px = dp(9).
+            // THE v259 BUG was feeding dp(27) here - the px/dp unit slip that
+            // shoved the title ~54px too far left, then v260's revert let it
+            // fall back too far right. dp(9) is the measured truth.
+            final int centerX = getWidth() / 2 - dp(9);
+            l = Math.max(leftPadding, Math.min(centerX - titleTextView.getMeasuredWidth() / 2, avatarLeft - dp(16) - titleTextView.getMeasuredWidth()));
         } else if (isCentered()) {
-            l += dp(6);
+            l = leftPadding + (isPreviewMode() ? dp(AndroidUtilities.isTablet() ? 80 : 72) / 2 : dp(6));
+        } else {
+            l = leftPadding + (avatarImageView.getVisibility() == VISIBLE ? dp(glassMode ? 49.66f : 55) : dp(glassMode ? 13 : 1)) + rightAvatarPadding;
         }
         SimpleTextView titleTextLargerCopyView = this.titleTextLargerCopyView.get();
         if (getSubtitleTextView().getVisibility() != GONE) {
@@ -935,9 +1046,17 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
             starFgItem.layout(leftPadding + dp(28), viewTop + dp(24), leftPadding + dp(28) + starFgItem.getMeasuredWidth(), viewTop + dp(24) + starFgItem.getMeasuredHeight());
         }
         if (subtitleTextView != null) {
-            subtitleTextView.layout(l, subtitleTop, l + subtitleTextView.getMeasuredWidth(), subtitleTop + subtitleTextView.getTextHeight());
+            // preview centering: subtitle sits exactly under the title
+            // (widths differ, so they cannot share one left edge)
+            final int subtitleL = isCentered() && meeroPreviewTitleCenter
+                    ? l + (titleTextView.getMeasuredWidth() - subtitleTextView.getMeasuredWidth()) / 2
+                    : l;
+            subtitleTextView.layout(subtitleL, subtitleTop, subtitleL + subtitleTextView.getMeasuredWidth(), subtitleTop + subtitleTextView.getTextHeight());
         } else if (animatedSubtitleTextView != null) {
-            animatedSubtitleTextView.layout(l, subtitleTop, l + animatedSubtitleTextView.getMeasuredWidth(), subtitleTop + animatedSubtitleTextView.getTextHeight());
+            final int subtitleL = isCentered() && meeroPreviewTitleCenter
+                    ? l + (titleTextView.getMeasuredWidth() - animatedSubtitleTextView.getMeasuredWidth()) / 2
+                    : l;
+            animatedSubtitleTextView.layout(subtitleL, subtitleTop, subtitleL + animatedSubtitleTextView.getMeasuredWidth(), subtitleTop + animatedSubtitleTextView.getTextHeight());
         }
         SimpleTextView subtitleTextLargerCopyView = this.subtitleTextLargerCopyView.get();
         if (subtitleTextLargerCopyView != null) {
@@ -959,7 +1078,20 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
 
     public void setCommunityItemVisible(boolean visible) {
         if (communityItem != null) {
-            communityItem.setVisibility(visible && !avatarImageIsHidden && !isCentered() ? VISIBLE : GONE);
+            // MeeroX v266 - END of the chat-header white-dot saga, decided by
+            // pixels: the disc on the header avatar was never the ⋮ glass nor
+            // the timer (that one retired in v255) - it was THIS linked-
+            // community badge (CommunityArrowDrawable: ~13dp white disc + dark
+            // rim + dark arrow, intrinsic 40/3dp), seated at
+            // avatarLeft+28dp / viewTop+27.33dp = the avatar's bottom-right
+            // corner, a 1:1 match with his full-res crop, and the drawChild
+            // PAINT_CLEAR hole (r 7.66dp) under it is why the avatar looked
+            // "shrunk / bitten". His standing order: the header dot GONE
+            // forever - so the header badge is now retired on EVERY path,
+            // unconditionally (config, chat type, linked ids no longer
+            // matter for the header). NekoConfig.meeroCommunityBadge still
+            // governs the badge in the dialog list / profile / search only.
+            communityItem.setVisibility(GONE);
         }
     }
 
@@ -971,17 +1103,24 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
                 timeItem.setAlpha(factor);
                 timeItem.setScaleX(factor * 0.85f);
                 timeItem.setScaleY(factor * 0.85f);
-                timeItem.setVisibility(factor > 0 ? VISIBLE : GONE);
+                timeItem.setVisibility(GONE); // MeeroX v255 (his order): the white timer dot on the chat-header avatar is retired permanently; the self-destruct timer stays reachable from the chat \u22ee menu.
             }
         }
     }
 
 
     public void showTimeItem(boolean animated) {
+        // MeeroX v257 (his renewed complaint: "النقطة البيضة موجودة إلى الآن"):
+        // v255's GONE only covered the ANIMATED path via onFactorChanged; the
+        // non-animated entry (opening a timed chat) jumps through
+        // BoolAnimator.setFloatValue without it. The dot is now unreachable
+        // on EVERY path - the timer itself stays in the chat ⋮ menu.
         if (avatarImageView.getVisibility() != VISIBLE) {
             return;
         }
-        animatorTimeVisible.setValue(true, animated);
+        if (timeItem != null) {
+            timeItem.setVisibility(GONE);
+        }
     }
 
     public void hideTimeItem(boolean animated) {
