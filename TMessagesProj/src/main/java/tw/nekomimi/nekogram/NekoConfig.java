@@ -76,7 +76,7 @@ public class NekoConfig {
     public static final ArrayList<DatacenterInfo> datacenterInfos = new ArrayList<>(5);
 
     // Configs
-    public static ConfigItem unreadBadgeOnBackButton = addConfig("unreadBadgeOnBackButton", configTypeBool, false);
+    public static ConfigItem unreadBadgeOnBackButton = addConfig("unreadBadgeOnBackButton", configTypeBool, true); // MeeroX v254: ON by default (unread counter on the back button, normal style)
     public static ConfigItem useCustomEmoji = addConfig("useCustomEmoji", configTypeBool, false);
     public static ConfigItem repeatConfirm = addConfig("repeatConfirm", configTypeBool, true);
     public static ConfigItem disableInstantCamera = addConfig("DisableInstantCamera", configTypeBool, true);
@@ -90,7 +90,10 @@ public class NekoConfig {
     // migrate the old value (loadConfig below). No UI references it anymore.
     public static ConfigItem meeroIosBubbles = addConfig("meeroIosBubbles", configTypeBool, true);
     public static ConfigItem meeroBubbleStyle = addConfig("meeroBubbleStyle", configTypeInt, 1);
-    public static ConfigItem meeroTapMenu = addConfig("meeroTapMenu", configTypeBool, true);
+    // MeeroX v278 (owner's explicit order «زيل الميزة»): meeroTapMenu is
+    // retired - key removed along with its settings row and the
+    // ChatMessageCell touch hook. Old stored values are harmless orphans.
+
     // MeeroX v126: fixed exclusive "Glass Night" skin for MeeroX settings
     // screens - ignores Telegram themes, follows day/night only. Default ON
     // (display feature); OFF returns the stock themed look exactly.
@@ -166,6 +169,51 @@ public class NekoConfig {
     public static ConfigItem meeroMixerBg = addConfig("meeroMixerBg", configTypeInt, 0);
     public static ConfigItem meeroMixerInBubble = addConfig("meeroMixerInBubble", configTypeInt, 0);
     public static ConfigItem meeroIosInputPill = addConfig("meeroIosInputPill", configTypeBool, true);
+
+    // MeeroX v254 — glass chat-header capsule pack (his sealed order)
+    public static ConfigItem meeroCherryTitle = addConfig("meeroCherryTitle", configTypeBool, true);
+    public static ConfigItem meeroCherryAdaptive = addConfig("meeroCherryAdaptive", configTypeBool, true);
+    public static ConfigItem meeroGlare = addConfig("meeroGlare", configTypeBool, true);
+    // MeeroX v256 (his sealed order): "رجوع للأصلي" master switch of the new
+    // collapsible chat-top-strip settings section. Default OFF so the user's
+    // current capsule look survives the update untouched. It GATES reads of
+    // meeroCherryTitle-Adaptive (they stay saved, only the effect pauses).
+    public static ConfigItem meeroHeaderStock = addConfig("meeroHeaderStock", configTypeBool, false);
+    // MeeroX v260 (his final call «إذا مافي خيار لتعطيلها فلا تحذفها نهائياً»):
+    // the linked-community badge becomes a USER FEATURE with a master switch
+    // instead of a hardcoded weld. Governs every place the white disc shows:
+    // chats list row avatar, chat header avatar, profile avatar. Default ON =
+    // reference parity; flip the row «شارة المجتمع المرتبط ✦» to hide it
+    // everywhere (his original wish, now reversible).
+    // MeeroX v261: default FLIPPED TO OFF. He answered a design question
+    // with «keep it as an optional feature» — but his live reaction to v260
+    // proved the intent all along was «the dot must be GONE unless I ask for
+    // it». Feature stays, just dormant until flipped on from «شارة المجتمع
+    // المرتبط ✦». (v260 shipped ON and he read that as "the new switch is
+    // unrelated to my problem" — owned, corrected.)
+    public static ConfigItem meeroCommunityBadge = addConfig("meeroCommunityBadge", configTypeBool, false);
+
+    // MeeroX v269 (his report: «الزر ما يسوى شيء»): the badge sites used the CACHED
+    // Bool(), only evaluated at bind time - toggling looked dead on screen.
+    // This reads the SharedPreferences value LIVE, every single time.
+    public static boolean meeroCommunityBadgeNow() {
+        try {
+            return getPreferences().getBoolean("meeroCommunityBadge", false);
+        } catch (Throwable ignore) {
+            return false;
+        }
+    }
+    // MeeroX v255 — message-menu pack (his sealed order). Note: the iOS blur
+    // panel, the bubble stack and the ~180ms animations ALREADY exist as
+    // meeroMenuBlur / meeroIosMsgMenu / meeroSwiftMenus; these complete it.
+    // MeeroX v256: owner REJECTED the pack after trying the beta ("ماريد هاي
+    // ميزات") - defaults flipped OFF so the pack sleeps; rows hidden too.
+    public static ConfigItem meeroMsgUnified = addConfig("meeroMsgUnified", configTypeBool, false);
+    public static ConfigItem meeroMsgAutoscroll = addConfig("meeroMsgAutoscroll", configTypeBool, false);
+    public static ConfigItem meeroMsgComfy = addConfig("meeroMsgComfy", configTypeBool, false);
+    public static ConfigItem meeroMsgNativeBlur = addConfig("meeroMsgNativeBlur", configTypeBool, false);
+    public static ConfigItem meeroMsgCompact = addConfig("meeroMsgCompact", configTypeBool, false);
+    public static ConfigItem meeroMsgOrder = addConfig("meeroMsgOrder", configTypeString, "");
     public static ConfigItem meeroIosWaveform = addConfig("meeroIosWaveform", configTypeBool, true);
     public static ConfigItem meeroIosSelection = addConfig("meeroIosSelection", configTypeBool, true);
     public static ConfigItem meeroIosRow = addConfig("meeroIosRow", configTypeBool, true);
@@ -362,8 +410,7 @@ public class NekoConfig {
     public static ConfigItem markReadAfterSend = addConfig("markReadAfterSend", configTypeBool, true);
     public static ConfigItem showGhostInDrawer = addConfig("showGhostInDrawer", configTypeBool, false);
     public static ConfigItem showGhostModeStatus = addConfig("showGhostModeStatus", configTypeBool, false);
-    // MeeroX v202: keyword alert log
-    public static ConfigItem meeroKeywordLog = addConfig("meeroKeywordLog", configTypeString, "");
+
     // --- Locked Status ---
     public static ConfigItem sendReadMessagePacketsLocked = addConfig("sendReadMessagePacketsLocked", configTypeBool, false);
     public static ConfigItem sendReadStoriesPacketsLocked = addConfig("sendReadStoriesPacketsLocked", configTypeBool, false);
