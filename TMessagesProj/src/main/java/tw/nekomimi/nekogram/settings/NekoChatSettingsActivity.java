@@ -118,17 +118,17 @@ public class NekoChatSettingsActivity extends BaseNekoXSettingsActivity implemen
     private final ConfigCellTextCheck hdrStockRow = new ConfigCellTextCheck(NekoConfig.meeroHeaderStock,
             "يرجع الهيدر لشكل تيليجرام الأصلي؛ يطفي التوسيط والعرض المتكيّف حتى تطفئه", "رجوع للأصلي");
     private final ConfigCellTextCheck hdrCenterRow = new ConfigCellTextCheck(NekoConfig.meeroCherryTitle,
-            "كبسولة زجاجية بالوسط، تشتغل بدون إعادة تشغيل", "توسيط عنوان الدردشة ✦");
+            "كبسولة زجاجية بالوسط، تشتغل بدون إعادة تشغيل", "توسيط عنوان الدردشة");
     private final ConfigCellTextCheck hdrAdaptiveRow = new ConfigCellTextCheck(NekoConfig.meeroCherryAdaptive,
-            "الكبسولة تتسع وتضيق بعرض الاسم والحالة بدل العرض الثابت", "عرض الكبسولة متكيّف ✦");
+            "الكبسولة تتسع وتضيق بعرض الاسم والحالة بدل العرض الثابت", "عرض الكبسولة متكيّف");
     private final ConfigCellTextCheck hdrGlareRow = new ConfigCellTextCheck(NekoConfig.meeroGlare,
-            "لمعة زجاجية متحركة تعبر كبسولة العنوان وفقاعات الرسائل", "تأثيرات البريق ✦");
+            "لمعة زجاجية متحركة تعبر كبسولة العنوان وفقاعات الرسائل", "تأثيرات البريق");
     private final ConfigCellTextCheck hdrBadgeRow = new ConfigCellTextCheck(NekoConfig.unreadBadgeOnBackButton,
             "عداد أحمر يعد محادثاتك غير المقروءة الثانية وأنت داخل دردشة", "عداد غير المقروء على زر الرجوع");
     // MeeroX v260 (his final verdict: feature-with-a-switch, not a silent
     // weld): Telegram 12's white community disc on avatars lives here now.
     private final ConfigCellTextCheck hdrCommunityRow = new ConfigCellTextCheck(NekoConfig.meeroCommunityBadge,
-            "قرص أبيض بسهم على صور القنوات/المجموعات المربوطة بمجتمع - بالقائمة والبحث والبروفايل (رأس المحادثة متوقف نهائياً منذ v266)", "شارة المجتمع المرتبط ✦") {
+            "قرص أبيض بسهم على صور القنوات/المجموعات المربوطة بمجتمع - بالقائمة والبحث والبروفايل (رأس المحادثة متوقف نهائياً منذ v266)", "شارة المجتمع المرتبط") {
         // MeeroX v269: rebind the dialog list INSTANTLY so toggling is visible at once.
         @Override
         public void onClick(org.telegram.ui.Cells.TextCheckCell cell) {
@@ -162,7 +162,7 @@ public class NekoChatSettingsActivity extends BaseNekoXSettingsActivity implemen
         meeroHdrSubRows.clear();
         int idx = meeroHdrAnchor;
         // MeeroX v275 (his order): the edition tag retires with its mission complete - it proved installs reach his device (the v267 install-certainty probe), the header section keeps a clean title.
-        hdrGroupRow = new ConfigCellText("شريط الدردشة العلوي ✦", meeroHdrExpanded ? "⌄" : "‹", this::meeroToggleHdrGroup);
+        hdrGroupRow = new ConfigCellText("شريط الدردشة العلوي", meeroHdrExpanded ? "⌄" : "‹", this::meeroToggleHdrGroup);
         hdrGroupRow.bindCellGroup(cellGroup);
         cellGroup.rows.add(idx++, hdrGroupRow);
         if (meeroHdrExpanded) {
