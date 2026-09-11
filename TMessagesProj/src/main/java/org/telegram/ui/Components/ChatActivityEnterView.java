@@ -17367,8 +17367,6 @@ public class ChatActivityEnterView extends FrameLayout implements
     // Ported from chh (Cherrygram) - clean iOS input field check
     // Uses NekoConfig.meeroIosInputPill instead of CherrygramChatsConfig
     public boolean iOSMessageInputFieldAvailable() {
-        if (forcePreview) return true;
-
         if (!tw.nekomimi.nekogram.NekoConfig.meeroIosInputPill.Bool() || isStories) {
             return false;
         }
