@@ -4044,7 +4044,9 @@ public class ChatActivity extends BaseFragment implements
         if (inPreviewMode) {
             actionBar.setBackButtonDrawable(null);
         } else {
+            // MeeroX v254 (cherry-parity): unread counter on the back button shows instantly on chat open
             actionBar.setBackButtonDrawable(new BackDrawable(isReport()));
+            actionBar.unreadBadgeSetCount(getMessagesStorage().getMainUnreadCount());
         }
 
         actionBar.setActionBarMenuOnItemClick(new ActionBar.ActionBarMenuOnItemClick() {
@@ -4608,7 +4610,7 @@ public class ChatActivity extends BaseFragment implements
             }
 
             @Override
-            protected boolean isCentered() {
+            public boolean isCentered() {
                 return isTitleCentered();
             }
 
@@ -5107,7 +5109,34 @@ public class ChatActivity extends BaseFragment implements
             BlurredBackgroundProviderImpl.topPanelChatActivity(themeDelegate),
             ChatObject.isForum(currentChat));
 
-        if (chatMode == MODE_PINNED) {
+        // MeeroX v254 (cherry-parity): centered title hosts the avatar container in its own ActionBar slot
+        if (isTitleCentered()) {
+            // MeeroX v264 - «الصورة فوق الـ3 نقاط», literally. Stock keeps the
+            // menu broughtToFront() (line above at addView time), so the ⋮
+            // glyph painted OVER the centered avatar's edge = the white
+            // "dot" he chased for weeks (appears only in centered mode,
+            // dies in stock - his exact A/B). Putting the avatar on top;
+            // the overflow menu stays reachable because the container is a
+            // non-clickable FrameLayout: taps pass through to the menu except
+            // on the avatar itself, whose drag-down submenu (cherry-parity,
+            // avatarOptionsMenuItem) already replaces the overflow there.
+            avatarContainer.bringToFront();
+            // MeeroX v265 - the FULL closure of the white-dot saga: the disc
+            // he kept seeing was the ⋮ item's own ROUND GLASS BACKDROP
+            // (BlurredBackgroundFactory circle behind chat_menu_options)
+            // peeking from behind the pinned avatar - pixel-confirmed on his
+            // full screenshot (a ~40dp pale glass circle at the right edge,
+            // half-hidden UNDER the avatar; stock shows no dot because the
+            // avatar sits at the opposite side and the circle reads as plain
+            // ⋮ chrome). Hiding the whole item's pixels (alpha 0 keeps the
+            // view measured AND the submenu anchored - the avatar drag-down
+            // popup opens from the same headerItem, chat options survive).
+            if (headerItem != null) {
+                headerItem.setAlpha(0f);
+            }
+            avatarContainer.setActionBar(actionBar);
+            actionBar.setChatAvatarContainer2(avatarContainer);
+        } else if (chatMode == MODE_PINNED) {
             actionBar.setChatAvatarContainer(avatarContainer);
             avatarContainer.setActionBar(actionBar);
         } else if (chatMode == MODE_WELCOME_MESSAGES) {
@@ -33600,11 +33629,22 @@ public class ChatActivity extends BaseFragment implements
                         popupLayout.addView(new ActionBarPopupWindow.GapView(contentView.getContext(), themeDelegate), LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 8));
                     }
                 }
+                // MeeroX v255: apply his custom message-menu order first
+                tw.nekomimi.nekogram.MeeroMsgMenu.applyOrder(items, options, icons);
+                final java.util.ArrayList<Integer> meeroCompactIds = new java.util.ArrayList<>();
+                final java.util.ArrayList<Integer> meeroCompactIcons = new java.util.ArrayList<>();
                 scrimPopupWindowItems = new ActionBarMenuSubItem[items.size()];
                 final boolean hasGroupedIcons = GroupedIconsView.useGroupedIcons();
                 for (int a = 0, N = items.size(); a < N; a++) {
                     final Integer option = options.get(a);
                     if (option == OPTION_DELETE && showWelcomeMessageRevertOption(selectedObject)) {
+                        continue;
+                    }
+                    // MeeroX v255: primaries leave the list for the compact circle row
+                    if (tw.nekomimi.nekogram.MeeroMsgMenu.compactOn() && tw.nekomimi.nekogram.MeeroMsgMenu.isCompactPrimary(option)) {
+                        meeroCompactIds.add(option);
+                        meeroCompactIcons.add(icons.get(a));
+                        scrimPopupWindowItems[a] = new ActionBarMenuSubItem(getParentActivity(), false, false, themeDelegate);
                         continue;
                     }
 
@@ -33893,6 +33933,15 @@ public class ChatActivity extends BaseFragment implements
                     popupLayout.addView(layout);
                 }
 
+                // MeeroX v255: compact quick-action circles at the menu bottom
+                if (tw.nekomimi.nekogram.MeeroMsgMenu.compactOn() && !meeroCompactIds.isEmpty()) {
+                    popupLayout.addView(tw.nekomimi.nekogram.MeeroMsgMenu.buildCompactRow(getParentActivity(), meeroCompactIds, meeroCompactIcons, meeroBtn -> {
+                        final Object tag = meeroBtn.getTag();
+                        if (tag instanceof Integer && selectedObject != null) {
+                            processSelectedOption((Integer) tag);
+                        }
+                    }));
+                }
                 if (GroupedIconsView.useGroupedIcons()) {
                     popupLayout.addView(new ActionBarPopupWindow.GapView(contentView.getContext(), themeDelegate), LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 8));
 
@@ -34066,7 +34115,31 @@ public class ChatActivity extends BaseFragment implements
                 }
 
                 boolean showNoForwards = (isPeerNoForwards() || message.messageOwner.noforwards && currentUser != null && currentUser.bot) && message.messageOwner.action == null && message.isSent() && !message.isEditing() && chatMode != MODE_SCHEDULED && chatMode != MODE_SAVED && getDialogId() != UserObject.VERIFY;
+                if (tw.nekomimi.nekogram.MeeroMsgMenu.wrapNeeded()) {
+                    // MeeroX v255: iOS sheet - bubble copy + menu scroll as one sheet,
+                    // optionally capped at half the screen and auto-scrolled down.
+                    final android.widget.LinearLayout meeroUCol = new android.widget.LinearLayout(contentView.getContext());
+                    meeroUCol.setOrientation(android.widget.LinearLayout.VERTICAL);
+                    meeroUCol.setClipChildren(false);
+                    if (meeroSnapshotShown && meeroSnapshotView != null && tw.nekomimi.nekogram.MeeroMsgMenu.unifiedOn()) {
+                        ((android.view.ViewGroup) meeroSnapshotView.getParent()).removeView(meeroSnapshotView);
+                        final boolean meeroOut = message != null && message.isOutOwner();
+                        meeroUCol.addView(meeroSnapshotView, LayoutHelper.createLinear(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, meeroOut ? Gravity.RIGHT : Gravity.LEFT, 0, 0, 0, 10));
+                    }
+                    meeroUCol.addView(popupLayout, LayoutHelper.createLinearRelatively(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.LEFT, isReactionsAvailable ? 16 : 0, 0, isReactionsAvailable ? 36 : 0, 0));
+                    final tw.nekomimi.nekogram.MeeroMsgMenu.CappedScrollView meeroScroll = new tw.nekomimi.nekogram.MeeroMsgMenu.CappedScrollView(contentView.getContext());
+                    if (tw.nekomimi.nekogram.MeeroMsgMenu.comfyOn()) {
+                        meeroScroll.setMaxHeightPx(contentView.getHeight() > 0 ? contentView.getHeight() / 2 : AndroidUtilities.dp(300));
+                    }
+                    meeroScroll.setClipChildren(false);
+                    meeroScroll.addView(meeroUCol, new android.widget.ScrollView.LayoutParams(android.view.ViewGroup.LayoutParams.WRAP_CONTENT, android.view.ViewGroup.LayoutParams.WRAP_CONTENT));
+                    scrimPopupContainerLayout.addView(meeroScroll, LayoutHelper.createLinear(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT));
+                    if (tw.nekomimi.nekogram.MeeroMsgMenu.autoscrollOn()) {
+                        meeroScroll.postDelayed(() -> { try { meeroScroll.smoothScrollTo(0, meeroUCol.getBottom()); } catch (Throwable ignore) {} }, 320);
+                    }
+                } else {
                 scrimPopupContainerLayout.addView(popupLayout, LayoutHelper.createLinearRelatively(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.LEFT, isReactionsAvailable ? 16 : 0, 0, isReactionsAvailable ? 36 : 0, 0));
+                }
                 scrimPopupContainerLayout.setPopupWindowLayout(popupLayout);
                 if (showNoForwards) {
                     popupLayout.measure(View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED), View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
@@ -34229,6 +34302,10 @@ public class ChatActivity extends BaseFragment implements
                 scrimPopupWindow.setAnimationStyle(0);
             }
             scrimPopupWindow.setFocusable(true);
+            // MeeroX v255: real system blur behind the menu (Android 12+)
+            if (tw.nekomimi.nekogram.MeeroMsgMenu.nativeBlurOn()) {
+                tw.nekomimi.nekogram.MeeroMsgMenu.applyNativeBlur(scrimPopupWindow);
+            }
             // MeeroX: tell the bubble copy how much room it may take before the
             // container is measured, so a long message becomes scrollable
             // instead of pushing the menu off the bottom of the screen.
@@ -49954,7 +50031,37 @@ public class ChatActivity extends BaseFragment implements
         return canShowCenteredTitle(this);
     }
 
+    /** MeeroX v254: Cherrygram centre-title master switch (default ON; gated defensively). */
+    private boolean meeroCherryTitleOn() {
+        try {
+            // MeeroX v256: "رجوع للأصلي" pauses the capsule (and with it the
+            // adaptive width, which is already AND-gated on isCentered()).
+            return tw.nekomimi.nekogram.NekoConfig.meeroCherryTitle.Bool()
+                    && !tw.nekomimi.nekogram.NekoConfig.meeroHeaderStock.Bool();
+        } catch (Throwable ignore) {
+            return false;
+        }
+    }
+
     private boolean canShowCenteredTitle(ChatActivity parentFragment) {
+        // MeeroX v257 (his bug report): "رجوع للأصلي" must bring back the
+        // OFFICIAL Telegram header. Gating only our capsule switch let the
+        // legacy Nagram center-title path below take over, so stock mode
+        // never actually looked stock - cut the whole thing off here.
+        try {
+            if (tw.nekomimi.nekogram.NekoConfig.meeroHeaderStock.Bool()) {
+                return false;
+            }
+        } catch (Throwable ignore) {
+        }
+        // MeeroX v254 (cherry-parity, his sealed order): Cherrygram center-title switch
+        if (parentFragment != null && parentFragment.meeroCherryTitleOn()) {
+            return !parentFragment.isReport()
+                    && parentFragment.getChatMode() != ChatActivity.MODE_SEARCH
+                    && parentFragment.getChatMode() != ChatActivity.MODE_SAVED
+                    && parentFragment.getChatMode() != ChatActivity.MODE_WELCOME_MESSAGES
+                    && parentFragment.getDialogId() != UserConfig.getInstance(UserConfig.selectedAccount).getClientUserId();
+        }
         if (!NaConfig.INSTANCE.getCenterActionBarTitle().Bool()) {
             return false;
         }
