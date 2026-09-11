@@ -112,11 +112,11 @@ public class MeeroSettingsActivity extends BaseNekoXSettingsActivity {
     // MeeroX v129: mock-accurate switches sit directly under the master
     // design row. Own on/off; OFF = stock switch even under the glass skin.
     private final AbstractConfigCell glassSwitchesRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroGlassSwitches, MeeroStrings.s(103)));
-    // MeeroX v125: ONE combined row owns both shape pickers - its name tells
-    // the user it holds two features, and the tap opens the shared modern
-    // sheet on the bubbles tab (the read-marks tab lives inside the same
-    // sheet). The old separate tick-style row is gone.
-    private final AbstractConfigCell bubbleStyleRow = cellGroup.appendCell(new ConfigCellSelectBox("MeeroPickerRowTitle", NekoConfig.meeroBubbleStyle, bubbleStyleNames(), () -> showBubbleStyleDialog()));
+    // MeeroX v280 (his order «والذي في الصورة ينتقل إلى المحادثات»): the
+    // combined bubble-picker row joined the moved Chat section inside the
+    // «المحادثات» sub-screen. The style NAME/DESC helpers stay HERE because
+    // the shared picker sheet reads them cross-class - only the row, its
+    // names array and its opener moved. One place, no repeats.
     private final AbstractConfigCell cardsRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroCards, MeeroStrings.s(36)));
     private final AbstractConfigCell dialogsStyleRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroDialogsStyle, MeeroStrings.s(83)));
     private final AbstractConfigCell glassBordersRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroGlassBorders, MeeroStrings.s(101)));
@@ -139,37 +139,15 @@ public class MeeroSettingsActivity extends BaseNekoXSettingsActivity {
     private final AbstractConfigCell iosMediaGridRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosMediaGrid, MeeroStrings.s(142)));
     private final AbstractConfigCell dividerAppearance = cellGroup.appendCell(new ConfigCellDivider());
 
-    // Chat - things that only show up inside a conversation.
-    private final AbstractConfigCell headerChat = cellGroup.appendCell(new ConfigCellHeader(MeeroStrings.s(105)));
-    private final AbstractConfigCell tapMenuRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroTapMenu, MeeroStrings.s(264)));
-    private final AbstractConfigCell menuBlurRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroMenuBlur, MeeroStrings.s(170)));
-    // MeeroX v107: separate switch for the full-screen fog behind the
-    // bottom-bar chats popup (menuBlur above frosts the menu panel itself).
-    private final AbstractConfigCell chatsMenuFogRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroChatsMenuFog, MeeroStrings.s(65)));
-    private final AbstractConfigCell iosInputPillRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosInputPill, MeeroStrings.s(138)));
-    // MeeroX v142: approved mock "preview-v142" - the iPhone chat header
-    // (centered name/status pill + detached photo circle at the edge; tools
-    // behind the photo tap / long-press glass menu).
-    private final AbstractConfigCell iosWaveformRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosWaveform, MeeroStrings.s(152)));
-    private final AbstractConfigCell iosCodeRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosCode, MeeroStrings.s(134)));
-    private final AbstractConfigCell iosSelectionRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosSelection, MeeroStrings.s(148)));
-    // MeeroX v159: approved polish - true-black AMOLED bubbles + one corner
-    // radius for every in-bubble card.
-    private final AbstractConfigCell amoledBubblesRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroAmoledBubbles, MeeroStrings.s(8)));
-    // MeeroX v164 (approved pick): the AMOLED bubble hairline - defaults OFF
-    // so the full-pure-black blend stays for everyone who prefers it merged.
-    private final AbstractConfigCell amoledStrokeRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroAmoledStroke, MeeroStrings.s(9)));
-    private final AbstractConfigCell unifiedRadiiRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroUnifiedRadii, MeeroStrings.s(267)));
-    // MeeroX v92: delivery ticks - a dedicated master switch (off returns the
-    // official Android ticks). MeeroX v125: the tick-shape picker row that
-    // used to sit beneath it was merged into the single combined row above
-    // ("Bubbles & read marks"), whose sheet hosts both pickers as tabs - one
-    // row, two features, no duplicates.
-    private final AbstractConfigCell ticksSwitchRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroTicksSwitch, MeeroStrings.s(266)));
-    private final AbstractConfigCell storyDownloadRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroStoryDownload, MeeroStrings.s(260)));
-    // MeeroX v95: the ghost swipe-read toggle moved into GhostModeActivity
-    // (circle-style row) so all ghost features live in one place.
-    private final AbstractConfigCell dividerChat = cellGroup.appendCell(new ConfigCellDivider());
+    // MeeroX v279 (his sealed three-option pick «كامل قسم المحادثات
+    // ينتقل» + placement «تحت البلوك بقسم المحادثات»): the WHOLE Chat
+    // section (header + menuBlur + chatsMenuFog + iosInputPill +
+    // devProfileBg (dev-gated) + iosWaveform + iosCode + iosSelection +
+    // amoledBubbles + amoledStroke + unifiedRadii + ticks master (with its
+    // enable-opens-sheet) + storyDownload + divider) MOVED to the
+    // «المحادثات» sub-screen (NekoChatSettingsActivity), right under the
+    // chat-top-strip block — same keys, same vault strings, one place,
+    // no repeats. Header s(105)/footers stay referenced there.
 
     // Navigation - moving between screens and lists.
     private final AbstractConfigCell headerNavigation = cellGroup.appendCell(new ConfigCellHeader(MeeroStrings.s(107)));
@@ -486,23 +464,9 @@ public class MeeroSettingsActivity extends BaseNekoXSettingsActivity {
         }
     }
 
-    private static String[] bubbleStyleNames() {
-        String[] names = new String[BUBBLE_STYLE_COUNT];
-        for (int i = 0; i < BUBBLE_STYLE_COUNT; i++) {
-            names[i] = bubbleStyleName(i);
-        }
-        return names;
-    }
-
-    private void showBubbleStyleDialog() {
-        // MeeroX v124: the old AlertDialog list became the modern shared
-        // bottom sheet (design A) - same skin for both pickers, tab #0.
-        MeeroPickerSheet.open(getParentActivity(), MeeroPickerSheet.TAB_BUBBLES, () -> {
-            if (listAdapter != null) {
-                listAdapter.notifyDataSetChanged();
-            }
-        });
-    }
+    // MeeroX v280: bubbleStyleNames()/showBubbleStyleDialog() moved with
+    // the row to NekoChatSettingsActivity; the name/desc helpers above
+    // stay single-sourced here for the shared picker sheet.
 
     @Override
     public String getTitle() {

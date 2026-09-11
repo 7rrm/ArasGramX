@@ -48,6 +48,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import kotlin.Unit;
+import tw.nekomimi.nekogram.MeeroBubbleStyles;
+import tw.nekomimi.nekogram.MeeroStrings;
 import tw.nekomimi.nekogram.NekoConfig;
 import tw.nekomimi.nekogram.config.CellGroup;
 import tw.nekomimi.nekogram.config.cell.AbstractConfigCell;
@@ -56,6 +58,7 @@ import tw.nekomimi.nekogram.config.cell.ConfigCellCustom;
 import tw.nekomimi.nekogram.config.cell.ConfigCellDivider;
 import tw.nekomimi.nekogram.config.cell.ConfigCellHeader;
 import tw.nekomimi.nekogram.config.cell.ConfigCellSelectBox;
+import tw.nekomimi.nekogram.config.cell.ConfigCellText;
 import tw.nekomimi.nekogram.config.cell.ConfigCellTextCheck;
 import tw.nekomimi.nekogram.config.cell.ConfigCellTextCheck2;
 import tw.nekomimi.nekogram.config.cell.ConfigCellTextCheckIcon;
@@ -96,6 +99,167 @@ public class NekoChatSettingsActivity extends BaseNekoXSettingsActivity implemen
     }
 
     private final CellGroup cellGroup = new CellGroup(this);
+
+    // ---------------------------------------------------------------
+    // MeeroX v257 (his sealed order + placement pick «انقله كله»): the
+    // collapsible chat-top-strip section lives at the TOP of this
+    // «المحادثات» screen. One expander row with a chevron; opening it
+    // reveals the LIVE Cherrygram-exact preview (real header widgets,
+    // his own name/photo, real wallpaper) and the four v254 buttons in
+    // the order he approved, led by his custom "رجوع للأصلي" master
+    // row. Same config keys as v256 - saved values carry over.
+    // ---------------------------------------------------------------
+    private boolean meeroHdrExpanded = false; // session-only, like the reference
+    private final ArrayList<AbstractConfigCell> meeroHdrSubRows = new ArrayList<>();
+    private AbstractConfigCell hdrGroupRow;
+    private int meeroHdrAnchor = -1;
+
+    private final ConfigCellCustom hdrPreviewRow = new ConfigCellCustom("meeroHdrPreview", ConfigCellCustom.CUSTOM_ITEM_MeeroHeaderPreview, false);
+    private final ConfigCellTextCheck hdrStockRow = new ConfigCellTextCheck(NekoConfig.meeroHeaderStock,
+            "يرجع الهيدر لشكل تيليجرام الأصلي؛ يطفي التوسيط والعرض المتكيّف حتى تطفئه", "رجوع للأصلي");
+    private final ConfigCellTextCheck hdrCenterRow = new ConfigCellTextCheck(NekoConfig.meeroCherryTitle,
+            "كبسولة زجاجية بالوسط، تشتغل بدون إعادة تشغيل", "توسيط عنوان الدردشة ✦");
+    private final ConfigCellTextCheck hdrAdaptiveRow = new ConfigCellTextCheck(NekoConfig.meeroCherryAdaptive,
+            "الكبسولة تتسع وتضيق بعرض الاسم والحالة بدل العرض الثابت", "عرض الكبسولة متكيّف ✦");
+    private final ConfigCellTextCheck hdrGlareRow = new ConfigCellTextCheck(NekoConfig.meeroGlare,
+            "لمعة زجاجية متحركة تعبر كبسولة العنوان وفقاعات الرسائل", "تأثيرات البريق ✦");
+    private final ConfigCellTextCheck hdrBadgeRow = new ConfigCellTextCheck(NekoConfig.unreadBadgeOnBackButton,
+            "عداد أحمر يعد محادثاتك غير المقروءة الثانية وأنت داخل دردشة", "عداد غير المقروء على زر الرجوع");
+    // MeeroX v260 (his final verdict: feature-with-a-switch, not a silent
+    // weld): Telegram 12's white community disc on avatars lives here now.
+    private final ConfigCellTextCheck hdrCommunityRow = new ConfigCellTextCheck(NekoConfig.meeroCommunityBadge,
+            "قرص أبيض بسهم على صور القنوات/المجموعات المربوطة بمجتمع - بالقائمة والبحث والبروفايل (رأس المحادثة متوقف نهائياً منذ v266)", "شارة المجتمع المرتبط ✦") {
+        // MeeroX v269: rebind the dialog list INSTANTLY so toggling is visible at once.
+        @Override
+        public void onClick(org.telegram.ui.Cells.TextCheckCell cell) {
+            super.onClick(cell);
+            try {
+                org.telegram.messenger.NotificationCenter.getGlobalInstance()
+                        .postNotificationName(org.telegram.messenger.NotificationCenter.dialogsNeedReload);
+            } catch (Throwable ignore) {}
+        }
+    };
+
+    {
+        // park the collapsible block at the very top of the screen
+        meeroHdrAnchor = cellGroup.rows.size();
+        meeroRebuildHdrRows();
+    }
+
+    private void meeroToggleHdrGroup() {
+        meeroHdrExpanded = !meeroHdrExpanded;
+        meeroRebuildHdrRows();
+        if (listAdapter != null) {
+            listAdapter.notifyDataSetChanged();
+        }
+    }
+
+    private void meeroRebuildHdrRows() {
+        cellGroup.rows.removeAll(meeroHdrSubRows);
+        if (hdrGroupRow != null) {
+            cellGroup.rows.remove(hdrGroupRow);
+        }
+        meeroHdrSubRows.clear();
+        int idx = meeroHdrAnchor;
+        // MeeroX v275 (his order): the edition tag retires with its mission complete - it proved installs reach his device (the v267 install-certainty probe), the header section keeps a clean title.
+        hdrGroupRow = new ConfigCellText("شريط الدردشة العلوي ✦", meeroHdrExpanded ? "⌄" : "‹", this::meeroToggleHdrGroup);
+        hdrGroupRow.bindCellGroup(cellGroup);
+        cellGroup.rows.add(idx++, hdrGroupRow);
+        if (meeroHdrExpanded) {
+            meeroHdrSubRows.add(hdrPreviewRow);
+            meeroHdrSubRows.add(hdrStockRow);
+            meeroHdrSubRows.add(hdrCenterRow);
+            meeroHdrSubRows.add(hdrAdaptiveRow);
+            meeroHdrSubRows.add(hdrGlareRow);
+            meeroHdrSubRows.add(hdrBadgeRow);
+            meeroHdrSubRows.add(hdrCommunityRow);
+            for (AbstractConfigCell c : meeroHdrSubRows) {
+                c.bindCellGroup(cellGroup);
+                cellGroup.rows.add(idx++, c);
+            }
+            meeroUpdateHdrEnableds();
+        }
+    }
+
+    // MeeroX v256 rules he picked: stock mode greys center+adaptive; a
+    // switched-off center greys adaptive (visible but grey, never hidden).
+    private void meeroUpdateHdrEnableds() {
+        boolean stock = NekoConfig.meeroHeaderStock.Bool();
+        boolean center = NekoConfig.meeroCherryTitle.Bool();
+        hdrCenterRow.setEnabled(!stock);
+        hdrAdaptiveRow.setEnabled(!stock && center);
+    }
+
+    // ---------------------------------------------------------------
+    // MeeroX v279 (his sealed three-option pick «كامل قسم المحادثات
+    // ينتقل» + placement pick «تحت البلوك»): the WHOLE Chat section that
+    // used to live on the main MeeroX settings page moved here, sitting
+    // under the chat-top-strip block (collapsed or expanded, the block's
+    // dynamic rows keep parking at index 0, so this section always sits
+    // right below it). Same config keys, same vault strings, same
+    // behaviours (the ticks master keeps its enable-opens-sheet from
+    // v278; the dev-profile row keeps its @i55544 gate). Nothing is
+    // duplicated back on the main page - one place, no repeats.
+    // ---------------------------------------------------------------
+    private final AbstractConfigCell headerChatMoved = cellGroup.appendCell(new ConfigCellHeader(MeeroStrings.s(105)));
+    private final AbstractConfigCell menuBlurRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroMenuBlur, MeeroStrings.s(170)));
+    private final AbstractConfigCell chatsMenuFogRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroChatsMenuFog, MeeroStrings.s(65)));
+    private final AbstractConfigCell iosInputPillRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosInputPill, MeeroStrings.s(138)));
+    private final AbstractConfigCell devProfileBgRow = null; // Removed per user request
+    private final AbstractConfigCell iosWaveformRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosWaveform, MeeroStrings.s(152)));
+    private final AbstractConfigCell iosCodeRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosCode, MeeroStrings.s(134)));
+    private final AbstractConfigCell iosSelectionRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroIosSelection, MeeroStrings.s(148)));
+    private final AbstractConfigCell amoledBubblesRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroAmoledBubbles, MeeroStrings.s(8)));
+    private final AbstractConfigCell amoledStrokeRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroAmoledStroke, MeeroStrings.s(9)));
+    private final AbstractConfigCell unifiedRadiiRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroUnifiedRadii, MeeroStrings.s(267)));
+    private final AbstractConfigCell ticksSwitchRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroTicksSwitch, MeeroStrings.s(266)) {
+        @Override
+        public void onClick(org.telegram.ui.Cells.TextCheckCell cell) {
+            super.onClick(cell);
+            if (NekoConfig.meeroTicksSwitch.Bool() && getParentActivity() != null) {
+                MeeroPickerSheet.open(getParentActivity(), MeeroPickerSheet.TAB_TICKS, () -> {
+                    if (listAdapter != null) {
+                        listAdapter.notifyDataSetChanged();
+                    }
+                });
+            }
+        }
+    });
+    private final AbstractConfigCell storyDownloadRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.meeroStoryDownload, MeeroStrings.s(260)));
+    // MeeroX v280 (his order «والذي في الصورة ينتقل إلى المحادثات» - the
+    // «فقاعة iOS الرسمية» bubble picker): the last bubble-related row left
+    // on the main page joins its family here. Same key, names served
+    // single-sourced from MeeroSettingsActivity.bubbleStyleName (the
+    // shared sheet reads that helper too, so it must stay there), same
+    // designed sheet opening on the bubbles tab (the read-marks tab lives
+    // inside it).
+    private final AbstractConfigCell bubbleStyleRow = cellGroup.appendCell(new ConfigCellSelectBox("MeeroPickerRowTitle", NekoConfig.meeroBubbleStyle, bubbleStyleNames(), this::showBubbleStyleDialog));
+    private final AbstractConfigCell dividerChatMoved = cellGroup.appendCell(new ConfigCellDivider());
+
+    private static String[] bubbleStyleNames() {
+        final String[] names = new String[MeeroBubbleStyles.COUNT];
+        for (int i = 0; i < names.length; i++) {
+            names[i] = MeeroSettingsActivity.bubbleStyleName(i);
+        }
+        return names;
+    }
+
+    private void showBubbleStyleDialog() {
+        MeeroPickerSheet.open(getParentActivity(), MeeroPickerSheet.TAB_BUBBLES, () -> {
+            if (listAdapter != null) {
+                listAdapter.notifyDataSetChanged();
+            }
+        });
+    }
+
+    private boolean meeroIsDevAccount() {
+        try {
+            final org.telegram.messenger.UserConfig cfg = org.telegram.messenger.UserConfig.getInstance(org.telegram.messenger.UserConfig.selectedAccount);
+            return cfg != null && cfg.getCurrentUser() != null && cfg.getCurrentUser().username != null && cfg.getCurrentUser().username.equalsIgnoreCase("i55544");
+        } catch (Throwable ignore) {
+            return false;
+        }
+    }
 
     // Sticker Size
     private final AbstractConfigCell headerStickerSize = cellGroup.appendCell(new ConfigCellHeader(getString(R.string.StickerSize)));
@@ -532,7 +696,11 @@ public class NekoChatSettingsActivity extends BaseNekoXSettingsActivity implemen
 
         // Cells: Set OnSettingChanged Callbacks
         cellGroup.callBackSettingsChanged = (key, newValue) -> {
-            if (key.equals(NekoConfig.disableProximityEvents.getKey())) {
+            // MeeroX v257: live greying inside the chat-top-strip section
+            if (key.equals(NekoConfig.meeroHeaderStock.getKey()) || key.equals(NekoConfig.meeroCherryTitle.getKey())) {
+                meeroUpdateHdrEnableds();
+                listAdapter.notifyDataSetChanged();
+            } else if (key.equals(NekoConfig.disableProximityEvents.getKey())) {
                 MediaController.getInstance().recreateProximityWakeLock();
             } else if (key.equals(NekoConfig.showSeconds.getKey())) {
                 tooltip.showWithAction(0, UndoView.ACTION_NEED_RESTART, null, null);
@@ -812,6 +980,12 @@ public class NekoChatSettingsActivity extends BaseNekoXSettingsActivity implemen
         protected View onCreateCustomViewHolder(@NonNull ViewGroup parent, int viewType) {
             View view = null;
             switch (viewType) {
+                // MeeroX v257: live chat-top-strip preview (Cherrygram-exact:
+                // real header widgets over the real wallpaper, his own
+                // name/photo, white-chip back capsule like the reference).
+                case ConfigCellCustom.CUSTOM_ITEM_MeeroHeaderPreview:
+                    view = new MeeroHeaderPreviewView(mContext, NekoChatSettingsActivity.this, getResourceProvider());
+                    break;
                 case ConfigCellCustom.CUSTOM_ITEM_StickerSize:
                     view = stickerSizeCell = new StickerSizeCell(mContext);
                     break;
