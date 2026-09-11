@@ -3146,7 +3146,7 @@ public class ChatActivityEnterView extends FrameLayout implements
                 }
             }
         });
-        messageEditTextContainer.addView(emojiButton, LayoutHelper.createFrame(DEFAULT_HEIGHT, DEFAULT_HEIGHT, iOSMessageInputFieldAvailable() ? Gravity.BOTTOM | Gravity.RIGHT : Gravity.BOTTOM | Gravity.LEFT, iOSMessageInputFieldAvailable() ? 0 : 2, 0, iOSMessageInputFieldAvailable() ? 3 : 0, 0));
+        messageEditTextContainer.addView(emojiButton, LayoutHelper.createFrame(DEFAULT_HEIGHT, DEFAULT_HEIGHT, Gravity.BOTTOM | Gravity.LEFT, 2, 0, 0, 0));
         setEmojiButtonImage(false, false);
 
         deleteRichDraftButton = new ImageView(context);
@@ -6873,7 +6873,6 @@ public class ChatActivityEnterView extends FrameLayout implements
         messageEditText.setMaxLines(6);
         messageEditText.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 18);
         messageEditText.setGravity(Gravity.BOTTOM);
-        messageEditText.setSupportRtlHint(true); // FIX: RTL hint alignment for Arabic
         messageEditText.setPadding(0, dp(9), 0, dp(10));
         messageEditText.setBackgroundDrawable(null);
         messageEditText.setTextColor(getThemedColor(Theme.key_chat_messagePanelText));
@@ -6884,8 +6883,20 @@ public class ChatActivityEnterView extends FrameLayout implements
         messageEditText.setCursorColor(getThemedColor(Theme.key_chat_messagePanelCursor));
         messageEditText.setHandlesColor(getThemedColor(Theme.key_chat_TextSelectionCursor));
         messageEditTextContainer.addView(messageEditText, 1, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, Gravity.BOTTOM, 52, 0, isChat ? 50 : 2, 1.5f));
-        // FIX: meeroAttachWrap block removed (was causing empty space + broken attach button)
-        // The chh-style iOSMessageInputFieldAvailable() handles the layout instead
+        // MeeroX v136: when the iOS transplant happened at construction time
+        // (before this field existed), its left-margin rule has to be
+        // applied now that the field does.
+        if (meeroAttachWrap != null) {
+            final FrameLayout.LayoutParams meeroTlp = (FrameLayout.LayoutParams) messageEditText.getLayoutParams();
+            meeroTlp.leftMargin = dp(10);
+            messageEditText.setLayoutParams(meeroTlp);
+            // v137: same physical-left anchoring the live toggle applies.
+            // v200 (owner report): absolute LEFT forces Arabic to start at
+            // the wrong edge - RTL locales keep plain BOTTOM so the text
+            // follows paragraph direction (Arabic starts right), LTR keeps
+            // the iPhone left anchor.
+            messageEditText.setGravity(LocaleController.isRTL ? Gravity.BOTTOM : Gravity.BOTTOM | Gravity.LEFT);
+        }
 
         richDraftPreview = new RichMessageLayout.PreviewView(getContext(), currentAccount, resourcesProvider);
         richDraftPreview.setAllowActions(false);
@@ -17358,36 +17369,14 @@ public class ChatActivityEnterView extends FrameLayout implements
      * pill so their layouts never meet the transplant.
      */
     private boolean meeroIosComposer() {
-        // FIX: Use iOSMessageInputFieldAvailable() (from chh) instead of
-        // creating the broken meeroAttachWrap. This checks the same setting
-        // (meeroIosInputPill) but uses the clean chh layout approach.
-        return iOSMessageInputFieldAvailable();
-    }
-
-    // Ported from chh (Cherrygram) - clean iOS input field check
-    // Uses NekoConfig.meeroIosInputPill instead of CherrygramChatsConfig
-    public boolean iOSMessageInputFieldAvailable() {
-        if (!tw.nekomimi.nekogram.NekoConfig.meeroIosInputPill.Bool() || isStories) {
-            return false;
-        }
-
-        if (parentFragment == null || parentFragment.isInPreviewMode()) {
-            return false;
-        }
-
-        TLRPC.Chat currentChat = parentFragment.getCurrentChat();
-        boolean isChatAllowed = false;
-        if (currentChat != null) {
-            boolean isChannel = ChatObject.isChannel(currentChat);
-            if (isChannel) {
-                isChatAllowed = ChatObject.hasAdminRights(currentChat);
-            } else {
-                isChatAllowed = true;
-            }
-        }
-
-        TLRPC.User currentUser = parentFragment.getCurrentUser();
-        return isChatAllowed || currentUser != null;
+        // v233 (his report - two clips on the story reply bar): require a real
+        // chat host. PeerStoriesView builds its reply bar with fragment=null
+        // and sets isStories=true only after we already synced once (PeerStories
+        // View:3714); in that window we re-parented the attach button into the
+        // iOS clip, so the story bar ended up with the stock clip AND ours.
+        // Chats always pass their ChatActivity - nothing changes there; story
+        // and comment bars keep the single stock clip for everyone.
+        return isChat && !isStories && parentFragment != null && meeroIosInputPill();
     }
 
     /** iOS glyph tone: near-white at night, system grey in day. */
@@ -17468,7 +17457,7 @@ public class ChatActivityEnterView extends FrameLayout implements
         if (attachButton == null || messageEditTextContainer == null || textFieldContainer == null) {
             return;
         }
-        final boolean want = false; // FIX: meeroAttachWrap disabled (broken), use chh layout instead
+        final boolean want = meeroIosComposer();
         try {
             if (want && meeroAttachWrap == null) {
                 android.view.ViewParent parent = attachButton.getParent();
