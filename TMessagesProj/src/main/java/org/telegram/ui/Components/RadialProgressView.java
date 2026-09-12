@@ -35,7 +35,7 @@ import org.telegram.ui.ActionBar.Theme;
 public class RadialProgressView extends View {
 
     // ==================== Constants ====================
-    private static final float rotationTime = 750; // ms for a full 360° rotation
+    private static final float rotationTime = 700; // ms for a full 360° rotation
     private static final float risingTime = 500;    // ms used only in progress mode (not in spinner)
 
     // Outer ring colors
@@ -466,7 +466,7 @@ public class RadialProgressView extends View {
                 cx + outerHalf, cy + outerHalf);
 
         // Inner ring rect — slightly bigger (0.24 of size)
-        float innerHalf = bigSize * 0.27f;
+        float innerHalf = bigSize * 0.28f;
         innerRect.set(cx - innerHalf, cy - innerHalf,
                 cx + innerHalf, cy + innerHalf);
 
