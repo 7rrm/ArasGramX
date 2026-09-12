@@ -292,21 +292,29 @@ public class RadialProgressView extends View {
             int x = (getMeasuredWidth() - viewSize) / 2;
             int y = (getMeasuredHeight() - viewSize) / 2;
 
-            float strokeWidth = AndroidUtilities.dp(3);
-            float innerStrokeWidth = AndroidUtilities.dp(2.5f);
+            // === Sizes ===
+            // Make the spinner much bigger to fill the dialog box
+            int bigSize = AndroidUtilities.dp(56); // was dp(40) - now much bigger
+            if (size > bigSize) bigSize = size; // respect setSize if larger
 
-            // Outer ring rect - make it fill most of the view
-            float outerPadding = strokeWidth / 2 + AndroidUtilities.dp(1);
-            cicleRect.set(x + outerPadding, y + outerPadding,
-                    x + viewSize - outerPadding, y + viewSize - outerPadding);
+            int cx2 = getMeasuredWidth() / 2;
+            int cy2 = getMeasuredHeight() / 2;
 
-            // Inner ring rect (~65% of outer - bigger to fill more space)
-            float innerOffset = viewSize * 0.175f;
-            innerRect.set(x + innerOffset, y + innerOffset,
-                    x + viewSize - innerOffset, y + viewSize - innerOffset);
+            float strokeWidth = AndroidUtilities.dp(3.5f);
+            float innerStrokeWidth = AndroidUtilities.dp(3f);
 
-            float cx = x + viewSize / 2f;
-            float cy = y + viewSize / 2f;
+            // Outer ring rect - fills most of the view
+            float outerHalf = bigSize / 2f;
+            cicleRect.set(cx2 - outerHalf, cy2 - outerHalf,
+                    cx2 + outerHalf, cy2 + outerHalf);
+
+            // Inner ring rect - 65% size, with clear gap between rings
+            float innerHalf = bigSize * 0.32f; // 32% radius = 64% diameter
+            innerRect.set(cx2 - innerHalf, cy2 - innerHalf,
+                    cx2 + innerHalf, cy2 + innerHalf);
+
+            float cx = cx2;
+            float cy = cy2;
 
             // Create sweep gradients
             SweepGradient outerGradient = new SweepGradient(cx, cy, gradientColors, gradientPositions);
@@ -325,20 +333,26 @@ public class RadialProgressView extends View {
             innerGlowPaint.setShader(new SweepGradient(cx, cy, gradientColors, gradientPositions));
             innerGlowPaint.setStrokeWidth(innerStrokeWidth + AndroidUtilities.dp(1.5f));
 
-            // Draw outer ring glow + main together (no clip issues)
+            // Draw outer ring: 2 GAPS (clockwise) - full 360 rotation, no reset
+            // Arc 1: 0° to 150° (150° arc)
+            // Gap: 150° to 180° (30° gap)
+            // Arc 2: 180° to 330° (150° arc)
+            // Gap: 330° to 360° (30° gap)
             canvas.save();
             canvas.rotate(radOffset, cx, cy);
-            canvas.drawArc(cicleRect, 0, 270, false, glowPaint);
-            canvas.drawArc(cicleRect, 0, 270, false, progressPaint);
+            canvas.drawArc(cicleRect, 0, 150, false, glowPaint);
+            canvas.drawArc(cicleRect, 180, 150, false, glowPaint);
+            canvas.drawArc(cicleRect, 0, 150, false, progressPaint);
+            canvas.drawArc(cicleRect, 180, 150, false, progressPaint);
             canvas.restore();
 
-            // Draw inner ring glow + main together
+            // Draw inner ring: 1 GAP (counter-clockwise) - full 360 rotation, no reset
+            // Arc: 0° to 300° (300° arc)
+            // Gap: 300° to 360° (60° gap)
             canvas.save();
             canvas.rotate(-radOffset, cx, cy);
-            canvas.drawArc(innerRect, 0, 135, false, innerGlowPaint);
-            canvas.drawArc(innerRect, 180, 135, false, innerGlowPaint);
-            canvas.drawArc(innerRect, 0, 135, false, innerPaint);
-            canvas.drawArc(innerRect, 180, 135, false, innerPaint);
+            canvas.drawArc(innerRect, 0, 300, false, innerGlowPaint);
+            canvas.drawArc(innerRect, 0, 300, false, innerPaint);
             canvas.restore();
 
             // Update animation
@@ -358,21 +372,19 @@ public class RadialProgressView extends View {
     public void draw(Canvas canvas, float cx, float cy) {
         if (noProgress && toCircleProgress == 0) {
             // Use custom draw for spinner mode
-            int viewSize = size;
-            if (viewSize == 0) {
-                viewSize = AndroidUtilities.dp(40);
-            }
+            int bigSize = AndroidUtilities.dp(56);
+            if (size > bigSize) bigSize = size;
 
-            float strokeWidth = AndroidUtilities.dp(3);
-            float innerStrokeWidth = AndroidUtilities.dp(2.5f);
+            float strokeWidth = AndroidUtilities.dp(3.5f);
+            float innerStrokeWidth = AndroidUtilities.dp(3f);
 
-            float outerPadding = strokeWidth / 2;
-            cicleRect.set(cx - viewSize / 2f + outerPadding, cy - viewSize / 2f + outerPadding,
-                    cx + viewSize / 2f - outerPadding, cy + viewSize / 2f - outerPadding);
+            float outerHalf = bigSize / 2f;
+            cicleRect.set(cx - outerHalf, cy - outerHalf,
+                    cx + outerHalf, cy + outerHalf);
 
-            float innerOffset = viewSize * 0.20f;
-            innerRect.set(cx - viewSize / 2f + innerOffset, cy - viewSize / 2f + innerOffset,
-                    cx + viewSize / 2f - innerOffset, cy + viewSize / 2f - innerOffset);
+            float innerHalf = bigSize * 0.32f;
+            innerRect.set(cx - innerHalf, cy - innerHalf,
+                    cx + innerHalf, cy + innerHalf);
 
             SweepGradient outerGradient = new SweepGradient(cx, cy, gradientColors, gradientPositions);
             SweepGradient innerGradient = new SweepGradient(cx, cy, gradientColors, gradientPositions);
@@ -386,26 +398,20 @@ public class RadialProgressView extends View {
             innerGlowPaint.setShader(new SweepGradient(cx, cy, gradientColors, gradientPositions));
             innerGlowPaint.setStrokeWidth(innerStrokeWidth + AndroidUtilities.dp(1.5f));
 
+            // Outer ring: 2 gaps, clockwise
             canvas.save();
             canvas.rotate(radOffset, cx, cy);
-            canvas.drawArc(cicleRect, 0, 270, false, glowPaint);
+            canvas.drawArc(cicleRect, 0, 150, false, glowPaint);
+            canvas.drawArc(cicleRect, 180, 150, false, glowPaint);
+            canvas.drawArc(cicleRect, 0, 150, false, progressPaint);
+            canvas.drawArc(cicleRect, 180, 150, false, progressPaint);
             canvas.restore();
 
-            canvas.save();
-            canvas.rotate(radOffset, cx, cy);
-            canvas.drawArc(cicleRect, 0, 270, false, progressPaint);
-            canvas.restore();
-
-            canvas.save();
-            canvas.rotate(-radOffset, cx, cy);
-            canvas.drawArc(innerRect, 0, 135, false, innerGlowPaint);
-            canvas.drawArc(innerRect, 180, 135, false, innerGlowPaint);
-            canvas.restore();
-
+            // Inner ring: 1 gap, counter-clockwise
             canvas.save();
             canvas.rotate(-radOffset, cx, cy);
-            canvas.drawArc(innerRect, 0, 135, false, innerPaint);
-            canvas.drawArc(innerRect, 180, 135, false, innerPaint);
+            canvas.drawArc(innerRect, 0, 300, false, innerGlowPaint);
+            canvas.drawArc(innerRect, 0, 300, false, innerPaint);
             canvas.restore();
         } else {
             cicleRect.set(cx - size / 2f, cy - size / 2f, cx + size / 2f, cy + size / 2f);
