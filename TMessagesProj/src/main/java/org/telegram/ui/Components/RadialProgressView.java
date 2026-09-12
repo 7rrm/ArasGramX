@@ -41,7 +41,7 @@ public class RadialProgressView extends View {
     private Paint innerPaint;
     private Paint glowPaint;
     private Paint innerGlowPaint;
-    private static final float rotationTime = 2000;
+    private static final float rotationTime = 1200; // Speed: 1200ms per rotation (faster)
     private static final float risingTime = 500;
     private int size;
 
@@ -295,13 +295,13 @@ public class RadialProgressView extends View {
             float strokeWidth = AndroidUtilities.dp(3);
             float innerStrokeWidth = AndroidUtilities.dp(2.5f);
 
-            // Outer ring rect
-            float outerPadding = strokeWidth / 2;
+            // Outer ring rect - make it fill most of the view
+            float outerPadding = strokeWidth / 2 + AndroidUtilities.dp(1);
             cicleRect.set(x + outerPadding, y + outerPadding,
                     x + viewSize - outerPadding, y + viewSize - outerPadding);
 
-            // Inner ring rect (~60% of outer)
-            float innerOffset = viewSize * 0.20f;
+            // Inner ring rect (~65% of outer - bigger to fill more space)
+            float innerOffset = viewSize * 0.175f;
             innerRect.set(x + innerOffset, y + innerOffset,
                     x + viewSize - innerOffset, y + viewSize - innerOffset);
 
@@ -325,28 +325,18 @@ public class RadialProgressView extends View {
             innerGlowPaint.setShader(new SweepGradient(cx, cy, gradientColors, gradientPositions));
             innerGlowPaint.setStrokeWidth(innerStrokeWidth + AndroidUtilities.dp(1.5f));
 
-            // Draw outer ring glow
+            // Draw outer ring glow + main together (no clip issues)
             canvas.save();
             canvas.rotate(radOffset, cx, cy);
             canvas.drawArc(cicleRect, 0, 270, false, glowPaint);
-            canvas.restore();
-
-            // Draw outer ring main
-            canvas.save();
-            canvas.rotate(radOffset, cx, cy);
             canvas.drawArc(cicleRect, 0, 270, false, progressPaint);
             canvas.restore();
 
-            // Draw inner ring glow
+            // Draw inner ring glow + main together
             canvas.save();
             canvas.rotate(-radOffset, cx, cy);
             canvas.drawArc(innerRect, 0, 135, false, innerGlowPaint);
             canvas.drawArc(innerRect, 180, 135, false, innerGlowPaint);
-            canvas.restore();
-
-            // Draw inner ring main
-            canvas.save();
-            canvas.rotate(-radOffset, cx, cy);
             canvas.drawArc(innerRect, 0, 135, false, innerPaint);
             canvas.drawArc(innerRect, 180, 135, false, innerPaint);
             canvas.restore();
