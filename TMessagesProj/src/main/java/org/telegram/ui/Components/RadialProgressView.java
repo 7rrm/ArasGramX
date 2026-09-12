@@ -1,26 +1,26 @@
 /*
- * Modified RadialProgressView - Dual-ring spinner with gradient + glow + fade
+ * Modified RadialProgressView - Dual-ring spinner
  *
  * Features:
- *  - Outer ring: TWO arcs with different solid colors (purple + cyan)
- *    each arc fades to full transparency at both ends
- *  - Inner ring: single arc (as before), unchanged color
- *  - Unified stroke width for both rings
- *  - Outer glow: 1dp
- *  - Inner glow: 0.8dp
- *  - No flicker: radOffset rotates continuously without reset
- *  - Cached SweepGradient for inner ring (performance)
- *  - invalidate() called in all setters
+ *  - Outer ring: TWO arcs with different solid colors
+ *      Arc 1 (0°..150°):   purple 0xFF651FFF
+ *      Arc 2 (180°..330°): cyan   0xFF00E5FF
+ *    Each arc fades ONLY in alpha at its ends (stroke width stays constant),
+ *    using a full-circle SweepGradient with a narrow visible window.
+ *  - Inner ring: single 300° arc with cyan→purple gradient (unchanged colors).
+ *  - Unified stroke width for both rings (2.5dp).
+ *  - Glow strength: 0.5dp for BOTH outer and inner rings.
+ *  - No flicker: radOffset rotates continuously without reset.
+ *  - Cached inner SweepGradient for performance.
+ *  - invalidate() called in all setters.
  */
 package org.telegram.ui.Components;
 
 import android.content.Context;
 import android.graphics.BlurMaskFilter;
 import android.graphics.Canvas;
-import android.graphics.LinearGradient;
 import android.graphics.Paint;
 import android.graphics.RectF;
-import android.graphics.Shader;
 import android.graphics.SweepGradient;
 import android.graphics.drawable.Drawable;
 import android.view.View;
@@ -34,6 +34,15 @@ import org.telegram.ui.ActionBar.Theme;
 
 public class RadialProgressView extends View {
 
+    // ==================== Constants ====================
+    private static final float rotationTime = 900; // ms for a full 360° rotation
+    private static final float risingTime = 500;    // ms used only in progress mode (not in spinner)
+
+    // Outer ring colors
+    private static final int COLOR_PURPLE = 0xFF651FFF;
+    private static final int COLOR_CYAN   = 0xFF00E5FF;
+
+    // ==================== State ====================
     private long lastUpdateTime;
     private float radOffset;
     private float currentCircleLength;
@@ -49,24 +58,20 @@ public class RadialProgressView extends View {
     private DecelerateInterpolator decelerateInterpolator;
     private AccelerateInterpolator accelerateInterpolator;
 
-    // Inner ring paints (unchanged gradient behavior)
-    private Paint progressPaint;      // unused in dual-ring mode but kept for compatibility
+    // Legacy paints (kept for compatibility with progress mode)
+    private Paint progressPaint;
+    private Paint glowPaint;
+
+    // Inner ring paints
     private Paint innerPaint;
-    private Paint glowPaint;          // unused in dual-ring mode but kept for compatibility
     private Paint innerGlowPaint;
 
-    // Outer ring paints — one pair per arc color
+    // Outer ring arc paints
     private Paint outerPurplePaint;
     private Paint outerCyanPaint;
     private Paint outerPurpleGlowPaint;
     private Paint outerCyanGlowPaint;
 
-    // Colors for outer arcs
-    private static final int COLOR_PURPLE = 0xFF651FFF;
-    private static final int COLOR_CYAN   = 0xFF00E5FF;
-
-    private static final float rotationTime = 1200; // ms per full rotation
-    private static final float risingTime = 500;
     private int size;
 
     private float currentProgress;
@@ -79,10 +84,11 @@ public class RadialProgressView extends View {
     private boolean noProgress = true;
     private final Theme.ResourcesProvider resourcesProvider;
 
+    // Gradient for the inner ring
     private int[] gradientColors;
     private float[] gradientPositions;
 
-    // Cached gradient for inner ring
+    // Cached inner-ring gradient
     private SweepGradient cachedInnerGradient;
     private float cachedCx = -1f;
     private float cachedCy = -1f;
@@ -103,7 +109,7 @@ public class RadialProgressView extends View {
         decelerateInterpolator = new DecelerateInterpolator();
         accelerateInterpolator = new AccelerateInterpolator();
 
-        // Gradient for inner ring (cyan -> blue -> purple with fade)
+        // Inner-ring gradient (cyan → blue → purple, then fades out)
         gradientColors = new int[]{
                 0xFF00E5FF,
                 0xFF2979FF,
@@ -114,7 +120,7 @@ public class RadialProgressView extends View {
         };
         gradientPositions = new float[]{0f, 0.25f, 0.55f, 0.70f, 0.85f, 1.0f};
 
-        // ===== Legacy paints (kept for compatibility) =====
+        // ===== Legacy paint (progress mode) =====
         progressPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         progressPaint.setStyle(Paint.Style.STROKE);
         progressPaint.setStrokeCap(Paint.Cap.ROUND);
@@ -128,22 +134,23 @@ public class RadialProgressView extends View {
         innerPaint.setStrokeWidth(AndroidUtilities.dp(2.5f));
         innerPaint.setColor(progressColor);
 
+        // ===== Legacy glow paint (kept for compatibility, not used in dual-ring) =====
         glowPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         glowPaint.setStyle(Paint.Style.STROKE);
         glowPaint.setStrokeCap(Paint.Cap.ROUND);
-        glowPaint.setStrokeWidth(AndroidUtilities.dp(3.5f));
+        glowPaint.setStrokeWidth(AndroidUtilities.dp(3f));
         glowPaint.setColor(progressColor);
-        glowPaint.setMaskFilter(new BlurMaskFilter(AndroidUtilities.dp(1f), BlurMaskFilter.Blur.NORMAL));
+        glowPaint.setMaskFilter(new BlurMaskFilter(AndroidUtilities.dp(0.5f), BlurMaskFilter.Blur.NORMAL));
 
-        // ===== Inner ring glow paint (0.8dp blur) =====
+        // ===== Inner ring glow (0.5dp blur) =====
         innerGlowPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         innerGlowPaint.setStyle(Paint.Style.STROKE);
         innerGlowPaint.setStrokeCap(Paint.Cap.ROUND);
-        innerGlowPaint.setStrokeWidth(AndroidUtilities.dp(3.3f));
+        innerGlowPaint.setStrokeWidth(AndroidUtilities.dp(3f));
         innerGlowPaint.setColor(progressColor);
-        innerGlowPaint.setMaskFilter(new BlurMaskFilter(AndroidUtilities.dp(0.8f), BlurMaskFilter.Blur.NORMAL));
+        innerGlowPaint.setMaskFilter(new BlurMaskFilter(AndroidUtilities.dp(0.5f), BlurMaskFilter.Blur.NORMAL));
 
-        // ===== Outer ring arc paints (BUTT cap so transparent edges look clean) =====
+        // ===== Outer ring arc paints (BUTT cap for clean alpha fade) =====
         outerPurplePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         outerPurplePaint.setStyle(Paint.Style.STROKE);
         outerPurplePaint.setStrokeCap(Paint.Cap.BUTT);
@@ -156,20 +163,20 @@ public class RadialProgressView extends View {
         outerCyanPaint.setStrokeWidth(AndroidUtilities.dp(2.5f));
         outerCyanPaint.setColor(COLOR_CYAN);
 
-        // ===== Outer ring glow paints (1dp blur) =====
+        // ===== Outer ring glow paints (0.5dp blur) =====
         outerPurpleGlowPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         outerPurpleGlowPaint.setStyle(Paint.Style.STROKE);
         outerPurpleGlowPaint.setStrokeCap(Paint.Cap.BUTT);
-        outerPurpleGlowPaint.setStrokeWidth(AndroidUtilities.dp(3.5f));
+        outerPurpleGlowPaint.setStrokeWidth(AndroidUtilities.dp(3f));
         outerPurpleGlowPaint.setColor(COLOR_PURPLE);
-        outerPurpleGlowPaint.setMaskFilter(new BlurMaskFilter(AndroidUtilities.dp(1f), BlurMaskFilter.Blur.NORMAL));
+        outerPurpleGlowPaint.setMaskFilter(new BlurMaskFilter(AndroidUtilities.dp(0.5f), BlurMaskFilter.Blur.NORMAL));
 
         outerCyanGlowPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         outerCyanGlowPaint.setStyle(Paint.Style.STROKE);
         outerCyanGlowPaint.setStrokeCap(Paint.Cap.BUTT);
-        outerCyanGlowPaint.setStrokeWidth(AndroidUtilities.dp(3.5f));
+        outerCyanGlowPaint.setStrokeWidth(AndroidUtilities.dp(3f));
         outerCyanGlowPaint.setColor(COLOR_CYAN);
-        outerCyanGlowPaint.setMaskFilter(new BlurMaskFilter(AndroidUtilities.dp(1f), BlurMaskFilter.Blur.NORMAL));
+        outerCyanGlowPaint.setMaskFilter(new BlurMaskFilter(AndroidUtilities.dp(0.5f), BlurMaskFilter.Blur.NORMAL));
 
         lastUpdateTime = System.currentTimeMillis();
     }
@@ -279,10 +286,10 @@ public class RadialProgressView extends View {
         innerPaint.setStrokeWidth(dp);
         outerPurplePaint.setStrokeWidth(dp);
         outerCyanPaint.setStrokeWidth(dp);
-        glowPaint.setStrokeWidth(dp + AndroidUtilities.dp(1f));
-        innerGlowPaint.setStrokeWidth(dp + AndroidUtilities.dp(0.8f));
-        outerPurpleGlowPaint.setStrokeWidth(dp + AndroidUtilities.dp(1f));
-        outerCyanGlowPaint.setStrokeWidth(dp + AndroidUtilities.dp(1f));
+        glowPaint.setStrokeWidth(dp + AndroidUtilities.dp(0.5f));
+        innerGlowPaint.setStrokeWidth(dp + AndroidUtilities.dp(0.5f));
+        outerPurpleGlowPaint.setStrokeWidth(dp + AndroidUtilities.dp(0.5f));
+        outerCyanGlowPaint.setStrokeWidth(dp + AndroidUtilities.dp(0.5f));
         invalidate();
     }
 
@@ -444,7 +451,7 @@ public class RadialProgressView extends View {
     }
 
     private void drawDualRing(Canvas canvas, float cx, float cy) {
-        // Make the spinner much bigger to fill the dialog box
+        // Make the spinner big enough to fill the dialog box
         int bigSize = AndroidUtilities.dp(56);
         if (size > bigSize) {
             bigSize = size;
@@ -453,42 +460,74 @@ public class RadialProgressView extends View {
         // ===== Unified stroke width for both rings =====
         float strokeW = AndroidUtilities.dp(2.5f);
 
-        // Outer ring rect — fills most of the view
+        // Outer ring rect
         float outerHalf = bigSize / 2f;
         cicleRect.set(cx - outerHalf, cy - outerHalf,
                 cx + outerHalf, cy + outerHalf);
 
-        // Inner ring rect — 20% radius (small inner ring)
-        float innerHalf = bigSize * 0.20f;
+        // Inner ring rect — slightly bigger (0.24 of size)
+        float innerHalf = bigSize * 0.24f;
         innerRect.set(cx - innerHalf, cy - innerHalf,
                 cx + innerHalf, cy + innerHalf);
 
-        // ===== Build edge-fading gradients for the outer arcs =====
-        float radius = (cicleRect.right - cicleRect.left) / 2f;
+        // ===== Build edge-fading SweepGradients for outer arcs =====
+        // Full-circle gradient; the color is fully visible only inside the arc,
+        // and fades to alpha=0 near both endpoints. Because the gradient is
+        // circular (SweepGradient), the stroke keeps its FULL WIDTH and only
+        // fades in ALPHA — no thinning at the edges.
+        float fadeFrac = 0.15f;   // 15% of arc length used for the fade
 
         // --- Arc 1: 0°..150° (PURPLE) ---
-        float x1s = cx + radius * (float) Math.cos(Math.toRadians(0f));
-        float y1s = cy + radius * (float) Math.sin(Math.toRadians(0f));
-        float x1e = cx + radius * (float) Math.cos(Math.toRadians(150f));
-        float y1e = cy + radius * (float) Math.sin(Math.toRadians(150f));
+        float arcStart1 = 0f;
+        float arcEnd1   = 150f;
+        float p1a = arcStart1 / 360f;
+        float p1b = (arcStart1 + fadeFrac * (arcEnd1 - arcStart1)) / 360f;
+        float p1c = (arcEnd1   - fadeFrac * (arcEnd1 - arcStart1)) / 360f;
+        float p1d = arcEnd1 / 360f;
 
-        LinearGradient purpleGradient = new LinearGradient(
-                x1s, y1s, x1e, y1e,
-                new int[]{0x00651FFF, COLOR_PURPLE, COLOR_PURPLE, 0x00651FFF},
-                new float[]{0f, 0.15f, 0.85f, 1f},
-                Shader.TileMode.CLAMP);
+        SweepGradient purpleGradient = new SweepGradient(cx, cy,
+                new int[]{
+                        0x00651FFF,   // 0°   : transparent
+                        0x00651FFF,   // 0°   : transparent (dup)
+                        0xFF651FFF,   // +15% : full purple
+                        0xFF651FFF,   // -15% : full purple
+                        0x00651FFF,   // 150° : transparent
+                        0x00651FFF    // 360° : transparent
+                },
+                new float[]{
+                        0f,
+                        p1a,
+                        p1b,
+                        p1c,
+                        p1d,
+                        1f
+                });
 
         // --- Arc 2: 180°..330° (CYAN) ---
-        float x2s = cx + radius * (float) Math.cos(Math.toRadians(180f));
-        float y2s = cy + radius * (float) Math.sin(Math.toRadians(180f));
-        float x2e = cx + radius * (float) Math.cos(Math.toRadians(330f));
-        float y2e = cy + radius * (float) Math.sin(Math.toRadians(330f));
+        float arcStart2 = 180f;
+        float arcEnd2   = 330f;
+        float p2a = arcStart2 / 360f;
+        float p2b = (arcStart2 + fadeFrac * (arcEnd2 - arcStart2)) / 360f;
+        float p2c = (arcEnd2   - fadeFrac * (arcEnd2 - arcStart2)) / 360f;
+        float p2d = arcEnd2 / 360f;
 
-        LinearGradient cyanGradient = new LinearGradient(
-                x2s, y2s, x2e, y2e,
-                new int[]{0x0000E5FF, COLOR_CYAN, COLOR_CYAN, 0x0000E5FF},
-                new float[]{0f, 0.15f, 0.85f, 1f},
-                Shader.TileMode.CLAMP);
+        SweepGradient cyanGradient = new SweepGradient(cx, cy,
+                new int[]{
+                        0x0000E5FF,   // 0°   : transparent
+                        0x0000E5FF,   // 180° : transparent
+                        0xFF00E5FF,   // +15% : full cyan
+                        0xFF00E5FF,   // -15% : full cyan
+                        0x0000E5FF,   // 330° : transparent
+                        0x0000E5FF    // 360° : transparent
+                },
+                new float[]{
+                        0f,
+                        p2a,
+                        p2b,
+                        p2c,
+                        p2d,
+                        1f
+                });
 
         // Apply shaders + widths
         outerPurplePaint.setShader(purpleGradient);
@@ -498,20 +537,20 @@ public class RadialProgressView extends View {
         outerCyanPaint.setStrokeWidth(strokeW);
 
         outerPurpleGlowPaint.setShader(purpleGradient);
-        outerPurpleGlowPaint.setStrokeWidth(strokeW + AndroidUtilities.dp(1f));
+        outerPurpleGlowPaint.setStrokeWidth(strokeW + AndroidUtilities.dp(0.5f));
 
         outerCyanGlowPaint.setShader(cyanGradient);
-        outerCyanGlowPaint.setStrokeWidth(strokeW + AndroidUtilities.dp(1f));
+        outerCyanGlowPaint.setStrokeWidth(strokeW + AndroidUtilities.dp(0.5f));
 
         // ===== Draw outer ring (clockwise rotation) =====
         canvas.save();
         canvas.rotate(radOffset, cx, cy);
 
-        // Purple arc (with glow first, then the solid line)
+        // Purple arc (glow first, then solid line)
         canvas.drawArc(cicleRect, 0, 150, false, outerPurpleGlowPaint);
         canvas.drawArc(cicleRect, 0, 150, false, outerPurplePaint);
 
-        // Cyan arc (with glow first, then the solid line)
+        // Cyan arc (glow first, then solid line)
         canvas.drawArc(cicleRect, 180, 150, false, outerCyanGlowPaint);
         canvas.drawArc(cicleRect, 180, 150, false, outerCyanPaint);
 
@@ -521,7 +560,7 @@ public class RadialProgressView extends View {
         ensureInnerGradient(cx, cy);
 
         innerPaint.setStrokeWidth(strokeW);
-        innerGlowPaint.setStrokeWidth(strokeW + AndroidUtilities.dp(0.8f));
+        innerGlowPaint.setStrokeWidth(strokeW + AndroidUtilities.dp(0.5f));
 
         canvas.save();
         canvas.rotate(-radOffset, cx, cy);
