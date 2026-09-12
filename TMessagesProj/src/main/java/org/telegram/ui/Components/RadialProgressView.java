@@ -466,7 +466,7 @@ public class RadialProgressView extends View {
                 cx + outerHalf, cy + outerHalf);
 
         // Inner ring rect — slightly bigger (0.24 of size)
-        float innerHalf = bigSize * 0.28f;
+        float innerHalf = bigSize * 0.277f;
         innerRect.set(cx - innerHalf, cy - innerHalf,
                 cx + innerHalf, cy + innerHalf);
 
