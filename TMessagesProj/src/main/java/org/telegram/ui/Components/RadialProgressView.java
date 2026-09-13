@@ -82,6 +82,7 @@ public class RadialProgressView extends View {
     private float toCircleProgress;
 
     private boolean noProgress = true;
+    private boolean useCustomSpinner = false; // FIX: only true for AlertDialog spinner
     private final Theme.ResourcesProvider resourcesProvider;
 
     // Gradient for the inner ring
@@ -226,6 +227,12 @@ public class RadialProgressView extends View {
     public void setNoProgress(boolean value) {
         noProgress = value;
         invalidate();
+    }
+
+    /** FIX: Set to true ONLY for AlertDialog spinner (center box).
+     *  All other uses (calls, downloads) keep the original Telegram spinner. */
+    public void setUseCustomSpinner(boolean value) {
+        useCustomSpinner = value;
     }
 
     public void setProgress(float value) {
@@ -422,8 +429,17 @@ public class RadialProgressView extends View {
 
     @Override
     protected void onDraw(Canvas canvas) {
-        if (noProgress && toCircleProgress == 0) {
+        if (useCustomSpinner && noProgress && toCircleProgress == 0) {
             drawDualRing(canvas, getMeasuredWidth() / 2f, getMeasuredHeight() / 2f);
+        } else if (!useCustomSpinner && noProgress && toCircleProgress == 0) {
+            // Original Telegram spinner (for calls, downloads, etc.)
+            int x = (getMeasuredWidth() - size) / 2;
+            int y = (getMeasuredHeight() - size) / 2;
+            cicleRect.set(x, y, x + size, y + size);
+            progressPaint.setShader(null);
+            progressPaint.setColor(progressColor);
+            progressPaint.setStrokeWidth(AndroidUtilities.dp(3));
+            canvas.drawArc(cicleRect, radOffset, drawingCircleLenght = currentCircleLength, false, progressPaint);
         } else {
             // Original progress mode
             int x = (getMeasuredWidth() - size) / 2;
@@ -439,8 +455,15 @@ public class RadialProgressView extends View {
     }
 
     public void draw(Canvas canvas, float cx, float cy) {
-        if (noProgress && toCircleProgress == 0) {
+        if (useCustomSpinner && noProgress && toCircleProgress == 0) {
             drawDualRing(canvas, cx, cy);
+        } else if (!useCustomSpinner && noProgress && toCircleProgress == 0) {
+            // Original Telegram spinner
+            cicleRect.set(cx - size / 2f, cy - size / 2f, cx + size / 2f, cy + size / 2f);
+            progressPaint.setShader(null);
+            progressPaint.setColor(progressColor);
+            progressPaint.setStrokeWidth(AndroidUtilities.dp(3));
+            canvas.drawArc(cicleRect, radOffset, drawingCircleLenght = currentCircleLength, false, progressPaint);
         } else {
             cicleRect.set(cx - size / 2f, cy - size / 2f, cx + size / 2f, cy + size / 2f);
             progressPaint.setShader(null);
