@@ -10,9 +10,10 @@
  *  - Inner ring: single 300° arc with cyan→purple gradient (unchanged colors).
  *  - Unified stroke width for both rings (2.5dp).
  *  - Glow strength: 0.5dp for BOTH outer and inner rings.
- *  - No flicker: radOffset rotates continuously without reset.
- *  - Cached inner SweepGradient for performance.
- *  - invalidate() called in all setters.
+ *  - useCustomSpinner: only true for AlertDialog spinner; all other uses
+ *    (calls, downloads, avatars) keep the original Telegram spinner.
+ *  - No flicker: radOffset rotates continuously WITHOUT reset when
+ *    useCustomSpinner is active.
  */
 package org.telegram.ui.Components;
 
@@ -339,6 +340,19 @@ public class RadialProgressView extends View {
 
     private void updateAnimation(long dt) {
         if (noProgress) {
+            // ============================================================
+            // ✅ FIX: when useCustomSpinner is active, do NOT reset radOffset.
+            // Rotate continuously; only clamp when it grows very large.
+            // This eliminates the flicker.
+            // ============================================================
+            if (useCustomSpinner) {
+                radOffset += 360f * dt / rotationTime;
+                if (radOffset > 100000f) {
+                    radOffset -= 100000f;
+                }
+                return;
+            }
+
             // Original Telegram spinner animation (grows/shrinks arc)
             radOffset += 360 * dt / rotationTime;
             int count = (int) (radOffset / 360);
@@ -537,16 +551,12 @@ public class RadialProgressView extends View {
         cicleRect.set(cx - outerHalf, cy - outerHalf,
                 cx + outerHalf, cy + outerHalf);
 
-        // Inner ring rect — slightly bigger (0.24 of size)
+        // Inner ring rect — slightly bigger (0.271 of size)
         float innerHalf = bigSize * 0.271f;
         innerRect.set(cx - innerHalf, cy - innerHalf,
                 cx + innerHalf, cy + innerHalf);
 
         // ===== Build edge-fading SweepGradients for outer arcs =====
-        // Full-circle gradient; the color is fully visible only inside the arc,
-        // and fades to alpha=0 near both endpoints. Because the gradient is
-        // circular (SweepGradient), the stroke keeps its FULL WIDTH and only
-        // fades in ALPHA — no thinning at the edges.
         float fadeFrac = 0.15f;   // 15% of arc length used for the fade
 
         // --- Arc 1: 0°..150° (PURPLE) ---
@@ -559,12 +569,12 @@ public class RadialProgressView extends View {
 
         SweepGradient purpleGradient = new SweepGradient(cx, cy,
                 new int[]{
-                        0x00651FFF,   // 0°   : transparent
-                        0x00651FFF,   // 0°   : transparent (dup)
-                        0xFF651FFF,   // +15% : full purple
-                        0xFF651FFF,   // -15% : full purple
-                        0x00651FFF,   // 150° : transparent
-                        0x00651FFF    // 360° : transparent
+                        0x00651FFF,
+                        0x00651FFF,
+                        0xFF651FFF,
+                        0xFF651FFF,
+                        0x00651FFF,
+                        0x00651FFF
                 },
                 new float[]{
                         0f,
@@ -585,12 +595,12 @@ public class RadialProgressView extends View {
 
         SweepGradient cyanGradient = new SweepGradient(cx, cy,
                 new int[]{
-                        0x0000E5FF,   // 0°   : transparent
-                        0x0000E5FF,   // 180° : transparent
-                        0xFF00E5FF,   // +15% : full cyan
-                        0xFF00E5FF,   // -15% : full cyan
-                        0x0000E5FF,   // 330° : transparent
-                        0x0000E5FF    // 360° : transparent
+                        0x0000E5FF,
+                        0x0000E5FF,
+                        0xFF00E5FF,
+                        0xFF00E5FF,
+                        0x0000E5FF,
+                        0x0000E5FF
                 },
                 new float[]{
                         0f,
