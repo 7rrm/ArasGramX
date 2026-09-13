@@ -2556,6 +2556,16 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
             actionBar.backButtonImageView.setContentDescription(getString(R.string.QrCode));
             actionBar.backButtonImageView.setImageResource(R.drawable.outline_header_qr_24);
             actionBar.backButtonImageView.setColorFilter(getThemedColor(Theme.key_actionBarDefaultIcon), PorterDuff.Mode.SRC_IN);
+            // FIX: apply glass to QR code icon button
+            if (iBlur3FactoryLiquidGlass != null) {
+                try {
+                    final int qrSize = AndroidUtilities.dp(MEERO_PROFILE_BUTTON);
+                    final BlurredBackgroundDrawable qrBg = iBlur3FactoryLiquidGlass.create(
+                            actionBar.backButtonImageView, BlurredBackgroundProviderImpl.headerButton(resourcesProvider));
+                    qrBg.setRadius(qrSize / 2f);
+                    actionBar.backButtonImageView.setBackground(new MeeroCenteredDrawable(qrBg, qrSize, qrSize));
+                } catch (Throwable ignore) {}
+            }
             actionBar.backButtonImageView.setOnClickListener(v -> {
                 Bundle args = new Bundle();
                 args.putLong("chat_id", chatId);
@@ -6236,6 +6246,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                 avatarImage.clearForeground();
                 doNotSetForeground = false;
                 updateStoriesViewBounds(false);
+                meeroGlassProfileButtons(); // FIX: re-apply glass after avatar expansion
             }
         });
         updateRowsIds();
