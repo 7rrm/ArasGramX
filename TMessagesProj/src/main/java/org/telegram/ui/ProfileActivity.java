@@ -2665,21 +2665,25 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
      * the iOS chrome uses.
      */
     private void meeroGlassProfileButtons() {
-        // v204 (owner field evidence): no capability gate besides the real
-        // ones - the old cards-switch gate was what left his devices bare.
         if (iBlur3FactoryLiquidGlass == null || actionBar == null) {
             return;
         }
         try {
-            // The back button and the menu are laid out at the full action
-            // bar height, so a 48dp capsule is centred inside instead.
             final int size = AndroidUtilities.dp(MEERO_PROFILE_BUTTON);
+            // Apply glass to back button (or QR button if present)
             final View back = actionBar.getBackButton();
             if (back != null) {
                 final BlurredBackgroundDrawable bg = iBlur3FactoryLiquidGlass.create(
                         back, BlurredBackgroundProviderImpl.topPanel(resourcesProvider));
                 bg.setRadius(size / 2f);
                 back.setBackground(new MeeroCenteredDrawable(bg, size, size));
+            }
+            // Also apply glass to backButtonImageView (QR code icon)
+            if (actionBar.backButtonImageView != null) {
+                final BlurredBackgroundDrawable qrBg = iBlur3FactoryLiquidGlass.create(
+                        actionBar.backButtonImageView, BlurredBackgroundProviderImpl.headerButton(resourcesProvider));
+                qrBg.setRadius(size / 2f);
+                actionBar.backButtonImageView.setBackground(new MeeroCenteredDrawable(qrBg, size, size));
             }
             final ActionBarMenu menu = actionBar.createMenu();
             if (menu != null) {
@@ -3720,6 +3724,10 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
         // MeeroX: the back and overflow controls sat as bare icons on the
         // cover photo and were hard to see. iOS puts them on a glass disc.
         meeroGlassProfileButtons();
+        // FIX: delayed re-apply to ensure glass sticks after layout
+        if (fragmentView != null) {
+            fragmentView.post(() -> meeroGlassProfileButtons());
+        }
 
         FrameLayout frameLayout = (FrameLayout) fragmentView;
 
