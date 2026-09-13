@@ -921,6 +921,7 @@ public class AlertDialog extends Dialog implements Drawable.Callback, Notificati
 
             RadialProgressView progressView = new RadialProgressView(getContext(), resourcesProvider);
             progressView.setSize(dp(32));
+            progressView.setUseCustomSpinner(true); // FIX: use custom dual-ring spinner only here
             progressView.setProgressColor(getThemedColor(Theme.key_dialog_inlineProgress));
             progressViewContainer.addView(progressView, LayoutHelper.createFrame(86, 86, Gravity.CENTER));
         } else {
