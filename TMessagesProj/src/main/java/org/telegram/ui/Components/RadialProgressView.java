@@ -339,10 +339,59 @@ public class RadialProgressView extends View {
 
     private void updateAnimation(long dt) {
         if (noProgress) {
-            // Simple continuous rotation — no resets, no flicker
-            radOffset += 360f * dt / rotationTime;
-            if (radOffset >= 360f) {
-                radOffset -= 360f * (float) Math.floor(radOffset / 360f);
+            // Original Telegram spinner animation (grows/shrinks arc)
+            radOffset += 360 * dt / rotationTime;
+            int count = (int) (radOffset / 360);
+            radOffset -= count * 360;
+
+            if (toCircle && toCircleProgress != 1f) {
+                toCircleProgress += 16 / 220f;
+                if (toCircleProgress > 1f) {
+                    toCircleProgress = 1f;
+                }
+            } else if (!toCircle && toCircleProgress != 0f) {
+                toCircleProgress -= 16 / 400f;
+                if (toCircleProgress < 0) {
+                    toCircleProgress = 0f;
+                }
+            }
+
+            if (toCircleProgress == 0) {
+                currentProgressTime += dt;
+                if (currentProgressTime >= risingTime) {
+                    currentProgressTime = risingTime;
+                }
+                if (risingCircleLength) {
+                    currentCircleLength = 4 + 266 * accelerateInterpolator.getInterpolation(currentProgressTime / risingTime);
+                } else {
+                    currentCircleLength = 4 - 270 * (1.0f - decelerateInterpolator.getInterpolation(currentProgressTime / risingTime));
+                }
+                if (currentProgressTime == risingTime) {
+                    if (risingCircleLength) {
+                        radOffset += 270;
+                        currentCircleLength = -266;
+                    }
+                    risingCircleLength = !risingCircleLength;
+                    currentProgressTime = 0;
+                }
+            } else {
+                if (risingCircleLength) {
+                    float old = currentCircleLength;
+                    currentCircleLength = 4 + 266 * accelerateInterpolator.getInterpolation(currentProgressTime / risingTime);
+                    currentCircleLength += 360 * toCircleProgress;
+                    float dx = old - currentCircleLength;
+                    if (dx > 0) {
+                        radOffset += old - currentCircleLength;
+                    }
+                } else {
+                    float old = currentCircleLength;
+                    currentCircleLength = 4 - 270 * (1.0f - decelerateInterpolator.getInterpolation(currentProgressTime / risingTime));
+                    currentCircleLength -= 364 * toCircleProgress;
+                    float dx = old - currentCircleLength;
+                    if (dx > 0) {
+                        radOffset += old - currentCircleLength;
+                    }
+                }
             }
         } else {
             // Original progress mode
